@@ -286,7 +286,11 @@ echo ""
 # =============================================================================
 echo "=== H: Directory structure ==="
 
-for dir in .opencode .opencode/skills .opencode/rules .opencode/agents docs docs/SOPs templates scripts; do
+for dir in .opencode .opencode/skills .opencode/rules .opencode/agents \
+           .docworkbench .docworkbench/doc-lifecycle .docworkbench/doc-lifecycle/templates \
+           .docworkbench/infra-topology .docworkbench/infra-topology/templates \
+           proposals proposals/approved plans plans/completed inventory \
+           docs docs/SOPs templates scripts; do
     TOTAL=$((TOTAL+1))
     [ -d "$dir" ] && pass "H: $dir/ exists" || fail "H: $dir/ MISSING"
 done
