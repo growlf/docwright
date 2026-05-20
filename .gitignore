@@ -1,0 +1,42 @@
+# Secrets and credentials
+*.key
+*.pem
+credentials*
+secrets*
+.env
+
+# Temp files
+/tmp/*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Obsidian vault artifacts
+.obsidian/*
+!.obsidian/community-plugins.json
+!.obsidian/plugins
+!.obsidian/plugins/templater-obsidian
+!.obsidian/plugins/quickadd
+.obsidian/plugins/*
+!.obsidian/plugins/templater-obsidian/*
+!.obsidian/plugins/quickadd/*
+
+# Python cache
+__pycache__/
+
+# Virtual environments
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Build artifacts
+dist/
+build/
+*.log
