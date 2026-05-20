@@ -1,12 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/big-pickle",
   "instructions": [
     "AGENTS.md",
     ".opencode/rules/commit-format.md",
     ".opencode/rules/frontmatter-validate.md",
     ".opencode/rules/no-plaintext-creds.md",
-    ".opencode/rules/no-secrets.md",
-    ".opencode/rules/lifecycle-auto-process.md"
+    ".opencode/rules/no-secrets.md"
   ],
   "permission": {
     "edit": "ask",
@@ -18,5 +18,19 @@
   },
   "experimental": {
     "skills": true
+  },
+  "agent": {
+    "design": {
+      "mode": "primary",
+      "description": "Plan mode — can edit plans, proposals, docs, and profile definitions",
+      "color": "#8B5CF6",
+      "permission": {
+        "edit": "allow",
+        "write": "allow",
+        "bash": "ask",
+        "read": "allow"
+      },
+      "prompt": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning."
+    }
   }
 }

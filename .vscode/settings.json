@@ -1,0 +1,17 @@
+{
+  "editor.minimap.enabled": false,
+  "editor.wordWrap": "on",
+  "files.associations": {
+    "*.jsonc": "jsonc"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": null,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "on",
+      "strings": "on",
+      "other": "on"
+    }
+  },
+  "explorer.sortOrder": "type"
+}

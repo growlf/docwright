@@ -12,8 +12,10 @@ secrets*
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
+# IDE (shared settings tracked, personal state ignored)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 
 # Obsidian vault artifacts
