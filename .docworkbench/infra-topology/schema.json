@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Infrastructure Topology",
+  "description": "Frontmatter schema for devices, services, and network segments in the infra-topology profile",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Entity name"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["device", "service", "network-segment"],
+      "description": "Type of infrastructure entity"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "active", "decommissioned"],
+      "description": "Operational lifecycle state"
+    },
+    "hostname": {
+      "type": "string",
+      "description": "Network hostname or FQDN"
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP address (v4 or v6)"
+    },
+    "depends-on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Wikilinks to entities this depends on"
+    },
+    "location": {
+      "type": "string",
+      "description": "Physical or logical location"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Classification tags"
+    },
+    "decommissioned_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date decommissioned"
+    }
+  },
+  "required": ["title", "type", "status", "hostname"],
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "decommissioned" } } },
+      "then": { "required": ["decommissioned_date"] }
+    }
+  ]
+}

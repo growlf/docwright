@@ -1,0 +1,22 @@
+{
+  "name": "infra-topology",
+  "displayName": "Infrastructure Topology",
+  "description": "Network devices, services, and segments tracked through their operational lifecycle",
+  "lifecycleStates": ["planned", "active", "decommissioned"],
+  "stateTransitions": {
+    "planned": ["active", "decommissioned"],
+    "active": ["decommissioned"],
+    "decommissioned": []
+  },
+  "frontmatterSchema": "./schema.json",
+  "templateDir": "./templates/",
+  "docsGlob": "inventory/**/*.md",
+  "namingConvention": "dot-prefix",
+  "features": {
+    "graph": true,
+    "wikilinks": true,
+    "backlinks": true,
+    "contentEmbedding": false
+  },
+  "opencodeInstructions": "./opencode-instructions.md"
+}

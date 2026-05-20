@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Documentation Lifecycle",
+  "description": "Frontmatter schema for documents in the doc-lifecycle profile",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposal", "plan", "completed", "canceled"],
+      "description": "Lifecycle state"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name or handle"
+    },
+    "created": {
+      "type": "string",
+      "format": "date",
+      "description": "Creation date (YYYY-MM-DD)"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Classification tags"
+    },
+    "depends-on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Wikilinks to documents this depends on"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date completed (completed status only)"
+    },
+    "canceled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date canceled (canceled status only)"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "description": "Why the document was canceled"
+    }
+  },
+  "required": ["title", "status", "created", "author"],
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "completed" } } },
+      "then": { "required": ["completed_date"] }
+    },
+    {
+      "if": { "properties": { "status": { "const": "canceled" } } },
+      "then": { "required": ["canceled_date", "cancellation_reason"] }
+    }
+  ]
+}

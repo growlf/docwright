@@ -1,0 +1,23 @@
+{
+  "name": "doc-lifecycle",
+  "displayName": "Documentation Lifecycle",
+  "description": "Proposals, plans, SOPs moving through formal approval states",
+  "lifecycleStates": ["proposal", "plan", "completed", "canceled"],
+  "stateTransitions": {
+    "proposal": ["plan", "canceled"],
+    "plan": ["completed", "canceled"],
+    "completed": [],
+    "canceled": []
+  },
+  "frontmatterSchema": "./schema.json",
+  "templateDir": "./templates/",
+  "docsGlob": "docs/**/*.md",
+  "namingConvention": null,
+  "features": {
+    "graph": false,
+    "wikilinks": true,
+    "backlinks": true,
+    "contentEmbedding": false
+  },
+  "opencodeInstructions": "./opencode-instructions.md"
+}

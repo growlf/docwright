@@ -2,7 +2,16 @@
 
 **A documentation workbench for LLM-assisted project management.**
 
-DocWright is a portable vault that combines OpenCode configuration, a lifecycle workflow (proposals → plans → docs), and SOP templates into a self-contained project starter. Fork it, configure your model provider, and start managing work through structured documents — with an LLM agent as your assistant.
+DocWright is a portable vault that combines OpenCode configuration, a **profile-driven document lifecycle engine**, and SOP templates into a self-contained project starter. Fork it, configure your model provider, and start managing work through structured documents — with an LLM agent as your assistant.
+
+Two profiles ship in the box:
+
+| Profile | Purpose | States |
+|---------|---------|--------|
+| **doc-lifecycle** | Proposals, plans, SOPs | proposal → plan → completed / canceled |
+| **infra-topology** | Network devices, services, segments | planned → active → decommissioned |
+
+Both are illustrative, not prescriptive. You can define your own profiles for any domain that benefits from structured markdown moving through defined states.
 
 ## Quick Start
 
@@ -24,14 +33,17 @@ This guide covers Ollama setup with GPU acceleration on aging hardware — a com
 ## Project Structure
 
 ```
-├── proposals/          # Ideas and change requests (approved: false)
-├── proposals/approved/ # Human-approved proposals → plan creation
-├── plans/              # Implementation plans with phases and steps
-├── plans/completed/    # Completed or canceled plans
-├── docs/               # Generated documentation and SOPs
-├── templates/          # Markdown templates for proposals, plans, SOPs
-├── scripts/            # Git hooks, test suite, architecture verification
-└── .opencode/          # OpenCode agents, rules, and skills
+├── .docworkbench/           # Profile definitions
+│   ├── doc-lifecycle/       #   Proposals, plans, SOPs
+│   └── infra-topology/      #   Devices, services, segments
+├── proposals/               # Ideas and change requests (approved: false)
+├── proposals/approved/      # Human-approved proposals → plan creation
+├── plans/                   # Implementation plans with phases and steps
+├── plans/completed/         # Completed or canceled plans
+├── docs/                    # Generated documentation and SOPs
+├── templates/               # Generic templates
+├── scripts/                 # Git hooks, test suite, architecture verification
+└── .opencode/               # OpenCode agents, rules, and skills
 ```
 
 ## The Lifecycle
