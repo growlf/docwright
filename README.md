@@ -1,60 +1,45 @@
-# DocWright
+# docwright
 
-**A documentation workbench for LLM-assisted project management.**
+**Organizational operating system for policy-driven teams.**
 
-DocWright is a portable vault that combines OpenCode configuration, a **profile-driven document lifecycle engine**, and SOP templates into a self-contained project starter. Fork it, configure your model provider, and start managing work through structured documents — with an LLM agent as your assistant.
+docwright is a governance layer — not an editor — that connects an organization's
+values, decisions, and daily work through a policy-grounded document hierarchy.
+All state lives in plain Markdown files with YAML frontmatter, in a git repository,
+accessible from multiple client surfaces without vendor lock-in.
 
-Two profiles ship in the box:
+## What it is
 
-| Profile | Purpose | States |
-|---------|---------|--------|
-| **doc-lifecycle** | Proposals, plans, SOPs | proposal → plan → completed / canceled |
-| **infra-topology** | Network devices, services, segments | planned → active → decommissioned |
+```
+Inbox (ideas, issues, observations)
+  → Issues → Proposals → Plans → Policies / Decisions
+                                       → Work Items → Code (OpenCode)
+```
 
-Both are illustrative, not prescriptive. You can define your own profiles for any domain that benefits from structured markdown moving through defined states.
+- **Web UI** — primary interface for all contributors (SvelteKit, rendered Markdown,
+  AI chat panel, ACL-gated actions)
+- **VSCodium extension** — power tool for developers (lifecycle enforcement, git workflow,
+  OpenCode integration)
+- **Logseq** — optional graph explorer (opens the same vault folder, read-only)
 
-## Quick Start
+## Status
+
+Pre-alpha. Phase 0 (spike) in progress.
+See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
+
+## Quick start (coming in Phase 1)
 
 ```bash
-cp .env.example .env       # Set OPCODE_USER_NAME and OPCODE_USER_EMAIL
-bash scripts/install-hooks.sh  # Install pre-commit validation
-# Edit opencode.jsonc to add your LLM provider
-# Then: create your first proposal in proposals/
+# Install the VSCodium extension (once published)
+# Open any folder — org-operations profile activates automatically
+# Ctrl+Shift+P → "docwright: New Inbox Item"
 ```
 
-## Getting Up and Running on Older Hardware
+## For AI agents and Claude Code
 
-If you're setting up a local LLM to work with DocWright on older hardware (e.g., Intel NUC Skull Canyon), check out:
-
-**[growlf/intel_nuc_skullcanyon_ollama_with_gpu](https://github.com/growlf/intel_nuc_skullcanyon_ollama_with_gpu)**
-
-This guide covers Ollama setup with GPU acceleration on aging hardware — a common path for running DocWright's LLM agent locally without cloud API dependency. It walks through Iris Xe/Arc GPU configuration, container setup, and performance tuning for smaller models that still deliver useful agent assistance.
-
-## Project Structure
-
-```
-├── .docworkbench/           # Profile definitions
-│   ├── doc-lifecycle/       #   Proposals, plans, SOPs
-│   └── infra-topology/      #   Devices, services, segments
-├── proposals/               # Ideas and change requests (approved: false)
-├── proposals/approved/      # Human-approved proposals → plan creation
-├── plans/                   # Implementation plans with phases and steps
-├── plans/completed/         # Completed or canceled plans
-├── docs/                    # Generated documentation and SOPs
-├── templates/               # Generic templates
-├── scripts/                 # Git hooks, test suite, architecture verification
-└── .opencode/               # OpenCode agents, rules, and skills
-```
-
-## The Lifecycle
-
-```
-proposals/ → approved/ → plans/ → completed/ → docs/
-                                ↘ canceled (no docs)
-```
-
-All changes flow through this state machine. See `docs/SOPs/order-of-work-lifecycle.md` for the full guide.
+See [CLAUDE.md](./CLAUDE.md) — read this first when starting a new session.
+Full project context and decision log:
+https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
 
 ## License
 
-MIT — free to use, fork, and adapt.
+MIT — see [LICENSE](./LICENSE)

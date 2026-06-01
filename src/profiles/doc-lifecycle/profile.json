@@ -1,0 +1,18 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "doc-lifecycle",
+  "displayName": "Doc Lifecycle",
+  "description": "Proposal → Plan → Completed/Canceled. Developer-focused document workflow.",
+  "version": "0.1.0",
+  "documentTypes": ["proposal", "plan", "sop"],
+  "states": {
+    "proposal": ["proposal", "plan", "completed", "canceled"]
+  },
+  "requiredFrontmatter": ["title", "status", "created", "author", "author-role"],
+  "features": {
+    "wikilinks": true,
+    "graph": false,
+    "naming": false,
+    "llmWiki": false
+  }
+}

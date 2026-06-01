@@ -61,3 +61,46 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 2. `bash scripts/install-hooks.sh` to install pre-commit hooks
 3. Create your first proposal in `proposals/`
 4. See `docs/SOPs/order-of-work-lifecycle.md` for the full lifecycle guide
+
+---
+
+## Architectural Context (added 2026-06-01)
+
+docwright has been reframed as an **organizational operating system** — a governance
+layer with multiple client surfaces. Read CLAUDE.md for full context.
+
+### Invariants — never violate these
+
+1. **dispatch module has zero VS Code API deps** — `src/dispatch/` must be importable
+   outside the extension host. The CI pipeline enforces this via `npm run test:dispatch`.
+   If you import `vscode` in `src/dispatch/`, the build breaks. Fix the import.
+
+2. **Frontmatter is audit record, not enforcement** — `author-role:` records who did
+   what. Enforcement is Forgejo team membership + branch protection + Web UI OAuth.
+   Do not use `author-role:` to make permission decisions in code.
+
+3. **Git is the canonical store** — no auxiliary database. index.json is a derived
+   cache rebuilt from frontmatter. _backlinks.json is rebuilt from wikilinks.
+   If these files are deleted, rebuild them — don't restore from backup.
+
+4. **No telemetry, ever** — do not add any analytics, tracking, or phone-home code.
+
+5. **`author-role:` field required in all templates** — every profile template must
+   include `author-role:` with default value `contributor`. This is non-negotiable.
+   See CONTRIBUTING.md.
+
+### Profile structure
+
+Profiles live in `src/profiles/[name]/` and contain:
+- `profile.json` — manifest (states, document types, features, required frontmatter)
+- `schema.json` — frontmatter JSON Schema for validation
+- `opencode-instructions.md` — AI context injected on profile activation
+- `templates/[type].md` — scaffolding templates (ALL must include `author-role:`)
+
+### ACL model
+
+Four tiers: Observer / Contributor / Steward / Governance
+Source of truth: Forgejo team membership (not frontmatter)
+Frontmatter `author-role:` is an audit record of the tier at time of action.
+Web UI enforces via Forgejo OAuth + team API.
+VSCodium uses `docworkbench.userRole` workspace setting (honor system for devs).

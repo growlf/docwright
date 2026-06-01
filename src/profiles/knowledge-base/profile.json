@@ -1,0 +1,19 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "knowledge-base",
+  "displayName": "Knowledge Base",
+  "description": "Karpathy LLM Wiki pattern with docwright governance. Ingest → Lint → Save-to-Wiki.",
+  "version": "0.1.0",
+  "documentTypes": ["source", "concept", "entity", "comparison", "exploration"],
+  "states": {
+    "source": ["inbox", "compiled", "verified", "archived"]
+  },
+  "requiredFrontmatter": ["title", "type", "author-role"],
+  "optionalFrontmatter": ["status", "tags", "confidence", "aliases", "source_url", "ai-last-action"],
+  "features": {
+    "wikilinks": true,
+    "graph": true,
+    "naming": false,
+    "llmWiki": true
+  }
+}

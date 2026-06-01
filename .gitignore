@@ -42,3 +42,21 @@ node_modules/
 dist/
 build/
 *.log
+
+# Extension package
+*.vsix
+
+# docwright derived cache (per-user)
+.docworkbench/index.json
+
+# docwright backlinks cache (per-user)
+.docworkbench/_backlinks.json
+
+# docwright daemon trust config (per-instance)
+.docworkbench/daemon.json
+
+# Phase 0 spike — throwaway code
+spike/
+
+# Source maps
+*.js.map

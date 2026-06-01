@@ -1,0 +1,18 @@
+---
+name: Bug report
+about: Something is broken
+labels: bug
+---
+
+**Describe the bug**
+
+**Steps to reproduce**
+
+**Expected behaviour**
+
+**Actual behaviour**
+
+**Environment**
+- docwright version:
+- VSCodium version:
+- OS:

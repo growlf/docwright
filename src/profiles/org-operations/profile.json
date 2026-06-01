@@ -1,0 +1,25 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "org-operations",
+  "displayName": "Org Operations",
+  "description": "Organizational operating system. Policy as the foundation of all work.",
+  "version": "0.1.0",
+  "documentTypes": ["inbox", "issue", "proposal", "plan", "policy", "decision", "work-item"],
+  "states": {
+    "policy":    ["draft", "active", "superseded", "archived"],
+    "proposal":  ["inbox", "triaged", "evaluated", "accepted", "rejected"],
+    "plan":      ["draft", "active", "completed", "canceled"],
+    "issue":     ["inbox", "triaged", "resolved", "declined"],
+    "decision":  ["draft", "final"],
+    "work-item": ["backlog", "active", "done", "canceled"],
+    "inbox":     ["new", "triaged"]
+  },
+  "requiredFrontmatter": ["type", "status", "created", "author", "author-role"],
+  "optionalFrontmatter": ["parent", "policy-area", "tags", "origin", "ai-last-action"],
+  "features": {
+    "wikilinks": true,
+    "graph": true,
+    "naming": true,
+    "llmWiki": false
+  }
+}

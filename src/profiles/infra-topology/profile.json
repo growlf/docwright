@@ -1,0 +1,18 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "infra-topology",
+  "displayName": "Infra Topology",
+  "description": "Network/device/service lifecycle: Planned → Active → Decommissioned.",
+  "version": "0.1.0",
+  "documentTypes": ["device", "service", "network-segment"],
+  "states": {
+    "default": ["planned", "active", "decommissioned"]
+  },
+  "requiredFrontmatter": ["title", "type", "status", "hostname", "author-role"],
+  "features": {
+    "wikilinks": true,
+    "graph": true,
+    "naming": true,
+    "llmWiki": false
+  }
+}
