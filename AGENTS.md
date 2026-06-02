@@ -44,6 +44,7 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 | `docwright-backup` | backup, recovery, restore | backup-recovery SOP |
 | `docwright-infra` | deployment, placement, service | infrastructure-placement SOP |
 | `docwright-project` | switch to, resume, project, registry, vault | project-registry SKILL |
+| `docwright-proposal` | new proposal, create proposal, template, draft | proposal-template SKILL |
 
 ## Available Subagents
 
