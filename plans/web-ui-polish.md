@@ -38,7 +38,3 @@ WYSIWYG split-pane editor, and delete feedback with toast notifications.
 - Undo option for git-tracked files (git restore)
 - Show file path prominently in confirmation dialog
 
-### 4. Registry pattern (`.docwright/registry.json`)
-- Create `.docwright/` directory with `.gitignore` to track gitignored config
-- Implement `registry.json` reading in dispatch module
-- Add a simple `ls projects` render in the Web UI
