@@ -1,11 +1,16 @@
 ---
-title: "Web UI polish — create experience, WYSIWYG editing, folder operations"
-author: "NetYeti"
+title: Web UI polish — create experience, WYSIWYG editing, folder operations
+author: NetYeti
 created: 2026-06-02
-tags: [webui, ux, editing, crud]
-approved: false
-created_by: "NetYeti@phoenix"
-assigned_to: ""
+tags:
+  - webui
+  - ux
+  - editing
+  - crud
+approved: true
+created_by: NetYeti@phoenix
+priority: high
+assigned_to: "NetYeti"
 ---
 
 ## Problem
