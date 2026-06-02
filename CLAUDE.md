@@ -40,6 +40,16 @@ Git server: Forgejo (recommended for self-hosting)
 AI backend: OpenCode (any OpenAI-compatible endpoint; local LLMs via Meshy/Ollama)
 ACL: Forgejo team membership (source of truth) + `author-role:` frontmatter (audit record)
 
+## Core philosophy
+
+**Security first. Policy driven. Test verified at every stage.**
+
+Every feature is designed with security as a baseline constraint — never retrofitted.
+Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
+rather than hardcoded logic. Every change ships only after it is verifiable through
+tests. This applies equally to the engine, the UI surfaces, and the governance
+documents that DocWright itself manages.
+
 ## Key architectural invariants — never break these
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.

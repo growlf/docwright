@@ -4,6 +4,8 @@
 
 DocWright is a governance layer — not just an editor — that connects an organization's values, decisions, and daily work through a policy-grounded document hierarchy. All state lives in plain Markdown files with YAML frontmatter, in a git repository, accessible from multiple client surfaces without vendor lock-in.
 
+**Design philosophy:** Security first. Policy driven. Test verified at every stage.
+
 ## What it is
 
 ```

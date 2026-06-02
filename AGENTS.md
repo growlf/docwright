@@ -2,6 +2,11 @@
 
 ## Core Principles
 
+**Security first. Policy driven. Test verified at every stage.**
+Every action must be safe before it is useful. Every behavior must be governed by
+policy, not hardcoded logic. Every change must be verifiable through tests before
+it ships. This applies to the engine, the UI, and the governance documents themselves.
+
 **ALWAYS VERIFY, never assume docs are up to date.** Before acting on any documented IP, credential, role, or topology, verify against the live system.
 
 **One-off tasks are prohibited.** All work must flow through the document lifecycle. See the `order-of-work-lifecycle` SOP for details.

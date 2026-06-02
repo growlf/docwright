@@ -23,6 +23,15 @@ identity/network info) and a commit-msg hook (conventional commit format).
 The `core.hooksPath` line above wires git to use them — without it the hooks
 are silently skipped.
 
+## Core Philosophy
+
+**Security first. Policy driven. Test verified at every stage.**
+
+Every feature is designed with security as a baseline constraint — not bolted on after the
+fact. Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
+rather than hardcoded logic. Every change ships only after it can be verified through tests.
+This applies equally to code contributions and to the governance documents themselves.
+
 ## The Most Important Rule
 
 **The dispatch module (`src/dispatch/`) must have zero VS Code API dependencies.**
