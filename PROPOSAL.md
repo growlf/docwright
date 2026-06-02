@@ -290,7 +290,7 @@ VSCodium Window
 │   └── Git diff view
 │
 ├── [Side Bar: OpenCode Chat] ───────────────    ← BORROW + INTEGRATE (optional)
-│   └── OpenCode web UI via in-process HTTP server
+│   └── OpenCode web UI via direct URL embed
 │       (extension host → localhost:PORT → opencode serve → AI or local LLM)
 │
 └── [Panel: Git] ────────────────────────────    ← BORROW (VSCodium)
@@ -323,16 +323,14 @@ OpenCode Chat (fully parallel and independent)
         │
 Extension spawns `opencode serve` as child process on free port
         │
-In-process HTTP server (Node http module inside VS Code extension host)
-        ├── Serves OpenCode SPA static files
-        └── Proxies /api/* to opencode serve child process
+VSCodium WebView points directly at http://127.0.0.1:PORT
         │
 opencode serve → any OpenAI-compatible endpoint (cloud or local)
 ```
 
-**Note on the HTTP server:** The HTTP server runs *inside the VS Code extension host
-process*, which is itself Node.js. It is not a separate daemon. From the user's
-perspective it is entirely invisible.
+**Note on the direct-URL embed:** `opencode serve` (v1.15+) serves its own SPA at
+the root URL. The VSCodium WebView loads it directly — no in-process HTTP server,
+static file serving, or API proxy is needed. Confirmed by Phase 0 spike.
 
 ### Dashboard Refresh Triggers
 
@@ -614,7 +612,7 @@ cloud provider dependency should be assumed.
 
 | Component | Source | Canonical URL | License | How We Use It |
 |-----------|--------|---------------|---------|---------------|
-| **OpenCode Web SPA** | Anomaly Innovations (formerly SST) | `github.com/sst/opencode` `packages/app/` | MIT | Serve via in-process HTTP server |
+| **OpenCode Web SPA** | Anomaly Innovations (formerly SST) | `github.com/sst/opencode` `packages/app/` | MIT | Served directly by `opencode serve` child process |
 | **SPA proxy technique** | cpkt9762 | `github.com/cpkt9762/opencode-web-for-vscode` | MIT | In-process HTTP server pattern |
 | **OpenCode JS SDK** | Anomaly Innovations | `github.com/sst/opencode` `packages/sdk/` | MIT | Session management and prompts |
 | **opencode-gui patterns** | ktmage | `github.com/ktmage/opencode-gui` | MIT | WebView embedding reference |
@@ -654,7 +652,6 @@ only. Simpler, fewer moving parts, no schedule impact on any other feature.
 | **Template Engine** | Renders templates with variable substitution (title, date, author from git) | `src/templates/TemplateEngine.ts`, `src/templates/defaults/` |
 | **Scaffolding Commands** | "New [type]" per profile template; auto-stages; naming-convention-aware | `src/commands/scaffold.ts` |
 | **OpenCode Server Manager** | Spawns `opencode serve` as child process; dynamic port; restart on crash | `src/opencode/ServerManager.ts` |
-| **In-Process HTTP Server** | Node `http` inside extension host: serves SPA + proxies `/api/*` | `src/opencode/SpaServer.ts` |
 | **OpenCode Config Writer** | Writes profile `opencodeInstructions` to `.opencode/` on activation | `src/opencode/ConfigWriter.ts` |
 | **Settings Module** | Typed `vscode.workspace.getConfiguration('docworkbench')` wrapper | `src/settings/Settings.ts` |
 
@@ -754,7 +751,7 @@ Contributors get the profile automatically on checkout.
 
 ### ChromeOS / Crostini Notes
 
-The in-process HTTP server uses the VS Code extension host's Node.js runtime —
+The extension uses the VS Code extension host's Node.js runtime —
 **no separate Node.js installation is required**. The Node.js dependency is satisfied
 by VS Code/VSCodium itself.
 
@@ -1110,3 +1107,4 @@ Avoid trademarked terms (VSCode, VSCodium, OpenCode, Visual Studio).
 | v0.4 | 2026-05-21 | Phase 0 spike; zero-config story; in-process HTTP server clarification; performance mitigations; local LLM first-class; FOSS hygiene files; best-practices automation as lead value prop; profile schema versioning; minimum install = VSCodium + Git; moved to Drive | Claude (Anthropic) |
 | v0.5 | 2026-05-21 | Added §3 Quick Start; §6 Key Design Decisions; §11 Command Registry; template and OpenCode instructions examples; Promote step sequence and failure handling; dashboard event trigger table; multi-root workspace handling; performance targets; BDFL governance; Phase 2 parallelisation note; Promote partial failure risk | Claude (Anthropic) |
 | v0.6 | 2026-05-22 | OpenCode Zen / Big Pickle established as primary AI path (with data retention note); self-hosted LLM stacks referenced (`growlf/ai-stack`, `growlf/intel_nuc_skullcanyon_ollama_with_gpu`); `code-review` added as future profile target (inspired by open-code-review, multi-model routing intent documented); `growlf/docwright` confirmed as canonical home; Drive demoted to sharing mirror | Claude (Anthropic) |
+| v0.7 | 2026-06-02 | Phase 0 spike results: `opencode serve` serves its own SPA, removing need for in-process HTTP proxy; architecture simplified to direct-URL WebView embed; `@opencode-ai/sdk` added as dependency; `SpaServer.ts` removed from module table | NetYeti (growlfd@gmail.com) @ phoenix |
