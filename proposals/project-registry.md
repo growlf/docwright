@@ -14,10 +14,9 @@ assigned_to: ""
 
 ## Problem
 
-DocWright manages its own development and also governs external infrastructure
-projects (BMS, YetiCraft, Cascade STEAM) via separate vaults. Currently there is
-no way to discover or resume work across these projects — you must know the
-filesystem path and profile for each one.
+DocWright manages its own development and also governs external projects via
+separate vaults. Currently there is no way to discover or resume work across
+these projects without knowing the filesystem path and profile for each one.
 
 A project registry solves this without violating the "virgin repo" principle:
 the docwright repo never commits references to external projects.
@@ -31,10 +30,10 @@ containing a simple index:
 {
   "projects": [
     {
-      "name": "BMS Infrastructure",
-      "path": "../bms-infra",
+      "name": "Example Project",
+      "path": "../example-infra",
       "profile": "infra-topology",
-      "last_session": "docs/session-notes/..."
+      "last_session": "docs/session-notes/session_note_yyyymmdd.md"
     }
   ]
 }
@@ -50,7 +49,7 @@ containing a simple index:
    - `updateLastSession(root: string, name: string, path: string)`
 
 3. Web UI surface:
-   - `ls projects` or project switcher in the sidebar
+   - Project switcher in the sidebar
    - Shows name, profile, last session note link
    - Click to navigate or resume
 
