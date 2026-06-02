@@ -41,6 +41,7 @@ node_modules/
 # Build artifacts
 dist/
 build/
+.svelte-kit/
 *.log
 
 # Extension package
