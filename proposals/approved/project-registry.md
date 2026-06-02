@@ -7,9 +7,10 @@ tags:
   - workflow
   - registry
   - multi-repo
-approved: false
+approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+priority: highest
+assigned_to: "NetYeti"
 ---
 
 ## Problem
