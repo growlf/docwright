@@ -17,7 +17,8 @@ assigned_to: NetYeti
 ## Overview
 
 Polish the Web UI CRUD experience: better file/folder creation from the tree,
-WYSIWYG split-pane editor, and delete feedback with toast notifications.
+3-mode editor toggle (preview / WYSIWYG / source), and delete feedback with
+toast notifications.
 
 ## Tasks
 
@@ -27,11 +28,12 @@ WYSIWYG split-pane editor, and delete feedback with toast notifications.
 - Inline rename for newly created files (untitled.md → user types name)
 - API: POST /api/mkdir for folder creation
 
-### 2. WYSIWYG split-pane editor
-- Replace raw textarea with split view: markdown source (left) + live preview (right)
-- Toolbar with formatting buttons (bold, italic, heading H1-H3, link, list, code)
-- Raw markdown toggle for power users
-- Keyboard shortcuts for toolbar actions
+### 2. 3-mode editor toggle
+- Preview (read-only rendered markdown, default)
+- Edit (WYSIWYG contenteditable div with formatting toolbar)
+- Source (raw textarea with markdown)
+- Cycle button in toolbar toggles between modes
+- Toolbar buttons: bold, italic, heading H1-H3, link, list, code
 
 ### 3. Delete UX improvements
 - Toast notification confirming deletion
