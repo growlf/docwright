@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import FileTree from './FileTree.svelte';
   import { page } from '$app/stores';
+  import { fileChanged } from '$lib/fileChanges';
 
   function newFile() {
     let name = prompt('New file path (e.g. docs/my-doc.md):');
@@ -15,6 +17,17 @@
       if (r.ok) goto('/' + name.replace(/\.md$/, ''));
     });
   }
+
+  onMount(() => {
+    const es = new EventSource('/api/watch');
+    es.addEventListener('filechange', (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      fileChanged.set(data);
+    });
+    es.addEventListener('error', () => {
+      // SSE will auto-reconnect
+    });
+  });
 </script>
 
 <div id="app">

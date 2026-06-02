@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
+  import { fileChanged } from '$lib/fileChanges';
 
   let raw = $state('');
   let content = $state('');
@@ -24,6 +26,15 @@
 
   $effect(() => {
     loadFile();
+  });
+
+  onMount(() => {
+    return fileChanged.subscribe((change) => {
+      if (!change || editing) return;
+      if (change.path === filePath() || change.path.endsWith('/' + filePath())) {
+        loadFile();
+      }
+    });
   });
 
   async function loadFile() {

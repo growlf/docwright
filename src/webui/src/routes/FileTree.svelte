@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import DirNode from './DirNode.svelte';
+  import { fileChanged } from '$lib/fileChanges';
 
   let { currentPath }: { currentPath: string } = $props();
 
@@ -13,11 +14,20 @@
 
   let tree = $state<TreeItem[]>([]);
   let loading = $state(true);
+  let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  onMount(async () => {
+  async function fetchTree() {
     const res = await fetch('/api/list');
     tree = await res.json();
     loading = false;
+  }
+
+  onMount(() => {
+    fetchTree();
+    return fileChanged.subscribe(() => {
+      if (refreshTimeout) clearTimeout(refreshTimeout);
+      refreshTimeout = setTimeout(fetchTree, 200);
+    });
   });
 </script>
 

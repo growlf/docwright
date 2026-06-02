@@ -12,14 +12,14 @@ Markdown files in this git repository.
 
 BDFL: NetYeti (growlf on GitHub, growlfd@gmail.com)
 License: MIT
-Status: Pre-alpha — Phase 0 spike in progress
+Status: Pre-alpha — Phase 0 complete, Web UI prototype functional
 
 ## Full project context
 
 Session log and proposal docs:
 https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
 
-Read SESSION-LOG-v8.md first when resuming. It contains the full decision log.
+Read SESSION-LOG.md first when resuming. It contains the session index.
 PROPOSAL.md (v0.8) contains the full architecture spec.
 
 ## Architecture in brief
@@ -56,18 +56,33 @@ ACL: Forgejo team membership (source of truth) + `author-role:` frontmatter (aud
 - `infra-topology` — planned→active→decommissioned (network/device management)
 - `knowledge-base` — LLM Wiki pattern (Karpathy); Ingest/Lint/Save-to-Wiki
 
-## Phase 0 (current) — spike
+## Phase 0 — spike (complete) ✅
 
-Goal: validate `opencode serve` HTTP API before building Phase 1.
-Go/no-go gate — if API is unstable, fall back to SDK-only chat, no schedule impact.
+Goal: validate `opencode serve` HTTP API feasibility.
 
-Checklist:
-- [ ] Confirm `opencode serve` HTTP API is stable and documented
-- [ ] Confirm JS SDK covers required endpoints (session create, message send, stream)
-- [ ] Build minimal SPA embed proof-of-concept in a WebView
-- [ ] Decision: SPA embed OR SDK-only for the OpenCode chat panel
+Results:
+- `opencode serve` v1.15.13 HTTP API is stable ✅
+- JS SDK covers required endpoints ✅
+- SPA embed via iframe in WebView confirmed working ✅
+- Decision: go with iframe SPA embed (approach 1) ✅
+- Web UI redirected as primary target (VSCodium extension demoted)
 
-## Phase 1 (next) — Foundation
+## Phase 1 (current) — Web UI prototype
+
+Goal: functional SvelteKit web UI with full CRUD, file tree, wikilink navigation,
+and live file change detection via SSE.
+
+Delivered:
+- [x] SvelteKit scaffold with dark theme layout, collapsible file tree sidebar
+- [x] Markdown rendering (markdown-it) with TOC anchors, external link targets
+- [x] Wikilink parsing: `[[path]]`, `[[path#section]]`, `[[path|alias]]`
+- [x] CRUD: create (+ button), edit (textarea toggle), save, delete (with confirm)
+- [x] SSE live reload: `/api/watch` endpoint, auto-refresh tree + page on file change
+- [x] API: GET /api/list, GET /api/read, POST /api/write, DELETE /api/delete
+
+**Next:** Polish file creation UX, add folder ops, WYSIWYG editor, toast notifications
+
+## Phase 2 (next) — Foundation
 
 Goal: working extension skeleton; profile engine; zero-config; basic scaffolding;
 inbox capture (VSCodium command + localhost web form).
