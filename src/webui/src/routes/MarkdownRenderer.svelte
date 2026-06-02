@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import markdownit from 'markdown-it';
   import anchor from 'markdown-it-anchor';
 
@@ -6,48 +7,51 @@
 
   let html = $state('');
 
-  const md = markdownit({ html: true, linkify: true })
+  const md = markdownit({ html: true })
     .use(anchor, {
       permalink: false,
       slugify: (s: string) =>
         s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, ''),
     });
 
-  const defaultRender =
-    md.renderer.rules.link_open ||
-    function (tokens, idx, options, env, self) {
-      return self.renderToken(tokens, idx, options);
-    };
-
-  md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-    const token = tokens[idx];
-    const href = token.attrGet('href') || '';
-
-    if (href.startsWith('http://') || href.startsWith('https://')) {
-      token.attrSet('target', '_blank');
-      token.attrSet('rel', 'noopener noreferrer');
-    }
-
-    return defaultRender(tokens, idx, options, env, self);
-  };
-
   function handleClick(e: MouseEvent) {
-    const anchor = (e.target as HTMLElement).closest('a');
-    if (!anchor) return;
-    const href = anchor.getAttribute('href') || '';
-    if (!href.startsWith('#')) return;
+    const el = (e.target as HTMLElement).closest('a');
+    if (!el) return;
+    const href = el.getAttribute('href') || '';
 
-    e.preventDefault();
-    const id = href.slice(1);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-      history.replaceState(null, '', href);
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const id = href.slice(1);
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        history.replaceState(null, '', href);
+      }
+    } else if (href.startsWith('http://') || href.startsWith('https://')) {
+      e.preventDefault();
+      window.open(href, '_blank', 'noopener,noreferrer');
+    } else if (href.endsWith('.md')) {
+      e.preventDefault();
+      const url = '/' + href.replace(/^\.\//, '').replace(/\.md$/, '');
+      goto(url);
     }
   }
 
+  function convertWikilinks(src: string): string {
+    return src.replace(/\[\[([^\]]+)\]\]/g, (_, raw: string) => {
+      const pipe = raw.indexOf('|');
+      const targetPart = pipe >= 0 ? raw.slice(0, pipe) : raw;
+      const hashAt = targetPart.indexOf('#');
+      const target = hashAt >= 0 ? targetPart.slice(0, hashAt) : targetPart;
+      const anchor = hashAt >= 0 ? targetPart.slice(hashAt) : '';
+      const href = (target.endsWith('.md') ? target : target + '.md') + anchor;
+      const label = pipe >= 0 ? raw.slice(pipe + 1) : (target.replace(/\.md$/, '').split('/').pop() || target);
+      return `[${label}](${href})`;
+    });
+  }
+
   $effect(() => {
-    html = md.render(content);
+    html = md.render(convertWikilinks(content));
   });
 </script>
 

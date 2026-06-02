@@ -24,7 +24,8 @@
   });
 
   async function loadFile() {
-    const filePath = $page.params.path + '.md';
+    let filePath = $page.params.path;
+    if (!filePath.endsWith('.md')) filePath += '.md';
     const res = await fetch('/api/read?path=' + encodeURIComponent(filePath));
     if (!res.ok) {
       if (res.status === 404) {

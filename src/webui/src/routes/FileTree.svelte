@@ -26,7 +26,17 @@
 {:else}
   <nav class="tree">
     {#each tree as item}
-      <DirNode {item} {currentPath} />
+      {#if item.type === 'file'}
+        <a
+          href="/{item.path.replace(/\.md$/, '')}"
+          class="file-link"
+          class:active={'/' + item.path.replace(/\.md$/, '') === currentPath}
+        >
+          {item.name.replace(/\.md$/, '')}
+        </a>
+      {:else}
+        <DirNode {item} {currentPath} />
+      {/if}
     {/each}
   </nav>
 {/if}
@@ -34,4 +44,7 @@
 <style>
   .muted { padding: 12px 16px; color: #666; font-size: 13px; }
   .tree { padding: 8px 0; flex: 1; overflow-y: auto; }
+  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: #aaa; text-decoration: none; cursor: pointer; }
+  .file-link:hover { background: #1a1a1a; color: #fff; }
+  .file-link.active { background: #2b5b84; color: #fff; }
 </style>
