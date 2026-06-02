@@ -50,6 +50,13 @@ rather than hardcoded logic. Every change ships only after it is verifiable thro
 tests. This applies equally to the engine, the UI surfaces, and the governance
 documents that DocWright itself manages.
 
+This philosophy is not only how DocWright is built — it is what DocWright transmits
+into the organizations that adopt it. Every bundled profile, every template, and every
+AI instruction file should actively reinforce these values in the work the vault governs.
+When DocWright helps a team write a proposal or plan, it should prompt them to consider
+security implications, ground decisions in policy, and define how the outcome will be
+verified before it ships.
+
 ## Key architectural invariants — never break these
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.
@@ -180,6 +187,10 @@ A profile is a directory under `src/profiles/[name]/` containing:
 - `templates/[type].md` — scaffolding templates (MUST include `author-role:` field)
 
 All templates MUST include `author-role:` field. Default value: `contributor`.
+
+Every `opencode-instructions.md` MUST embed the core philosophy and instruct the AI
+to actively apply it to the vault's work — prompting for security considerations,
+policy grounding, and verification steps whenever it helps draft or review a document.
 
 ## Attribution reminder (see NOTICE.md for full list)
 

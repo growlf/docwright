@@ -6,6 +6,9 @@
 Every action must be safe before it is useful. Every behavior must be governed by
 policy, not hardcoded logic. Every change must be verifiable through tests before
 it ships. This applies to the engine, the UI, and the governance documents themselves.
+It also applies outward: when DocWright is used to govern a project or organization,
+this philosophy is actively transmitted into that work — prompting security thinking,
+policy grounding, and verification at every stage of the documents it helps produce.
 
 **ALWAYS VERIFY, never assume docs are up to date.** Before acting on any documented IP, credential, role, or topology, verify against the live system.
 

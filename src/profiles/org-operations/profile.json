@@ -3,6 +3,7 @@
   "name": "org-operations",
   "displayName": "Org Operations",
   "description": "Organizational operating system. Policy as the foundation of all work.",
+  "principles": ["Security first", "Policy driven", "Test verified at every stage"],
   "version": "0.1.0",
   "documentTypes": ["inbox", "issue", "proposal", "plan", "policy", "decision", "work-item"],
   "states": {
