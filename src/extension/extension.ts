@@ -9,7 +9,7 @@
  */
 import * as vscode from 'vscode';
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(_context: vscode.ExtensionContext): void {
   console.log('docwright: activating...');
 
   // TODO Phase 1: Load profile engine from dispatch module

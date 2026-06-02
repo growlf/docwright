@@ -22,8 +22,10 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["vscode"],
-            "message": "The dispatch module must have zero VS Code API dependencies. See CONTRIBUTING.md."
+            "patterns": [{
+              "group": ["vscode"],
+              "message": "The dispatch module must have zero VS Code API dependencies. See CONTRIBUTING.md."
+            }]
           }
         ]
       }
