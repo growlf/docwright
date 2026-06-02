@@ -1,11 +1,17 @@
 ---
 title: "Phase 0 Spike: OpenCode Embed Verification"
 author: NetYeti
-created: "2026-06-02"
-tags: [phase-0, spike, decision, opencode, architecture]
-approved: false
-created_by: "NetYeti@phoenix"
-assigned_to: [NetYeti]
+created: 2026-06-02
+tags:
+  - phase-0
+  - spike
+  - decision
+  - opencode
+  - architecture
+approved: true
+created_by: NetYeti@phoenix
+assigned_to:
+  - NetYeti
 ---
 
 # Phase 0 Spike: OpenCode Embed Verification

@@ -17,6 +17,14 @@
   let error = $state<string | null>(null);
   let mode = $state<'read' | 'edit' | 'source'>('read');
   let html = $state('');
+  let showProps = $state(true);
+
+  let docType = $derived(
+    filePath().startsWith('proposals/') ? 'proposal'
+    : filePath().startsWith('plans/') ? 'plan'
+    : filePath().startsWith('docs/') ? 'doc'
+    : 'page'
+  );
 
   function splitFrontmatter(raw: string) {
     const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -121,11 +129,7 @@
   }
 
   async function save() {
-    if (mode === 'source') {
-      // raw is already bound to textarea
-    } else if (mode === 'edit') {
-      syncHtmlToRaw();
-    }
+    if (mode === 'source') ; else if (mode === 'edit') syncHtmlToRaw();
     const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -137,6 +141,38 @@
       frontmatter = parsed.frontmatter;
       content = parsed.body;
       html = md.render(content);
+      showToast('Saved', 2000);
+    }
+  }
+
+  function rebuildRaw() {
+    if (!frontmatter) return;
+    const fmStr = Object.entries(frontmatter)
+      .map(([k, v]) => Array.isArray(v) ? k + ':\n  - ' + v.join('\n  - ') : k + ': ' + v)
+      .join('\n');
+    raw = '---\n' + fmStr + '\n---\n' + content;
+  }
+
+  async function saveFrontmatter() {
+    rebuildRaw();
+    await save();
+  }
+
+  async function approveProposal() {
+    if (!frontmatter) return;
+    frontmatter.approved = true;
+    if (!frontmatter.assigned_to) frontmatter.assigned_to = prompt('Assign to:') || '';
+    rebuildRaw();
+    const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: raw }),
+    });
+    if (res.ok) {
+      showToast('Approved and assigned to ' + (frontmatter.assigned_to || 'unassigned'), 3000);
+      const parsed = splitFrontmatter(raw);
+      frontmatter = parsed.frontmatter;
+      content = parsed.body;
     }
   }
 

@@ -1,11 +1,8 @@
-# docwright
+# DocWright
 
 **Organizational operating system for policy-driven teams.**
 
-docwright is a governance layer — not an editor — that connects an organization's
-values, decisions, and daily work through a policy-grounded document hierarchy.
-All state lives in plain Markdown files with YAML frontmatter, in a git repository,
-accessible from multiple client surfaces without vendor lock-in.
+DocWright is a governance layer — not just an editor — that connects an organization's values, decisions, and daily work through a policy-grounded document hierarchy. All state lives in plain Markdown files with YAML frontmatter, in a git repository, accessible from multiple client surfaces without vendor lock-in.
 
 ## What it is
 
@@ -15,16 +12,13 @@ Inbox (ideas, issues, observations)
                                        → Work Items → Code (OpenCode)
 ```
 
-- **Web UI** — primary interface for all contributors (SvelteKit, rendered Markdown,
-  AI chat panel, ACL-gated actions)
-- **VSCodium extension** — power tool for developers (lifecycle enforcement, git workflow,
-  OpenCode integration)
-- **Logseq** — optional graph explorer (opens the same vault folder, read-only)
+*   **Web UI** — primary interface for all contributors (SvelteKit, rendered Markdown, AI chat panel, ACL-gated actions)
+*   **VSCodium extension** — power tool for developers (lifecycle enforcement, git workflow, OpenCode integration)
+*   **Logseq** — optional graph explorer (opens the same vault folder, read-only)
 
 ## Status
 
-Pre-alpha. Phase 0 (spike) in progress.
-See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
+Pre-alpha. Phase 0 (spike) in progress. See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
 
 ## Quick start (coming in Phase 1)
 
@@ -36,9 +30,7 @@ See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
 
 ## For AI agents and Claude Code
 
-See [CLAUDE.md](./CLAUDE.md) — read this first when starting a new session.
-Full project context and decision log:
-https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
+See [CLAUDE.md](./CLAUDE.md) — read this first when starting a new session. Full project context and decision log: https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
 
 ## License
 
