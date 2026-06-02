@@ -106,7 +106,7 @@ validate_template_vars() {
 validate_scenario_synthesis() {
     local FILE=$1; [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] || [[ "$FILE" =~ ^plans/completed/ ]] && return 0
     local CONTENT=$(cat "$FILE" 2>/dev/null)
-    echo "$CONTENT" | grep -qiE '(bash|shell|script|sed |awk |python|deploy|generator|pipeline|batch.*edit)' || return 0
+    echo "$CONTENT" | grep -qiE '\b(bash|shell|script|sed|awk|python|deploy|generator|pipeline)\b|batch.*edit' || return 0
     local FM=$(get_frontmatter "$FILE"); local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
     echo "$STATUS" | grep -qE '^(approved|in-progress)$' || return 0
     echo "$FM" | grep -q "^scenario_synthesis:" && return 0
