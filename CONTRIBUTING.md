@@ -11,11 +11,17 @@ For significant changes, open an issue first so we can discuss the direction.
 ## Development Setup
 
 ```bash
+git config core.hooksPath .githooks   # activate commit hooks (once, after cloning)
 npm install
 npm run compile      # TypeScript compile check
 npm run lint         # ESLint
 npm run test:dispatch  # Run dispatch unit tests (outside extension host)
 ```
+
+The `.githooks/` directory contains a pre-commit hook (frontmatter validation,
+identity/network info) and a commit-msg hook (conventional commit format).
+The `core.hooksPath` line above wires git to use them — without it the hooks
+are silently skipped.
 
 ## The Most Important Rule
 
