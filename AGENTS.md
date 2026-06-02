@@ -6,6 +6,8 @@
 
 **One-off tasks are prohibited.** All work must flow through the document lifecycle. See the `order-of-work-lifecycle` SOP for details.
 
+**No active work before plan approval.** Gathering data and evaluating feasibility is fine from a proposal. Implementation code, infrastructure changes, or any system state mutation is STRICTLY FORBIDDEN until a plan has `status: approved` or `status: in-progress` and non-empty `assigned_to`. See `.opencode/rules/no-work-before-approval.md`.
+
 **Multi-system operation.** This repo may operate from many machines. NEVER assume any specific host. Check connectivity before infrastructure operations.
 
 **User identity & accountability.** The `.env` file (gitignored) supplies the HUMAN identity. The MACHINE identity is ALWAYS `$(hostname)`. Agents MUST use `OPCODE_USER_NAME@$(hostname)` for `created_by` in proposals/plans. See `.env.example`.
@@ -54,6 +56,7 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 - `no-secrets.md` — Never output plaintext credentials
 - `no-plaintext-creds.md` — Always reference your secrets vault
 - `frontmatter-validate.md` — Required fields per document type
+- `no-work-before-approval.md` — No implementation before plan approval
 
 ## Getting Started
 

@@ -6,7 +6,8 @@
     ".opencode/rules/commit-format.md",
     ".opencode/rules/frontmatter-validate.md",
     ".opencode/rules/no-plaintext-creds.md",
-    ".opencode/rules/no-secrets.md"
+    ".opencode/rules/no-secrets.md",
+    ".opencode/rules/no-work-before-approval.md"
   ],
   "permission": {
     "edit": "ask",
