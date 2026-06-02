@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
   import { fileChanged } from '$lib/fileChanges';
+  import { showToast } from '$lib/toast';
   import TurndownService from 'turndown';
   import markdownit from 'markdown-it';
 
@@ -145,11 +146,22 @@
   }
 
   async function deleteFile() {
-    if (!confirm('Delete ' + filePath() + '?')) return;
-    const res = await fetch('/api/delete?path=' + encodeURIComponent(filePath()), {
+    const fp = filePath();
+    if (!confirm('Delete ' + fp + '?\n\nThis can be undone within 5 seconds.')) return;
+    const res = await fetch('/api/delete?path=' + encodeURIComponent(fp), {
       method: 'DELETE',
     });
-    if (res.ok) goto('/');
+    if (res.ok) {
+      showToast('Deleted ' + fp, 5000, {
+        label: 'Undo',
+        onclick: () => {
+          fetch('/api/restore?path=' + encodeURIComponent(fp), { method: 'POST' }).then(r => {
+            if (r.ok) { showToast('Restored ' + fp, 3000); loadFile(); }
+          });
+        },
+      });
+      setTimeout(() => goto('/'), 5500);
+    }
   }
 </script>
 

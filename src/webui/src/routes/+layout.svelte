@@ -4,6 +4,7 @@
   import FileTree from './FileTree.svelte';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
+  import { toasts, dismissToast } from '$lib/toast';
 
   interface ProjectEntry {
     name: string;
@@ -112,6 +113,17 @@
   <main id="content">
     <slot />
   </main>
+  <div class="toast-container">
+    {#each $toasts as toast (toast.id)}
+      <div class="toast">
+        <span class="toast-msg">{toast.message}</span>
+        {#if toast.action}
+          <button class="toast-action" onclick={() => { toast.action!.onclick(); dismissToast(toast.id); }}>{toast.action.label}</button>
+        {/if}
+        <button class="toast-close" onclick={() => dismissToast(toast.id)}>✕</button>
+      </div>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -126,6 +138,12 @@
   .new-menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
   .new-menu-item:hover { background: #2b5b84; color: #fff; }
   #content { flex: 1; overflow-y: auto; background: #1a1a1a; color: #e0e0e0; scroll-behavior: smooth; }
+  .toast-container { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10000; }
+  .toast { display: flex; align-items: center; gap: 8px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.4); min-width: 260px; }
+  .toast-msg { flex: 1; }
+  .toast-action { background: none; border: 1px solid #2b5b84; color: #58a6ff; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .toast-action:hover { background: #1a3a5a; }
+  .toast-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0 2px; }
   .project-section { border-top: 1px solid #222; padding: 8px 0; }
   .project-heading { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px; }
   .project-link { display: block; padding: 4px 16px; font-size: 13px; color: #aaa; text-decoration: none; }
