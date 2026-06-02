@@ -1,7 +1,7 @@
 #!/bin/bash
 msg=$(head -1 "$1" | tr -d '\r')
 [ -z "$msg" ] && exit 0
-echo "$msg" | grep -qE '^(feat|fix|docs|refactor|test|chore): .+' && exit 0
+echo "$msg" | grep -qE '^(feat|fix|docs|refactor|test|chore|policy|decision): .+' && exit 0
 echo -e "\033[0;31m[✗]\033[0m Commit message must follow: <type>: <description>"
-echo -e "\033[0;31m[✗]\033[0m Types: feat, fix, docs, refactor, test, chore"
+echo -e "\033[0;31m[✗]\033[0m Types: feat, fix, docs, refactor, test, chore, policy, decision"
 exit 1
