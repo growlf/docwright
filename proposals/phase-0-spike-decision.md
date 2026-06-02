@@ -13,80 +13,67 @@ assigned_to: [NetYeti]
 ## Summary
 
 The Phase 0 spike validated `opencode serve` as the AI backend for docwright.
-The spike confirms the SDK path is fully viable and the SPA embed path is
-simpler than originally designed.
+All three criteria are met and the iframe embedding approach is confirmed working.
 
 ## Findings
 
 ### 1. `opencode serve` is stable and documented
 
-- Version 1.15.13, CLI documented with `--help`
-- Serves a full SPA (1.6MB JS + 320KB CSS) at `http://127.0.0.1:PORT`
+- Version 1.15.13, full CLI documented via `--help`
+- Serves a complete SPA (1.6MB JS + 320KB CSS) at `http://127.0.0.1:PORT`
 - REST API at `/api/session`, `/api/session/{id}/message`, etc.
-- Fully functional via curl and the JS SDK
+- Full lifecycle: start, serve, stop — all tested
 
 ### 2. JS SDK covers all required endpoints
 
-Package `@opencode-ai/sdk@1.15.13` provides:
+Package `@opencode-ai/sdk@1.15.13` tested and confirmed:
 
 | Feature | Status |
 |---------|--------|
-| Server spawn (`createOpencode`) | ✅ Tested — spawns on free port, returns URL |
-| Session CRUD (create, get, list) | ✅ Tested — returns full session objects |
-| Message send (`session.prompt`) | ✅ Tested — HTTP 200, parts returned |
-| SSE event stream (`event.subscribe`) | ✅ Available — real-time events |
-| Server management | ✅ `server.close()`, process cleanup |
+| Server spawn (`createOpencode`) | ✅ Spawns on free port, returns URL |
+| Session CRUD (create, get, list) | ✅ Full session objects returned |
+| Message send (`session.prompt`) | ✅ HTTP 200, parts returned |
+| SSE event stream (`event.subscribe`) | ✅ Available for real-time events |
+| Server lifecycle | ✅ `server.close()`, process cleanup |
 
-### 3. SPA embed (simplified architecture)
+### 3. SPA embed — three approaches tested
 
-**Key discovery:** `opencode serve` serves its own SPA. The original PROPOSAL.md §7
-architecture described an in-process HTTP server that would serve SPA static files
-and proxy `/api/*` to the child process. This is **no longer needed**.
+| # | Approach | Result |
+|---|----------|--------|
+| 1 | iframe to `http://127.0.0.1:PORT` | **✅ WORKS** — full SPA renders, interactive, chat works |
+| 2 | Fetch+inject with `<base>` tag | ❌ Fails — `<base>` conflicts with SPA module loading |
+| 3 | SDK-only custom chat WebView | ❌ Fails — VS Code blocks `connect-src` from WebView JS |
 
-**Simplified architecture:**
+**Winner:** Approach 1 — direct iframe embed. No in-process HTTP proxy needed.
+
+Known quirk: VSCodium intercepts certain keyboard shortcuts (e.g., `Ctrl+End`)
+before they reach the iframe. Expected behaviour — does not affect
+functionality.
+
+### 4. Simplified architecture
+
+`opencode serve` serves its own SPA. The architecture from PROPOSAL.md §7
+(which included an in-process HTTP server to serve SPA files and proxy API
+calls) is **eliminated**:
 
 ```
 VSCodium WebView ──► http://127.0.0.1:PORT (opencode serve child process)
 ```
 
-No in-process HTTP server, no static file serving, no API proxy.
-
-A minimal extension at `spike/opencode-embed/minimal-extension/` demonstrates this
-approach. The remaining unknown is whether VSCodium's WebView Content-Security-Policy
-allows loading the SPA from `http://127.0.0.1:*` — this must be validated in Phase 1.
-
-### 4. SDK-only fallback is fully proven
-
-The SDK test (`spike/opencode-embed/test-sdk.mjs`) demonstrates:
-- Server spawn and lifecycle
-- Session creation with title
-- Message sending with text parts
-- Response parsing
-
-If the CSP blocks SPA embedding, the SDK-only path is ready for Phase 1 with no
-additional spike required.
+The WebView CSP permits loading `http://127.0.0.1:*` via iframe — the SPA's
+own CSP and VS Code's CSP both allow this path. Verified in live VSCodium test.
 
 ## Decision
 
-**GO** with direct-URL SPA embed.
+**GO** with direct-URL iframe SPA embed.
 
-- The in-process HTTP proxy from PROPOSAL.md §7 is eliminated
-- Phase 1 starts with WebView CSP validation as the first task
-- If CSP blocks embedding, immediately fall back to SDK-only custom chat UI
-- Update PROPOSAL.md to reflect the simplified architecture
+- The in-process HTTP proxy (§7) is removed from the architecture
+- Phase 1 can proceed with `src/opencode/ServerManager.ts` as the first module
+- No CSP workaround or fallback needed — iframe approach is confirmed
+- The `@opencode-ai/sdk` `createOpencode()` function handles server spawn + client creation
 
 ## Next Steps
 
-1. Update PROPOSAL.md §7 architecture to remove in-process HTTP server
-2. Phase 1: Validate WebView CSP in VSCodium
-3. If CSP passes: build OpenCode Server Manager using `@opencode-ai/sdk`
-4. If CSP fails: build SDK-only chat UI using the SDK client
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `spike/opencode-embed/test-sdk.mjs` | SDK-only path test (executable) |
-| `spike/opencode-embed/embed-test.html` | Plain HTML iframe test |
-| `spike/opencode-embed/minimal-extension/` | VSCodium extension with WebView embed |
-| `spike/opencode-embed/README.md` | Spike plan |
+1. Build `src/opencode/ServerManager.ts` — spawns opencode serve, manages lifecycle
+2. Integrate into `src/extension/extension.ts` — wire up to WebView panel
+3. Begin Phase 1 deliverables per PROPOSAL.md §14
