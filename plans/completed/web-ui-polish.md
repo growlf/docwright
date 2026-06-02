@@ -1,6 +1,7 @@
 ---
 title: Web UI polish — create experience, WYSIWYG editing, folder operations
-status: approved
+status: completed
+completed_date: 2026-06-02
 author: NetYeti
 created: 2026-06-02
 tags:
