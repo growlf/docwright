@@ -2,19 +2,48 @@
 title: "Document Properties Pane"
 author: NetYeti
 created: 2026-06-02
-tags: 
-approved: false
+tags:
+  - ui
+  - properties
+  - frontmatter
+  - wysiwyg
+approved: true
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: NetYeti
 ---
 ## Problem
 
-This is a UI/UX proposal
-
-Well, I just noticed something that does not fit an "easy workflow" pattern that we want to embed throughout DocWright - I cannot simply "click a checkbox or button" to approve the proposal anymore. 
+The frontmatter of a document is only accessible in source mode. There is no
+way to approve a proposal, change a status field, or assign a document without
+switching to raw YAML — which breaks the intended low-friction workflow for
+non-developer contributors.
 
 ## Proposed Solution
 
-We need a right-hand pane that has the front matter as a form with buttons and fields for the user to interact with. Unless you think of something better?  This would only show when the user is in reading mode of a doc file.
+A **right-hand properties pane** that surfaces frontmatter as a structured form,
+visible alongside the document content.
 
-It occurs to me that it should NOT be interactive in the reading view.. just displayed, editable in WYSIWYG mode, and gone in source mode.
+**Behaviour by editor mode:**
+- **Read mode** — pane is visible, display-only (no inputs). Shows key fields at a glance.
+- **WYSIWYG mode** — pane is a live form. Changes write back to frontmatter on save.
+- **Source mode** — pane is hidden (user is editing raw YAML directly).
+
+**Form fields rendered from frontmatter:**
+- Text inputs for `title`, `author`, `assigned_to`
+- Date picker for `created`, `due_date`
+- Tag chip editor for `tags`, `category`
+- Dropdowns for `status`, `complexity`, `estimated_effort`, `automated`
+- Checkbox for `approved`
+
+**Action buttons (document-type-aware):**
+- Proposals: **Approve** (sets `approved: true`, prompts for `assigned_to` if empty),
+  **Reject** (sets `approved: false`, adds `rejection_reason`)
+- Plans: **Start** (sets `status: in-progress`), **Complete**, **Cancel**
+- All: **Save** (commits frontmatter changes without touching body)
+
+The pane width is fixed at ~280px and collapsible. The toggle button sits at the
+top-right of the content area. Collapsed state persists in `sessionStorage`.
+
+**Implementation note:** the groundwork (`showProps`, `rebuildRaw`, `saveFrontmatter`,
+`approveProposal`) is already scaffolded in `+page.svelte`. The plan is to build
+the pane component on top of that foundation.
