@@ -30,9 +30,10 @@
     } else if (href.startsWith('http://') || href.startsWith('https://')) {
       e.preventDefault();
       window.open(href, '_blank', 'noopener,noreferrer');
-    } else if (href.endsWith('.md')) {
+    } else if (href.replace(/#.*$/, '').endsWith('.md')) {
       e.preventDefault();
-      const url = '/' + href.replace(/^\.\//, '').replace(/\.md$/, '');
+      const path = href.replace(/^\.\//, '');
+      const url = '/' + path.replace(/\.md(#.*)?$/, '$1');
       goto(url);
     }
   }
