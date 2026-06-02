@@ -10,6 +10,10 @@ It also applies outward: when DocWright is used to govern a project or organizat
 this philosophy is actively transmitted into that work — prompting security thinking,
 policy grounding, and verification at every stage of the documents it helps produce.
 
+**Bugs before features.** Check for open bug issues before beginning any feature
+implementation. If bugs exist that affect the feature's area, resolve them first
+or declare an explicit exception in the plan. See `policies/core/bugs-before-features.md`.
+
 **ALWAYS VERIFY, never assume docs are up to date.** Before acting on any documented IP, credential, role, or topology, verify against the live system.
 
 **One-off tasks are prohibited.** All work must flow through the document lifecycle. See the `order-of-work-lifecycle` SOP for details.
@@ -68,6 +72,7 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 - `no-plaintext-creds.md` — Always reference your secrets vault
 - `frontmatter-validate.md` — Required fields per document type
 - `no-work-before-approval.md` — No implementation before plan approval
+- `bugs-before-features.md` — Resolve known bugs before starting feature work
 
 ## Getting Started
 

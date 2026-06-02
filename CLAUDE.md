@@ -44,6 +44,11 @@ ACL: Forgejo team membership (source of truth) + `author-role:` frontmatter (aud
 
 **Security first. Policy driven. Test verified at every stage.**
 
+**Bugs before features.** Known bugs are resolved before new feature work begins.
+Unresolved bugs mislead feature development, create security exposure, and increase
+cognitive load. Exceptions are rare and must be explicitly justified in the plan or
+commit. See [[policies/core/bugs-before-features.md]].
+
 Every feature is designed with security as a baseline constraint — never retrofitted.
 Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
 rather than hardcoded logic. Every change ships only after it is verifiable through

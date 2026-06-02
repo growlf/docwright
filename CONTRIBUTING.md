@@ -27,6 +27,10 @@ are silently skipped.
 
 **Security first. Policy driven. Test verified at every stage.**
 
+**Bugs before features.** Known bugs take priority over new feature work.
+Exceptions are permitted but must be justified in the PR description.
+See `policies/core/bugs-before-features.md` for the full policy.
+
 Every feature is designed with security as a baseline constraint — not bolted on after the
 fact. Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
 rather than hardcoded logic. Every change ships only after it can be verified through tests.
