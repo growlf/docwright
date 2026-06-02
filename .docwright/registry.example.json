@@ -1,0 +1,10 @@
+{
+  "projects": [
+    {
+      "name": "Example Project",
+      "path": "../example-infra",
+      "profile": "infra-topology",
+      "last_session": "docs/session-notes/session_note_yyyymmdd.md"
+    }
+  ]
+}
