@@ -15,14 +15,7 @@
  * between calls.
  */
 
-// Barrel export — add modules here as they are implemented
-// export * from './profile';
-// export * from './linter';
-// export * from './templates';
-// export * from './wikilinks';
-// export * from './promote';
-// export * from './acl';
-// export * from './inbox';
-// export * from './llmwiki';
+// Barrel export
+export * from './registry';
 
 export const DISPATCH_VERSION = '0.0.1';
