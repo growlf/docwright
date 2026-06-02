@@ -43,6 +43,7 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 | `docwright-security` | credential, password, vaultwarden, vlan, firewall, ssh, access | password-secret-management SOP |
 | `docwright-backup` | backup, recovery, restore | backup-recovery SOP |
 | `docwright-infra` | deployment, placement, service | infrastructure-placement SOP |
+| `docwright-project` | switch to, resume, project, registry, vault | project-registry SKILL |
 
 ## Available Subagents
 
@@ -50,6 +51,7 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 |----------|----------|------------|
 | `@docwright-lifecycle` | lifecycle transitions, proposal→plan→completed | order-of-work-lifecycle SOP |
 | `@docwright-incident` | incident, breach, outage, P1-P4 | incident-response SOP |
+| `@docwright-project` | switch to, resume, project, registry, vault | project-registry SKILL |
 
 ## Available Rules (auto-enforced, no context load)
 - `commit-format.md` — `<type>: <description>` format enforcement
