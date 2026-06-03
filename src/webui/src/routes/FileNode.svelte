@@ -138,4 +138,9 @@
   .menu-item:disabled { color: #444; cursor: default; }
   .menu-item.danger { color: #e44; }
   .menu-item.danger:hover { background: #3a1a1a; color: #f66; }
+
+  @media (max-width: 768px) {
+    .file-link { min-height: 44px; display: flex; align-items: center; padding: 0 8px 0 20px; }
+    .menu-item { min-height: 44px; display: flex; align-items: center; }
+  }
 </style>

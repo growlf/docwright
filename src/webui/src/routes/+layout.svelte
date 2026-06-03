@@ -15,7 +15,14 @@
   }
 
   let projects = $state<ProjectEntry[]>([]);
-  let showNewMenu = $state(false);
+  let showNewMenu  = $state(false);
+  let sidebarOpen  = $state(false);   // mobile only
+
+  // Close sidebar on navigation
+  $effect(() => {
+    $page.url;   // reactive dependency
+    sidebarOpen = false;
+  });
 
   function closeMenus() { showNewMenu = false; }
 
@@ -74,21 +81,26 @@
 
   onMount(() => {
     loadProjects();
-
     const es = new EventSource('/api/watch');
     es.addEventListener('filechange', (e: MessageEvent) => {
-      const data = JSON.parse(e.data);
-      fileChanged.set(data);
-    });
-    es.addEventListener('error', () => {
-      // SSE will auto-reconnect
+      fileChanged.set(JSON.parse(e.data));
     });
   });
 </script>
 
+<!-- Mobile top bar (hidden on desktop via CSS) -->
+<div class="mobile-topbar">
+  <button class="hamburger" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Toggle menu">☰</button>
+  <span class="mobile-title">docwright</span>
+</div>
+
+<!-- Scrim behind open sidebar (mobile only) -->
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+<div class="sidebar-scrim" class:visible={sidebarOpen} onclick={() => sidebarOpen = false}></div>
+
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
-  <aside id="sidebar">
+  <aside id="sidebar" class:open={sidebarOpen}>
     <div class="sidebar-header">
       <h1>docwright</h1>
       <div class="new-group">
@@ -132,11 +144,38 @@
 </div>
 
 <style>
+  /* ── Mobile top bar ─────────────────────────────────────────────────────── */
+  .mobile-topbar {
+    display: none;          /* shown only at ≤ 768px */
+    position: fixed; top: 0; left: 0; right: 0; height: 48px;
+    align-items: center; gap: 12px; padding: 0 16px;
+    background: #111; border-bottom: 1px solid #222; z-index: 150;
+  }
+  .hamburger {
+    background: none; border: none; color: #aaa; font-size: 20px;
+    cursor: pointer; padding: 0 4px; line-height: 1;
+    min-width: 44px; min-height: 44px; display: flex; align-items: center;
+  }
+  .hamburger:hover { color: #fff; }
+  .mobile-title { font-size: 14px; font-weight: 600; color: #fff; }
+
+  /* ── Sidebar scrim (mobile only) ────────────────────────────────────────── */
+  .sidebar-scrim {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 149;
+  }
+  .sidebar-scrim.visible { display: block; }
+
+  /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
-  #sidebar { width: 260px; min-width: 260px; background: #111; color: #ccc; display: flex; flex-direction: column; overflow-y: auto; }
+  #sidebar {
+    width: 260px; min-width: 260px; background: #111; color: #ccc;
+    display: flex; flex-direction: column; overflow-y: auto;
+    transition: width 0.2s ease;
+  }
   .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-  .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; margin: 0; }
-  .new-group { position: relative; }
+  .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; }
+  .new-group { position: relative; flex-shrink: 0; }
   .new-btn { background: none; border: 1px solid #444; color: #aaa; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
   .new-btn:hover { background: #222; color: #fff; }
   .new-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
@@ -150,9 +189,36 @@
   .toast-action:hover { background: #1a3a5a; }
   .toast-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0 2px; }
   .project-section { border-top: 1px solid #222; padding: 8px 0; }
-  .project-heading { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px; }
+  .project-heading { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px; white-space: nowrap; overflow: hidden; }
   .project-link { display: block; padding: 4px 16px; font-size: 13px; color: #aaa; text-decoration: none; }
   .project-link:hover { background: #1a1a1a; color: #fff; }
-  .project-name { display: block; }
-  .project-profile { font-size: 11px; color: #555; }
+  .project-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .project-profile { font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; }
+
+  /* ── Tablet (769–1024px): icon strip sidebar ────────────────────────────── */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    #sidebar { width: 48px; min-width: 48px; overflow: hidden; }
+    #sidebar:hover { width: 260px; overflow-y: auto; }
+    .sidebar-header h1 { display: none; }
+    .new-group { display: none; }
+    .project-name { display: none; }
+    .project-profile { display: none; }
+  }
+
+  /* ── Mobile (≤ 768px): overlay sidebar + top bar ────────────────────────── */
+  @media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+
+    #sidebar {
+      position: fixed; top: 0; left: -260px; height: 100vh;
+      transition: left 0.2s ease; z-index: 200;
+      width: 260px; min-width: 260px;
+    }
+    #sidebar.open { left: 0; }
+
+    #content { padding-top: 48px; } /* clear the fixed top bar */
+
+    /* Shift toasts up from git panel area */
+    .toast-container { bottom: 80px; }
+  }
 </style>

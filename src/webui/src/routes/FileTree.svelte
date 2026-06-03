@@ -120,4 +120,10 @@
   .archived-toggle { padding: 6px 12px 8px; border-top: 1px solid #1a1a1a; margin-top: auto; }
   .archived-btn { background: none; border: none; color: #444; font-size: 11px; cursor: pointer; padding: 2px 0; }
   .archived-btn:hover { color: #888; }
+
+  /* ── Mobile touch targets ───────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .mode-btn { min-height: 44px; font-size: 13px; }
+    .archived-btn { min-height: 44px; display: flex; align-items: center; font-size: 13px; }
+  }
 </style>

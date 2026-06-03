@@ -319,4 +319,12 @@
   .bump-btn.active { border-color: #2b5b2b; color: #8b8; background: #0a1a0a; }
 
   .git-log { margin: 4px 8px 0; padding: 6px 8px; background: #0a0a0a; border-radius: 3px; font-size: 10px; color: #8b8; font-family: monospace; word-break: break-all; }
+
+  @media (max-width: 768px) {
+    .git-header { min-height: 44px; }
+    .act-btn    { min-height: 44px; font-size: 12px; }
+    .go-btn     { min-height: 44px; font-size: 12px; }
+    .cancel-btn { min-height: 44px; font-size: 12px; }
+    .count-btn  { min-height: 44px; font-size: 12px; }
+  }
 </style>

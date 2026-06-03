@@ -472,4 +472,31 @@
   .wysiwyg :global(code) { background: #1a1a1a; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 13px; }
   .wysiwyg :global(pre) { background: #111; padding: 12px; border-radius: 6px; overflow-x: auto; }
   .wysiwyg :global(pre code) { background: none; padding: 0; }
+
+  /* ── Tablet (769–1024px): narrower pane offset ──────────────────────────── */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .page-body.pane-open     { padding-right: 236px; } /* 220px pane + 16px */
+    .page-body.pane-collapsed { padding-right: 48px;  }
+  }
+
+  /* ── Mobile (≤ 768px) ───────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    /* Reset pane offsets — pane is a bottom sheet, not on the right */
+    .page-body.pane-open,
+    .page-body.pane-collapsed { padding-right: 16px; }
+
+    /* Content padding */
+    .page-body { padding: 16px; }
+
+    /* Toolbar: keep it compact, hide low-priority actions */
+    .toolbar { flex-wrap: wrap; gap: 4px; }
+    .path { display: none; }          /* path shown in topbar; hide here */
+    .btn.props-toggle { display: none; } /* pane toggle irrelevant on mobile */
+
+    /* Touch-friendly button sizing */
+    .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }
+
+    /* Touch-friendly WYSIWYG toolbar */
+    .fmt-btn { min-height: 44px; padding: 0 10px; }
+  }
 </style>

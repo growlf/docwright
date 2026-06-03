@@ -341,4 +341,25 @@
     box-sizing: border-box;
   }
   .chip-input:focus { outline: none; border-color: #2b5b84; }
+
+  /* ── Tablet (769–1024px): narrow pane ──────────────────────────────────── */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .pane { width: 220px; }
+    .pane.collapsed { width: 32px; }
+  }
+
+  /* ── Mobile (≤ 768px): bottom sheet ────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .pane {
+      position: fixed;
+      bottom: 0; left: 0; right: 0; top: auto;
+      width: 100% !important; min-width: 0;
+      height: 60vh;
+      border-radius: 12px 12px 0 0;
+      border-left: none;
+      border-top: 1px solid #2a2a2a;
+      z-index: 300;
+    }
+    .pane.collapsed { height: 44px; border-radius: 12px 12px 0 0; }
+  }
 </style>
