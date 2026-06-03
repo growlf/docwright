@@ -103,6 +103,7 @@ export function GET() {
     .filter(({ path: p, fm }) =>
       !referencedByPlan.has(p) &&
       fm.deferred !== true &&
+      fm.approved === true &&
       !p.includes('phase-0-spike-decision')
     )
     .map(({ path: p, fm }) => entry(p, fm));

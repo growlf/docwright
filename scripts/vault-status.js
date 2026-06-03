@@ -82,6 +82,7 @@ const deferred = allProposals.filter(p => p.fm.deferred === true);
 
 const approvedPending = allApproved.filter(p =>
   !planSources.has(p.path) &&
+  p.fm.deferred !== true &&
   !p.file.includes('phase-0-spike-decision')
 );
 
