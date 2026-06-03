@@ -219,10 +219,11 @@
       if (sessionID !== currentID) return;
       if (part.type !== 'text') return;
 
-      const messageID: string = part.messageID ?? part.id;
+      // messageID: try part.messageID, part.id, flat p.messageID, then generate one
+      const messageID: string = part.messageID ?? p.messageID ?? part.id ?? `ai-${Date.now()}`;
       // Prefer delta (incremental) for smooth streaming; fall back to full text
       const delta: string = p.delta ?? part.text ?? '';
-      if (!delta) return;
+      if (!delta && !messageID.startsWith('ai-')) return;
 
       const idx = messages.findIndex(m => m.id === messageID);
       if (idx >= 0) {
@@ -489,9 +490,9 @@
         {#if sessions.length === 0}
           <option value="">No sessions</option>
         {/if}
-        {#each sessions as s}
+        {#each sessions.filter(s => s?.id) as s (s.id)}
           <option value={s.id} selected={s.id === currentID}>
-            {s.title || s.id?.slice(0, 14) + '…'}
+            {s.title || s.id.slice(0, 14) + '…'}
           </option>
         {/each}
       </select>
@@ -505,7 +506,7 @@
 
     <!-- Messages -->
     <div class="messages">
-      {#each messages as msg (msg.id)}
+      {#each messages as msg (msg.id ?? msg)}
         <div class="msg {msg.role}">
           {#each msg.parts as part}
             {#if part.type === 'text' && part.text}
