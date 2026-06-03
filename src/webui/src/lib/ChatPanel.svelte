@@ -463,10 +463,16 @@
             placeholder="http://localhost:4096"
             onblur={saveConfig} />
         </div>
-        <div class="setting-hint">
-          Start OpenCode with CORS allowed for this page:
-          <code class="setting-cmd">{serveCmd}</code>
-        </div>
+        {#if typeof window !== 'undefined' && ocUrl && ocUrl.includes(window.location.host)}
+          <div class="setting-warn">
+            ⚠ This URL points to DocWright itself — set it to where OpenCode is running (default: <code>http://localhost:4096</code>)
+          </div>
+        {:else}
+          <div class="setting-hint">
+            Start OpenCode with CORS allowed for this page:
+            <code class="setting-cmd">{serveCmd}</code>
+          </div>
+        {/if}
       {/if}
       <div class="setting-row">
         <span class="setting-label">MCP</span>
@@ -631,8 +637,10 @@
   .setting-cmd  { display: block; margin-top: 3px; background: #1a1a1a; border: 1px solid #333; border-radius: 3px; padding: 4px 8px; color: #58a6ff; font-family: monospace; font-size: 10px; word-break: break-all; }
   .setting-retry { align-self: flex-start; padding: 4px 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #888; font-size: 11px; cursor: pointer; }
   .setting-retry:hover { border-color: #555; color: #ccc; }
-  .mcp-ok   { font-size: 11px; color: #6d6; }
-  .mcp-warn { font-size: 11px; color: #cc6; }
+  .mcp-ok       { font-size: 11px; color: #6d6; }
+  .mcp-warn     { font-size: 11px; color: #cc6; }
+  .setting-warn { font-size: 10px; color: #e87; background: #2a1500; border: 1px solid #553300; border-radius: 3px; padding: 4px 8px; }
+  .setting-warn code { color: #58a6ff; font-family: monospace; }
 
   /* ── Disconnected state ── */
   .state-msg { padding: 24px; font-size: 13px; text-align: center; }
