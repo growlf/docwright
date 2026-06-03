@@ -194,6 +194,8 @@
       try {
         const ev = JSON.parse(e.data);
         lastEvent = ev.type;
+        // Don't count heartbeats as real events
+        if (ev.type !== 'server.heartbeat') eventCount++;
         console.debug('[DocWright chat] SSE event:', ev.type, ev.properties);
         handleEvent(ev);
       } catch (err) {
@@ -396,6 +398,17 @@
     }
   }
 
+  async function cancelSend() {
+    if (currentID) {
+      try { await ocFetch('POST', `session/${currentID}/abort`, {}); } catch { /* ignore */ }
+    }
+    sending = false;
+    statusText = 'Cancelled';
+    setTimeout(() => { if (statusText === 'Cancelled') statusText = ''; }, 2000);
+    if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+    if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
+  }
+
   function handleKey(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   }
@@ -582,9 +595,13 @@
       {/each}
       {#if statusText}
         <div class="status-row">
-          {statusText}{sending && thinkingSecs > 0 ? ` (${thinkingSecs}s)` : ''}
+          <span>{statusText}{sending && thinkingSecs > 0 ? ` (${thinkingSecs}s)` : ''}</span>
           {#if sending && thinkingSecs > 3}
-            <span class="event-count">{eventCount} events · {lastEvent || '—'}</span>
+            <span class="event-count">
+              {eventCount > 0 ? `${eventCount} events` : 'waiting…'}
+              {#if lastEvent === 'server.heartbeat'}· heartbeat{:else if lastEvent}· {lastEvent}{/if}
+            </span>
+            <button class="cancel-btn" onclick={cancelSend} title="Cancel">✕</button>
           {/if}
         </div>
       {/if}
@@ -708,6 +725,8 @@
   .msg-text { display: block; color: inherit; }
   .status-row { font-size: 11px; color: #555; padding: 1px 4px; font-style: italic; align-self: flex-start; display: flex; align-items: center; gap: 8px; }
   .event-count { font-size: 10px; color: #333; font-style: normal; }
+  .cancel-btn  { background: none; border: none; color: #555; cursor: pointer; font-size: 11px; padding: 0 3px; border-radius: 2px; }
+  .cancel-btn:hover { color: #e44; }
 
   /* ── Input ── */
   .input-area { display: flex; gap: 6px; padding: 9px 10px; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
