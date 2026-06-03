@@ -51,21 +51,27 @@
     return mode === 'proxy' ? '/api/opencode' : ocUrl.replace(/\/$/, '');
   }
 
+  // Directory passed as ?directory= query param — works for both fetch AND EventSource
+  // (EventSource doesn't support custom headers, so x-opencode-directory won't work)
+  function withDir(url: string): string {
+    if (!vaultPath) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}directory=${encodeURIComponent(vaultPath)}`;
+  }
+
   function sseUrl(path: string): string {
-    return `${base()}/${path}`;
+    return withDir(`${base()}/${path}`);
   }
 
   // ── Request helper ────────────────────────────────────────────────────────
 
-  async function ocFetch(method: string, path: string, body?: unknown): Promise<Response> {
-    const url = `${base()}/${path}`;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (mode === 'direct' && vaultPath) {
-      headers['x-opencode-directory'] = vaultPath;
-    }
+  async function ocFetch(method: string, path: string, body?: unknown, extraQuery?: string): Promise<Response> {
+    let url = `${base()}/${path}`;
+    if (extraQuery) url += (url.includes('?') ? '&' : '?') + extraQuery;
+    url = withDir(url);
     return fetch(url, {
       method,
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: body != null ? JSON.stringify(body) : undefined,
     });
   }
@@ -79,10 +85,11 @@
 
   // ── UI state ─────────────────────────────────────────────────────────────
 
-  let connected   = $state(false);
-  let checking    = $state(true);
+  let connected    = $state(false);
+  let checking     = $state(true);
   let showSettings = $state(false);
-  let procStatus  = $state<ProcStatus>('stopped');
+  let mcpRegistered = $state(false);
+  let procStatus   = $state<ProcStatus>('stopped');
   let starting    = $state(false);
   let startMsg    = $state('');
   let sessions    = $state<Session[]>([]);
@@ -171,28 +178,52 @@
 
   function handleEvent(ev: { type: string; properties?: Record<string, any> }) {
     const p = ev.properties ?? {};
+
     if (ev.type === 'session.status' && p.sessionID === currentID) {
       statusText = p.status ?? '';
     }
-    if (ev.type === 'message.part.updated' && p.sessionID === currentID) {
-      const { messageID, part } = p;
-      if (!part?.text) return;
+
+    if (ev.type === 'message.part.updated') {
+      // Actual structure: { part: { sessionID, messageID, type, text, ... }, delta?: string }
+      const part = p.part ?? p; // some versions wrap in .part, others are flat
+      const sessionID = part.sessionID ?? p.sessionID;
+      if (sessionID !== currentID) return;
+      if (part.type !== 'text') return;
+
+      const messageID: string = part.messageID ?? part.id;
+      // Prefer delta (incremental) for smooth streaming; fall back to full text
+      const delta: string = p.delta ?? part.text ?? '';
+      if (!delta) return;
+
       const idx = messages.findIndex(m => m.id === messageID);
       if (idx >= 0) {
         const updated = [...messages];
         const existing = updated[idx].parts.find(pt => pt.type === 'text');
-        if (existing) existing.text = (existing.text ?? '') + part.text;
-        else updated[idx].parts.push({ type: 'text', text: part.text });
+        if (p.delta !== undefined) {
+          // Delta mode: append the incremental text
+          if (existing) existing.text = (existing.text ?? '') + p.delta;
+          else updated[idx].parts.push({ type: 'text', text: p.delta });
+        } else {
+          // Full text mode: replace (it's the accumulated value)
+          if (existing) existing.text = part.text ?? '';
+          else updated[idx].parts.push({ type: 'text', text: part.text ?? '' });
+        }
         messages = updated;
       } else {
-        messages = [...messages, { id: messageID, role: 'assistant', parts: [{ type: 'text', text: part.text }] }];
+        messages = [...messages, {
+          id: messageID,
+          role: 'assistant',
+          parts: [{ type: 'text', text: p.delta ?? part.text ?? '' }],
+        }];
       }
       scrollToBottom();
     }
+
     if (ev.type === 'message.updated' && p.sessionID === currentID) {
       const tool = p.message?.parts?.find((pt: any) => pt.type === 'tool-invocation');
       if (tool?.toolName) statusText = `running: ${tool.toolName}`;
     }
+
     if (ev.type === 'session.idle' && p.sessionID === currentID) {
       statusText = '';
       sending = false;
@@ -234,6 +265,8 @@
 
   // ── Send ─────────────────────────────────────────────────────────────────
 
+  let sendTimeout: ReturnType<typeof setTimeout> | null = null;
+
   async function send() {
     const text = input.trim();
     if (!text || !currentID || sending) return;
@@ -242,6 +275,13 @@
     statusText = 'thinking…';
     messages = [...messages, { id: 'tmp-' + Date.now(), role: 'user', parts: [{ type: 'text', text }] }];
     scrollToBottom();
+
+    // Safety: reset sending after 90s in case SSE session.idle never arrives
+    if (sendTimeout) clearTimeout(sendTimeout);
+    sendTimeout = setTimeout(() => {
+      if (sending) { sending = false; statusText = 'Response timed out'; }
+    }, 90_000);
+
     try {
       await ocFetch('POST', `session/${currentID}/message`, {
         parts: [{ type: 'text', text }],
@@ -249,6 +289,7 @@
     } catch {
       statusText = 'Send failed — is OpenCode still running?';
       sending = false;
+      if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
     }
   }
 
@@ -262,11 +303,25 @@
 
   // ── Mount ─────────────────────────────────────────────────────────────────
 
+  async function ensureMcp() {
+    try {
+      // Check current state
+      const check = await fetch('/api/opencode-config');
+      if (!check.ok) return;
+      const state = await check.json();
+      if (state.registered) { mcpRegistered = true; return; }
+      // Register if not already
+      const reg = await fetch('/api/opencode-config', { method: 'POST' });
+      if (reg.ok) { const d = await reg.json(); mcpRegistered = d.registered; }
+    } catch { /* non-critical */ }
+  }
+
   onMount(async () => {
     try {
       const r = await fetch('/api/brand');
       if (r.ok) { const d = await r.json(); vaultPath = d.vaultPath ?? ''; }
     } catch { /* non-critical */ }
+    await ensureMcp();
     await checkHealth();
   });
 
@@ -318,6 +373,15 @@
           <code class="setting-cmd">{serveCmd}</code>
         </div>
       {/if}
+      <div class="setting-row">
+        <span class="setting-label">MCP</span>
+        {#if mcpRegistered}
+          <span class="mcp-ok">✓ DocWright tools registered</span>
+        {:else}
+          <span class="mcp-warn">⚠ Not registered</span>
+          <button class="setting-retry" onclick={ensureMcp}>Register</button>
+        {/if}
+      </div>
       <button class="setting-retry" onclick={() => { showSettings = false; checkHealth(); }}>
         Reconnect
       </button>
@@ -459,6 +523,8 @@
   .setting-cmd  { display: block; margin-top: 3px; background: #1a1a1a; border: 1px solid #333; border-radius: 3px; padding: 4px 8px; color: #58a6ff; font-family: monospace; font-size: 10px; word-break: break-all; }
   .setting-retry { align-self: flex-start; padding: 4px 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #888; font-size: 11px; cursor: pointer; }
   .setting-retry:hover { border-color: #555; color: #ccc; }
+  .mcp-ok   { font-size: 11px; color: #6d6; }
+  .mcp-warn { font-size: 11px; color: #cc6; }
 
   /* ── Disconnected state ── */
   .state-msg { padding: 24px; font-size: 13px; text-align: center; }
