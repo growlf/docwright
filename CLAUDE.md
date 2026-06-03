@@ -94,15 +94,27 @@ Results:
 Goal: functional SvelteKit web UI with full CRUD, file tree, wikilink navigation,
 and live file change detection via SSE.
 
+**VSCodium extension: deliberately deferred.** The team uses the Web UI
+surface more than the IDE at this stage. The extension will follow in Phase 2
+when the dispatch module exists. See `plans/phase-1-opencode-embed.md`.
+
 Delivered:
 - [x] SvelteKit scaffold with dark theme layout, collapsible file tree sidebar
 - [x] Markdown rendering (markdown-it) with TOC anchors, external link targets
 - [x] Wikilink parsing: `[[path]]`, `[[path#section]]`, `[[path|alias]]`
-- [x] CRUD: create (+ button), edit (textarea toggle), save, delete (with confirm)
+- [x] CRUD + rename + delete with toast notifications and git undo
 - [x] SSE live reload: `/api/watch` endpoint, auto-refresh tree + page on file change
-- [x] API: GET /api/list, GET /api/read, POST /api/write, DELETE /api/delete
+- [x] 3-mode editor: preview / WYSIWYG / source
+- [x] Proposal templating system (sidebar + UI button)
+- [x] Document properties pane (frontmatter form, action buttons, mode-aware)
+- [x] Sidebar polish: docs/all-files toggle, hidden archived dirs, context-aware +
+- [x] Vault status page (`/status`) with SSE refresh — default home page
+- [x] Smart 404: moved-document redirect + not-found inline state
+- [x] Collation foundation: overlap detection stub, related-proposals panel
+- [x] Lifecycle compliance: pre-commit gate, MCP server, Claude Code hook
+- [x] Project registry + vault switching
 
-**Next:** Polish file creation UX, add folder ops, WYSIWYG editor, toast notifications
+**Active plans:** collation (high), git-controls (medium), phase-1-opencode-embed (high, see above)
 
 ## Phase 2 (next) — Foundation
 
