@@ -17,7 +17,7 @@
   let loading = $state(true);
 
   // Collapsed state per section, persisted in sessionStorage
-  const SECTIONS = ['open-proposals', 'active-plans', 'approved-pending', 'completed', 'deferred'];
+  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'completed', 'deferred'];
   function isCollapsed(key: string): boolean {
     if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
     const val = sessionStorage.getItem('status-collapsed-' + key);
@@ -104,6 +104,33 @@
       {/if}
     </section>
 
+    <!-- Approved, pending plan -->
+    <section class="section">
+      <button class="section-header" onclick={() => toggleSection('approved-pending')}>
+        <span class="section-title">Approved — Awaiting Plan</span>
+        <span class="badge {data.proposals.approved_pending.length > 0 ? 'badge-warn' : ''}">{data.proposals.approved_pending.length}</span>
+        <span class="chevron">{collapsed['approved-pending'] ? '▸' : '▾'}</span>
+      </button>
+      {#if !collapsed['approved-pending']}
+        {#if data.proposals.approved_pending.length === 0}
+          <div class="empty">All approved proposals have plans ✓</div>
+        {:else}
+          <table class="items-table">
+            <thead><tr><th>Title</th><th>Category</th><th>Effort</th></tr></thead>
+            <tbody>
+              {#each data.proposals.approved_pending as p}
+                <tr class="item-row" onclick={() => navTo(p)}>
+                  <td class="item-title">{p.title}</td>
+                  <td>{#each p.category as c}<span class="tag">{c}</span>{/each}</td>
+                  <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {/if}
+      {/if}
+    </section>
+
     <!-- Active plans -->
     <section class="section">
       <button class="section-header" onclick={() => toggleSection('active-plans')}>
@@ -124,33 +151,6 @@
                   <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
                   <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
                   <td class="item-date">{p.assigned_to || '—'}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        {/if}
-      {/if}
-    </section>
-
-    <!-- Approved, pending plan -->
-    <section class="section">
-      <button class="section-header" onclick={() => toggleSection('approved-pending')}>
-        <span class="section-title">Approved — Awaiting Plan</span>
-        <span class="badge {data.proposals.approved_pending.length > 0 ? 'badge-warn' : ''}">{data.proposals.approved_pending.length}</span>
-        <span class="chevron">{collapsed['approved-pending'] ? '▸' : '▾'}</span>
-      </button>
-      {#if !collapsed['approved-pending']}
-        {#if data.proposals.approved_pending.length === 0}
-          <div class="empty">All approved proposals have plans ✓</div>
-        {:else}
-          <table class="items-table">
-            <thead><tr><th>Title</th><th>Category</th><th>Effort</th></tr></thead>
-            <tbody>
-              {#each data.proposals.approved_pending as p}
-                <tr class="item-row" onclick={() => navTo(p)}>
-                  <td class="item-title">{p.title}</td>
-                  <td>{#each p.category as c}<span class="tag">{c}</span>{/each}</td>
-                  <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
                 </tr>
               {/each}
             </tbody>
