@@ -1,0 +1,65 @@
+/*
+ * DocWright theme override file
+ * Place this file at brand/theme.css in your vault root.
+ * It is loaded after all DocWright styles — any rule here takes priority.
+ *
+ * CURRENT APPROACH (Phase A):
+ * Override DocWright's CSS classes directly.
+ * Key classes and colour values are listed below as a reference.
+ *
+ * FUTURE (Phase B — CSS custom properties):
+ * Once DocWright migrates to CSS variables, you will only need to
+ * override :root variables here. The class-level overrides below
+ * will continue to work in the meantime.
+ *
+ * ── Colour reference (DocWright defaults) ───────────────────────────────
+ *
+ * Backgrounds:
+ *   #111   — app background, sidebar, panes
+ *   #161616 — section headers, collapsed strips
+ *   #1a1a1a — hover states
+ *   #1c1c1c — toolbar hover
+ *   #0d0d0d — code/preview backgrounds
+ *
+ * Borders:
+ *   #222   — primary borders
+ *   #2a2a2a — panel borders
+ *   #1a1a1a — subtle row dividers
+ *   #333   — button borders
+ *
+ * Text:
+ *   #e8e8e8 — document title (bright)
+ *   #ccc   — primary content text
+ *   #aaa   — secondary text, field values
+ *   #888   — muted labels
+ *   #666   — dim text, file paths
+ *   #555   — very dim, section labels
+ *   #444   — near-invisible, deferred items
+ *
+ * Accents:
+ *   #58a6ff — primary accent (blue), links
+ *   #6d6    — success / approved / completed
+ *   #cc6    — warning / deferred / medium priority
+ *   #e44    — danger / canceled / error
+ *   #a78bfa — purple, related/collation actions
+ *   #e87    — high priority
+ *
+ * ── Example: light mode skeleton ────────────────────────────────────────
+ *
+ * Uncomment and fill in to start a light theme:
+ *
+ * html, body { background: #f5f5f5 !important; }
+ * #sidebar, .pane, .panel { background: #fff !important; }
+ * .sidebar-header, .pane-header { border-bottom-color: #ddd !important; }
+ * h1, .brand-name, .doc-title { color: #111 !important; }
+ * .body, .fval { color: #222 !important; }
+ *
+ * ── Example: accent colour change ───────────────────────────────────────
+ *
+ * :root { --accent: #e65c00; }  /* when Phase B lands, one line does it */
+ * a, .footer-link { color: #e65c00 !important; }
+ * .act.approve { border-color: #4a2200 !important; color: #e65c00 !important; }
+ *
+ */
+
+/* Your overrides go here */

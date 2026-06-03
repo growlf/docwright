@@ -63,6 +63,41 @@ This is intentional: white-labeling the brand does not remove attribution.
 
 ---
 
+## Theming
+
+### Drop-in CSS override
+
+Place a CSS file at `brand/theme.css` in the vault root. It is loaded after
+all DocWright styles, so any rule in it takes full priority.
+
+A starter file with colour reference comments is included at `brand/theme.css`
+in the DocWright repo — copy it to your vault and edit from there.
+
+```
+vault-root/
+  brand/
+    theme.css       ← your overrides (loaded automatically)
+    logo.svg        ← optional SVG logo
+  brand.json        ← name / logoPath config
+```
+
+### What to override
+
+Key background colours: `#111` (main), `#161616` (elevated), `#1a1a1a` (hover).
+Key text colours: `#e8e8e8` (title), `#ccc` (body), `#aaa` (secondary), `#555` (dim).
+Primary accent: `#58a6ff`. Success: `#6d6`. Warning: `#cc6`. Danger: `#e44`.
+
+See `brand/theme.css` for the full colour reference and example skeletons.
+
+### Coming in Phase B
+
+Once DocWright migrates its internal styles to CSS custom properties, a
+theme file will only need to override `:root` variables — no knowledge of
+internal class names required, and themes stay stable across updates.
+See `proposals/ui-theming-system.md`.
+
+---
+
 ## Vault Profile
 
 The active profile controls document types, lifecycle states, frontmatter
