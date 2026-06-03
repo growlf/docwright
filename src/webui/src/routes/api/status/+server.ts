@@ -116,8 +116,9 @@ export function GET() {
     .map(({ path: p, fm }) => entry(p, fm));
 
   const completedCount = readDir(path.join(REPO_ROOT, 'plans', 'completed')).length;
+  const vaultName = path.basename(REPO_ROOT);
 
-  const data = { proposals: { open, approved_pending: approvedPending, deferred }, plans: { active, completed_count: completedCount } };
+  const data = { vaultName, proposals: { open, approved_pending: approvedPending, deferred }, plans: { active, completed_count: completedCount } };
   cache = { data, at: Date.now() };
   return json(data);
 }

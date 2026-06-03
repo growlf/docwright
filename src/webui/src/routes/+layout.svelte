@@ -15,7 +15,10 @@
     last_session?: string;
   }
 
-  let projects = $state<ProjectEntry[]>([]);
+  interface BrandConfig { name: string; logoPath: string | null; }
+
+  let projects  = $state<ProjectEntry[]>([]);
+  let brand     = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
   let showNewMenu  = $state(false);
   let showSidebar  = $state(true);
 
@@ -81,7 +84,15 @@
       .catch(() => { projects = []; });
   }
 
+  function loadBrand() {
+    fetch('/api/brand')
+      .then(r => r.json())
+      .then(data => { brand = data; })
+      .catch(() => {});
+  }
+
   onMount(() => {
+    loadBrand();
     loadProjects();
     const es = new EventSource('/api/watch');
     es.addEventListener('filechange', (e: MessageEvent) => {
@@ -94,7 +105,13 @@
 <div class="mobile-topbar">
   <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle menu">☰</button>
   <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-  <span class="mobile-title">docwright</span>
+  <span class="mobile-title">
+    {#if brand.logoPath}
+      <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
+    {:else}
+      {brand.name}
+    {/if}
+  </span>
   <button class="gear-btn" onclick={() => showPropsPane.update(v => !v)} aria-label="Toggle properties">⚙</button>
 </div>
 
@@ -108,7 +125,13 @@
     <div class="sidebar-header">
       <button class="sidebar-toggle" onclick={toggleSidebar} aria-label="Toggle sidebar">{showSidebar ? '◀' : '▶'}</button>
       <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-      <h1>docwright</h1>
+      <div class="brand">
+        {#if brand.logoPath}
+          <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
+        {:else}
+          <span class="brand-name">{brand.name}</span>
+        {/if}
+      </div>
       <div class="new-group">
         <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+</button>
         {#if showNewMenu}
@@ -148,6 +171,18 @@
     {/each}
   </div>
 </div>
+
+<footer class="app-footer">
+  <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
+    DocWright
+  </a>
+  <span class="footer-sep">·</span>
+  <span>MIT License</span>
+  <span class="footer-sep">·</span>
+  <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
+    github.com/growlf/docwright
+  </a>
+</footer>
 
 <style>
   /* ── Mobile top bar ─────────────────────────────────────────────────────── */
@@ -205,7 +240,26 @@
     }
   }
   .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
-  .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; }
+
+  .brand { flex: 1; min-width: 0; overflow: hidden; }
+  .brand-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .brand-logo { max-height: 24px; max-width: 120px; object-fit: contain; display: block; }
+
+  .app-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-size: 10px;
+    color: #333;
+    border-top: 1px solid #1a1a1a;
+    background: #0d0d0d;
+    flex-shrink: 0;
+  }
+  .footer-link { color: #333; text-decoration: none; }
+  .footer-link:hover { color: #666; }
+  .footer-sep { color: #222; }
   .sidebar-toggle { flex-shrink: 0; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .sidebar-toggle:hover { color: #fff; }
   .new-group { position: relative; flex-shrink: 0; }

@@ -9,6 +9,7 @@
     status: string; priority: string; assigned_to: string;
   }
   interface StatusData {
+    vaultName: string;
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
     plans: { active: DocEntry[]; completed_count: number };
   }
@@ -68,7 +69,7 @@
 
 <div class="status-page">
   <div class="status-header">
-    <h1>Vault Status</h1>
+    <h1>{data?.vaultName ?? 'Vault'} Status</h1>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
   </div>
 
@@ -195,7 +196,7 @@
 </div>
 
 <style>
-  .status-page { padding: 32px; max-width: 900px; }
+  .status-page { padding: 32px; }
 
   .status-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
   h1 { font-size: 20px; font-weight: 600; color: #fff; margin: 0; }
