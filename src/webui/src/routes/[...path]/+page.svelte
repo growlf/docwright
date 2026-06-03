@@ -121,8 +121,19 @@
   async function loadFile() {
     const res = await fetch('/api/read?path=' + encodeURIComponent(filePath()));
     if (!res.ok) {
-      if (res.status === 404) { raw = ''; content = ''; frontmatter = null; error = null; }
-      else error = 'Failed to load file';
+      if (res.status === 404) {
+        // Try to find the document at a different lifecycle path (e.g. moved to approved/)
+        const slug = filePath().replace(/\.md$/, '').replace(/^.*\//, '');
+        const findRes = await fetch('/api/find?name=' + encodeURIComponent(slug));
+        if (findRes.ok) {
+          const { path: foundPath } = await findRes.json();
+          if (foundPath) { goto('/' + foundPath.replace(/\.md$/, ''), { replaceState: true }); return; }
+        }
+        // Truly missing — show not-found state
+        raw = ''; content = ''; frontmatter = null; error = '404';
+      } else {
+        error = 'Failed to load file';
+      }
       return;
     }
     error = null;
@@ -309,7 +320,17 @@
       </div>
     </div>
 
-    {#if error}
+    {#if error === '404'}
+      <div class="not-found">
+        <div class="nf-icon">⌕</div>
+        <h2 class="nf-title">Document not found</h2>
+        <p class="nf-path">{filePath()}</p>
+        <div class="nf-actions">
+          <a class="nf-btn primary" href="/status">Go to status page</a>
+          <button class="nf-btn" onclick={() => { goto('/proposals/' + filePath().replace(/^.*\//, '').replace(/\.md$/, '') + '?new=1'); }}>Create as proposal</button>
+        </div>
+      </div>
+    {:else if error}
       <p class="error">{error}</p>
 
     {:else if mode === 'source'}
@@ -392,6 +413,15 @@
   .page-body.pane-open { padding-right: 296px; /* 280px pane + 16px gap */ }
 
   .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
+  .not-found { text-align: center; padding: 64px 32px; }
+  .nf-icon { font-size: 48px; color: #333; margin-bottom: 16px; }
+  .nf-title { font-size: 18px; color: #666; font-weight: 500; margin: 0 0 8px; }
+  .nf-path { font-size: 12px; color: #444; font-family: monospace; margin: 0 0 24px; }
+  .nf-actions { display: flex; gap: 10px; justify-content: center; }
+  .nf-btn { padding: 6px 16px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid #333; background: #1a1a1a; color: #888; text-decoration: none; display: inline-block; }
+  .nf-btn:hover { border-color: #555; color: #ccc; }
+  .nf-btn.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
+  .nf-btn.primary:hover { background: #1a3a5a; }
   .fm     { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px; background: #222; border-radius: 6px; margin-bottom: 24px; font-size: 12px; }
   .fm-entry { color: #aaa; }
   .fm-entry strong { color: #fff; }
