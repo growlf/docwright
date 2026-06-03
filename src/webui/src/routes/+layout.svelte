@@ -125,13 +125,13 @@
     <div class="sidebar-header">
       <button class="sidebar-toggle" onclick={toggleSidebar} aria-label="Toggle sidebar">{showSidebar ? '◀' : '▶'}</button>
       <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-      <div class="brand">
+      <a href="/status" class="brand" title="Go to {brand.name} status">
         {#if brand.logoPath}
           <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
         {:else}
           <span class="brand-name">{brand.name}</span>
         {/if}
-      </div>
+      </a>
       <div class="new-group">
         <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+</button>
         {#if showNewMenu}
@@ -241,8 +241,10 @@
   }
   .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
 
-  .brand { flex: 1; min-width: 0; overflow: hidden; }
+  .brand { flex: 1; min-width: 0; overflow: hidden; text-decoration: none; cursor: pointer; }
   .brand-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .brand:hover .brand-name { color: #aaa; }
+  .brand:hover .brand-logo { opacity: 0.8; }
   .brand-logo { max-height: 24px; max-width: 120px; object-fit: contain; display: block; }
 
   .app-footer {
