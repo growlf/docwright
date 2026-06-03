@@ -9,6 +9,7 @@ tags:
   - home
 proposal_source:
   - proposals/approved/ui-need-a-status-page-view-and-tool-skill.md
+  - proposals/approved/404-redirect-to-status-page.md
 priority: high
 automated: off
 assigned_to: NetYeti
@@ -81,7 +82,25 @@ logic as `/api/status` and prints a plain-text summary to the terminal.
 Useful for AI sessions to quickly assess the vault state without opening
 the browser.
 
-### 6. Tests / verification
+### 6. Smart 404 fallback (from proposals/approved/404-redirect-to-status-page.md)
+
+**API: GET /api/find?name=slug**
+
+Searches all lifecycle directories for a file whose stem matches `slug`
+(case-insensitive, strips `.md`). Priority order: `proposals/` >
+`proposals/approved/` > `plans/` > `plans/completed/` > `docs/`.
+Returns `{ path: string } | { path: null }`.
+
+**In +page.svelte 404 branch:**
+
+Before rendering the error state, call `/api/find?name=<slug>`. If a match
+is found, `goto(matchedPath, { replaceState: true })` — the move is invisible.
+If no match, render an inline "Document not found" state (not a browser 404):
+- Show the attempted slug
+- "Go to status page" button → `/_status`
+- "Create this document" button → pre-fills the new-file flow with the slug
+
+### 7. Tests / verification
 
 - Open proposal appears in Open section after creation
 - Approving a proposal moves it to Approved-pending-plan section
