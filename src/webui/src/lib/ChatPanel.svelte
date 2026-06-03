@@ -105,10 +105,12 @@
   let input         = $state('');
   let statusText    = $state('');
   let sending       = $state(false);
-  let lastEventType = $state('');   // debug: last SSE event seen
-  let msgEnd: HTMLElement | undefined;
+  let eventCount    = $state(0);     // total SSE events received (any type)
+  let thinkingSecs  = $state(0);     // elapsed seconds while sending
+  let msgEnd        = $state<HTMLElement | undefined>(undefined);
   let es: EventSource | null = null;
   let sseRetries    = 0;
+  let thinkingTimer: ReturnType<typeof setInterval> | null = null;
 
   // The correct opencode serve command for this browser's origin
   let serveCmd = $derived(
@@ -186,11 +188,11 @@
     };
 
     es.onmessage = (e) => {
-      sseConnected = true; // mark on first message if onopen didn't fire
+      sseConnected = true;
+      eventCount++;
       try {
         const ev = JSON.parse(e.data);
         console.debug('[DocWright chat] SSE event:', ev.type, ev.properties);
-        lastEventType = ev.type;
         handleEvent(ev);
       } catch (err) {
         console.warn('[DocWright chat] Failed to parse SSE event:', e.data, err);
@@ -322,7 +324,9 @@
     console.debug('[DocWright chat] Sending to session', currentID, ':', text.slice(0, 60));
     input = '';
     sending = true;
+    thinkingSecs = 0;
     statusText = 'thinking…';
+    thinkingTimer = setInterval(() => { thinkingSecs++; }, 1000);
     messages = [...messages, { id: 'tmp-' + Date.now(), role: 'user', parts: [{ type: 'text', text }] }];
     scrollToBottom();
 
@@ -382,6 +386,7 @@
       sending = false;
       statusText = '';
       if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
+      if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
     }
   }
 
@@ -450,16 +455,16 @@
   {#if showSettings}
     <div class="settings-panel">
       <div class="setting-row">
-        <label class="setting-label">Mode</label>
-        <select class="setting-select" bind:value={mode} onchange={saveConfig}>
+        <label class="setting-label" for="oc-mode">Mode</label>
+        <select id="oc-mode" class="setting-select" bind:value={mode} onchange={saveConfig}>
           <option value="direct">Direct — my local OpenCode</option>
           <option value="proxy">Proxy — server's OpenCode</option>
         </select>
       </div>
       {#if mode === 'direct'}
         <div class="setting-row">
-          <label class="setting-label">OpenCode URL</label>
-          <input class="setting-input" type="text" bind:value={ocUrl}
+          <label class="setting-label" for="oc-url">OpenCode URL</label>
+          <input id="oc-url" class="setting-input" type="text" bind:value={ocUrl}
             placeholder="http://localhost:4096"
             onblur={saveConfig} />
         </div>
@@ -570,7 +575,12 @@
         </div>
       {/each}
       {#if statusText}
-        <div class="status-row">{statusText}</div>
+        <div class="status-row">
+          {statusText}{sending && thinkingSecs > 0 ? ` (${thinkingSecs}s)` : ''}
+          {#if sending && thinkingSecs > 5}
+            <span class="event-count" title="SSE events received">{eventCount} events</span>
+          {/if}
+        </div>
       {/if}
       <div bind:this={msgEnd}></div>
     </div>
@@ -690,7 +700,8 @@
   .msg.assistant,
   .msg.model     { align-self: flex-start; background: #1a1a1a; color: #ccc; border-bottom-left-radius: 2px; }
   .msg-text { display: block; color: inherit; }
-  .status-row { font-size: 11px; color: #555; padding: 1px 4px; font-style: italic; align-self: flex-start; }
+  .status-row { font-size: 11px; color: #555; padding: 1px 4px; font-style: italic; align-self: flex-start; display: flex; align-items: center; gap: 8px; }
+  .event-count { font-size: 10px; color: #333; font-style: normal; }
 
   /* ── Input ── */
   .input-area { display: flex; gap: 6px; padding: 9px 10px; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
