@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { showPropsPane } from './pane';
+
   let {
     frontmatter = $bindable<Record<string, any>>({}),
     collapsed = $bindable(
@@ -22,6 +24,10 @@
   } = $props();
 
   function toggleCollapsed() {
+    if (window.innerWidth <= 768) {
+      showPropsPane.set(false);
+      return;
+    }
     collapsed = !collapsed;
     if (typeof sessionStorage !== 'undefined')
       sessionStorage.setItem('propsPaneCollapsed', String(collapsed));
@@ -203,10 +209,7 @@
 
 <style>
   .pane {
-    position: fixed;
-    right: 0;
-    top: 0;
-    height: 100vh;
+    position: relative;
     width: 280px;
     background: #111;
     border-left: 1px solid #2a2a2a;
@@ -214,7 +217,7 @@
     flex-direction: column;
     overflow-y: auto;
     transition: width 0.15s;
-    z-index: 100;
+    flex-shrink: 0;
   }
   .pane.collapsed { width: 32px; overflow: hidden; }
 
@@ -348,18 +351,16 @@
     .pane.collapsed { width: 32px; }
   }
 
-  /* ── Mobile (≤ 768px): bottom sheet ────────────────────────────────────── */
+  /* ── Mobile (≤ 768px): right-side overlay ──────────────────────────────── */
   @media (max-width: 768px) {
     .pane {
-      position: fixed;
-      bottom: 0; left: 0; right: 0; top: auto;
-      width: 100% !important; min-width: 0;
-      height: 60vh;
-      border-radius: 12px 12px 0 0;
-      border-left: none;
-      border-top: 1px solid #2a2a2a;
+      position: fixed; top: 0; right: 0; left: auto; bottom: 0;
+      height: 100vh;
+      width: 280px !important; min-width: 0;
+      border-left: 1px solid #2a2a2a; border-top: none;
+      border-radius: 0;
       z-index: 300;
     }
-    .pane.collapsed { height: 44px; border-radius: 12px 12px 0 0; }
+    .pane.collapsed { width: 0 !important; overflow: hidden; }
   }
 </style>

@@ -6,6 +6,7 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast } from '$lib/toast';
+  import { showPropsPane } from '$lib/pane';
 
   interface ProjectEntry {
     name: string;
@@ -16,14 +17,15 @@
 
   let projects = $state<ProjectEntry[]>([]);
   let showNewMenu  = $state(false);
-  let sidebarOpen  = $state(false);   // mobile only
+  let showSidebar  = $state(true);
 
-  // Close sidebar on navigation
+  // Close sidebar on navigation (mobile only)
   $effect(() => {
-    $page.url;   // reactive dependency
-    sidebarOpen = false;
+    $page.url;
+    if (window.innerWidth <= 768) showSidebar = false;
   });
 
+  function toggleSidebar() { showSidebar = !showSidebar; }
   function closeMenus() { showNewMenu = false; }
 
   function newFile() {
@@ -90,18 +92,22 @@
 
 <!-- Mobile top bar (hidden on desktop via CSS) -->
 <div class="mobile-topbar">
-  <button class="hamburger" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Toggle menu">☰</button>
+  <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle menu">☰</button>
+  <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
   <span class="mobile-title">docwright</span>
+  <button class="gear-btn" onclick={() => showPropsPane.update(v => !v)} aria-label="Toggle properties">⚙</button>
 </div>
 
 <!-- Scrim behind open sidebar (mobile only) -->
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="sidebar-scrim" class:visible={sidebarOpen} onclick={() => sidebarOpen = false}></div>
+<div class="sidebar-scrim" class:visible={showSidebar} onclick={toggleSidebar}></div>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
-  <aside id="sidebar" class:open={sidebarOpen}>
+  <aside id="sidebar" class:open={showSidebar} class:collapsed={!showSidebar}>
     <div class="sidebar-header">
+      <button class="sidebar-toggle" onclick={toggleSidebar} aria-label="Toggle sidebar">{showSidebar ? '◀' : '▶'}</button>
+      <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
       <h1>docwright</h1>
       <div class="new-group">
         <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+</button>
@@ -157,7 +163,18 @@
     min-width: 44px; min-height: 44px; display: flex; align-items: center;
   }
   .hamburger:hover { color: #fff; }
-  .mobile-title { font-size: 14px; font-weight: 600; color: #fff; }
+  .home-btn {
+    background: none; border: none; color: #555; font-size: 16px; text-decoration: none;
+    line-height: 1; padding: 0 2px;
+  }
+  .home-btn:hover { color: #aaa; }
+  .mobile-title { font-size: 14px; font-weight: 600; color: #fff; flex: 1; }
+  .gear-btn {
+    background: none; border: none; color: #aaa; font-size: 18px;
+    cursor: pointer; padding: 0 4px; line-height: 1;
+    min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+  }
+  .gear-btn:hover { color: #fff; }
 
   /* ── Sidebar scrim (mobile only) ────────────────────────────────────────── */
   .sidebar-scrim {
@@ -166,15 +183,31 @@
   }
   .sidebar-scrim.visible { display: block; }
 
+  /* Desktop: scrim never shows — sidebar is inline layout, not overlay */
+  @media (min-width: 769px) {
+    .sidebar-scrim.visible { display: none; }
+  }
+
   /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
   #sidebar {
     width: 260px; min-width: 260px; background: #111; color: #ccc;
     display: flex; flex-direction: column; overflow-y: auto;
-    transition: width 0.2s ease;
+    transition: width 0.2s ease, min-width 0.2s ease;
   }
-  .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+  #sidebar.collapsed {
+    width: 32px; min-width: 32px; overflow: hidden;
+  }
+  /* Desktop: hover collapsed strip to peek full sidebar */
+  @media (min-width: 769px) {
+    #sidebar.collapsed:hover {
+      width: 260px; min-width: 260px; overflow-y: auto;
+    }
+  }
+  .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
   .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; }
+  .sidebar-toggle { flex-shrink: 0; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .sidebar-toggle:hover { color: #fff; }
   .new-group { position: relative; flex-shrink: 0; }
   .new-btn { background: none; border: 1px solid #444; color: #aaa; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
   .new-btn:hover { background: #222; color: #fff; }
@@ -195,16 +228,6 @@
   .project-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .project-profile { font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; }
 
-  /* ── Tablet (769–1024px): icon strip sidebar ────────────────────────────── */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    #sidebar { width: 48px; min-width: 48px; overflow: hidden; }
-    #sidebar:hover { width: 260px; overflow-y: auto; }
-    .sidebar-header h1 { display: none; }
-    .new-group { display: none; }
-    .project-name { display: none; }
-    .project-profile { display: none; }
-  }
-
   /* ── Mobile (≤ 768px): overlay sidebar + top bar ────────────────────────── */
   @media (max-width: 768px) {
     .mobile-topbar { display: flex; }
@@ -215,6 +238,7 @@
       width: 260px; min-width: 260px;
     }
     #sidebar.open { left: 0; }
+    #sidebar.collapsed { width: 260px; min-width: 260px; } /* override desktop collapsed on mobile */
 
     #content { padding-top: 48px; } /* clear the fixed top bar */
 

@@ -7,6 +7,7 @@
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
+  import { showPropsPane } from '$lib/pane';
   import TurndownService from 'turndown';
   import markdownit from 'markdown-it';
 
@@ -25,6 +26,21 @@
       ? sessionStorage.getItem('propsPaneCollapsed') === 'true'
       : false
   );
+
+  // Mobile gear icon (from layout) toggles pane via store
+  onMount(() => {
+    return showPropsPane.subscribe(v => {
+      if (window.innerWidth <= 768) {
+        showProps = v;
+        if (v) propsCollapsed = false;
+      }
+    });
+  });
+
+  function toggleProps() {
+    showProps = !showProps;
+    showPropsPane.set(showProps);
+  }
 
   // Collation panel state
   let showCollation = $state(false);
@@ -319,7 +335,7 @@
         {:else}
           <button class="btn del" onclick={deleteFile}>Delete</button>
         {/if}
-        <button class="btn props-toggle" onclick={() => showProps = !showProps} title="Toggle properties">
+        <button class="btn props-toggle" onclick={toggleProps} title="Toggle properties">
           ⊞
         </button>
         <button class="btn mode-toggle" onclick={cycleMode}>
@@ -391,6 +407,12 @@
     {/if}
   </div>
 
+  <!-- Properties pane scrim (mobile only) -->
+  {#if showProps && mode !== 'source' && frontmatter}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div class="props-scrim" onclick={toggleProps}></div>
+  {/if}
+
   <!-- Properties pane — hidden in source mode -->
   {#if showProps && mode !== 'source' && frontmatter}
     <PropertiesPane
@@ -419,8 +441,14 @@
 <style>
   .page-wrap { display: block; min-height: 100%; }
   .page-body { padding: 32px; }
-  .page-body.pane-open     { padding-right: 296px; } /* 280px pane + 16px gap */
-  .page-body.pane-collapsed { padding-right: 48px;  } /* 32px collapsed pane + 16px gap */
+
+  /* Desktop (≥769px): properties pane is inline via flex, not fixed overlay */
+  @media (min-width: 769px) {
+    .page-wrap { display: flex; gap: 16px; align-items: flex-start; }
+    .page-body { flex: 1; min-width: 0; }
+    .page-body.pane-open,
+    .page-body.pane-collapsed { padding-right: 32px; }
+  }
 
   .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
   .not-found { text-align: center; padding: 64px 32px; }
@@ -456,6 +484,7 @@
   .mode-toggle:hover { background: #1a3a1a; }
   .props-toggle { border-color: #444; color: #777; font-size: 14px; padding: 2px 9px; }
   .props-toggle:hover { color: #aaa; }
+  .props-scrim { display: none; }
 
   .editor { width: 100%; min-height: 60vh; background: #0a0a0a; color: #e0e0e0; border: 1px solid #333; border-radius: 6px; padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
 
@@ -473,25 +502,20 @@
   .wysiwyg :global(pre) { background: #111; padding: 12px; border-radius: 6px; overflow-x: auto; }
   .wysiwyg :global(pre code) { background: none; padding: 0; }
 
-  /* ── Tablet (769–1024px): narrower pane offset ──────────────────────────── */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .page-body.pane-open     { padding-right: 236px; } /* 220px pane + 16px */
-    .page-body.pane-collapsed { padding-right: 48px;  }
-  }
-
   /* ── Mobile (≤ 768px) ───────────────────────────────────────────────────── */
   @media (max-width: 768px) {
-    /* Reset pane offsets — pane is a bottom sheet, not on the right */
-    .page-body.pane-open,
-    .page-body.pane-collapsed { padding-right: 16px; }
-
+    /* Reset to block layout (no flex) */
+    .page-wrap { display: block; padding: 0; }
     /* Content padding */
     .page-body { padding: 16px; }
 
     /* Toolbar: keep it compact, hide low-priority actions */
     .toolbar { flex-wrap: wrap; gap: 4px; }
     .path { display: none; }          /* path shown in topbar; hide here */
-    .btn.props-toggle { display: none; } /* pane toggle irrelevant on mobile */
+    .btn.props-toggle { display: none; }
+
+    /* Scrim behind properties pane overlay */
+    .props-scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 299; }
 
     /* Touch-friendly button sizing */
     .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }

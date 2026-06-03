@@ -1,6 +1,7 @@
 ---
-title: "Collation — dependency fields, overlap detection, and related-proposals panel"
-status: approved
+title: Collation — dependency fields, overlap detection, and related-proposals panel
+status: completed
+completed_date: 2026-06-03
 author: NetYeti
 created: 2026-06-02
 tags:
@@ -13,7 +14,7 @@ proposal_source:
 priority: high
 automated: off
 assigned_to: NetYeti
-scenario_synthesis: "UI prototype only — AI calls are stubbed with keyword similarity; no shell commands or deployment steps"
+scenario_synthesis: UI prototype only — AI calls are stubbed with keyword similarity; no shell commands or deployment steps
 depends_on:
   - properties-pane
 ---

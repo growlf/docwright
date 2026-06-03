@@ -113,6 +113,56 @@ def _active_plans_text() -> str:
     return "Active plans:\n" + "\n".join(lines)
 
 
+# ── Collation (keyword overlap) ────────────────────────────────────────────
+
+
+_STOP_WORDS = {
+    "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "as", "is", "was", "are", "were", "be",
+    "been", "being", "have", "has", "had", "do", "does", "did", "will",
+    "would", "could", "should", "may", "might", "shall", "can", "not",
+    "no", "nor", "so", "if", "then", "than", "that", "this", "these",
+    "those", "it", "its", "they", "them", "their", "we", "you", "our",
+    "all", "each", "every", "both", "few", "more", "most", "other",
+    "some", "such", "only", "own", "same", "too", "very", "just",
+    "about", "above", "after", "again", "against", "because", "before",
+    "between", "under", "over", "up", "down", "out", "off", "into",
+}
+
+
+def _tokenize(text: str) -> set[str]:
+    words = re.findall(r"[a-zA-Z][a-zA-Z0-9]{2,}", text.lower())
+    return {w for w in words if w not in _STOP_WORDS}
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def _scan_docs_for_collation() -> list[dict]:
+    docs = []
+    for dir_name in ["proposals", "proposals/approved", "plans", "plans/completed"]:
+        base = REPO_ROOT / dir_name
+        for path in sorted(base.glob("*.md")):
+            text = path.read_text()
+            fm_end = text.find("---", 3)
+            fm = text[3:fm_end] if fm_end > 0 else ""
+            body = text[fm_end + 3:] if fm_end > 0 else text
+            title = _extract_frontmatter_field(fm, "title") or path.stem
+            rel = str(path.relative_to(REPO_ROOT))
+            docs.append({
+                "path": rel,
+                "title": title,
+                "tokens": _tokenize(fm + "\n" + body),
+            })
+    return docs
+
+
+# ── End collation helpers ────────────────────────────────────────────────────
+
+
 def _log_transition(action: str, detail: str) -> None:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     entry = f"| {ts} | {action} | {detail} |\n"
@@ -272,6 +322,39 @@ async def get_facts() -> str:
     except Exception:
         pass
     return "\n\n---\n\n".join(parts)
+
+
+@mcp.tool()
+async def collate(threshold: float = 0.12) -> str:
+    """
+    Find overlapping proposals and plans by keyword similarity.
+    Scans all lifecycle docs, computes Jaccard similarity on significant words,
+    and groups matches above the threshold (default 0.12).
+    Pass higher threshold to reduce noise, lower to surface more potential overlaps.
+    """
+    try:
+        docs = _scan_docs_for_collation()
+        n = len(docs)
+        pairs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                score = _jaccard(docs[i]["tokens"], docs[j]["tokens"])
+                if score >= threshold:
+                    pairs.append((score, docs[i], docs[j]))
+        pairs.sort(key=lambda x: -x[0])
+
+        if not pairs:
+            return f"No overlaps found above threshold {threshold} across {n} documents."
+
+        lines = [f"Overlap analysis ({len(pairs)} pairs above threshold {threshold}):", ""]
+        for score, a, b in pairs:
+            pct = f"{score:.0%}" if score >= 0.1 else f"{score:.1%}"
+            lines.append(f"  {pct}  {a['path']}")
+            lines.append(f"       {b['path']}")
+            lines.append("")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Collation error: {e}"
 
 
 # ── MCP Tools — State Machine (Transition Tools) ─────────────────────────────

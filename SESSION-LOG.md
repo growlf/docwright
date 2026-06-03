@@ -23,11 +23,22 @@ page auto-reload on file changes from any source (external editor, git, etc.)
 
 ---
 
-## Session: 2026-05-30 (session 4) — PVE2-1 COMPLETE: cspve2 installed
+## Session: 2026-06-03 — UI Panes refactor, all plans completed
 
-**Focus:** PVE 9.1.1 auto-install on cspve2
+**Focus:** Complete remaining plans, refactor sidebar and properties pane UX
 
-See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
+**Completed:**
+- [x] All 13 plans moved to `plans/completed/` — zero active plans
+- [x] Sidebar: desktop inline flex layout + 32px collapsed strip with hover peek; mobile fixed overlay
+- [x] Properties pane: desktop inline flex item; mobile fixed right-side overlay
+- [x] Toggle state: desktop uses local state, mobile uses shared store — no double-toggle
+- [x] Sidebar scrim only on mobile (CSS guard)
+- [x] Removed fragile `padding-right` layout hack
+- [x] Added home icon to sidebar and mobile top bar
+- [x] Added gear icon for properties pane on mobile
+- [x] Added close button for sidebar on mobile
+
+**Session note:** `docs/session-notes/session_note_202606031342.md`
 
 ---
 

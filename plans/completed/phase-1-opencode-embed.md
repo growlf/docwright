@@ -1,6 +1,7 @@
 ---
 title: Phase 1 — OpenCode AI integration (Web UI first; extension deferred)
-status: in-progress
+status: completed
+completed_date: 2026-06-03
 author: NetYeti
 created: 2026-06-03
 tags:
