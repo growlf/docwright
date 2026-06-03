@@ -57,7 +57,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     }).then(r => {
-      if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, ''));
+      if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, '') + '?new=1');
     });
   }
 

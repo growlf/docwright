@@ -4,6 +4,8 @@
   "displayName": "Org Operations",
   "description": "Organizational operating system. Policy as the foundation of all work.",
   "principles": ["Security first", "Policy driven", "Test verified at every stage"],
+  "proposalCategories": ["UI", "UX", "ENGINE", "DATA"],
+  "effortSizes": { "XS": "~1d", "S": "~3d", "M": "~1w", "L": "~2w", "XL": "~1mo" },
   "version": "0.1.0",
   "documentTypes": ["inbox", "issue", "proposal", "plan", "policy", "decision", "work-item"],
   "states": {
