@@ -1,6 +1,7 @@
 ---
 title: "Sidebar polish — view mode toggle, hidden directories, context-aware new"
-status: approved
+status: completed
+completed_date: 2026-06-03
 author: NetYeti
 created: 2026-06-02
 tags:
