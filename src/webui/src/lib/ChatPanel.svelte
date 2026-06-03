@@ -21,6 +21,12 @@
   type ConnMode = 'direct' | 'proxy';
   type ProcStatus = 'stopped' | 'starting' | 'running-ours' | 'running-external';
 
+  // OpenCode uses 'user'/'assistant' or 'human'/'model' depending on version
+  function normalizeRole(role: string): 'user' | 'assistant' {
+    if (role === 'user' || role === 'human') return 'user';
+    return 'assistant'; // assistant, model, ai, tool — all render as assistant
+  }
+
   // ── Connection config (localStorage) ─────────────────────────────────────
 
   const LS_URL      = 'oc-url';
@@ -296,8 +302,8 @@
       const data = await api('GET', `session/${id}/message`);
       const list = Array.isArray(data) ? data : (data.messages ?? []);
       messages = list.map((m: any) => ({
-        id: m.id,
-        role: m.role,
+        id: m.id ?? m.messageID,
+        role: normalizeRole(m.role),
         parts: m.parts ?? [{ type: 'text', text: m.content ?? '' }],
       }));
       scrollToBottom();
@@ -629,10 +635,11 @@
 
   /* ── Messages ── */
   .messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
-  .msg { max-width: 93%; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .msg { max-width: 93%; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: #ccc; background: #1a1a1a; align-self: flex-start; }
   .msg.user      { align-self: flex-end; background: #1a2f4a; color: #c8dfff; border-bottom-right-radius: 2px; }
-  .msg.assistant { align-self: flex-start; background: #1a1a1a; color: #ccc; border-bottom-left-radius: 2px; }
-  .msg-text { display: block; }
+  .msg.assistant,
+  .msg.model     { align-self: flex-start; background: #1a1a1a; color: #ccc; border-bottom-left-radius: 2px; }
+  .msg-text { display: block; color: inherit; }
   .status-row { font-size: 11px; color: #555; padding: 1px 4px; font-style: italic; align-self: flex-start; }
 
   /* ── Input ── */
