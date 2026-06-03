@@ -1,6 +1,7 @@
 ---
 title: "Git controls panel in the Web UI"
-status: approved
+status: completed
+completed_date: 2026-06-03
 author: NetYeti
 created: 2026-06-02
 tags:
