@@ -85,21 +85,24 @@
 
   // ── UI state ─────────────────────────────────────────────────────────────
 
-  let connected    = $state(false);
-  let checking     = $state(true);
-  let showSettings = $state(false);
+  let connected     = $state(false);
+  let sseConnected  = $state(false);  // separate: EventSource is open and receiving
+  let checking      = $state(true);
+  let showSettings  = $state(false);
   let mcpRegistered = $state(false);
-  let procStatus   = $state<ProcStatus>('stopped');
-  let starting    = $state(false);
-  let startMsg    = $state('');
-  let sessions    = $state<Session[]>([]);
-  let currentID   = $state<string | null>(null);
-  let messages    = $state<Message[]>([]);
-  let input       = $state('');
-  let statusText  = $state('');
-  let sending     = $state(false);
+  let procStatus    = $state<ProcStatus>('stopped');
+  let starting      = $state(false);
+  let startMsg      = $state('');
+  let sessions      = $state<Session[]>([]);
+  let currentID     = $state<string | null>(null);
+  let messages      = $state<Message[]>([]);
+  let input         = $state('');
+  let statusText    = $state('');
+  let sending       = $state(false);
+  let lastEventType = $state('');   // debug: last SSE event seen
   let msgEnd: HTMLElement | undefined;
   let es: EventSource | null = null;
+  let sseRetries    = 0;
 
   // The correct opencode serve command for this browser's origin
   let serveCmd = $derived(
@@ -165,14 +168,40 @@
 
   function openEventStream() {
     if (es) { es.close(); es = null; }
+    sseConnected = false;
     const url = sseUrl('event');
+    console.debug('[DocWright chat] Opening SSE stream:', url);
     es = new EventSource(url);
-    es.onmessage = (e) => {
-      try { handleEvent(JSON.parse(e.data)); } catch { /* ignore */ }
+
+    es.onopen = () => {
+      console.debug('[DocWright chat] SSE stream opened');
+      sseConnected = true;
+      sseRetries = 0;
     };
-    es.onerror = () => {
-      connected = false;
-      es?.close(); es = null;
+
+    es.onmessage = (e) => {
+      sseConnected = true; // mark on first message if onopen didn't fire
+      try {
+        const ev = JSON.parse(e.data);
+        console.debug('[DocWright chat] SSE event:', ev.type, ev.properties);
+        lastEventType = ev.type;
+        handleEvent(ev);
+      } catch (err) {
+        console.warn('[DocWright chat] Failed to parse SSE event:', e.data, err);
+      }
+    };
+
+    es.onerror = (err) => {
+      console.warn('[DocWright chat] SSE error (retry', sseRetries, '):', err);
+      sseConnected = false;
+      sseRetries++;
+      // Don't immediately disconnect — EventSource auto-retries.
+      // Only hard-disconnect after 5 consecutive failures.
+      if (sseRetries >= 5) {
+        console.error('[DocWright chat] SSE gave up after 5 retries');
+        connected = false;
+        es?.close(); es = null;
+      }
     };
   }
 
@@ -242,9 +271,20 @@
   async function newSession() {
     try {
       const s = await api('POST', 'session', {});
-      sessions = [s, ...sessions];
-      await selectSession(s.id);
-    } catch (e) { console.error('Failed to create session', e); }
+      // OpenCode may return { id } or { sessionID } or nested { session: { id } }
+      const id: string = s?.id ?? s?.sessionID ?? s?.session?.id ?? s?.session?.sessionID;
+      if (!id) {
+        console.error('[DocWright chat] Session create returned no ID:', s);
+        statusText = 'Could not get session ID — check console';
+        return;
+      }
+      console.debug('[DocWright chat] Created session:', id);
+      sessions = [{ id, title: s?.title }, ...sessions];
+      await selectSession(id);
+    } catch (e) {
+      console.error('[DocWright chat] Session create failed:', e);
+      statusText = 'Session create failed — check console';
+    }
   }
 
   async function selectSession(id: string) {
@@ -269,7 +309,10 @@
 
   async function send() {
     const text = input.trim();
-    if (!text || !currentID || sending) return;
+    if (!text) return;
+    if (!currentID) { statusText = 'No active session — try New Session'; return; }
+    if (sending) return;
+    console.debug('[DocWright chat] Sending to session', currentID, ':', text.slice(0, 60));
     input = '';
     sending = true;
     statusText = 'thinking…';
@@ -339,7 +382,10 @@
     </span>
     {#if connected}
       <span class="dot green"
-        title={procStatus === 'running-ours' ? 'Started by DocWright (this server)' : 'Connected'}
+        title={procStatus === 'running-ours' ? 'Started by DocWright (this server)' : 'OpenCode connected'}
+      ></span>
+      <span class="dot {sseConnected ? 'sse-ok' : 'sse-warn'}"
+        title={sseConnected ? 'Event stream live' : 'Event stream connecting…'}
       ></span>
       {#if procStatus === 'running-ours'}
         <button class="icon-btn" onclick={stopViaServer} title="Stop OpenCode (started by this server)">■</button>
@@ -440,14 +486,22 @@
     <div class="session-bar">
       <select class="session-select"
         onchange={(e) => selectSession((e.target as HTMLSelectElement).value)}>
+        {#if sessions.length === 0}
+          <option value="">No sessions</option>
+        {/if}
         {#each sessions as s}
           <option value={s.id} selected={s.id === currentID}>
-            {s.title || s.id.slice(0, 14) + '…'}
+            {s.title || s.id?.slice(0, 14) + '…'}
           </option>
         {/each}
       </select>
       <button class="icon-btn" onclick={newSession} title="New session">＋</button>
     </div>
+    {#if !currentID}
+      <div class="no-session-warn">No active session — click ＋ to create one</div>
+    {:else if !sseConnected}
+      <div class="no-session-warn">Event stream connecting… responses may not appear yet</div>
+    {/if}
 
     <!-- Messages -->
     <div class="messages">
@@ -501,8 +555,13 @@
   }
   .mode-badge.proxy { background: #2a1a4a; color: #a78bfa; border-color: #4a2b84; }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .dot.green { background: #6d6; box-shadow: 0 0 4px #6d6; }
-  .dot.grey  { background: #444; }
+  .dot.green    { background: #6d6; box-shadow: 0 0 4px #6d6; }
+  .dot.grey     { background: #444; }
+  .dot.sse-ok   { background: #58a6ff; box-shadow: 0 0 3px #58a6ff; }
+  .dot.sse-warn { background: #cc6; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .no-session-warn { padding: 4px 12px; font-size: 10px; color: #cc6; background: #1a1a00; border-bottom: 1px solid #333300; }
   .icon-btn  { background: none; border: none; color: #555; cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 3px; }
   .icon-btn:hover { color: #aaa; background: #1a1a1a; }
   .icon-btn.close:hover { color: #e44; }
