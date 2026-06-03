@@ -203,16 +203,20 @@
 
 <style>
   .pane {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
     width: 280px;
-    min-width: 280px;
     background: #111;
     border-left: 1px solid #2a2a2a;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    transition: min-width 0.15s, width 0.15s;
+    transition: width 0.15s;
+    z-index: 100;
   }
-  .pane.collapsed { width: 32px; min-width: 32px; }
+  .pane.collapsed { width: 32px; overflow: hidden; }
 
   .pane-header {
     display: flex;

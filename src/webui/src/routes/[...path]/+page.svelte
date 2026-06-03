@@ -290,7 +290,7 @@
 
 <div class="page-wrap">
   <!-- Main content -->
-  <div class="page-body">
+  <div class="page-body" class:pane-open={showProps && mode !== 'source'}>
     <div class="toolbar">
       <span class="path">{filePath()}</span>
       <div class="actions">
@@ -387,8 +387,9 @@
 {/if}
 
 <style>
-  .page-wrap { display: flex; min-height: 100%; align-items: stretch; }
-  .page-body { flex: 1; min-width: 0; padding: 32px; max-width: 800px; }
+  .page-wrap { display: block; min-height: 100%; }
+  .page-body { padding: 32px; }
+  .page-body.pane-open { padding-right: 296px; /* 280px pane + 16px gap */ }
 
   .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
   .fm     { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px; background: #222; border-radius: 6px; margin-bottom: 24px; font-size: 12px; }
