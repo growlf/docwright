@@ -1,5 +1,5 @@
 ---
-title: "Sidebar polish — view mode toggle and hidden directories"
+title: "Sidebar polish — view mode toggle, hidden directories, context-aware new"
 status: approved
 author: NetYeti
 created: 2026-06-02
@@ -10,6 +10,7 @@ tags:
 proposal_source:
   - proposals/approved/ui-view_includes_all.md
   - proposals/approved/ux-hide-old-cycle-docs.md
+  - proposals/approved/context-of-new.md
 priority: medium
 automated: off
 assigned_to: NetYeti
@@ -59,7 +60,25 @@ Add to `org-operations/profile.json`:
 "hiddenDirectories": ["proposals/approved", "plans/completed"]
 ```
 
-### 4. Tests / verification
+### 4. Context-aware "+" on directory rows
+
+- Hovering any directory row in `DirNode.svelte` reveals a small "+" button
+  on the right of the row (opacity 0 → 1 on hover, matching existing style)
+- Clicking it performs the default action for that directory:
+
+  | Directory prefix | Action |
+  |-----------------|--------|
+  | `proposals` | `newProposal()` from `+layout.svelte` |
+  | `plans` | Prompt for plan title, create stub with plan frontmatter template |
+  | `docs` | Generic new file in that directory |
+  | `policies` | New file with policy frontmatter template |
+  | Anything else | Generic new file in that directory |
+
+- The mapping is defined in `profile.json` → `directoryActions` (future); for
+  now it is a simple prefix match in `DirNode.svelte`
+- The global "+" header button keeps its full New File / New Proposal menu
+
+### 5. Tests / verification
 
 - Docs mode: confirm meta-files and archived dirs absent from tree
 - All files mode: confirm everything visible including non-markdown
