@@ -62,6 +62,16 @@ When DocWright helps a team write a proposal or plan, it should prompt them to c
 security implications, ground decisions in policy, and define how the outcome will be
 verified before it ships.
 
+**Keep good ideas for later.** Every plan and proposal that sets something aside MUST
+capture it as a deferred proposal before closing. Good ideas not captured are good ideas
+lost. See [[policies/core/capture-deferred-ideas.md]].
+
+**Multiple perspectives produce better outcomes.** No single AI model, and no single
+person, has complete knowledge or perfect judgment. DocWright was built by triangulating
+between Claude, BigPickle (OpenCode's configured LLM), and the BDFL — each catching
+what the others missed. This practice must be preserved and made easy for every
+organization that adopts DocWright. See [[policies/core/multi-perspective-review.md]].
+
 ## Key architectural invariants — never break these
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.

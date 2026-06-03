@@ -119,25 +119,32 @@
     <div class="pane-actions">
       {#if docType === 'proposal'}
         {#if !frontmatter.approved}
-          <button class="act approve" onclick={approve}>Approve</button>
+          <button class="act approve" onclick={approve}
+            title="Set approved: true and save — marks this proposal as approved for planning">Approve</button>
         {:else}
-          <button class="act unapprove" onclick={unapprove}>Unapprove</button>
+          <button class="act unapprove" onclick={unapprove}
+            title="Revoke approval — sets approved: false">Unapprove</button>
         {/if}
-        <button class="act related" onclick={() => onfindrelated?.()}>Find Related</button>
+        <button class="act related" onclick={() => onfindrelated?.()}
+          title="Scan vault for proposals with similar content using keyword matching">Find Related</button>
       {/if}
       {#if docType === 'plan'}
         {#if frontmatter.status === 'approved'}
-          <button class="act start" onclick={() => setPlanStatus('in-progress')}>Start</button>
+          <button class="act start" onclick={() => setPlanStatus('in-progress')}
+            title="Set status: in-progress — marks this plan as actively being worked">Start</button>
         {/if}
         {#if frontmatter.status === 'in-progress'}
-          <button class="act complete" onclick={() => setPlanStatus('completed')}>Complete</button>
+          <button class="act complete" onclick={() => setPlanStatus('completed')}
+            title="Set status: completed and move plan to plans/completed/">Complete</button>
         {/if}
         {#if frontmatter.status !== 'completed' && frontmatter.status !== 'canceled'}
-          <button class="act cancel-plan" onclick={() => setPlanStatus('canceled')}>Cancel</button>
+          <button class="act cancel-plan" onclick={() => setPlanStatus('canceled')}
+            title="Set status: canceled — plan will no longer appear as active">Cancel</button>
         {/if}
       {/if}
       {#if mode === 'edit'}
-        <button class="act save" onclick={() => onsave?.()}>Save</button>
+        <button class="act save" onclick={() => onsave?.()}
+          title="Save changes to disk and commit frontmatter">Save</button>
       {/if}
     </div>
 

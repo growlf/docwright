@@ -57,7 +57,7 @@
 <div class="panel">
   <div class="panel-header">
     <span class="panel-title">Related proposals</span>
-    <button class="close-btn" onclick={onclose}>✕</button>
+    <button class="close-btn" onclick={onclose} title="Close related proposals panel">✕</button>
   </div>
 
   {#if loading}
@@ -70,7 +70,7 @@
     </div>
     {#each matches as match}
       <div class="match" class:subsumed={subsumed.has(match.path)}>
-        <button class="match-header" onclick={() => toggleExpand(match.path)}>
+        <button class="match-header" onclick={() => toggleExpand(match.path)} title="Click to expand and see matching sections">
           <span class="match-title">{match.title || match.path}</span>
           <span class="score {scoreLabel(match.score)}">{Math.round(match.score * 100)}%</span>
           <span class="expand-icon">{expanded.has(match.path) ? '▾' : '▸'}</span>
@@ -85,7 +85,8 @@
                   {#if inserted.has(match.path + '#' + section.heading)}
                     <span class="inserted-badge">✓ inserted</span>
                   {:else if section.content.trim()}
-                    <button class="insert-btn" onclick={() => handleInsert(match, section)}>
+                    <button class="insert-btn" onclick={() => handleInsert(match, section)}
+                      title="Quote this section into the current document as a blockquote">
                       Insert ↓
                     </button>
                   {/if}
@@ -100,7 +101,7 @@
 
             {#if !subsumed.has(match.path)}
               <div class="subsume-row">
-                <label class="subsume-label">
+                <label class="subsume-label" title="Mark the related proposal as absorbed into this one — sets subsumed_by in its frontmatter so it no longer appears as a standalone open proposal">
                   <input type="checkbox" onchange={() => handleSubsume(match)} />
                   Mark as subsumed by this proposal
                 </label>

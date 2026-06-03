@@ -245,12 +245,13 @@
     const res = await fetch('/api/overlap?path=' + encodeURIComponent(fp));
     if (!res.ok) return;
     const { matches } = await res.json();
-    for (const m of matches) {
-      showToast(`Possible overlap with "${m.title}" (${Math.round(m.score * 100)}% match) →`, 0, {
-        label: 'Review',
-        onclick: () => goto('/' + m.path.replace(/\.md$/, '')),
-      });
-    }
+    if (matches.length === 0) return;
+    collationMatches = matches;
+    showToast(
+      `${matches.length} related proposal${matches.length === 1 ? '' : 's'} found`,
+      8000,
+      { label: 'Review', onclick: () => { showCollation = true; } }
+    );
   }
 
   async function findRelated() {
@@ -338,7 +339,8 @@
         <button class="btn props-toggle" onclick={toggleProps} title="Toggle properties">
           ⊞
         </button>
-        <button class="btn mode-toggle" onclick={cycleMode}>
+        <button class="btn mode-toggle" onclick={cycleMode}
+          title={mode === 'read' ? 'Switch to WYSIWYG editor' : mode === 'edit' ? 'Switch to raw Markdown / frontmatter source' : 'Switch to read-only preview'}>
           {mode === 'read' ? 'Edit' : mode === 'edit' ? 'Source' : 'Preview'}
         </button>
       </div>

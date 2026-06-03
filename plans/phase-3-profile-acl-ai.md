@@ -1,0 +1,57 @@
+---
+title: Phase 3 — Profile Engine, ACL & AI Integration
+status: approved
+author: NetYeti
+created: 2026-06-03
+tags:
+  - phase-3
+  - profile-engine
+  - acl
+  - ai
+  - dispatch
+priority: medium
+automated: off
+assigned_to: NetYeti
+depends_on:
+  - phase-2-foundation
+---
+
+# Phase 3 — Profile Engine, ACL & AI Integration
+
+## Overview
+
+Phase 3 completes the profile engine with all four bundled profiles, wires
+in ACL enforcement via Forgejo team membership, and enables full AI write
+flows through the ACL controller. By the end of this phase, DocWright
+enforces policy automatically and every AI action is auditable.
+
+This plan tracks all Phase 3 deliverables. Each deliverable will be broken
+out into its own plan when Phase 2 is complete and work begins.
+
+## Deliverables
+
+| # | Deliverable | Status | Notes |
+|---|-------------|--------|-------|
+| 1 | Full profile engine — all four bundled profiles loaded and validated | ⏳ Planned | org-operations, doc-lifecycle, infra-topology, knowledge-base |
+| 2 | `profile.json` schema validation on load | ⏳ Planned | Fail loudly on malformed profiles |
+| 3 | ACL controller — Forgejo team membership as enforcement source | ⏳ Planned | `src/dispatch/acl.ts` wired to Forgejo API |
+| 4 | Branch protection enforcement via Forgejo teams | ⏳ Planned | Write access gated by team membership |
+| 5 | AI write flows through ACL controller | ⏳ Planned | All AI mutations carry `ai-last-action:` stamps |
+| 6 | `author-role:` frontmatter populated from Forgejo team on scaffold | ⏳ Planned | Audit record, not enforcement |
+| 7 | Wikilink graph — real backlink index (`_backlinks.json`) | ⏳ Planned | Replace stub; based on gowtham0992/link pattern |
+| 8 | Related-documents panel — real LLM Jaccard replacement | ⏳ Planned | Replace overlap detection stub with dispatch LLM call |
+| 9 | LLM Wiki engine (`src/dispatch/llmwiki.ts`) — Ingest/Lint/Save-to-Wiki | ⏳ Planned | knowledge-base profile; Karpathy pattern |
+| 10 | `opencode-instructions.md` for all four bundled profiles | ⏳ Planned | Each must embed core philosophy + security/policy prompts |
+| 11 | Frontmatter linter (`src/dispatch/linter.ts`) — full schema enforcement | ⏳ Planned | Runs on save; surfaces violations in Web UI |
+| 12 | Promote workflow (`src/dispatch/promote.ts`) — status transitions | ⏳ Planned | Validates transitions against profile state machine |
+
+## Phase Context
+
+See [[plans/phase-2-foundation]] for Phase 2 deliverables.
+Phase 3 begins after Phase 2 is complete and the extension skeleton is stable.
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |
