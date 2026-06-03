@@ -20,6 +20,8 @@
   "requiredFrontmatter": ["type", "status", "created", "author", "author-role"],
   "optionalFrontmatter": ["parent", "policy-area", "tags", "origin", "ai-last-action",
     "category", "complexity", "estimated_effort", "depends_on", "due_date", "subsumed_by"],
+  "sidebarExcludePatterns": ["AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "NOTICE.md", "SECURITY.md", "PROPOSAL.md", "SESSION-LOG.md"],
+  "hiddenDirectories": ["proposals/approved", "plans/completed"],
   "features": {
     "wikilinks": true,
     "graph": true,

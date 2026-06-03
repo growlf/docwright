@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getContext } from 'svelte';
+  import { goto } from '$app/navigation';
   import DirNode from './DirNode.svelte';
   import { fileChanged } from '$lib/fileChanges';
 
@@ -11,6 +13,12 @@
 
   let { item, currentPath }: { item: TreeItem; currentPath: string } = $props();
 
+  const sidebar = getContext<{
+    viewMode: 'docs' | 'all';
+    showArchived: boolean;
+    hiddenDirs: string[];
+  }>('sidebar');
+
   let collapsed = $state(true);
   let showMenu = $state(false);
   let menuX = $state(0);
@@ -19,9 +27,7 @@
   let createType = $state<'file' | 'folder'>('file');
   let newName = $state('');
 
-  function toggle() {
-    if (!creating) collapsed = !collapsed;
-  }
+  function toggle() { if (!creating) collapsed = !collapsed; }
 
   function handleContext(e: MouseEvent) {
     e.preventDefault();
@@ -29,23 +35,20 @@
     menuX = e.clientX;
     menuY = e.clientY;
   }
-
-  function closeMenu() {
-    showMenu = false;
-  }
+  function closeMenu() { showMenu = false; }
 
   function startCreate(type: 'file' | 'folder') {
     createType = type;
     creating = true;
     newName = type === 'file' ? 'untitled.md' : 'new-folder';
     showMenu = false;
+    collapsed = false;
   }
 
   async function confirmCreate() {
     if (!newName.trim()) { creating = false; return; }
     const name = createType === 'file' && !newName.endsWith('.md') ? newName + '.md' : newName;
     const fullPath = item.path + '/' + name;
-
     if (createType === 'folder') {
       await fetch('/api/mkdir?path=' + encodeURIComponent(fullPath), { method: 'POST' });
     } else {
@@ -55,9 +58,7 @@
         body: JSON.stringify({ content: '# ' + name.replace(/\.md$/, '') + '\n\n' }),
       });
     }
-
     creating = false;
-    collapsed = false;
     fileChanged.set({ path: fullPath });
   }
 
@@ -65,6 +66,57 @@
     if (e.key === 'Enter') confirmCreate();
     else if (e.key === 'Escape') creating = false;
   }
+
+  // Context-aware "+" — proposal/plan/policy templates vs generic file
+  async function contextNew(e: MouseEvent) {
+    e.stopPropagation();
+    collapsed = false;
+    const dir = item.path;
+    const date = new Date().toISOString().slice(0, 10);
+
+    if (dir === 'proposals' || dir.startsWith('proposals/')) {
+      const title = prompt('Proposal title:');
+      if (!title) return;
+      const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') + '.md';
+      const content =
+        '---\ntitle: "' + title + '"\nauthor: NetYeti\ncreated: ' + date +
+        '\ntags: []\ncategory: []\ncomplexity: ""\nestimated_effort: ""\ndepends_on: []\n' +
+        'approved: false\ncreated_by: "NetYeti@phoenix"\nassigned_to: ""\n---\n\n## Problem\n\n\n## Proposed Solution\n\n';
+      const path = dir + '/' + slug;
+      const res = await fetch('/api/write?path=' + encodeURIComponent(path), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) goto('/' + path.replace(/\.md$/, '') + '?new=1');
+
+    } else if (dir === 'policies' || dir.startsWith('policies/')) {
+      const title = prompt('Policy title:');
+      if (!title) return;
+      const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') + '.md';
+      const content =
+        '---\ntitle: "' + title + '"\nstatus: draft\nauthor: NetYeti\ncreated: ' + date +
+        '\nauthor-role: governance\ntags: []\n---\n\n## Statement\n\n\n## Rationale\n\n';
+      const path = dir + '/' + slug;
+      const res = await fetch('/api/write?path=' + encodeURIComponent(path), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) goto('/' + path.replace(/\.md$/, '') + '?new=1');
+
+    } else {
+      startCreate('file');
+    }
+  }
+
+  // Filter children based on view mode and archived state
+  let visibleChildren = $derived(
+    (item.children ?? []).filter(child => {
+      if (sidebar.viewMode === 'all') return true;
+      if (child.type === 'file' && !child.name.endsWith('.md')) return false;
+      if (child.type === 'dir' && !sidebar.showArchived && sidebar.hiddenDirs.includes(child.path)) return false;
+      return true;
+    })
+  );
 </script>
 
 {#if item.type === 'dir'}
@@ -75,7 +127,7 @@
         <span class="arrow">{collapsed ? '▸' : '▾'}</span>
         <span class="dir-name">{item.name}</span>
       </button>
-      <button class="add-btn" onclick={() => { collapsed = false; startCreate('file'); }} title="New file">+</button>
+      <button class="add-btn" onclick={contextNew} title="New item">+</button>
     </div>
 
     {#if showMenu}
@@ -99,21 +151,21 @@
           />
         </div>
       {/if}
-      {#if item.children}
-        {#each item.children as child}
-          {#if child.type === 'dir'}
-            <DirNode item={child} {currentPath} />
-          {:else}
-            <a
-              href="/{child.path.replace(/\.md$/, '')}"
-              class="file-link"
-              class:active={'/' + child.path.replace(/\.md$/, '') === currentPath}
-            >
-              {child.name.replace(/\.md$/, '')}
-            </a>
-          {/if}
-        {/each}
-      {/if}
+      {#each visibleChildren as child}
+        {#if child.type === 'dir'}
+          <DirNode item={child} {currentPath} />
+        {:else}
+          <a
+            href={child.name.endsWith('.md') ? '/' + child.path.replace(/\.md$/, '') : '/api/read?path=' + child.path}
+            class="file-link"
+            class:active={'/' + child.path.replace(/\.md$/, '') === currentPath}
+            target={child.name.endsWith('.md') ? undefined : '_blank'}
+            rel={child.name.endsWith('.md') ? undefined : 'noopener'}
+          >
+            {child.name.replace(/\.md$/, '')}
+          </a>
+        {/if}
+      {/each}
     </div>
   </div>
 {/if}
@@ -129,7 +181,7 @@
   .add-btn:hover { background: #222; color: #fff; }
   .children { padding-left: 16px; }
   .children.hidden { display: none; }
-  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: #aaa; text-decoration: none; cursor: pointer; }
+  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: #aaa; text-decoration: none; }
   .file-link:hover { background: #1a1a1a; color: #fff; }
   .file-link.active { background: #2b5b84; color: #fff; }
   .context-menu { position: fixed; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 4px 0; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
