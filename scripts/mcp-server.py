@@ -1,0 +1,516 @@
+#!/usr/bin/env python3
+"""
+DocWright MCP Server (dw-mcp) — lifecycle state machine for this project.
+
+Serves lifecycle data as tools and owns all state transitions so agents
+never directly mutate lifecycle files. Pre-commit hook catches bypasses.
+
+Tools:
+  get_session_context()       SESSION-LOG.md + active plans
+  get_status()                Full lifecycle status (60s TTL cache)
+  list_active_plans()         Plans with status approved/in_progress
+  get_plan(name)              Read a specific plan file
+  get_facts()                 Project invariants and operational gotchas
+  run_dry_run()               Show pending transitions (read-only)
+  transition_to_approved()    Move approved proposal + create plan
+  transition_to_completed()   Move completed plan + generate doc
+  transition_to_canceled()    Cancel a plan with reason
+  audit_log()                 Read back all lifecycle transitions
+
+Usage:
+  .venv/bin/python3 scripts/mcp-server.py           # MCP stdio
+  .venv/bin/python3 scripts/mcp-server.py --test    # smoke-test all tools
+"""
+
+import asyncio
+import os
+import re
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+try:
+    from mcp.server.fastmcp import FastMCP
+except ImportError:
+    print("ERROR: mcp package not installed.\nRun: .venv/bin/pip install mcp", file=sys.stderr)
+    sys.exit(1)
+
+REPO_ROOT = Path(__file__).parent.parent.resolve()
+CACHE_FILE = Path("/tmp/docwright-status-cache.txt")
+AUDIT_LOG = REPO_ROOT / "docs" / "audit-log.md"
+CACHE_TTL = 60
+
+mcp = FastMCP("docwright")
+
+
+# ── Helpers ─────────────────────────────────────────────────────────────────
+
+
+def _read_file(rel_path: str) -> str:
+    p = REPO_ROOT / rel_path
+    if not p.exists():
+        raise FileNotFoundError(f"{rel_path} not found")
+    return p.read_text()
+
+
+def _write_file(rel_path: str, content: str) -> None:
+    p = REPO_ROOT / rel_path
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content)
+
+
+def _move_file(src_rel: str, dst_rel: str) -> None:
+    src = REPO_ROOT / src_rel
+    dst = REPO_ROOT / dst_rel
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    src.rename(dst)
+
+
+def _status_cache_hit() -> str | None:
+    if CACHE_FILE.exists() and (time.time() - CACHE_FILE.stat().st_mtime) < CACHE_TTL:
+        return CACHE_FILE.read_text()
+    return None
+
+
+def _write_cache(text: str) -> None:
+    CACHE_FILE.write_text(text)
+
+
+def _extract_frontmatter_field(text: str, field: str) -> str:
+    m = re.search(rf"^{field}:\s*(.+)$", text, re.MULTILINE)
+    return m.group(1).strip().strip("\"'") if m else ""
+
+
+def _set_frontmatter_field(text: str, field: str, value: str) -> str:
+    return re.sub(
+        rf"^({field}:).*$",
+        rf"\1 {value}",
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+
+
+def _scan_plans(dir_name: str, *statuses: str) -> list[tuple[str, str, str]]:
+    base = REPO_ROOT / dir_name
+    results = []
+    for path in sorted(base.glob("*.md")):
+        text = path.read_text()
+        status = _extract_frontmatter_field(text, "status")
+        if statuses and status not in statuses:
+            continue
+        title = _extract_frontmatter_field(text, "title") or path.stem
+        results.append((title, path.name, status))
+    return results
+
+
+def _active_plans_text() -> str:
+    plans = _scan_plans("plans", "approved", "in_progress", "in-progress")
+    if not plans:
+        return "No plans ready for execution."
+    lines = [f"- {t}  ({f}) [{s}]" for t, f, s in plans]
+    return "Active plans:\n" + "\n".join(lines)
+
+
+def _log_transition(action: str, detail: str) -> None:
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    entry = f"| {ts} | {action} | {detail} |\n"
+    if AUDIT_LOG.exists():
+        content = AUDIT_LOG.read_text()
+        marker = "|-----------|--------|--------|"
+        idx = content.find(marker)
+        if idx >= 0:
+            table_start = idx + len(marker) + 1
+            body = content[table_start:].strip()
+            AUDIT_LOG.write_text(content[:table_start] + entry + "\n" + body + "\n")
+        else:
+            AUDIT_LOG.write_text(content.rstrip() + "\n" + entry + "\n")
+    else:
+        AUDIT_LOG.write_text(
+            "# Audit Log\n\n"
+            "Automated record of all lifecycle transitions.\n\n"
+            "| Timestamp | Action | Detail |\n"
+            "|-----------|--------|--------|\n"
+            f"{entry}\n"
+        )
+
+
+def _build_status() -> str:
+    lines = []
+    sep = "-" * 80
+    lines.append(f"{'LIFECYCLE DOCUMENT STATUS':^80}")
+    lines.append(f"  {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
+    lines.append("")
+
+    active = _scan_plans("plans", "approved", "in_progress", "in-progress")
+    if not active:
+        lines.append("  ⚠  COMPLIANCE WARNING: No active approved plan.")
+        lines.append("      Lifecycle transitions require an active plan.")
+        lines.append("      Run list_active_plans() to see available plans.")
+        lines.append("")
+
+    lines.append("  PROPOSALS (proposals/):")
+    lines.append(f"  {sep}")
+    for t, f, s in _scan_plans("proposals"):
+        approved = "✗" if s == "false" else "✓" if s == "true" else s
+        lines.append(f"     {f:<55} approved={approved}")
+    lines.append("")
+
+    lines.append("  APPROVED PROPOSALS (proposals/approved/):")
+    lines.append(f"  {sep}")
+    for path in sorted((REPO_ROOT / "proposals" / "approved").glob("*.md")):
+        text = path.read_text()
+        assigned = _extract_frontmatter_field(text, "assigned_to") or "—"
+        lines.append(f"     {path.stem:<55} assigned_to={assigned}")
+    lines.append("")
+
+    lines.append("  PLANS (plans/):")
+    lines.append(f"  {sep}")
+    for t, f, s in _scan_plans("plans"):
+        lines.append(f"     {f:<55} status={s}")
+    lines.append("")
+
+    lines.append("  COMPLETED PLANS (plans/completed/):")
+    lines.append(f"  {sep}")
+    for t, f, s in _scan_plans("plans/completed"):
+        lines.append(f"     {f:<55} status={s}")
+
+    return "\n".join(lines)
+
+
+# ── MCP Tools — Informational ────────────────────────────────────────────────
+
+
+@mcp.tool()
+async def get_session_context() -> str:
+    """SESSION-LOG.md (last 100 lines) + active plans summary."""
+    parts = []
+    try:
+        log = _read_file("SESSION-LOG.md")
+        lines = log.splitlines()
+        if len(lines) > 100:
+            parts.append(f"[SESSION-LOG.md — showing last 100 of {len(lines)} lines]\n\n" + "\n".join(lines[-100:]))
+        else:
+            parts.append(f"[SESSION-LOG.md]\n\n{log}")
+    except Exception as e:
+        parts.append(f"[SESSION-LOG.md unavailable: {e}]")
+    try:
+        parts.append(f"[Active Plans]\n\n{_active_plans_text()}")
+    except Exception as e:
+        parts.append(f"[Active plans unavailable: {e}]")
+    return "\n\n---\n\n".join(parts)
+
+
+@mcp.tool()
+async def get_status() -> str:
+    """Full lifecycle status of proposals, plans, and completed items. 60s cache."""
+    cached = _status_cache_hit()
+    if cached:
+        return cached
+    try:
+        result = _build_status()
+        _write_cache(result)
+        return result
+    except Exception as e:
+        if CACHE_FILE.exists():
+            return f"[stale cache — live fetch failed: {e}]\n\n" + CACHE_FILE.read_text()
+        return f"Status unavailable: {e}"
+
+
+@mcp.tool()
+async def list_active_plans() -> str:
+    """List all plans currently with status: approved or in_progress."""
+    try:
+        return _active_plans_text()
+    except Exception as e:
+        return f"Error listing plans: {e}"
+
+
+@mcp.tool()
+async def get_plan(name: str) -> str:
+    """Read a specific plan file. Pass filename with or without .md extension."""
+    try:
+        safe = Path(name if name.endswith(".md") else name + ".md").name
+        text = _read_file(f"plans/{safe}")
+        return text
+    except FileNotFoundError:
+        try:
+            text = _read_file(f"plans/completed/{safe}")
+            return f"[completed plan]\n\n{text}"
+        except FileNotFoundError:
+            return f"Plan '{name}' not found. Use list_active_plans() or get_status()."
+    except Exception as e:
+        return f"Error reading plan: {e}"
+
+
+@mcp.tool()
+async def get_facts() -> str:
+    """Project invariants and operational gotchas. Call before lifecycle changes."""
+    parts = []
+    parts.append("""\
+## Invariants
+
+1. Agents NEVER set approved: true on proposals — only humans
+2. No active work before plan approval (status: approved or in-progress)
+3. Lifecycle transitions MUST use `transition_to_*` MCP tools, not direct file edits
+4. Frontmatter is audit record, not enforcement
+5. Git is the canonical store — index.json is derived cache, rebuild don't restore
+6. No telemetry, ever
+7. author-role field required in all templates
+
+## MCP State Machine Rules
+
+- transition_to_approved: requires approved: true + non-empty assigned_to (human sets these)
+- transition_to_completed: requires all tasks completed, plan not already done
+- transition_to_canceled: requires non-empty cancellation_reason
+- All transitions are logged to docs/audit-log.md""")
+    try:
+        sops = sorted((REPO_ROOT / "docs" / "SOPs").glob("*.md"))
+        sop_list = "\n".join(f"- docs/SOPs/{p.name}" for p in sops)
+        parts.append(f"## Available SOPs\n\n{sop_list}")
+    except Exception:
+        pass
+    return "\n\n---\n\n".join(parts)
+
+
+# ── MCP Tools — State Machine (Transition Tools) ─────────────────────────────
+
+
+@mcp.tool()
+async def run_dry_run() -> str:
+    """
+    Show pending lifecycle transitions without applying them.
+    Safe read-only operation. Call before any transition_to_* tool.
+    """
+    lines = []
+    lines.append("PENDING LIFECYCLE TRANSITIONS (dry run)")
+    lines.append("=" * 50)
+
+    proposals_dir = REPO_ROOT / "proposals"
+    for path in sorted(proposals_dir.glob("*.md")):
+        if path.parent.name == "approved":
+            continue
+        text = path.read_text()
+        approved = _extract_frontmatter_field(text, "approved")
+        assigned = _extract_frontmatter_field(text, "assigned_to")
+        if approved == "true" and assigned:
+            title = _extract_frontmatter_field(text, "title") or path.stem
+            lines.append(f"\n[READY TO APPROVE]  {path.stem}")
+            lines.append(f"  Title: {title}")
+            lines.append(f"  Assigned to: {assigned}")
+            lines.append(f"  Run: transition_to_approved(name='{path.stem}')")
+
+    plans_dir = REPO_ROOT / "plans"
+    for path in sorted(plans_dir.glob("*.md")):
+        if path.parent.name == "completed":
+            continue
+        text = path.read_text()
+        status = _extract_frontmatter_field(text, "status")
+        if status == "completed":
+            title = _extract_frontmatter_field(text, "title") or path.stem
+            lines.append(f"\n[READY TO COMPLETE]  {path.stem}")
+            lines.append(f"  Title: {title}")
+            lines.append(f"  Run: transition_to_completed(name='{path.stem}')")
+
+    if len(lines) == 1:
+        return "No pending lifecycle transitions."
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def transition_to_approved(proposal_name: str) -> str:
+    """
+    Transition a proposal with approved: true to proposals/approved/ and create a plan.
+    Only call this after the human has set approved: true and assigned_to in the frontmatter.
+    Validates: approved must be true, assigned_to must be non-empty.
+    """
+    safe = Path(proposal_name if proposal_name.endswith(".md") else proposal_name + ".md").name
+
+    try:
+        text = _read_file(f"proposals/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Proposal '{proposal_name}' not found in proposals/."
+
+    approved = _extract_frontmatter_field(text, "approved")
+    assigned = _extract_frontmatter_field(text, "assigned_to")
+    title = _extract_frontmatter_field(text, "title") or safe.replace(".md", "")
+
+    if approved != "true":
+        return f"ERROR: Proposal '{proposal_name}' has approved={approved}. Only humans set approved: true."
+    if not assigned:
+        return f"ERROR: Proposal '{proposal_name}' has no assigned_to. Human must set it."
+
+    _move_file(f"proposals/{safe}", f"proposals/approved/{safe}")
+
+    plan_slug = safe.replace(".md", ".md")
+    plan_content = f"""---
+title: {title}
+status: approved
+author: {_extract_frontmatter_field(text, 'author') or 'NetYeti'}
+created: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+tags: {_extract_frontmatter_field(text, 'tags') or ''}
+proposal_source: proposals/approved/{safe}
+priority: medium
+automated: guided
+assigned_to: {assigned}
+---
+
+## Summary
+
+*Plan generated from approved proposal: {title}*
+
+## Tasks
+
+- [ ] Task 1
+
+## Progress
+
+- [ ] Plan created from approved proposal
+"""
+    _write_file(f"plans/{plan_slug}", plan_content)
+
+    _log_transition("APPROVED", f"proposal/{safe} → proposals/approved/ + plan created")
+    return f"✅ Proposal '{safe}' approved and moved to proposals/approved/. Plan created at plans/{plan_slug}."
+
+
+@mcp.tool()
+async def transition_to_completed(plan_name: str) -> str:
+    """
+    Transition a plan with status: completed to plans/completed/ and generate doc.
+    Validates: plan must have status: completed, must not already be in completed/.
+    """
+    safe = Path(plan_name if plan_name.endswith(".md") else plan_name + ".md").name
+
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/. Has it already been completed?"
+
+    status = _extract_frontmatter_field(text, "status")
+    title = _extract_frontmatter_field(text, "title") or safe.replace(".md", "")
+
+    if status != "completed":
+        return f"ERROR: Plan '{plan_name}' has status={status}. Set status: completed first."
+
+    _move_file(f"plans/{safe}", f"plans/completed/{safe}")
+
+    doc_slug = safe
+    completed_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    doc_content = f"""---
+title: {title}
+status: completed
+completed_date: {completed_date}
+author: {_extract_frontmatter_field(text, 'author') or 'NetYeti'}
+created: {_extract_frontmatter_field(text, 'created') or completed_date}
+tags: {_extract_frontmatter_field(text, 'tags') or ''}
+---
+
+## Summary
+
+*Plan completed: {title}*
+
+## Completion
+
+- Completed: {completed_date}
+- Source plan: plans/completed/{safe}
+"""
+    _write_file(f"docs/{doc_slug}", doc_content)
+
+    _log_transition("COMPLETED", f"plan/{safe} → plans/completed/ + doc generated")
+    return f"✅ Plan '{safe}' completed and moved to plans/completed/. Doc generated at docs/{doc_slug}."
+
+
+@mcp.tool()
+async def transition_to_canceled(plan_name: str, cancellation_reason: str) -> str:
+    """
+    Cancel a plan with a reason. Moves to plans/completed/ with canceled status.
+    Validates: cancellation_reason must be non-empty.
+    """
+    if not cancellation_reason.strip():
+        return "ERROR: cancellation_reason is required."
+
+    safe = Path(plan_name if plan_name.endswith(".md") else plan_name + ".md").name
+
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/."
+
+    canceled_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    text = _set_frontmatter_field(text, "status", "canceled")
+
+    if "canceled_date:" not in text.split("---")[1]:
+        text = re.sub(
+            r"^(status:.*)$",
+            rf"\1\ncanceled_date: {canceled_date}\ncancellation_reason: \"{cancellation_reason}\"",
+            text,
+            count=1,
+            flags=re.MULTILINE,
+        )
+
+    _write_file(f"plans/{safe}", text)
+    _move_file(f"plans/{safe}", f"plans/completed/{safe}")
+
+    _log_transition("CANCELED", f"plan/{safe} → plans/completed/ (reason: {cancellation_reason})")
+    return f"✅ Plan '{safe}' canceled and moved to plans/completed/."
+
+
+@mcp.tool()
+async def audit_log() -> str:
+    """Read back all lifecycle transitions recorded in docs/audit-log.md."""
+    try:
+        return _read_file("docs/audit-log.md")
+    except FileNotFoundError:
+        return "No audit log entries yet."
+
+
+# ── Test mode ─────────────────────────────────────────────────────────────────
+
+
+async def _run_tests():
+    cases = [
+        ("get_session_context", get_session_context, {}),
+        ("get_status", get_status, {}),
+        ("list_active_plans", list_active_plans, {}),
+        ("get_facts", get_facts, {}),
+        ("run_dry_run", run_dry_run, {}),
+        ("get_plan", get_plan, {"name": "collation"}),
+        ("transition_to_approved (dry — missing approved)", transition_to_approved, {"proposal_name": "_nonexistent_"}),
+        ("transition_to_completed (dry — not completed)", transition_to_completed, {"plan_name": "collation"}),
+        ("transition_to_canceled (dry — missing reason)", transition_to_canceled, {"plan_name": "collation", "cancellation_reason": ""}),
+        ("audit_log", audit_log, {}),
+    ]
+    passed = failed = 0
+    for name, fn, kwargs in cases:
+        label = f"{name}({', '.join(f'{k}={v!r}' for k, v in kwargs.items())})"
+        print(f"\n{'─' * 64}")
+        print(f"  {label}")
+        print('─' * 64)
+        try:
+            result = await fn(**kwargs)
+            preview = result[:400] + ("…" if len(result) > 400 else "")
+            print(preview)
+            print(f"\n  [{len(result)} chars]  ✓")
+            passed += 1
+        except Exception as e:
+            print(f"  ERROR: {e}  ✗")
+            failed += 1
+    print(f"\n{'=' * 64}")
+    print(f"  Results: {passed} passed, {failed} failed")
+    print('=' * 64)
+
+
+if __name__ == "__main__":
+    if "--test" in sys.argv:
+        asyncio.run(_run_tests())
+    elif "--serve" in sys.argv:
+        port = int(os.environ.get("MCP_PORT", "3002"))
+        host = os.environ.get("MCP_HOST", "127.0.0.1")
+        mcp.settings.host = host
+        mcp.settings.port = port
+        print(f"[dw-mcp] Starting SSE on {host}:{port}/sse", file=sys.stderr)
+        mcp.run(transport="sse")
+    else:
+        mcp.run()

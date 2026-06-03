@@ -133,6 +133,61 @@ validate_agent_instructions() {
 }
 
 # =============================================================================
+# 9. Self-approval detection
+# =============================================================================
+validate_no_self_approval() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^proposals/[^/]+\.md$ ]] && return 0
+    [[ "$FILE" =~ ^proposals/approved/ ]] && return 0
+    local OLD NEW
+    OLD=$(git show "HEAD:$FILE" 2>/dev/null | grep "^approved:" | sed 's/^approved: *//')
+    NEW=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+    [ "$OLD" = "false" ] && [ "$NEW" = "true" ] || return 0
+    if [ -f ".git/COMMIT_EDITMSG" ] && ! grep -q "HUMAN-APPROVED:" .git/COMMIT_EDITMSG; then
+        print_error "$FILE: approved changed false→true without HUMAN-APPROVED: marker in commit message"
+        print_error "  Only humans can approve proposals. Add HUMAN-APPROVED:<name> to commit message if you approved this."
+        return 1
+    fi
+    return 0
+}
+
+# =============================================================================
+# 10. Location invariant check
+# =============================================================================
+validate_location_invariant() {
+    local FILE=$1
+    [[ ! "$FILE" =~ \.md$ ]] && return 0
+    # File in proposals/approved/ must have approved: true
+    if [[ "$FILE" =~ ^proposals/approved/ ]]; then
+        local APP=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+        [ "$APP" != "true" ] && print_error "$FILE: in proposals/approved/ but approved != true" && return 1
+    fi
+    # File in plans/completed/ must have status: completed or canceled
+    if [[ "$FILE" =~ ^plans/completed/ ]]; then
+        local STS=$(grep "^status:" "$FILE" 2>/dev/null | sed 's/^status: *//')
+        [ "$STS" != "completed" ] && [ "$STS" != "canceled" ] && \
+            print_error "$FILE: in plans/completed/ but status != completed|canceled" && return 1
+    fi
+    return 0
+}
+
+# =============================================================================
+# 11. File existence invariant (no duplicate proposal/plan in root + approved)
+# =============================================================================
+validate_no_duplicate_locations() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^proposals/approved/ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && return 0
+    local ROOT_FILE=""
+    if [[ "$FILE" =~ ^proposals/approved/ ]]; then
+        ROOT_FILE="${FILE/proposals\/approved\//proposals/}"
+    elif [[ "$FILE" =~ ^plans/completed/ ]]; then
+        ROOT_FILE="${FILE/plans\/completed\//plans/}"
+    fi
+    [ -f "$ROOT_FILE" ] && print_error "$FILE: also exists at $ROOT_FILE — move, don't copy" && return 1
+    return 0
+}
+
+# =============================================================================
 # Main validation loop
 # =============================================================================
 ERRORS=0; WARNINGS=0
@@ -146,6 +201,9 @@ for FILE in $STAGED; do
         validate_scenario_synthesis "$FILE" || ((ERRORS++))
     fi
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
+    validate_no_self_approval "$FILE" || ((ERRORS++))
+    validate_location_invariant "$FILE" || ((ERRORS++))
+    validate_no_duplicate_locations "$FILE" || ((ERRORS++))
 done
 
 [ $ERRORS -gt 0 ] && print_error "Pre-commit validation failed with $ERRORS error(s)" && exit 1

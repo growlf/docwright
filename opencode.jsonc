@@ -20,6 +20,12 @@
   "skills": {
     "paths": [".opencode/skills"]
   },
+  "mcp": {
+    "dw-mcp": {
+      "type": "local",
+      "command": [".venv/bin/python3", "scripts/mcp-server.py"]
+    }
+  },
   "agent": {
     "design": {
       "mode": "primary",
@@ -31,7 +37,7 @@
         "bash": "ask",
         "read": "allow"
       },
-      "prompt": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning."
+      "prompt": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning.\n\nLIFECYCLE ENFORCEMENT — lifecycle state transitions MUST use the MCP server's transition_to_* tools, not direct file edits. Never set approved: true on any proposal — only humans do that. The pre-commit hook will reject commits that violate lifecycle rules."
     }
   }
 }

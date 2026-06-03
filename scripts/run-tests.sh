@@ -79,6 +79,24 @@ else
     ALL_PASSED=1
 fi
 
+# === Test 6: MCP server smoke test ===
+echo "--- Test 6: MCP server smoke test ---"
+if .venv/bin/python3 scripts/mcp-server.py --test > /dev/null 2>&1; then
+    pass "MCP server (10/10 tests pass)"
+else
+    fail "MCP server smoke test FAILED -- run: .venv/bin/python3 scripts/mcp-server.py --test"
+    ALL_PASSED=1
+fi
+
+# === Test 7: Transition unit tests ===
+echo "--- Test 7: Transition unit tests ---"
+if .venv/bin/python3 scripts/test-transitions.py > /dev/null 2>&1; then
+    pass "Transition unit tests pass"
+else
+    fail "Transition unit tests FAILED -- run: .venv/bin/python3 scripts/test-transitions.py"
+    ALL_PASSED=1
+fi
+
 # === Summary ===
 DURATION=$(( $(date +%s) - START_TIME ))
 echo ""

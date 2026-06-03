@@ -88,6 +88,21 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 docwright has been reframed as an **organizational operating system** — a governance
 layer with multiple client surfaces. Read CLAUDE.md for full context.
 
+### MCP Instance Isolation
+
+The `dw-mcp` MCP server exposes a specific DocWright instance's lifecycle data.
+Each project that uses DocWright lifecycle management must:
+
+1. **Own its own MCP config** — define `"dw-mcp"` in the **project's** `opencode.jsonc`,
+   NOT in `~/.config/opencode/opencode.json` (global config).
+2. **Point to the correct server** — the MCP URL/path must serve that project's data only.
+3. **Never inherit another project's MCP** — if a project doesn't run a DocWright MCP
+   server, it should have no `"mcp"` block at all.
+
+**Why:** A global MCP config causes every repo to load the same lifecycle data,
+leading to cross-instance contamination — agents acting on wrong plans,
+accidental data corruption, and confused session context (as of 2026-06-02 fix).
+
 ### Invariants — never violate these
 
 1. **dispatch module has zero VS Code API deps** — `src/dispatch/` must be importable
