@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/netyeti/Projects/DocWright/scripts/claude-lifecycle-hook.sh",
+            "timeout": 10,
+            "statusMessage": "Lifecycle gate…"
+          }
+        ]
+      }
+    ]
+  }
+}
