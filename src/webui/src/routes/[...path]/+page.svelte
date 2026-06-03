@@ -20,6 +20,11 @@
   let mode = $state<'read' | 'edit' | 'source'>('read');
   let html = $state('');
   let showProps = $state(true);
+  let propsCollapsed = $state(
+    typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('propsPaneCollapsed') === 'true'
+      : false
+  );
 
   // Collation panel state
   let showCollation = $state(false);
@@ -301,7 +306,10 @@
 
 <div class="page-wrap">
   <!-- Main content -->
-  <div class="page-body" class:pane-open={showProps && mode !== 'source'}>
+  <div class="page-body"
+    class:pane-open={showProps && mode !== 'source' && !propsCollapsed}
+    class:pane-collapsed={showProps && mode !== 'source' && propsCollapsed}
+  >
     <div class="toolbar">
       <span class="path">{filePath()}</span>
       <div class="actions">
@@ -387,6 +395,7 @@
   {#if showProps && mode !== 'source' && frontmatter}
     <PropertiesPane
       bind:frontmatter={frontmatter}
+      bind:collapsed={propsCollapsed}
       {docType}
       {mode}
       onsave={saveFrontmatter}
@@ -410,7 +419,8 @@
 <style>
   .page-wrap { display: block; min-height: 100%; }
   .page-body { padding: 32px; }
-  .page-body.pane-open { padding-right: 296px; /* 280px pane + 16px gap */ }
+  .page-body.pane-open     { padding-right: 296px; } /* 280px pane + 16px gap */
+  .page-body.pane-collapsed { padding-right: 48px;  } /* 32px collapsed pane + 16px gap */
 
   .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
   .not-found { text-align: center; padding: 64px 32px; }

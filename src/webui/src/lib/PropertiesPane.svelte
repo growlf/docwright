@@ -1,6 +1,11 @@
 <script lang="ts">
   let {
     frontmatter = $bindable<Record<string, any>>({}),
+    collapsed = $bindable(
+      typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem('propsPaneCollapsed') === 'true'
+        : false
+    ),
     docType = 'page',
     mode = 'read',
     onsave,
@@ -8,18 +13,13 @@
     onfindrelated,
   }: {
     frontmatter: Record<string, any>;
+    collapsed?: boolean;
     docType: string;
     mode: 'read' | 'edit' | 'source';
     onsave?: () => void;
     onapprove?: () => void;
     onfindrelated?: () => void;
   } = $props();
-
-  let collapsed = $state(
-    typeof sessionStorage !== 'undefined'
-      ? sessionStorage.getItem('propsPaneCollapsed') === 'true'
-      : false
-  );
 
   function toggleCollapsed() {
     collapsed = !collapsed;
