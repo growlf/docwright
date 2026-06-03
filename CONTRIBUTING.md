@@ -1,82 +1,120 @@
-# Contributing to docwright
+# Contributing to DocWright
 
-Thank you for your interest in contributing. docwright is MIT-licensed and
-welcomes contributions from the community.
+Welcome. DocWright is MIT-licensed and built by a community of humans and AI
+tools working together. Every kind of contribution matters — code, governance
+design, documentation, profile authoring, bug reports, or simply using the
+tool and telling us what breaks.
 
-## Before You Start
+If you are here, you belong here.
 
-Read `CLAUDE.md` for architectural context and `PROPOSAL.md` for the full spec.
-For significant changes, open an issue first so we can discuss the direction.
+---
 
-## Development Setup
+## Understanding the project
+
+Start with these files, in this order:
+
+1. `docs/collaboration.md` — how the project works, who is involved, and the
+   philosophy behind the multi-perspective review practice
+2. `CLAUDE.md` — architecture, core invariants, what not to break
+3. `PROPOSAL.md` — the full specification (v0.8+)
+
+For significant changes, open a proposal in the vault (or a GitHub issue)
+before writing code. DocWright uses its own governance workflow on itself —
+discussion happens in `proposals/` before it happens in pull requests.
+
+---
+
+## Development setup
 
 ```bash
 git config core.hooksPath .githooks   # activate commit hooks (once, after cloning)
 npm install
-npm run compile      # TypeScript compile check
-npm run lint         # ESLint
-npm run test:dispatch  # Run dispatch unit tests (outside extension host)
+npm run compile        # TypeScript compile check
+npm run lint           # ESLint + Prettier
+npm run test:dispatch  # dispatch module tests (run outside extension host)
 ```
 
-The `.githooks/` directory contains a pre-commit hook (frontmatter validation,
-identity/network info) and a commit-msg hook (conventional commit format).
-The `core.hooksPath` line above wires git to use them — without it the hooks
-are silently skipped.
+The pre-commit hook validates frontmatter and records identity/network info.
+The commit-msg hook enforces conventional commit format. Both are required —
+`core.hooksPath` wires them in.
 
-## Core Philosophy
+---
 
-**Security first. Policy driven. Test verified at every stage.**
+## The one rule you cannot break
 
-**Bugs before features.** Known bugs take priority over new feature work.
-Exceptions are permitted but must be justified in the PR description.
-See `policies/core/bugs-before-features.md` for the full policy.
+**`src/dispatch/` must have zero VS Code API dependencies.**
 
-Every feature is designed with security as a baseline constraint — not bolted on after the
-fact. Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
-rather than hardcoded logic. Every change ships only after it can be verified through tests.
-This applies equally to code contributions and to the governance documents themselves.
+The dispatch module is the heart of DocWright. It runs outside the extension
+host and must stay that way. `npm run test:dispatch` catches violations. If
+your import from `vscode` is in `src/dispatch/`, the CI will fail and your PR
+will not merge. This is intentional and permanent.
 
-## The Most Important Rule
+---
 
-**The dispatch module (`src/dispatch/`) must have zero VS Code API dependencies.**
-
-The CI pipeline runs `npm run test:dispatch` outside the extension host.
-If you import anything from `vscode` in `src/dispatch/`, the tests will fail.
-This is intentional and must never be bypassed.
-
-## Code Style
+## Code standards
 
 - TypeScript strict mode throughout
-- ESLint + Prettier (run `npm run lint` before committing)
+- ESLint + Prettier — run `npm run lint` before committing
 - All public dispatch functions must be unit-testable with a plain filesystem mock
+- No telemetry. Ever. Not even anonymised.
 
-## Templates and Profiles
+---
 
-All profile templates (`src/profiles/*/templates/*.md`) **must** include
-the `author-role:` frontmatter field. Default value: `contributor`.
-This is a hard requirement — see PROPOSAL.md §6 for rationale.
+## Proposals and plans
 
-## Pull Request Process
+DocWright uses its own lifecycle for decisions. If you have a significant
+change in mind:
 
-1. Fork the repo and create a branch from `main`
-2. Make your changes
-3. Run `npm run lint && npm run test:dispatch` — both must pass
-4. Submit a PR with a clear description of what changed and why
-5. PRs require one reviewer approval before merge
+1. Check `proposals/` — it may already exist as a deferred proposal
+2. If not, open one (use `templates/proposal-template.md`)
+3. Discuss it in the proposal or in a GitHub issue
+4. Once approved, a plan is created and work begins
 
-## Profile Authoring
+Small fixes (typos, obvious bugs, documentation) can go straight to a PR.
 
-To add a new bundled profile, create a directory under `src/profiles/[name]/`
-containing: `profile.json`, `schema.json`, `opencode-instructions.md`,
-and `templates/` with one `.md` file per document type.
+---
+
+## Adding profiles
+
+A new bundled profile lives at `src/profiles/[name]/` and contains:
+
+- `profile.json` — manifest (name, states, document types, features)
+- `schema.json` — frontmatter JSON Schema
+- `opencode-instructions.md` — AI context injected when the profile is active
+- `templates/[type].md` — one per document type
+
+**All templates must include `author-role:` frontmatter.** Default: `contributor`.
+The `opencode-instructions.md` must embed the core philosophy and instruct
+the AI to prompt for security, policy, and verification considerations.
+
 See `src/profiles/doc-lifecycle/` as the reference implementation.
+
+---
 
 ## Attribution
 
-If your contribution incorporates patterns, code, or concepts from other
-projects, add them to `NOTICE.md`. See the existing entries for format.
+If your contribution incorporates patterns, code, or concepts from another
+project, add them to `NOTICE.md`. The existing entries show the format.
+We take attribution seriously — it is part of how we say thank you.
 
-## Governance
+---
 
-docwright uses a BDFL model. NetYeti (growlf) makes final decisions.
-All significant decisions are documented in `PROPOSAL.md` and `CHANGELOG.md`.
+## How decisions are made
+
+DocWright uses a BDFL model. NetYeti (growlf on GitHub) makes final calls.
+All significant decisions are documented as proposals before they become plans,
+and plans before they become code. The paper trail is the point.
+
+AI tools (Claude, BigPickle) contribute drafts and critique. Humans decide.
+`approved: true` on any proposal requires a human commit. That is not a
+formality — it is the governance model in action.
+
+---
+
+## Thank you
+
+Whether you are fixing a typo, designing a profile for your industry, or
+contributing a major feature — your work makes DocWright better for everyone
+who adopts it. Human contributors especially: the AI tools write fast, but
+they write what they are told. The ideas, the judgment, the real-world
+context — that comes from you.
