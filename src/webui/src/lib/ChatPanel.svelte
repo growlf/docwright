@@ -106,6 +106,7 @@
   let statusText    = $state('');
   let sending       = $state(false);
   let eventCount    = $state(0);     // total SSE events received (any type)
+  let lastEvent     = $state('');    // last SSE event type seen
   let thinkingSecs  = $state(0);     // elapsed seconds while sending
   let msgEnd        = $state<HTMLElement | undefined>(undefined);
   let es: EventSource | null = null;
@@ -192,6 +193,7 @@
       eventCount++;
       try {
         const ev = JSON.parse(e.data);
+        lastEvent = ev.type;
         console.debug('[DocWright chat] SSE event:', ev.type, ev.properties);
         handleEvent(ev);
       } catch (err) {
@@ -224,7 +226,11 @@
       // Actual structure: { part: { sessionID, messageID, type, text, ... }, delta?: string }
       const part = p.part ?? p; // some versions wrap in .part, others are flat
       const sessionID = part.sessionID ?? p.sessionID;
-      if (sessionID !== currentID) return;
+      if (sessionID !== currentID) {
+        console.warn('[DocWright chat] session mismatch — event:', sessionID, 'current:', currentID);
+        // Accept anyway if no currentID is set yet
+        if (currentID !== null) return;
+      }
       if (part.type !== 'text') return;
 
       // messageID: try part.messageID, part.id, flat p.messageID, then generate one
@@ -577,8 +583,8 @@
       {#if statusText}
         <div class="status-row">
           {statusText}{sending && thinkingSecs > 0 ? ` (${thinkingSecs}s)` : ''}
-          {#if sending && thinkingSecs > 5}
-            <span class="event-count" title="SSE events received">{eventCount} events</span>
+          {#if sending && thinkingSecs > 3}
+            <span class="event-count">{eventCount} events · {lastEvent || '—'}</span>
           {/if}
         </div>
       {/if}
