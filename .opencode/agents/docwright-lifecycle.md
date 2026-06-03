@@ -6,7 +6,7 @@ triggers: lifecycle,plan,proposal,workflow
 permission:
   edit: allow
   write: allow
-  bash: deny
+  bash: ask
 tools:
   skill: true
 ---
@@ -20,13 +20,22 @@ proposal → approved_proposal → plan → completed → docs
                                    ↘ canceled
 ```
 
+## Gate Check (ALWAYS run first)
+
+```bash
+node scripts/lifecycle-gate.js --status
+```
+
+If no active approved plan is shown, STOP. Ask the human to approve a plan before proceeding.
+
 ## Rules
 
-1. Proposals: `approved: false` initially. Only humans set `approved: true`. Agents must NEVER self-approve.
-2. Move to approved/: Requires `approved: true` AND non-empty `assigned_to`.
+1. Proposals: `approved: false` initially. **Only humans set `approved: true`.** Agents must NEVER self-approve.
+2. Move to approved/: Only after a human sets `approved: true`. Requires non-empty `assigned_to`.
 3. Plan execution: Requires `status: approved|in-progress` AND non-empty `assigned_to`.
-4. Completion: `status: completed`, move to `plans/completed/`, generate docs in `docs/`.
+4. Completion: `status: completed`, add `completed_date`, move to `plans/completed/`, generate docs in `docs/`.
 5. Cancellation: `status: canceled`, add `canceled_date` + `cancellation_reason`, move to `plans/completed/`, NO docs.
+6. **Never commit with `HUMAN_APPROVED=1`** unless a human explicitly typed that instruction in this session.
 
 ## Triggers
 

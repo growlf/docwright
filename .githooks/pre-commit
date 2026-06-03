@@ -122,6 +122,61 @@ validate_agent_instructions() {
 }
 
 # =============================================================================
+# Layer 3 — Lifecycle compliance checks
+# =============================================================================
+
+# Detect self-approval: proposal newly gaining approved: true without HUMAN_APPROVED=1
+validate_self_approval() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^proposals/approved/ ]] && return 0
+    local NEW_FM=$(get_frontmatter "$FILE")
+    local NEW_APPROVED=$(echo "$NEW_FM" | grep "^approved:" | sed 's/^approved: *//')
+    [ "$NEW_APPROVED" != "true" ] && return 0
+
+    # Check if approved was already true in the committed version (editing, not approving)
+    local OLD_APPROVED=$(git show HEAD:"$FILE" 2>/dev/null | awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' | grep "^approved:" | sed 's/^approved: *//')
+    [ "$OLD_APPROVED" = "true" ] && return 0  # already approved, just editing
+
+    # Newly approved file — requires explicit human authorization
+    if [ -z "$HUMAN_APPROVED" ]; then
+        print_error "$FILE: 'approved' set to true — only humans may approve proposals"
+        print_error "  If intentional: HUMAN_APPROVED=1 git commit ..."
+        return 1
+    fi
+    # Human-authorized: log it
+    print_status "$FILE: human-approved (HUMAN_APPROVED=1)"
+    return 0
+}
+
+# Detect plan status advancing to in-progress/completed without completed_date where required
+validate_plan_transition() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^plans/ ]] && return 0
+    local FM=$(get_frontmatter "$FILE")
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
+    if [ "$STATUS" = "completed" ]; then
+        echo "$FM" | grep -q "^completed_date:" || { print_error "$FILE: status=completed but missing completed_date"; return 1; }
+    fi
+    if [ "$STATUS" = "canceled" ]; then
+        echo "$FM" | grep -q "^canceled_date:" || { print_error "$FILE: status=canceled but missing canceled_date"; return 1; }
+        echo "$FM" | grep -q "^cancellation_reason:" || { print_warning "$FILE: status=canceled but missing cancellation_reason"; }
+    fi
+    return 0
+}
+
+# Log lifecycle transition to .docwright/lifecycle-audit.jsonl
+log_lifecycle_event() {
+    local FILE=$1 EVENT=$2
+    local AUDIT_DIR="$REPO_ROOT/.docwright"
+    local AUDIT_LOG="$AUDIT_DIR/lifecycle-audit.jsonl"
+    mkdir -p "$AUDIT_DIR"
+    local USER=$(git config user.name 2>/dev/null || echo "unknown")
+    local HOST=$(hostname)
+    local TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    echo "{\"ts\":\"$TS\",\"event\":\"$EVENT\",\"file\":\"$FILE\",\"user\":\"$USER\",\"host\":\"$HOST\"}" >> "$AUDIT_LOG"
+}
+
+# =============================================================================
 # Main validation loop
 # =============================================================================
 ERRORS=0; WARNINGS=0
@@ -129,12 +184,22 @@ for FILE in $STAGED; do
     [[ ! "$FILE" =~ \.md$ ]] && continue
     validate_template_vars "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && { validate_automated "$FILE" || ((ERRORS++)); }
-    [[ "$FILE" =~ ^proposals/approved/ ]] && { validate_assigned_to "$FILE" "proposal" || ((ERRORS++)); }
-    if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then
-        validate_assigned_to "$FILE" "plan" || ((ERRORS++))
-        validate_scenario_synthesis "$FILE" || ((ERRORS++))
+    [[ "$FILE" =~ ^proposals/approved/ ]] && {
+        validate_assigned_to "$FILE" "proposal" || ((ERRORS++))
+        validate_self_approval "$FILE" || ((ERRORS++))
+    }
+    if [[ "$FILE" =~ ^plans/ ]]; then
+        validate_plan_transition "$FILE" || ((ERRORS++))
+        if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then
+            validate_assigned_to "$FILE" "plan" || ((ERRORS++))
+            validate_scenario_synthesis "$FILE" || ((ERRORS++))
+        fi
     fi
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
+    # Audit log — record any lifecycle file change
+    if [[ "$FILE" =~ ^(proposals|plans|docs)/ ]]; then
+        log_lifecycle_event "$FILE" "staged"
+    fi
 done
 
 [ $ERRORS -gt 0 ] && print_error "Pre-commit validation failed with $ERRORS error(s)" && exit 1
