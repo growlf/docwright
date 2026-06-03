@@ -17,5 +17,11 @@
 
 // Barrel export
 export * from './registry';
+export * from './profile';
+export * from './vault-index';
+export * from './linter';
+export * from './ai';
+export * from './wikilinks';
+export * from './acl';
 
-export const DISPATCH_VERSION = '0.0.1';
+export const DISPATCH_VERSION = '0.1.0';

@@ -1,5 +1,5 @@
 ---
-title: "Dispatch module — surface-agnostic engine for DocWright"
+title: Dispatch module — surface-agnostic engine for DocWright
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -12,7 +12,7 @@ category:
 complexity: L
 estimated_effort: L
 depends_on: []
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
 ---

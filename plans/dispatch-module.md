@@ -1,6 +1,6 @@
 ---
-title: "Dispatch module — engine foundation"
-status: approved
+title: Dispatch module — engine foundation
+status: in-progress
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -12,7 +12,7 @@ proposal_source: proposals/approved/dispatch-module.md
 priority: high
 automated: off
 assigned_to: NetYeti
-scenario_synthesis: "Pure TypeScript module with filesystem and OpenCode SDK calls; no shell or deployment steps in plan tasks"
+scenario_synthesis: Pure TypeScript module with filesystem and OpenCode SDK calls; no shell or deployment steps in plan tasks
 depends_on:
   - phase-1-opencode-embed
 ---
