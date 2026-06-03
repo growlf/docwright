@@ -6,7 +6,8 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast } from '$lib/toast';
-  import { showPropsPane } from '$lib/pane';
+  import { showPropsPane, showChatPanel } from '$lib/pane';
+  import ChatPanel from '$lib/ChatPanel.svelte';
 
   interface ProjectEntry {
     name: string;
@@ -172,6 +173,18 @@
   </div>
 </div>
 
+<!-- Floating AI chat toggle — always accessible -->
+<button
+  class="chat-fab"
+  class:active={$showChatPanel}
+  onclick={() => showChatPanel.update(v => !v)}
+  title={$showChatPanel ? 'Close AI chat' : 'Open AI chat'}
+>⚡</button>
+
+{#if $showChatPanel}
+  <ChatPanel />
+{/if}
+
 <footer class="app-footer">
   <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
     DocWright
@@ -263,6 +276,29 @@
   .footer-link { color: #333; text-decoration: none; }
   .footer-link:hover { color: #666; }
   .footer-sep { color: #222; }
+
+  /* ── AI chat floating button ── */
+  .chat-fab {
+    position: fixed;
+    bottom: 44px; /* just above the footer */
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1a2f4a;
+    border: 1px solid #2b5b84;
+    color: #58a6ff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 350;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    transition: background 0.15s, transform 0.15s;
+  }
+  .chat-fab:hover  { background: #1e4a70; transform: scale(1.05); }
+  .chat-fab.active { background: #2b5b84; border-color: #58a6ff; }
   .sidebar-toggle { flex-shrink: 0; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .sidebar-toggle:hover { color: #fff; }
   .new-group { position: relative; flex-shrink: 0; }
