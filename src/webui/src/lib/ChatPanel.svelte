@@ -326,19 +326,61 @@
     messages = [...messages, { id: 'tmp-' + Date.now(), role: 'user', parts: [{ type: 'text', text }] }];
     scrollToBottom();
 
-    // Safety: reset sending after 90s in case SSE session.idle never arrives
-    if (sendTimeout) clearTimeout(sendTimeout);
-    sendTimeout = setTimeout(() => {
-      if (sending) { sending = false; statusText = 'Response timed out'; }
-    }, 90_000);
-
     try {
-      await ocFetch('POST', `session/${currentID}/message`, {
+      // POST /session/:id/message is synchronous — it blocks until the AI
+      // finishes and returns the complete response. SSE streams the partial
+      // text while we wait, but the response body is the source of truth.
+      const res = await ocFetch('POST', `session/${currentID}/message`, {
         parts: [{ type: 'text', text }],
       });
-    } catch {
+
+      if (!res.ok) {
+        statusText = `Send failed (${res.status}) — check console`;
+        console.error('[DocWright chat] Send failed:', res.status, res.statusText);
+        sending = false;
+        return;
+      }
+
+      // Read the response body — it contains the AI's complete reply
+      const data = await res.json().catch(() => null);
+      console.debug('[DocWright chat] POST response:', data);
+
+      if (data) {
+        // Extract text from response parts — use as fallback if SSE didn't stream it
+        const responseParts: any[] = data.parts ?? data.output?.parts ?? [];
+        const textContent = responseParts
+          .filter((p: any) => p.type === 'text')
+          .map((p: any) => p.text ?? '')
+          .join('');
+
+        const msgId = data.info?.id ?? data.message?.id ?? data.id ?? `ai-${Date.now()}`;
+
+        // Only add if SSE hasn't already added this message
+        const alreadyAdded = messages.some(m => m.id === msgId);
+        if (!alreadyAdded && textContent) {
+          messages = [...messages, {
+            id: msgId,
+            role: 'assistant',
+            parts: [{ type: 'text', text: textContent }],
+          }];
+          scrollToBottom();
+        } else if (alreadyAdded && textContent) {
+          // SSE may have partial text; update with complete response
+          const idx = messages.findIndex(m => m.id === msgId);
+          if (idx >= 0) {
+            const updated = [...messages];
+            const tp = updated[idx].parts.find(p => p.type === 'text');
+            if (tp) tp.text = textContent;
+            messages = updated;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[DocWright chat] Send error:', e);
       statusText = 'Send failed — is OpenCode still running?';
+    } finally {
       sending = false;
+      statusText = '';
       if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
     }
   }
