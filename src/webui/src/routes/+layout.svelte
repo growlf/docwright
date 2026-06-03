@@ -224,7 +224,7 @@
   }
 
   /* ── Core layout ────────────────────────────────────────────────────────── */
-  #app { display: flex; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
+  #app { display: flex; flex: 1; min-height: 0; font-family: system-ui, -apple-system, sans-serif; }
   #sidebar {
     width: 260px; min-width: 260px; background: #111; color: #ccc;
     display: flex; flex-direction: column; overflow-y: auto;
@@ -257,7 +257,8 @@
     color: #333;
     border-top: 1px solid #1a1a1a;
     background: #0d0d0d;
-    flex-shrink: 0;
+    flex-shrink: 0;   /* never compress — always full height */
+    z-index: 50;
   }
   .footer-link { color: #333; text-decoration: none; }
   .footer-link:hover { color: #666; }
