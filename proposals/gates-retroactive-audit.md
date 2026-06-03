@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Lifecycle Gates — Retroactive Audit of Past Transitions"
 author: NetYeti
 created: 2026-06-03

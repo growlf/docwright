@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Web UI Terminal / PTY Panel"
 author: NetYeti
 created: 2026-06-03

@@ -161,7 +161,7 @@
     const data = await res.json();
     raw = data.content;
     const parsed = splitFrontmatter(data.content);
-    frontmatter = parsed.frontmatter;
+    frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
     html = md.render(content);
   }
@@ -328,7 +328,14 @@
     class:pane-collapsed={showProps && mode !== 'source' && propsCollapsed}
   >
     <div class="toolbar">
-      <span class="path">{filePath()}</span>
+      <div class="doc-identity">
+        {#if frontmatter?.title}
+          <span class="doc-title">{frontmatter.title}</span>
+          <span class="path">{filePath()}</span>
+        {:else}
+          <span class="path path-only">{filePath()}</span>
+        {/if}
+      </div>
       <div class="actions">
         {#if mode !== 'read'}
           <button class="btn save" onclick={save}>Save</button>
@@ -382,22 +389,13 @@
         oninput={syncHtmlToRaw} use:setEditorHtml></div>
 
     {:else}
-      {#if frontmatter}
-        <div class="fm">
-          {#each Object.entries(frontmatter) as [key, val]}
-            <span class="fm-entry"><strong>{key}:</strong>
-              {Array.isArray(val) ? val.join(', ') : String(val ?? '')}
-            </span>
+      {#if frontmatter && Array.isArray(frontmatter.depends_on) && frontmatter.depends_on.length > 0}
+        <div class="dep-row">
+          <span class="dep-label">Depends on:</span>
+          {#each frontmatter.depends_on as dep}
+            <a class="dep-link" href="/{dep}">{dep}</a>
           {/each}
         </div>
-        {#if Array.isArray(frontmatter.depends_on) && frontmatter.depends_on.length > 0}
-          <div class="dep-row">
-            <span class="dep-label">Depends on:</span>
-            {#each frontmatter.depends_on as dep}
-              <a class="dep-link" href="/{dep}">{dep}</a>
-            {/each}
-          </div>
-        {/if}
       {/if}
       <div class="body">
         {#if content}
@@ -462,9 +460,6 @@
   .nf-btn:hover { border-color: #555; color: #ccc; }
   .nf-btn.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
   .nf-btn.primary:hover { background: #1a3a5a; }
-  .fm     { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px; background: #222; border-radius: 6px; margin-bottom: 24px; font-size: 12px; }
-  .fm-entry { color: #aaa; }
-  .fm-entry strong { color: #fff; }
   .body   { line-height: 1.6; }
   .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #181818; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
   .dep-label { color: #555; font-weight: 600; }
@@ -472,8 +467,11 @@
   .dep-link:hover { background: #1a3a5a; }
   .muted  { color: #666; }
 
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; }
-  .path   { font-size: 12px; color: #666; font-family: monospace; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; gap: 12px; }
+  .doc-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .doc-title { font-size: 15px; font-weight: 600; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .path   { font-size: 11px; color: #555; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .path-only { font-size: 13px; color: #888; }
   .actions { display: flex; gap: 6px; }
   .btn    { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid #444; background: #222; color: #ccc; }
   .btn:hover { background: #333; color: #fff; }
@@ -513,7 +511,8 @@
 
     /* Toolbar: keep it compact, hide low-priority actions */
     .toolbar { flex-wrap: wrap; gap: 4px; }
-    .path { display: none; }          /* path shown in topbar; hide here */
+    .path { display: none; }           /* path shown in topbar on mobile; hide here */
+    .doc-title { font-size: 14px; }    /* title stays visible on mobile */
     .btn.props-toggle { display: none; }
 
     /* Scrim behind properties pane overlay */

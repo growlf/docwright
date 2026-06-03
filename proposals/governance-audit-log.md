@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Governance Audit Log — Lifecycle Transition Logging"
 author: NetYeti
 created: 2026-06-03

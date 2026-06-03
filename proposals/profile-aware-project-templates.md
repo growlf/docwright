@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Profile-Aware Project Templates for vault init"
 author: NetYeti
 created: 2026-06-03

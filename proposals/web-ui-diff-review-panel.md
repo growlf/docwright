@@ -1,4 +1,5 @@
 ---
+complexity: medium
 title: "Web UI Diff / Review Panel for AI Sessions"
 author: NetYeti
 created: 2026-06-03

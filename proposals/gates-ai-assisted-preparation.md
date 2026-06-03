@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Lifecycle Gates — AI-Assisted Gate Preparation"
 author: NetYeti
 created: 2026-06-03

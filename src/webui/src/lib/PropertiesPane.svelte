@@ -33,10 +33,9 @@
       sessionStorage.setItem('propsPaneCollapsed', String(collapsed));
   }
 
-  const SIZING = ['', 'XS', 'S', 'M', 'L', 'XL'];
   const SELECT_OPTIONS: Record<string, string[]> = {
-    complexity:        SIZING,
-    estimated_effort:  SIZING,
+    complexity:        ['', 'low', 'medium', 'high'],
+    estimated_effort:  ['', 'XS', 'S', 'M', 'L', 'XL'],
     automated:         ['off', 'guided', 'full'],
     priority:          ['', 'low', 'medium', 'high', 'critical'],
     status: {
@@ -47,9 +46,23 @@
     }[docType] ?? [],
   };
 
+  const PREDEFINED_CHIPS: Record<string, string[]> = {
+    category: ['ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'infrastructure', 'profiles', 'security', 'testing', 'documentation'],
+    tags:     ['ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'phase-1', 'phase-2', 'phase-3', 'improvements', 'polish', 'bug'],
+  };
+
+  function togglePredefinedChip(key: string, val: string) {
+    const current: string[] = Array.isArray(frontmatter[key]) ? frontmatter[key] : [];
+    if (current.includes(val)) {
+      setField(key, current.filter(v => v !== val));
+    } else {
+      setField(key, [...current, val]);
+    }
+  }
+
   // Keys to hide — internal noise not useful in the pane
   const HIDDEN = new Set([
-    'created_by', 'scenario_synthesis', 'deferred_to', 'subsumed_by',
+    '_path', 'created_by', 'scenario_synthesis', 'deferred_to', 'subsumed_by',
     'docwrightProfileVersion',
   ]);
 
@@ -99,6 +112,27 @@
     onsave?.();
   }
 
+  let estimating = $state(false);
+  let estimateHint = $state('');
+
+  async function estimateComplexity() {
+    const path = frontmatter._path ?? '';
+    if (!path) return;
+    estimating = true;
+    estimateHint = '';
+    try {
+      const res = await fetch('/api/estimate-complexity?path=' + encodeURIComponent(path));
+      if (res.ok) {
+        const { complexity, reason } = await res.json();
+        setField('complexity', complexity);
+        estimateHint = reason;
+        setTimeout(() => estimateHint = '', 6000);
+      }
+    } finally {
+      estimating = false;
+    }
+  }
+
   // Warn if approved with no assignee
   let approvedWithoutAssignee = $derived(
     docType === 'proposal' && frontmatter.approved === true &&
@@ -127,6 +161,10 @@
         {/if}
         <button class="act related" onclick={() => onfindrelated?.()}
           title="Scan vault for proposals with similar content using keyword matching">Find Related</button>
+        <button class="act estimate" onclick={estimateComplexity} disabled={estimating}
+          title="Estimate complexity based on proposal scope, dependencies, and length">
+          {estimating ? '…' : '⟳ Complexity'}
+        </button>
       {/if}
       {#if docType === 'plan'}
         {#if frontmatter.status === 'approved'}
@@ -150,6 +188,9 @@
 
     {#if approvedWithoutAssignee}
       <div class="warn">Approved but no assignee set</div>
+    {/if}
+    {#if estimateHint}
+      <div class="estimate-hint">{estimateHint}</div>
     {/if}
 
     <!-- Fields -->
@@ -181,6 +222,18 @@
                   onchange={(e) => setField(key, (e.target as HTMLInputElement).checked)} />
               {:else if ftype === 'chips'}
                 <div class="chips-edit">
+                  {#if PREDEFINED_CHIPS[key]}
+                    <div class="chip-presets">
+                      {#each PREDEFINED_CHIPS[key] as preset}
+                        {@const active = (value as string[]).includes(preset)}
+                        <button class="preset-chip" class:active
+                          onclick={() => togglePredefinedChip(key, preset)}
+                          title={active ? `Remove "${preset}"` : `Add "${preset}"`}>
+                          {preset}
+                        </button>
+                      {/each}
+                    </div>
+                  {/if}
                   <div class="chips">
                     {#each (value as string[]) as chip, idx}
                       <span class="chip rm">
@@ -189,7 +242,7 @@
                       </span>
                     {/each}
                   </div>
-                  <input class="chip-input" placeholder="add, Enter…"
+                  <input class="chip-input" placeholder="custom value, Enter…"
                     onkeydown={(e) => addChip(key, e)} />
                 </div>
               {:else if ftype === 'select'}
@@ -278,6 +331,35 @@
   .act.save:hover     { background: #1a3a5a; }
   .act.related  { border-color: #4a2b84; color: #a78bfa; }
   .act.related:hover  { background: #2a1a5a; }
+  .act.estimate { border-color: #2a4a3a; color: #6b9; }
+  .act.estimate:hover { background: #1a3a2a; }
+  .act:disabled { opacity: 0.5; cursor: default; }
+
+  .estimate-hint {
+    margin: 4px 12px 0;
+    font-size: 10px;
+    color: #6b9;
+    font-style: italic;
+  }
+
+  .chip-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-bottom: 5px;
+  }
+  .preset-chip {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background: #181818;
+    color: #555;
+    cursor: pointer;
+  }
+  .preset-chip:hover { border-color: #555; color: #aaa; }
+  .preset-chip.active { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
+  .preset-chip.active:hover { background: #1a3a5a; }
 
   .warn {
     margin: 8px 12px;

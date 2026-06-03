@@ -15,7 +15,7 @@
 
   // Sidebar config (matches org-operations/profile.json)
   const EXCLUDE_ROOT = new Set([
-    'AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE',
+    'AGENTS.md', 'CHANGELOG.md', 'CLAUDE.md', 'CONTRIBUTING.md', 'LICENSE',
     'NOTICE.md', 'SECURITY.md', 'PROPOSAL.md', 'SESSION-LOG.md',
   ]);
   const HIDDEN_DIRS = ['proposals/approved', 'plans/completed'];

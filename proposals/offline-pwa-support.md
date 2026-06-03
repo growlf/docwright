@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Offline and PWA Support"
 author: NetYeti
 created: 2026-06-03

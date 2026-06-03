@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Model / Provider Picker in Chat Panel"
 author: NetYeti
 created: 2026-06-03

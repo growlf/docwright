@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Contributor Name Autocomplete in Properties Pane"
 author: NetYeti
 created: 2026-06-03

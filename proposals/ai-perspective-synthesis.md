@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "AI-Assisted Synthesis of Multiple Perspectives"
 author: NetYeti
 created: 2026-06-03

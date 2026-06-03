@@ -1,4 +1,5 @@
 ---
+complexity: medium
 title: "Related Documents UX — Beyond Keyword Similarity"
 author: NetYeti
 created: 2026-06-03

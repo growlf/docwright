@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Lifecycle Gates — Multi-Reviewer Quorum"
 author: NetYeti
 created: 2026-06-03

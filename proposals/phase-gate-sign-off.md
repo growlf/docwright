@@ -1,4 +1,5 @@
 ---
+complexity: high
 title: "Lifecycle Gates — Checkpoint Sign-off Before Transition"
 author: NetYeti
 created: 2026-06-03

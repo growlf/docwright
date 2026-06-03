@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Web UI Full Session Management"
 author: NetYeti
 created: 2026-06-03

@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Chat @-mention to Inject Document Context"
 author: NetYeti
 created: 2026-06-03

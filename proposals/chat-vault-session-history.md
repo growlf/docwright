@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Chat Session History Scoped to Vault"
 author: NetYeti
 created: 2026-06-03

@@ -1,4 +1,5 @@
 ---
+complexity: high
 title: Built-in Deferred Idea Capture
 author: NetYeti
 created: 2026-06-03
@@ -9,7 +10,7 @@ tags:
   - dispatch
   - ai
   - dog-fooding
-approved: true
+approved: false
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:

@@ -62,7 +62,9 @@ function entry(p: string, fm: Record<string, any>) {
     title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
     created: String(fm.created ?? ''),
     tags: Array.isArray(fm.tags) ? fm.tags : [],
-    category: Array.isArray(fm.category) ? fm.category : [],
+    category: Array.isArray(fm.category) && fm.category.length > 0
+      ? fm.category
+      : Array.isArray(fm.tags) ? fm.tags : [],
     complexity: String(fm.complexity ?? ''),
     status: String(fm.status ?? ''),
     priority: String(fm.priority ?? ''),

@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Lifecycle Gates — Time-Based and Scheduled Triggers"
 author: NetYeti
 created: 2026-06-03

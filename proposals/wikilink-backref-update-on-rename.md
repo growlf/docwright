@@ -1,4 +1,5 @@
 ---
+complexity: medium
 title: "Wikilink Back-Reference Updating on Rename"
 author: NetYeti
 created: 2026-06-03

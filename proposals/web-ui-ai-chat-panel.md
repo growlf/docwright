@@ -1,4 +1,5 @@
 ---
+complexity: high
 title: "Web UI AI Chat Panel — OpenCode Integration"
 author: NetYeti
 created: 2026-06-03

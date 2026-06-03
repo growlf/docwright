@@ -1,4 +1,5 @@
 ---
+complexity: medium
 title: "Per-Profile Governance System Prompt for OpenCode Sessions"
 author: NetYeti
 created: 2026-06-03

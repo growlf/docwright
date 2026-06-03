@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Gantt View for Plan Dependencies and Effort"
 author: NetYeti
 created: 2026-06-03

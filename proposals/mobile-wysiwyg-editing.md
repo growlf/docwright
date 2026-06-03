@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Mobile WYSIWYG Editing"
 author: NetYeti
 created: 2026-06-03

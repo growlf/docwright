@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Misc / Catch-all Inbox"
 author: NetYeti
 created: 2026-06-02

@@ -1,4 +1,5 @@
 ---
+complexity: low
 title: "Model Voting and Confidence Scoring Across Perspectives"
 author: NetYeti
 created: 2026-06-03
