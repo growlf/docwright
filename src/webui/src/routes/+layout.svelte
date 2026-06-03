@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import FileTree from './FileTree.svelte';
+  import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast } from '$lib/toast';
@@ -112,6 +113,7 @@
         {/each}
       </div>
     {/if}
+    <GitPanel />
   </aside>
   <main id="content">
     <slot />
