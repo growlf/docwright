@@ -1,16 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Document body -->
-  <path d="M5 3 L19 3 L27 11 L27 29 L5 29 Z"
-    fill="#0d1f2d" stroke="#58a6ff" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- Folded corner -->
-  <path d="M19 3 L19 11 L27 11"
-    fill="none" stroke="#58a6ff" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- Text lines -->
-  <line x1="9" y1="16" x2="23" y2="16" stroke="#58a6ff" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="9" y1="20" x2="21" y2="20" stroke="#3d7ab3" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="9" y1="24" x2="17" y2="24" stroke="#3d7ab3" stroke-width="1.5" stroke-linecap="round"/>
-  <!-- Pen nib (write) -->
-  <path d="M20 22 L23 19 L25 21 L22 24 Z"
-    fill="#a78bfa" stroke="none"/>
-  <line x1="25" y1="21" x2="26.5" y2="22.5" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32">
+  <text
+    x="0" y="24"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="22"
+    font-weight="700"
+    letter-spacing="-0.5"
+    fill="#58a6ff"
+  >DocWright</text>
 </svg>
