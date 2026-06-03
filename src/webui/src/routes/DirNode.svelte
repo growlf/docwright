@@ -2,6 +2,7 @@
   import { getContext } from 'svelte';
   import { goto } from '$app/navigation';
   import DirNode from './DirNode.svelte';
+  import FileNode from './FileNode.svelte';
   import { fileChanged } from '$lib/fileChanges';
 
   interface TreeItem {
@@ -155,15 +156,7 @@
         {#if child.type === 'dir'}
           <DirNode item={child} {currentPath} />
         {:else}
-          <a
-            href={child.name.endsWith('.md') ? '/' + child.path.replace(/\.md$/, '') : '/api/read?path=' + child.path}
-            class="file-link"
-            class:active={'/' + child.path.replace(/\.md$/, '') === currentPath}
-            target={child.name.endsWith('.md') ? undefined : '_blank'}
-            rel={child.name.endsWith('.md') ? undefined : 'noopener'}
-          >
-            {child.name.replace(/\.md$/, '')}
-          </a>
+          <FileNode item={child} {currentPath} />
         {/if}
       {/each}
     </div>
@@ -181,9 +174,6 @@
   .add-btn:hover { background: #222; color: #fff; }
   .children { padding-left: 16px; }
   .children.hidden { display: none; }
-  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: #aaa; text-decoration: none; }
-  .file-link:hover { background: #1a1a1a; color: #fff; }
-  .file-link.active { background: #2b5b84; color: #fff; }
   .context-menu { position: fixed; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 4px 0; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
   .menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
   .menu-item:hover { background: #2b5b84; color: #fff; }

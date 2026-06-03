@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, setContext } from 'svelte';
   import DirNode from './DirNode.svelte';
+  import FileNode from './FileNode.svelte';
   import { fileChanged } from '$lib/fileChanges';
 
   let { currentPath }: { currentPath: string } = $props();
@@ -86,15 +87,7 @@
   <nav class="tree">
     {#each filtered as item}
       {#if item.type === 'file'}
-        <a
-          href={item.name.endsWith('.md') ? '/' + item.path.replace(/\.md$/, '') : '/api/read?path=' + item.path}
-          class="file-link"
-          class:active={'/' + item.path.replace(/\.md$/, '') === currentPath}
-          target={item.name.endsWith('.md') ? undefined : '_blank'}
-          rel={item.name.endsWith('.md') ? undefined : 'noopener'}
-        >
-          {item.name.replace(/\.md$/, '')}
-        </a>
+        <FileNode {item} {currentPath} />
       {:else}
         <DirNode {item} {currentPath} />
       {/if}
@@ -124,10 +117,6 @@
 
   .muted { padding: 12px 16px; color: #666; font-size: 13px; }
   .tree { padding: 8px 0; flex: 1; overflow-y: auto; }
-  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: #aaa; text-decoration: none; }
-  .file-link:hover { background: #1a1a1a; color: #fff; }
-  .file-link.active { background: #2b5b84; color: #fff; }
-
   .archived-toggle { padding: 6px 12px 8px; border-top: 1px solid #1a1a1a; margin-top: auto; }
   .archived-btn { background: none; border: none; color: #444; font-size: 11px; cursor: pointer; padding: 2px 0; }
   .archived-btn:hover { color: #888; }
