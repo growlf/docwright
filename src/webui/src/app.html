@@ -3,11 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>docwright</title>
+    <title>DocWright</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>📄</text></svg>">
     <style>
       *, *::before, *::after { box-sizing: border-box; }
       html, body { margin: 0; padding: 0; background: #111; height: 100%; }
+
+      /* Consistent dark scrollbars across all elements */
+      ::-webkit-scrollbar              { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track        { background: #111; }
+      ::-webkit-scrollbar-thumb        { background: #2a2a2a; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover  { background: #3a3a3a; }
+      ::-webkit-scrollbar-corner       { background: #111; }
+
+      /* Firefox */
+      * { scrollbar-width: thin; scrollbar-color: #2a2a2a #111; }
     </style>
     %sveltekit.head%
   </head>
