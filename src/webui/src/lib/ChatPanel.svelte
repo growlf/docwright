@@ -6,8 +6,13 @@
   interface Message { id: string; role: 'user' | 'assistant'; parts: MessagePart[]; tool?: string; }
   interface Session { id: string; title?: string; }
 
+  type ProcStatus = 'stopped' | 'starting' | 'running-ours' | 'running-external';
+
   let connected   = $state(false);
   let checking    = $state(true);
+  let procStatus  = $state<ProcStatus>('stopped');
+  let starting    = $state(false);
+  let startMsg    = $state('');
   let sessions    = $state<Session[]>([]);
   let currentID   = $state<string | null>(null);
   let messages    = $state<Message[]>([]);
@@ -37,10 +42,54 @@
   async function checkHealth() {
     checking = true;
     try {
-      const r = await fetch('/api/opencode/global/health');
-      connected = r.ok;
+      const [healthRes, procRes] = await Promise.all([
+        fetch('/api/opencode/global/health'),
+        fetch('/api/opencode-process'),
+      ]);
+      connected = healthRes.ok;
+      if (procRes.ok) {
+        const { status } = await procRes.json();
+        procStatus = status;
+      }
     } catch { connected = false; }
     checking = false;
+  }
+
+  async function startOpenCode() {
+    starting = true;
+    startMsg = 'Starting OpenCode…';
+    try {
+      const res = await fetch('/api/opencode-process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' }),
+      });
+      const data = await res.json();
+      procStatus = data.status;
+      startMsg = data.message;
+      if (data.ok) {
+        connected = true;
+        openEventStream();
+        await loadSessions();
+        if (sessions.length > 0) await selectSession(sessions[0].id);
+        else await newSession();
+      }
+    } catch { startMsg = 'Failed to start — is opencode on PATH?'; }
+    starting = false;
+  }
+
+  async function stopOpenCode() {
+    await fetch('/api/opencode-process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'stop' }),
+    });
+    procStatus = 'stopped';
+    connected = false;
+    messages = [];
+    sessions = [];
+    currentID = null;
+    es?.close(); es = null;
   }
 
   function openEventStream() {
@@ -165,7 +214,12 @@
   <div class="chat-header">
     <span class="chat-title">AI Chat</span>
     {#if connected}
-      <span class="status-dot connected" title="OpenCode connected"></span>
+      <span class="status-dot connected"
+        title={procStatus === 'running-ours' ? 'OpenCode started by DocWright' : 'OpenCode running (external)'}
+      ></span>
+      {#if procStatus === 'running-ours'}
+        <button class="stop-btn" onclick={stopOpenCode} title="Stop OpenCode (started by DocWright)">■</button>
+      {/if}
     {:else}
       <span class="status-dot disconnected" title="OpenCode not running"></span>
     {/if}
@@ -179,9 +233,18 @@
     <div class="disconnected-state">
       <div class="dc-icon">⚡</div>
       <div class="dc-title">OpenCode not running</div>
-      <div class="dc-body">Start OpenCode to enable AI features:</div>
-      <code class="dc-cmd">opencode serve</code>
-      <button class="dc-retry" onclick={checkHealth}>Retry connection</button>
+      {#if starting}
+        <div class="dc-body starting">{startMsg}</div>
+        <div class="dc-spinner"></div>
+      {:else if startMsg}
+        <div class="dc-body err">{startMsg}</div>
+        <button class="dc-action primary" onclick={startOpenCode}>Try again</button>
+        <button class="dc-action" onclick={checkHealth}>Check connection</button>
+      {:else}
+        <button class="dc-action primary" onclick={startOpenCode}>Start OpenCode</button>
+        <div class="dc-hint">or run manually: <code>opencode serve</code></div>
+        <button class="dc-action" onclick={checkHealth}>Already running? Retry</button>
+      {/if}
     </div>
 
   {:else}
@@ -281,9 +344,31 @@
   .dc-icon  { font-size: 32px; color: #333; }
   .dc-title { font-size: 14px; font-weight: 600; color: #666; }
   .dc-body  { font-size: 12px; color: #444; }
-  .dc-cmd   { display: block; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px 12px; font-size: 12px; color: #58a6ff; font-family: monospace; }
-  .dc-retry { margin-top: 8px; padding: 6px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #888; font-size: 12px; cursor: pointer; }
-  .dc-retry:hover { border-color: #555; color: #ccc; }
+  .dc-body.starting { color: #888; }
+  .dc-body.err      { color: #e87; }
+  .dc-hint  { font-size: 11px; color: #444; margin-top: 4px; }
+  .dc-hint code { color: #58a6ff; font-family: monospace; }
+  .dc-action {
+    padding: 6px 18px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 4px; color: #888; font-size: 12px; cursor: pointer;
+    min-width: 140px;
+  }
+  .dc-action:hover { border-color: #555; color: #ccc; }
+  .dc-action.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
+  .dc-action.primary:hover { background: #1a3a5a; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dc-spinner {
+    width: 20px; height: 20px; border: 2px solid #2b5b84;
+    border-top-color: #58a6ff; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .stop-btn {
+    background: none; border: none; color: #555; cursor: pointer;
+    font-size: 11px; padding: 1px 4px; border-radius: 2px;
+  }
+  .stop-btn:hover { color: #e44; }
 
   /* ── Session bar ── */
   .session-bar {

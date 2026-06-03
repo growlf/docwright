@@ -1,5 +1,5 @@
 ---
-title: "AI Proposal Improvement — On-Save Trigger and Manual Button"
+title: AI Proposal Improvement — On-Save Trigger and Manual Button
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -8,13 +8,14 @@ tags:
   - proposals
   - web-ui
   - quality
-approved: false
-created_by: "NetYeti@phoenix"
-assigned_to: ""
+approved: true
+created_by: NetYeti@phoenix
+assigned_to: Netyeti
 related_to:
   - proposals/web-ui-ai-chat-panel.md
   - proposals/multi-perspective-review-feature.md
   - proposals/approved/ux-new-proposal.md
+_path: proposals/ai-proposal-improve-on-save.md
 ---
 
 ## Problem
