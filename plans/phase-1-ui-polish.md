@@ -60,6 +60,8 @@ They are recorded for the audit trail.
 | Favicon uses brand logo | session | `<link rel="icon" href="/api/brand/logo">` |
 | Deployment scenarios documented | session | `docs/deployment.md` — standalone, team server, enterprise |
 | Chat panel (direct mode) | session | `ChatPanel.svelte` — browser connects directly to client's OpenCode |
+| Chat panel send bug fixed | e0df5e9 | `message.part.updated` event structure corrected (p.part.messageID, p.delta); directory now `?directory=` query param so EventSource can carry it; 90s send timeout prevents stuck button |
+| MCP auto-registration | e0df5e9 | `/api/opencode-config` writes DocWright MCP entry into `opencode.json` on ChatPanel mount; settings panel shows registration status |
 
 ## Remaining Tasks
 
