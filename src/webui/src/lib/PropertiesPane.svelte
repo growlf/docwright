@@ -5,12 +5,14 @@
     mode = 'read',
     onsave,
     onapprove,
+    onfindrelated,
   }: {
     frontmatter: Record<string, any>;
     docType: string;
     mode: 'read' | 'edit' | 'source';
     onsave?: () => void;
     onapprove?: () => void;
+    onfindrelated?: () => void;
   } = $props();
 
   let collapsed = $state(
@@ -115,6 +117,7 @@
         {:else}
           <button class="act unapprove" onclick={unapprove}>Unapprove</button>
         {/if}
+        <button class="act related" onclick={() => onfindrelated?.()}>Find Related</button>
       {/if}
       {#if docType === 'plan'}
         {#if frontmatter.status === 'approved'}
@@ -259,6 +262,8 @@
   .act.cancel-plan:hover { background: #3a1a1a; }
   .act.save     { border-color: #2b5b84; color: #58a6ff; }
   .act.save:hover     { background: #1a3a5a; }
+  .act.related  { border-color: #4a2b84; color: #a78bfa; }
+  .act.related:hover  { background: #2a1a5a; }
 
   .warn {
     margin: 8px 12px;

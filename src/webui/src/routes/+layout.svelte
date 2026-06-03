@@ -44,8 +44,11 @@
       `title: "${title}"\n` +
       `author: ${user}\n` +
       `created: ${date}\n` +
-      'tags:\n' +
-      '  - new\n' +
+      'tags: []\n' +
+      'category: []\n' +
+      'complexity: ""\n' +
+      'estimated_effort: ""\n' +
+      'depends_on: []\n' +
       `approved: false\n` +
       `created_by: "${user}@${host}"\n` +
       'assigned_to: ""\n' +

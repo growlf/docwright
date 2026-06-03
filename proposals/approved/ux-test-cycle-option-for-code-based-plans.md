@@ -1,5 +1,5 @@
 ---
-title: "Test cycle option for code-based plans"
+title: Test cycle option for code-based plans
 author: NetYeti
 created: 2026-06-02
 tags:
@@ -7,10 +7,10 @@ tags:
   - policy
   - testing
   - tdd
-approved: false
+approved: true
 deferred: true
 deferred_to: phase-2
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 assigned_to: ""
 ---
 ## Problem

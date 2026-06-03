@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
+  import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
   import TurndownService from 'turndown';
@@ -19,6 +20,12 @@
   let mode = $state<'read' | 'edit' | 'source'>('read');
   let html = $state('');
   let showProps = $state(true);
+
+  // Collation panel state
+  let showCollation = $state(false);
+  let collationLoading = $state(false);
+  let collationMatches = $state<any[]>([]);
+  let lastOverlapPath = $state(''); // avoid re-firing on the same file
 
   let docType = $derived(
     filePath().startsWith('proposals/') ? 'proposal'
@@ -190,12 +197,65 @@
       content = parsed.body;
       html = md.render(content);
       showToast('Saved', 2000);
+      if (docType === 'proposal') checkOverlap();
     }
   }
 
   async function saveFrontmatter() {
     if (frontmatter) raw = buildRaw(frontmatter, content);
     await save();
+  }
+
+  async function checkOverlap() {
+    const fp = filePath();
+    if (lastOverlapPath === fp) return;
+    lastOverlapPath = fp;
+    const res = await fetch('/api/overlap?path=' + encodeURIComponent(fp));
+    if (!res.ok) return;
+    const { matches } = await res.json();
+    for (const m of matches) {
+      showToast(`Possible overlap with "${m.title}" (${Math.round(m.score * 100)}% match) →`, 0, {
+        label: 'Review',
+        onclick: () => goto('/' + m.path.replace(/\.md$/, '')),
+      });
+    }
+  }
+
+  async function findRelated() {
+    showCollation = true;
+    collationLoading = true;
+    collationMatches = [];
+    const res = await fetch('/api/overlap?path=' + encodeURIComponent(filePath()));
+    collationLoading = false;
+    if (res.ok) {
+      const { matches } = await res.json();
+      collationMatches = matches;
+    }
+  }
+
+  function handleInsert(slug: string, heading: string, sectionContent: string) {
+    const quote = `\n\n> *from [[${slug}]] — ${heading}*\n` +
+      sectionContent.split('\n').map(l => '> ' + l).join('\n') + '\n';
+    content += quote;
+    raw = frontmatter ? buildRaw(frontmatter, content) : content;
+    html = md.render(content);
+    mode = 'edit';
+  }
+
+  async function handleSubsume(relPath: string) {
+    const res = await fetch('/api/read?path=' + encodeURIComponent(relPath));
+    if (!res.ok) return;
+    const { content: relRaw } = await res.json();
+    const parsed = splitFrontmatter(relRaw);
+    if (!parsed.frontmatter) return;
+    parsed.frontmatter.subsumed_by = filePath().replace(/\.md$/, '');
+    const updated = buildRaw(parsed.frontmatter, parsed.body);
+    await fetch('/api/write?path=' + encodeURIComponent(relPath), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: updated }),
+    });
+    showToast('Marked ' + relPath + ' as subsumed', 2000);
   }
 
   async function handleApprove() {
@@ -283,6 +343,14 @@
             </span>
           {/each}
         </div>
+        {#if Array.isArray(frontmatter.depends_on) && frontmatter.depends_on.length > 0}
+          <div class="dep-row">
+            <span class="dep-label">Depends on:</span>
+            {#each frontmatter.depends_on as dep}
+              <a class="dep-link" href="/{dep}">{dep}</a>
+            {/each}
+          </div>
+        {/if}
       {/if}
       <div class="body">
         {#if content}
@@ -302,9 +370,21 @@
       {mode}
       onsave={saveFrontmatter}
       onapprove={handleApprove}
+      onfindrelated={findRelated}
     />
   {/if}
 </div>
+
+<!-- Collation panel — fixed overlay -->
+{#if showCollation}
+  <CollationPanel
+    matches={collationMatches}
+    loading={collationLoading}
+    oninsert={handleInsert}
+    onsubsume={handleSubsume}
+    onclose={() => { showCollation = false; collationMatches = []; }}
+  />
+{/if}
 
 <style>
   .page-wrap { display: flex; min-height: 100%; align-items: stretch; }
@@ -315,6 +395,10 @@
   .fm-entry { color: #aaa; }
   .fm-entry strong { color: #fff; }
   .body   { line-height: 1.6; }
+  .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #181818; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
+  .dep-label { color: #555; font-weight: 600; }
+  .dep-link { color: #58a6ff; text-decoration: none; border: 1px solid #1e3a5a; border-radius: 10px; padding: 1px 8px; }
+  .dep-link:hover { background: #1a3a5a; }
   .muted  { color: #666; }
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; }
