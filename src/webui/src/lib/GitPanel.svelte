@@ -75,16 +75,15 @@
   );
 
   async function stageAll() {
-    const res = await fetch('/api/git/commit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: '__stage_only__' }), // we just need git add
-    });
-    // Actually, use bash via a new endpoint — for now do git add via status reload
-    // Stage all is handled by committing with a pre-stage step; for prototype just
-    // call the existing write/rename which triggers SSE. A dedicated stage endpoint
-    // is a follow-up task.
-    setLog('Stage all: use git add -u in terminal for now — dedicated endpoint coming');
+    setLog('Staging all tracked changes…');
+    const res = await fetch('/api/git/stage', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      setLog('✓ Staged all tracked changes');
+      await loadStatus();
+    } else {
+      setLog('✗ ' + (data.error || 'Stage failed'));
+    }
   }
 
   async function commit() {
@@ -200,6 +199,7 @@
 
       <!-- Action row -->
       <div class="actions">
+        <button class="act-btn" onclick={stageAll}>Stage all</button>
         <button class="act-btn" onclick={() => { committing = !committing; tagging = false; commitError = ''; }}>Commit</button>
         <button class="act-btn push" onclick={push} disabled={!status || status.ahead === 0}>Push{status && status.ahead > 0 ? ` (${status.ahead})` : ''}</button>
         <button class="act-btn tag" onclick={openTagUI}>Tag</button>
