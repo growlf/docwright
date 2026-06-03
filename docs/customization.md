@@ -70,8 +70,9 @@ This is intentional: white-labeling the brand does not remove attribution.
 Place a CSS file at `brand/theme.css` in the vault root. It is loaded after
 all DocWright styles, so any rule in it takes full priority.
 
-A starter file with colour reference comments is included at `brand/theme.css`
-in the DocWright repo — copy it to your vault and edit from there.
+The DocWright repo ships a working example at `brand/theme.css` — this is
+DocWright's own brand theme and serves as the reference implementation.
+Copy the entire `brand/` directory to your vault and edit from there.
 
 ```
 vault-root/
