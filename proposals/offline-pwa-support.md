@@ -8,6 +8,7 @@ tags:
   - pwa
   - offline
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Offline support requires a service worker strategy and conflict resolution with git as canonical store. Revisit after launch."
 created_by: "NetYeti@phoenix"

@@ -8,6 +8,7 @@ tags:
   - sessions
   - opencode
   - improvements
+approved: false
 deferred: true
 deferred_reason: "MVP chat panel covers the core use case. Full session management UI is post-launch polish."
 created_by: "NetYeti@phoenix"

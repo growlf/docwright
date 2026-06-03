@@ -9,6 +9,7 @@ tags:
   - pty
   - opencode
   - improvements
+approved: false
 deferred: true
 deferred_reason: "High complexity. Governance app does not need a terminal in MVP. Revisit post-launch."
 created_by: "NetYeti@phoenix"

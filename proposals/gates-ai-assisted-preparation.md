@@ -8,6 +8,7 @@ tags:
   - gates
   - ai
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Depends on base gate mechanism (see proposals/phase-gate-sign-off.md). Revisit after launch."
 created_by: "NetYeti@phoenix"

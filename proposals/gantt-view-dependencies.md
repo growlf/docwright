@@ -9,6 +9,7 @@ tags:
   - planning
   - dependencies
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Depends on depends_on and estimated_effort fields being in active use across plans. Revisit after Phase 2 plans are underway."
 created_by: "NetYeti@phoenix"

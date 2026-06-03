@@ -8,6 +8,7 @@ tags:
   - properties-pane
   - contributors
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Requires a contributor list source (Forgejo team membership or vault config). Revisit when ACL/Forgejo integration lands in Phase 3."
 created_by: "NetYeti@phoenix"

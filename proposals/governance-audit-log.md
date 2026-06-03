@@ -9,6 +9,7 @@ tags:
   - lifecycle
   - dispatch
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Depends on gate mechanism and dispatch module being stable. Revisit after Phase 3 lifecycle enforcement is complete."
 created_by: "NetYeti@phoenix"

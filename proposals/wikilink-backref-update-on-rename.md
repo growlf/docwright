@@ -8,6 +8,7 @@ tags:
   - rename
   - dispatch
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Requires vault-wide wikilink index (dispatch module, Phase 3). Revisit after backlink index is implemented."
 created_by: "NetYeti@phoenix"

@@ -8,6 +8,7 @@ tags:
   - chat
   - providers
   - improvements
+approved: false
 deferred: true
 deferred_reason: "OpenCode handles model selection natively. Expose as a convenience in DocWright UI post-MVP."
 created_by: "NetYeti@phoenix"

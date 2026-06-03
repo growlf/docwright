@@ -9,6 +9,7 @@ tags:
   - ai
   - review
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Phase 3. Requires tight dispatch integration to surface diffs in a governance-aware way. Revisit after dispatch module is stable."
 created_by: "NetYeti@phoenix"

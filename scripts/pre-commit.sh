@@ -133,7 +133,38 @@ validate_agent_instructions() {
 }
 
 # =============================================================================
-# 9. Self-approval detection
+# 9. Required frontmatter fields validation
+#    (root cause fix: rules/frontmatter-validate.md requires these but hook
+#     never checked for their presence — 31 proposals were missing approved:)
+# =============================================================================
+validate_required_fields() {
+    local FILE=$1
+    local FM=$(get_frontmatter "$FILE")
+    [ -z "$FM" ] && return 0
+
+    if [[ "$FILE" =~ ^proposals/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^proposals/approved/ ]]; then
+        local REQUIRED=(title author created tags approved created_by assigned_to)
+        for field in "${REQUIRED[@]}"; do
+            if ! echo "$FM" | python3 -c "
+import sys, yaml
+field = '$field'
+try:
+    fm = yaml.safe_load(sys.stdin)
+    if not fm or field not in fm:
+        sys.exit(1)
+except:
+    sys.exit(1)
+" 2>/dev/null; then
+                print_error "$FILE: missing required frontmatter field '$field'"
+                return 1
+            fi
+        done
+    fi
+    return 0
+}
+
+# =============================================================================
+# 10. Self-approval detection
 # =============================================================================
 validate_no_self_approval() {
     local FILE=$1
@@ -194,6 +225,7 @@ ERRORS=0; WARNINGS=0
 for FILE in $STAGED; do
     [[ ! "$FILE" =~ \.md$ ]] && continue
     validate_template_vars "$FILE" || ((ERRORS++))
+    validate_required_fields "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && { validate_automated "$FILE" || ((ERRORS++)); }
     [[ "$FILE" =~ ^proposals/approved/ ]] && { validate_assigned_to "$FILE" "proposal" || ((ERRORS++)); }
     if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then

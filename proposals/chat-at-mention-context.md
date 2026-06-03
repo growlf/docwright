@@ -8,6 +8,7 @@ tags:
   - chat
   - context
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Post-MVP chat panel. Straightforward to add once base panel is stable."
 created_by: "NetYeti@phoenix"

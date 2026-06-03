@@ -8,6 +8,7 @@ tags:
   - keyboard
   - accessibility
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Add after the unified panel system is stable. Shortcuts should be assigned once the layout is settled."
 created_by: "NetYeti@phoenix"

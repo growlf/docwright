@@ -7,6 +7,7 @@ tags:
   - ui
   - search
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Requires search backend (tobi/qmd or similar). Post-launch."
 created_by: "NetYeti@phoenix"

@@ -25,5 +25,5 @@ export function GET() {
     } catch { /* malformed brand.json — use defaults */ }
   }
 
-  return json({ name, logoPath });
+  return json({ name, logoPath, vaultPath: REPO_ROOT });
 }

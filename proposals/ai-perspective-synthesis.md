@@ -8,6 +8,7 @@ tags:
   - review
   - synthesis
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Risk: synthesis by AI can remove the human from the loop. Requires careful design to preserve human judgment. Post-launch."
 created_by: "NetYeti@phoenix"

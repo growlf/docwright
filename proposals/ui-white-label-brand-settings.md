@@ -8,6 +8,7 @@ tags:
   - settings
   - white-label
   - improvements
+approved: false
 deferred: true
 deferred_reason: "brand.json config and logo serving work now. Settings UI to edit them belongs after the activity bar / settings panel is built."
 created_by: "NetYeti@phoenix"

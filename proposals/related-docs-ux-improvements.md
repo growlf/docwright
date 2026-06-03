@@ -8,6 +8,7 @@ tags:
   - collation
   - ux
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Immediate toast-flood bug fixed. Deeper UX improvements (score threshold, explicit related_to, acknowledgement state) belong post-launch."
 created_by: "NetYeti@phoenix"

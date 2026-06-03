@@ -7,6 +7,7 @@ tags:
   - ui
   - panels
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Fixed widths are fine for launch. Resize handles add complexity and drag state management. Post-launch."
 created_by: "NetYeti@phoenix"

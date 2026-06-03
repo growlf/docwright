@@ -10,7 +10,6 @@ depends_on: []
 approved: false
 created_by: NetYeti@phoenix
 assigned_to: ""
-_path: proposals/aproval-need-assigned-to-picklist.md
 ---
 ## Problem
 

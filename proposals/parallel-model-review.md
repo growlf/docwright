@@ -8,6 +8,7 @@ tags:
   - review
   - ui
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Sequential second-opinion covers most needs. Parallel column layout is a significant UI investment. Post-launch."
 created_by: "NetYeti@phoenix"

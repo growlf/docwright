@@ -8,6 +8,7 @@ tags:
   - file-tree
   - ux
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Non-trivial UX: moving files must handle wikilink updates and git rename tracking. Revisit after wikilink backref updating is implemented."
 created_by: "NetYeti@phoenix"

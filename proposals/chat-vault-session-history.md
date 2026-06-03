@@ -9,6 +9,7 @@ tags:
   - sessions
   - multi-vault
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Post-MVP. Useful for multi-vault users; single-vault users can use OpenCode's own session list."
 created_by: "NetYeti@phoenix"

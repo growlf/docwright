@@ -8,6 +8,7 @@ tags:
   - governance
   - dispatch
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Heuristic estimator ships now. AI-powered version requires the chat panel (Phase 2). Revisit after web-ui-ai-chat-panel lands."
 created_by: "NetYeti@phoenix"

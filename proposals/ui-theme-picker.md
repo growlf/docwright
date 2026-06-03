@@ -8,6 +8,7 @@ tags:
   - theming
   - settings
   - improvements
+approved: false
 deferred: true
 deferred_reason: "Drop-in theme.css works for launch. In-app picker needs settings panel (activity bar). Post-launch."
 created_by: "NetYeti@phoenix"

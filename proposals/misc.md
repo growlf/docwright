@@ -23,18 +23,22 @@ next batch of thoughts.
 Do not manually resolve the items below. Leave them for the collation feature
 to process.
 
-## Problem / Ideas
+## Ideas
 
-- The title from frontmatter needs to be rendered as an immutable H1 on the page
-  — the user should not be able to accidentally edit the document title inline.
-- When creating a new proposal, after setting the filename the editor should
-  immediately open in WYSIWYG mode — no extra click required.
-- There should be an AI-assisted button on proposals that auto-fills and reviews
-  the current document (fills gaps, flags weak reasoning, suggests tags).
-- Plans should have a "critique this plan" button that prompts the AI to argue
-  against the plan — stress-test assumptions before committing to the work.
+Below are the raw ideas captured during development. Each is either now
+covered by an existing or new proposal, or still pending extraction.
 
-## Proposed Solution
+| # | Idea | Status | Proposal |
+|---|------|--------|----------|
+| 1 | Immutable H1 from frontmatter title | **Promoted** | [[proposals/ui-immutable-title-h1.md]] |
+| 2 | Auto-open WYSIWYG on proposal create | **Covered** | [[proposals/approved/ux-new-proposal.md]] |
+| 3 | AI-assisted proposal review/fill button | **Covered** | [[proposals/ai-proposal-improve-on-save.md]] |
+| 4 | "Critique this plan" stress-test button | **Pending** | Not yet proposed — see [[proposals/multi-perspective-review-feature.md]] which partially covers (generic "second opinion" quick action) |
 
-Intentionally left blank — collation feature will distribute these items into
-the appropriate proposals and plans when it is implemented.
+## Collation Note
+
+When the collation feature (`ux-collating-proposals-into-apropriate-plans.md`)
+is built, it should:
+- Remove rows marked **Covered** from this table
+- Offer to promote **Pending** items to new proposals
+- Leave the file as an empty inbox
