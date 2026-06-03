@@ -9,8 +9,7 @@ tags:
   - lifecycle
   - visualization
   - improvements
-deferred: true
-deferred_reason: "Requires Phase 3 backlink index and dispatch module relationship data. Revisit after those are stable."
+deferred: false
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
@@ -85,17 +84,25 @@ relationship arrows between stages.
 - **Collation panel** — already shows related proposals inline. This
   proposal is the vault-wide version of that concept.
 
-## Deferred Because
+## Phased delivery
 
-Meaningful graph data requires:
-1. The backlink index (`_backlinks.json`) from Phase 3 dispatch work —
-   without it, a vault-wide relationship scan on every load is too slow
-2. The `proposal_source`, `related_to`, and `depends_on` fields to be
-   consistently populated — currently sparse on older documents
-3. A graph rendering strategy to be chosen
+**Phase 1 — Funnel view (build now, no new infrastructure needed)**
 
-The funnel view (swimlanes without edges) could ship earlier as a visual
-upgrade to the status page, without requiring the full graph infrastructure.
+The status API already returns all the data: open proposals, approved
+proposals, active plans, completed count, deferred. The funnel view is a
+visual re-rendering of the status page — swimlanes instead of collapsible
+sections, with simple SVG arrows connecting stages. No backlink index
+required. No graph library required. This is the "wow" demo that makes
+DocWright's governance model immediately legible to a new user.
+
+**Phase 3 — Full graph (dependency edges, backlink traversal)**
+
+The dependency graph and full relationship edges require:
+1. The backlink index (`_backlinks.json`) from Phase 3 dispatch work
+2. The `proposal_source`, `related_to`, `depends_on` fields consistently
+   populated across documents
+3. A graph rendering library (D3.js or similar)
+
 See [[plans/phase-3-profile-acl-ai.md]].
 
 ## Out of Scope
