@@ -134,26 +134,33 @@
 
 <!-- Always-visible toolbar — all viewports -->
 <div class="app-toolbar">
-  <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
-  <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-  <a href="/status" class="toolbar-brand" title="Go to {brand.name} status">
+  <!-- Left: sidebar toggle -->
+  <div class="toolbar-left">
+    <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
+  </div>
+
+  <!-- Center: brand — acts as home button -->
+  <a href="/status" class="toolbar-brand" title="Home — {brand.name} status">
     {#if brand.logoPath}
       <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
     {:else}
       <span class="brand-name">{brand.name}</span>
     {/if}
   </a>
-  <div class="toolbar-spacer"></div>
-  <div class="new-group">
-    <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+ New</button>
-    {#if showNewMenu}
-      <div class="new-menu" onclick={(e) => e.stopPropagation()}>
-        <button class="new-menu-item" onclick={newFile}>New File</button>
-        <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
-      </div>
-    {/if}
+
+  <!-- Right: new + properties toggle -->
+  <div class="toolbar-right">
+    <div class="new-group">
+      <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+ New</button>
+      {#if showNewMenu}
+        <div class="new-menu" onclick={(e) => e.stopPropagation()}>
+          <button class="new-menu-item" onclick={newFile}>New File</button>
+          <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
+        </div>
+      {/if}
+    </div>
+    <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
   </div>
-  <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
 </div>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -327,9 +334,9 @@
   /* old mobile-topbar removed — replaced by app-toolbar (always visible) */
   /* ── Always-visible toolbar ─────────────────────────────────────────────── */
   .app-toolbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 6px;
     height: 44px;
     padding: 0 10px;
     background: #0f0f12;
@@ -337,8 +344,13 @@
     flex-shrink: 0;
     z-index: 100;
   }
-  .toolbar-brand { display: flex; align-items: center; text-decoration: none; }
-  .toolbar-spacer { flex: 1; }
+  .toolbar-left  { display: flex; align-items: center; gap: 4px; justify-content: flex-start; }
+  .toolbar-right { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+  .toolbar-brand {
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; padding: 4px 8px; border-radius: 4px;
+  }
+  .toolbar-brand:hover { background: #1a1a2a; }
   .hamburger { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 3px; }
   .hamburger:hover { color: #aaa; background: #1a1a1a; }
   .home-btn { color: #666; font-size: 16px; text-decoration: none; padding: 4px 6px; border-radius: 3px; }
