@@ -1,8 +1,9 @@
 <script lang="ts">
   let {
     matches,
+    alreadyRelated = [] as string[],
     loading = false,
-    oninsert,
+    onaddrelated,
     onsubsume,
     onclose,
     onrecheck,
@@ -13,25 +14,22 @@
       score: number;
       sections: Array<{ heading: string; content: string }>;
     }>;
+    alreadyRelated?: string[];
     loading?: boolean;
-    oninsert?: (path: string, heading: string, content: string, title: string) => void;
+    onaddrelated?: (path: string) => void;
     onsubsume?: (path: string) => void;
     onclose?: () => void;
     onrecheck?: () => void;
   } = $props();
 
-  let expanded = $state<Set<string>>(new Set());
-  let subsumed = $state<Set<string>>(new Set());
-  let inserted = $state<Set<string>>(new Set());
+  let expanded  = $state<Set<string>>(new Set());
+  let subsumed  = $state<Set<string>>(new Set());
+  let justAdded = $state<Set<string>>(new Set());
 
   function toggleExpand(p: string) {
     const next = new Set(expanded);
     next.has(p) ? next.delete(p) : next.add(p);
     expanded = next;
-  }
-
-  function slug(p: string) {
-    return p.replace(/^.*\//, '').replace(/\.md$/, '');
   }
 
   function scoreLabel(s: number) {
@@ -40,14 +38,17 @@
     return 'low';
   }
 
-  function handleInsert(match: { path: string; title: string }, section: { heading: string; content: string }) {
-    const key = match.path + '#' + section.heading;
-    // Pass full relative path (without .md) so the wikilink resolves correctly
-    const fullPath = match.path.replace(/\.md$/, '');
-    oninsert?.(fullPath, section.heading, section.content, match.title);
-    const next = new Set(inserted);
-    next.add(key);
-    inserted = next;
+  function isRelated(path: string): boolean {
+    const norm = path.replace(/\.md$/, '');
+    return justAdded.has(path) ||
+      alreadyRelated.some(r => r === path || r === norm || r.replace(/\.md$/, '') === norm);
+  }
+
+  function handleAddRelated(path: string) {
+    onaddrelated?.(path);
+    const next = new Set(justAdded);
+    next.add(path);
+    justAdded = next;
   }
 
   function handleSubsume(match: { path: string }) {
@@ -75,31 +76,32 @@
     <div class="empty">No related proposals found.<br><small>Open a proposal and click ↺ to scan.</small></div>
   {:else}
     <div class="hint">
-      Click a result to expand. <strong>Insert</strong> quotes a section into this document.
+      <strong>Add as related</strong> writes to <code>related_to:</code> frontmatter — the correct way to link documents in the governance system.
     </div>
     {#each matches as match}
       <div class="match" class:subsumed={subsumed.has(match.path)}>
-        <button class="match-header" onclick={() => toggleExpand(match.path)} title="Click to expand and see matching sections">
+        <button class="match-header" onclick={() => toggleExpand(match.path)} title="Click to expand sections">
           <span class="match-title">{match.title || match.path}</span>
           <span class="score {scoreLabel(match.score)}">{Math.round(match.score * 100)}%</span>
           <span class="expand-icon">{expanded.has(match.path) ? '▾' : '▸'}</span>
         </button>
 
+        <div class="match-actions">
+          {#if isRelated(match.path)}
+            <span class="related-badge" title="Already in related_to: frontmatter">✓ Related</span>
+          {:else}
+            <button class="add-related-btn" onclick={() => handleAddRelated(match.path)}
+              title="Add to related_to: frontmatter — creates a structured, queryable link">
+              + Add as related
+            </button>
+          {/if}
+        </div>
+
         {#if expanded.has(match.path)}
           <div class="match-body">
             {#each match.sections as section}
               <div class="section">
-                <div class="section-heading">
-                  <span>{section.heading}</span>
-                  {#if inserted.has(match.path + '#' + section.heading)}
-                    <span class="inserted-badge">✓ inserted</span>
-                  {:else if section.content.trim()}
-                    <button class="insert-btn" onclick={() => handleInsert(match, section)}
-                      title="Quote this section into the current document as a blockquote">
-                      Insert ↓
-                    </button>
-                  {/if}
-                </div>
+                <div class="section-heading"><span>{section.heading}</span></div>
                 {#if section.content.trim()}
                   <div class="section-preview">{section.content.slice(0, 200)}{section.content.length > 200 ? '…' : ''}</div>
                 {:else}
@@ -216,17 +218,20 @@
     letter-spacing: 0.3px;
     margin-bottom: 4px;
   }
-  .insert-btn {
+  .match-actions { padding: 4px 12px 6px; }
+  .add-related-btn {
     background: none;
     border: 1px solid #2b5b84;
     color: #58a6ff;
-    font-size: 10px;
-    padding: 1px 7px;
-    border-radius: 3px;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
     cursor: pointer;
+    width: 100%;
+    text-align: left;
   }
-  .insert-btn:hover { background: #1a3a5a; }
-  .inserted-badge { font-size: 10px; color: #6d6; }
+  .add-related-btn:hover { background: #1a3a5a; }
+  .related-badge { font-size: 11px; color: #6d6; padding: 2px 0; display: block; }
 
   .section-preview {
     font-size: 11px;

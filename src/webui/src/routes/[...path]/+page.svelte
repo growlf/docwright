@@ -176,7 +176,7 @@
       onSave:         saveFrontmatter,
       onApprove:      handleApprove,
       onFindRelated:  findRelated,
-      onInsert:       (path: string, heading: string, content: string, title: string) => handleInsert(path, heading, content, title),
+      onAddRelated:   handleAddRelated,
       onSubsume:      handleSubsume,
     });
   }
@@ -289,18 +289,16 @@
     }
   }
 
-  function handleInsert(path: string, heading: string, sectionContent: string, title: string) {
-    // Insert a clean wikilink reference — full path so the link resolves correctly.
-    // The section content is available as a blockquote if the heading is meaningful.
-    const docTitle = title || path.split('/').pop() || path;
-    const label = heading && heading !== 'Overview' && heading !== 'Problem'
-      ? `${docTitle} — ${heading}`
-      : docTitle;
-    const ref = `\n\nSee [[${path}|${label}]]\n`;
-    content += ref;
-    raw = frontmatter ? buildRaw(frontmatter, content) : content;
-    html = md.render(content);
-    mode = 'edit';
+  async function handleAddRelated(relPath: string) {
+    if (!frontmatter) return;
+    const current: string[] = Array.isArray(frontmatter.related_to) ? frontmatter.related_to : [];
+    // Normalise path for comparison (with or without .md)
+    const norm = relPath.endsWith('.md') ? relPath : relPath + '.md';
+    const alreadyIn = current.some(r => r === relPath || r === norm || r.replace(/\.md$/, '') === relPath.replace(/\.md$/, ''));
+    if (alreadyIn) return;
+    const updated = { ...frontmatter, related_to: [...current, relPath] };
+    await saveFrontmatter(updated);
+    showToast('Added to related_to: ' + relPath.split('/').pop(), 2500);
   }
 
   async function handleSubsume(relPath: string) {
