@@ -32,140 +32,195 @@ The pattern that worked:
 3. Findings are written back into the plan as a `## Critical Review` section
 4. The author addresses or explicitly accepts each finding before starting
 
-This is multi-perspective review applied to plans — and it should be
-code-enforced, not discipline-enforced.
+This is multi-perspective review applied to plans — code-enforced, not
+discipline-enforced. The skill **must work with Claude, OpenCode (BigPickle),
+and any other AI tool** — no single model lock-in.
 
 ## Proposed Solution
 
-A Claude Code **skill** (`.claude/skills/critique-plan.md`) invoked as
-`/critique-plan [plan-file-path]`.
+**Architecture: standalone script + AI wrapper.**
 
-### What it does
+Logic lives in `scripts/critique-plan.js`. Any AI tool invokes the same script.
+No AI-specific code in the script itself. This follows the established rule:
+*"Skills must be tool-agnostic. Put executable logic in standalone scripts."*
 
-1. Reads the target plan file and all files referenced in `proposal_source:`
-2. Checks whether referenced files actually exist and are complete
-3. Reads downstream phase plans to understand what this plan enables
-4. Runs an adversarial agent with a fixed set of questions:
-   - Are deliverables specific enough to know when they're done?
-   - What are the most likely failure modes?
-   - What dependencies are missing (things that must exist first, but don't)?
-   - Are there better existing tools or approaches?
-   - What breaks in later phases if this is done wrong?
-   - Are any deliverables already complete (plan is stale)?
-   - Is anything severely underestimated?
-5. **Presents findings to the human for review** — does NOT auto-commit
-6. If the human approves, writes the `## Critical Review` section to the plan
-   and commits with `HUMAN_APPROVED=1`
+```
+scripts/critique-plan.js         ← tool-agnostic context gatherer + prompt builder
+.claude/skills/critique-plan.md  ← Claude Code wrapper
+opencode.json / shell             ← OpenCode / any other AI wrapper
+```
+
+### What the script does (`scripts/critique-plan.js`)
+
+Pure context-gathering — **no AI reasoning in the script**:
+
+1. Reads the target plan file
+2. Resolves all `proposal_source:` files — records which exist, which are missing
+3. Reads downstream phase plans (`depends_on` reverse lookup)
+4. Reads core policies from `policies/core/`
+5. Outputs a **structured context block** any AI can consume:
+
+```
+=== PLAN CRITIQUE CONTEXT ===
+Plan: plans/phase-2-foundation.md
+[full plan content]
+
+=== REFERENCED PROPOSALS ===
+[content of each proposal_source: file, or "⚠️ FILE NOT FOUND: path"]
+
+=== DOWNSTREAM PLANS ===
+[plans that list this plan in depends_on]
+
+=== CORE POLICIES ===
+[bugs-before-features, code-over-memory, keep-good-ideas, multi-perspective]
+
+=== CRITIC QUESTIONS (answer for each deliverable) ===
+1. Specific enough to know when done?
+2. Most likely failure modes?
+3. Missing dependencies that don't exist yet?
+4. Better existing tools or approaches?
+5. What breaks in later phases if this is done wrong?
+6. Already done (plan is stale)?
+7. Severely underestimated?
+
+Severity: 📝 note | ⚠️ warn | 🚫 block
+Format each finding as:
+### [Deliverable or topic] [severity]
+- **Finding:** [specific problem]
+- **Action:** [what to do]
+- **Resolution:** *(leave blank — author fills in when addressed)*
+```
+
+### Using with Claude Code
+
+```
+/critique-plan plans/phase-2-foundation.md
+```
+
+The `.claude/skills/critique-plan.md` skill:
+1. Runs `node scripts/critique-plan.js [path]`
+2. Passes the output to the Agent tool with the adversarial instructions
+3. Presents findings to the human for review
+4. On approval: writes `## Critical Review` section to the plan, commits
+   with `HUMAN_APPROVED=1`
+
+### Using with OpenCode (BigPickle or any configured model)
+
+```bash
+node scripts/critique-plan.js plans/phase-2-foundation.md
+```
+
+Paste or pipe the output into any OpenCode session. The context block and
+critic questions are self-contained — any model sees exactly what to do.
+BigPickle as `docwright-critic` is the ideal second opinion since it provides
+genuine model diversity.
+
+### Using with any other AI
+
+```bash
+node scripts/critique-plan.js plans/phase-2-foundation.md | your-llm-cli
+# or paste into any chat interface
+```
+
+No lock-in. The script output is plain text. The critic questions are embedded
+in the output itself.
+
+### Human approval is required
+
+Findings are always presented for human review before being written to the plan.
+The human can edit, reject, or accept each finding. Nothing is committed without
+`HUMAN_APPROVED=1`. This preserves *"the human is always the synthesizer"* from
+`policies/core/multi-perspective-review.md`.
 
 ### Trigger points
 
-- **Manual (Phase 2):** `/critique-plan plans/phase-2-foundation.md`
-- **Prompted (Phase 3):** When a proposal is added to a plan's `proposal_source:`
-  frontmatter, the Web UI prompts: "Run plan critique for updated proposals?"
-- **CI (Phase 3, harder):** Requires a headless Claude Code invocation mode that
-  doesn't exist yet — deferred. See [[proposals/skill-plan-critique-ci.md]].
+- **Manual:** `/critique-plan [plan-path]` in Claude Code, OR
+  `node scripts/critique-plan.js [plan-path]` piped to any AI
+- **Prompted (Phase 3):** Web UI prompts when a proposal is added to `proposal_source:`
+- **CI (deferred):** See [[proposals/skill-plan-critique-ci.md]]
+
+### Integration with phase gate
+
+When the phase gate fires, the reviewer is asked:
+> "Does the Critical Review section have any unresolved ⚠️ warn or 🚫 block
+> items (no Resolution: filled in)?"
+
+If yes, the gate does not pass until they are resolved or explicitly waived.
 
 ### Output format
 
 ```markdown
 ## Critical Review — Open Questions Before Starting
 
-*Reviewed [date] by /critique-plan. Each ⚠️ warn or 🚫 block item must be
-resolved or explicitly accepted with a written reason before the deliverable begins.*
+*Reviewed [date] by /critique-plan. Resolve or explicitly accept each
+⚠️ warn and 🚫 block before the deliverable begins.*
 
-### [Deliverable name or Cross-cutting] ⚠️ warn
+### [Deliverable or topic] ⚠️ warn
 - **Finding:** [specific problem]
 - **Action:** [what to do about it]
 - **Resolution:** *(fill in when addressed)*
 ```
 
-Severity levels:
+Severity:
 - **📝 note** — worth considering; non-blocking
-- **⚠️ warn** — likely to cause problems; address before starting this deliverable
-- **🚫 block** — must resolve before this deliverable can begin at all
-
-### Human approval is required
-
-The skill shows the findings and asks: "Write these to the plan? (y/n)"
-The author reviews, edits if needed, then approves. Findings are not written
-without human sign-off. This preserves the "human is always the synthesizer"
-principle from `policies/core/multi-perspective-review.md`.
-
-### Integration with phase gate
-
-When the phase gate reviewer prompt fires, it checks:
-> "Does the plan's Critical Review section have any unresolved ⚠️ warn or
-> 🚫 block items (no Resolution: line)?"
-
-If yes, the gate does not pass until they are resolved or waived with a reason.
+- **⚠️ warn** — likely to cause problems; address before starting
+- **🚫 block** — must resolve before this deliverable can begin
 
 ## Out of Scope
 
 | Idea | Why deferred | Deferred proposal |
 |------|-------------|-------------------|
-| CI trigger (headless) | Requires headless Claude Code mode; doesn't exist yet | [[proposals/skill-plan-critique-ci.md]] |
-| Auto re-critique when plan changes | Too noisy without quality gate on output | Post-launch |
+| CI trigger (headless) | Requires headless AI invocation; not stable yet | [[proposals/skill-plan-critique-ci.md]] |
+| Auto re-critique on every save | Too noisy | Post-launch |
 | Severity auto-escalation over time | Post-launch | — |
-| Critic votes on deliverable ordering | Scope creep | — |
 
 ## Critical Review — This Proposal Applied to Itself
 
-*This proposal was critiqued using its own standard. Findings:*
+*Self-critiqued using its own standard. 6 findings, all resolved:*
 
-### Skill format ⚠️ warn
-- **Finding:** The proposal says "a Claude Code skill" but doesn't specify the
-  actual `.claude/skills/critique-plan.md` format or content. Skills in this
-  codebase are markdown files with specific structure. Without specifying the
-  format, the deliverable isn't done until the format is defined.
-- **Action:** The skill file must be specified as part of this deliverable.
-- **Resolution:** Added to scope: "skill file in `.claude/skills/`"
+### Skill was Claude-only ⚠️ warn — RESOLVED
+- **Finding:** Original design used Claude Code Agent tool directly; unusable
+  from OpenCode, BigPickle, or any other model.
+- **Action:** Move logic to `scripts/critique-plan.js`; all AI tools call the
+  same script. Skill files are thin wrappers only.
+- **Resolution:** Architecture revised — script + wrapper pattern throughout.
 
-### `docwright-critic` is OpenCode, not Claude Code ⚠️ warn
-- **Finding:** The original proposal said "uses the `docwright-critic` persona
-  from `opencode.json`" — but that's an OpenCode agent config. Claude Code
-  uses the Agent tool with a prompt, not OpenCode personas. These are different
-  systems entirely.
-- **Action:** The skill uses Claude Code's Agent tool with the adversarial
-  prompt directly. The OpenCode `docwright-critic` persona is separately useful
-  for interactive review sessions.
-- **Resolution:** Fixed in this revision — skill uses Claude Code Agent tool.
+### `docwright-critic` is OpenCode, not Claude Code ⚠️ warn — RESOLVED
+- **Finding:** Original proposal conflated OpenCode agent personas with Claude
+  Code agents. These are different systems.
+- **Action:** Skill uses Claude Code Agent tool with the adversarial prompt.
+  OpenCode users pipe the script output to their configured agent.
+- **Resolution:** Usage sections clearly separate Claude Code vs OpenCode paths.
 
-### Auto-commit without HUMAN_APPROVED violates governance ⚠️ warn
-- **Finding:** Original proposal said the skill "commits the updated plan"
-  automatically. Our pre-commit hook requires `HUMAN_APPROVED=1` for governance
-  document changes. An auto-committing skill would either break the hook or
-  bypass it.
-- **Action:** Skill must present findings for human review before writing.
-  Human approves → commit uses HUMAN_APPROVED flow.
-- **Resolution:** Fixed — step 5 now explicitly presents findings for review.
+### Auto-commit without HUMAN_APPROVED violates governance ⚠️ warn — RESOLVED
+- **Finding:** Original design auto-committed findings. Our pre-commit hook
+  requires `HUMAN_APPROVED=1` for governance documents.
+- **Action:** Skill presents findings for review; commits only on human approval.
+- **Resolution:** Human approval step is now explicit throughout.
 
-### CI trigger isn't currently possible 📝 note
-- **Finding:** "CI triggers the skill via a GitHub Actions workflow" requires
-  headless Claude Code invocation, which doesn't exist in a stable form.
-- **Action:** Defer CI trigger; ship manual skill first; capture CI as a
-  separate deferred proposal.
-- **Resolution:** CI trigger explicitly deferred; separate proposal created.
+### CI trigger not currently possible 📝 note — RESOLVED
+- **Finding:** "CI triggers the skill via GitHub Actions" requires headless AI
+  invocation that doesn't exist in stable form.
+- **Action:** Defer CI trigger to a separate proposal; ship manual skill first.
+- **Resolution:** Explicitly deferred with own proposal.
 
-### No staleness handling ⚠️ warn
-- **Finding:** When a plan changes substantially after a critique, the existing
-  `## Critical Review` section becomes stale (findings may be wrong or resolved
-  without being marked). The proposal had no mechanism for this.
-- **Action:** Add "Resolution:" field to each finding. When a finding is addressed,
-  the author writes the resolution inline. The phase gate checks for empty
-  Resolution fields on warn/block items.
-- **Resolution:** Resolution field added to output format above.
+### No staleness handling ⚠️ warn — RESOLVED
+- **Finding:** When a plan changes substantially, old findings become stale.
+  No mechanism to invalidate them.
+- **Action:** Add `Resolution:` field per finding. Phase gate checks for
+  empty Resolution fields on warn/block items.
+- **Resolution:** Resolution field in output format; phase gate integration defined.
 
-### No quality gate on agent output 📝 note
-- **Finding:** The critic agent output varies in quality. It sometimes
-  hallucinates dependencies or misreads the codebase. Auto-writing findings
-  without review would pollute plans with wrong information.
-- **Action:** Human approval step is the quality gate. The author reviews and
-  can edit or reject findings before they're written.
-- **Resolution:** Human approval step explicit in the design.
+### No quality gate on agent output 📝 note — RESOLVED
+- **Finding:** Agent output varies in quality; hallucinated findings would
+  pollute plans.
+- **Action:** Human approval step is the quality gate.
+- **Resolution:** Explicit in the design.
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2026-06-04 | Created — pattern established during Phase 1/2 planning review | NetYeti |
-| 2026-06-04 | Self-critiqued using its own standard; 5 findings surfaced and resolved | NetYeti |
+| 2026-06-04 | Created | NetYeti |
+| 2026-06-04 | Self-critiqued; 5 issues resolved | NetYeti |
+| 2026-06-04 | Redesigned for tool-agnosticism: script + wrapper, works with Claude AND OpenCode AND any AI | NetYeti |
