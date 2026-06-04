@@ -137,23 +137,39 @@ block on direct writes from the Claude Code surface.
 
 ## What git pre-commit still does
 
-The pre-commit hook (`scripts/pre-commit.sh`) retains git-appropriate checks:
+The active hook is `.githooks/pre-commit` (`git config core.hooksPath = .githooks`).
+It runs two categories of checks:
 
+**Lifecycle governance (via `lifecycle-gate.js`):**
+- Pending step validation — `node scripts/lifecycle-gate.js --check-files` on every
+  staged plan file; blocks commits where a plan has `status: completed` with ⏳ rows,
+  or where a ✅-headed task section still has ⏳ step rows
+
+**Git-native integrity:**
 - Commit message format (`feat|fix|docs|refactor|test|chore: description`)
 - Required frontmatter fields per document type
 - File placement invariants (e.g. `proposals/approved/` must have `approved: true`)
-- No unresolved template variables (e.g. unfilled placeholder tokens)
+- No unresolved template variables
 - Self-approval detection for proposals
 
-These are commit-time, file-agnostic concerns. Lifecycle governance is not.
+The pending-step check is the final backstop: MCP tools and the PreToolUse hook
+prevent bad state from reaching disk; git catches anything that slips through.
+`--no-verify` bypasses all of this — but that's a deliberate human choice, not
+something an AI agent can do undetected.
 
 ---
 
 ## Audit trail
 
-Every MCP tool call is logged to `docs/audit-log.md` with timestamp, event
-type, and description. This provides a machine-readable history of all plan
-state changes, independent of git history.
+MCP tool calls and git hook validation events are logged to
+`.docwright/audit.jsonl` (append-only NDJSON, not tracked in git). Both
+`mcp-server.py` and `lifecycle-gate.js` append to the same file.
+
+Query the live log:
+- MCP tool: `audit_log()` — returns last 50 entries as a table
+- CLI: `node scripts/lifecycle-gate.js --audit`
+
+`docs/audit-log.md` is a historical archive of pre-migration entries only.
 
 ---
 

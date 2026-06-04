@@ -42,8 +42,9 @@ enforcement out of git and into the AI workflow layer:
    at the point of any AI write attempt.
 
 The solution: all AI plan mutations route through MCP tools. The PreToolUse hook
-blocks direct file writes entirely. Git pre-commit is untouched — it handles
-git-native concerns only.
+blocks direct file writes entirely. Git pre-commit (`.githooks/pre-commit`) retains
+pending-step validation via `lifecycle-gate.js --check-files` as a commit-time
+backstop, plus git-native checks (commit format, file placement, required fields).
 
 See [[docs/ai-governance-enforcement.md]] and
 [[policies/core/workflow-layer-governance.md]] for the full architecture.
@@ -79,8 +80,12 @@ See [[docs/ai-governance-enforcement.md]] and
   file is touched. Blanket block on `plans/*.md` with redirect message.
 - **MCP as governed path** — recounts `total_steps`/`completed_steps` and logs
   to audit trail on every call. No `--no-verify` escape hatch.
-- **Git pre-commit for git-native concerns only** — commit format, file placement,
-  required fields, no template vars. Lifecycle governance removed entirely.
+- **Git pre-commit as final backstop** — `.githooks/pre-commit` calls
+  `lifecycle-gate.js --check-files` on staged plans (pending-step validation)
+  AND handles git-native concerns (commit format, file placement, required fields,
+  no template vars). This was already implemented; discovered mid-session. The MCP
+  and PreToolUse layers prevent bad state from ever reaching a commit; git is the
+  last catch for anything that slips through.
 - **UI regex false-positive risk** — UI uses regex, not the state-machine parser;
   ⏳ inside a code block in Implementation Steps would fire falsely. Accepted as
   Phase 1 known limitation; fix in Phase 2 when dispatch linter is wired up.
@@ -125,4 +130,5 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-04 | Simplified — removed verbose Critical Review; corrected Deliverable 3 (hook not wired); fixed gate checklist state | NetYeti |
 | 2026-06-04 | Deliverable 3 redesigned — enforcement moved from git pre-commit to Claude Code PreToolUse hook + MCP safety net | NetYeti |
 | 2026-06-04 | Expanded scope — hook upgraded to blanket plan write block; five MCP mutation tools added; policy and reference docs written | NetYeti |
+| 2026-06-04 | Correction — discovered `.githooks/pre-commit` already calls `lifecycle-gate.js --check-files`; Design Decisions and Overview updated to reflect actual architecture | NetYeti |
 | 2026-06-04 | Deliverable 12 — plan-completion skill; fixes wrong MCP tool names in opencode-instructions.md | NetYeti |
