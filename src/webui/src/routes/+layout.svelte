@@ -25,9 +25,10 @@
   let projects     = $state<ProjectEntry[]>([]);
   let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
   let showNewMenu  = $state(false);
-  let showSidebar  = $state(true);
-  let leftView     = $state<'files' | 'settings' | 'git'>('files');
-  let showRightPanel = $state(true);
+  const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
+  let showSidebar    = $state(!mobile());
+  let leftView       = $state<'files' | 'settings' | 'git'>('files');
+  let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related'>('properties');
   let collationMatches = $state<any[]>([]);
   let collationLoading = $state(false);
@@ -55,7 +56,7 @@
   // Close sidebar on navigation (mobile only)
   $effect(() => {
     $page.url;
-    if (window.innerWidth <= 768) showSidebar = false;
+    if (mobile()) { showSidebar = false; showRightPanel = false; }
   });
 
   function toggleSidebar() { showSidebar = !showSidebar; }

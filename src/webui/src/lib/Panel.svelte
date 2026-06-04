@@ -27,7 +27,12 @@
   $effect.pre(() => {
     if (typeof localStorage === 'undefined') return;
     const stored = localStorage.getItem(LS_KEY);
-    if (stored !== null) open = stored === 'true';
+    if (stored !== null) {
+      open = stored === 'true';
+    } else {
+      // No stored preference — default: open on desktop, closed on mobile
+      open = window.innerWidth > 768;
+    }
   });
 
   function toggle() {
