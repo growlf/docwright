@@ -151,11 +151,13 @@ function hasPendingStepsInSection(content) {
 }
 
 /**
- * Check that a plan being set to status:completed has no ⏳ pending steps.
- * Also warn if any ✅ task section still has ⏳ rows (regardless of status).
+ * Block a plan from being committed with status:completed while any pending
+ * steps remain. In-progress plans with mixed done/pending rows are normal
+ * and are not flagged.
  */
 function checkPendingSteps(file, fm) {
   if (!file.startsWith('plans/') || file.startsWith('plans/completed/')) return { ok: true };
+  if (String(fm.status) !== 'completed') return { ok: true };
 
   let raw;
   try { raw = fs.readFileSync(path.join(ROOT, file), 'utf8'); }
@@ -163,12 +165,7 @@ function checkPendingSteps(file, fm) {
 
   if (!hasPendingStepsInSection(raw)) return { ok: true };
 
-  const isCompleting = String(fm.status) === 'completed';
-  const msg = isCompleting
-    ? `${file}: status=completed but ⏳ Pending rows remain in Implementation Steps.\n  Update all step rows before marking this plan complete.`
-    : `${file}: task marked ✅ Complete but Implementation Steps still has ⏳ Pending rows.\n  Update the step table in the same commit.`;
-
-  return { ok: false, error: msg };
+  return { ok: false, error: `${file}: status=completed but pending rows remain in Implementation Steps.\n  Mark all step rows done before completing this plan.` };
 }
 
 /**

@@ -118,6 +118,11 @@ fs.writeFileSync(testFixture, planAllDone, 'utf-8');
 const resultDone = checkPendingSteps('plans/_test-fixture.md', { status: 'completed' });
 assert('checkPendingSteps: status:completed + all-done file → ok:true', resultDone.ok === true);
 
+// In-progress plans with mixed done/pending rows are normal — must not be blocked
+fs.writeFileSync(testFixture, planWithPending, 'utf-8');
+const resultInProgress = checkPendingSteps('plans/_test-fixture.md', { status: 'in-progress' });
+assert('checkPendingSteps: status:in-progress + ⏳ file → ok:true (in-progress is fine)', resultInProgress.ok === true);
+
 fs.unlinkSync(testFixture);
 
 // ── Summary ─────────────────────────────────────────────────────────────────
