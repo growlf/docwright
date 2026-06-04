@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { fileChanged } from '$lib/fileChanges';
+  import FunnelView from '$lib/FunnelView.svelte';
 
   interface DocEntry {
     path: string; title: string; created: string;
@@ -16,6 +17,17 @@
 
   let data = $state<StatusData | null>(null);
   let loading = $state(true);
+
+  type ViewMode = 'list' | 'funnel';
+  function getViewMode(): ViewMode {
+    if (typeof sessionStorage === 'undefined') return 'list';
+    return (sessionStorage.getItem('status-view') as ViewMode) ?? 'list';
+  }
+  let viewMode = $state<ViewMode>(getViewMode());
+  function setView(v: ViewMode) {
+    viewMode = v;
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('status-view', v);
+  }
 
   // Collapsed state per section, persisted in sessionStorage
   const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'completed', 'deferred'];
@@ -70,12 +82,26 @@
 <div class="status-page">
   <div class="status-header">
     <h1>{data?.vaultName ?? 'Vault'} Status</h1>
+    <div class="view-toggle">
+      <button class="view-btn" class:active={viewMode === 'list'}   onclick={() => setView('list')}   title="List view">≡ List</button>
+      <button class="view-btn" class:active={viewMode === 'funnel'} onclick={() => setView('funnel')} title="Funnel view">⊙ Funnel</button>
+    </div>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
   </div>
 
   {#if loading && !data}
     <div class="loading">Scanning vault…</div>
   {:else if data}
+
+    {#if viewMode === 'funnel'}
+      <FunnelView
+        deferred={data.proposals.deferred}
+        open={data.proposals.open}
+        approved={data.proposals.approved_pending}
+        active={data.plans.active}
+        completedCount={data.plans.completed_count}
+      />
+    {:else}
 
     <!-- Open proposals -->
     <section class="section">
@@ -192,6 +218,7 @@
       </section>
     {/if}
 
+    {/if} <!-- end {:else} list view -->
   {/if}
 </div>
 
@@ -199,9 +226,14 @@
   .status-page { padding: 32px; }
 
   .status-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-  h1 { font-size: 20px; font-weight: 600; color: #fff; margin: 0; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin: 0; flex: 1; }
   .refresh-btn { background: none; border: 1px solid #333; color: #666; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 14px; }
   .refresh-btn:hover { color: #aaa; border-color: #555; }
+
+  .view-toggle { display: flex; gap: 2px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 2px; }
+  .view-btn { background: none; border: none; color: #555; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  .view-btn:hover  { color: #aaa; }
+  .view-btn.active { background: #2a2a2a; color: #ccc; }
 
   .loading { color: #555; padding: 16px 0; font-size: 13px; }
 
