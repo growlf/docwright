@@ -14,7 +14,7 @@
       sections: Array<{ heading: string; content: string }>;
     }>;
     loading?: boolean;
-    oninsert?: (slug: string, heading: string, content: string) => void;
+    oninsert?: (path: string, heading: string, content: string, title: string) => void;
     onsubsume?: (path: string) => void;
     onclose?: () => void;
     onrecheck?: () => void;
@@ -40,9 +40,11 @@
     return 'low';
   }
 
-  function handleInsert(match: { path: string }, section: { heading: string; content: string }) {
+  function handleInsert(match: { path: string; title: string }, section: { heading: string; content: string }) {
     const key = match.path + '#' + section.heading;
-    oninsert?.(slug(match.path), section.heading, section.content);
+    // Pass full relative path (without .md) so the wikilink resolves correctly
+    const fullPath = match.path.replace(/\.md$/, '');
+    oninsert?.(fullPath, section.heading, section.content, match.title);
     const next = new Set(inserted);
     next.add(key);
     inserted = next;

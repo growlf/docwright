@@ -176,7 +176,7 @@
       onSave:         saveFrontmatter,
       onApprove:      handleApprove,
       onFindRelated:  findRelated,
-      onInsert:       handleInsert,
+      onInsert:       (path: string, heading: string, content: string, title: string) => handleInsert(path, heading, content, title),
       onSubsume:      handleSubsume,
     });
   }
@@ -289,10 +289,15 @@
     }
   }
 
-  function handleInsert(slug: string, heading: string, sectionContent: string) {
-    const quote = `\n\n> *from [[${slug}]] — ${heading}*\n` +
-      sectionContent.split('\n').map(l => '> ' + l).join('\n') + '\n';
-    content += quote;
+  function handleInsert(path: string, heading: string, sectionContent: string, title: string) {
+    // Insert a clean wikilink reference — full path so the link resolves correctly.
+    // The section content is available as a blockquote if the heading is meaningful.
+    const docTitle = title || path.split('/').pop() || path;
+    const label = heading && heading !== 'Overview' && heading !== 'Problem'
+      ? `${docTitle} — ${heading}`
+      : docTitle;
+    const ref = `\n\nSee [[${path}|${label}]]\n`;
+    content += ref;
     raw = frontmatter ? buildRaw(frontmatter, content) : content;
     html = md.render(content);
     mode = 'edit';

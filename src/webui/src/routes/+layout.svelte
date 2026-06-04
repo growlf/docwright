@@ -290,7 +290,7 @@
       <CollationPanel
         matches={collationMatches}
         loading={collationLoading}
-        oninsert={(slug, heading, content) => $currentDoc.onInsert?.(slug, heading, content)}
+        oninsert={(path, heading, content, title) => $currentDoc.onInsert?.(path, heading, content, title)}
         onsubsume={(path) => $currentDoc.onSubsume?.(path)}
         onrecheck={() => { if ($currentDoc.filePath) findRelated($currentDoc.filePath); }}
         onclose={() => { rightTab = 'properties'; collationMatches = []; }}
