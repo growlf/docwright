@@ -120,13 +120,13 @@
   }
 
   // Count ⏳ Pending step rows — blocks Complete button
-  let pendingSteps = $derived(() => {
+  let pendingSteps = $derived.by(() => {
     if (docType !== 'plan' || !body) return 0;
     // Only count rows inside the Implementation Steps section
     const stepsMatch = body.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
     const section = stepsMatch ? stepsMatch[0] : body;
     return (section.match(/⏳/g) ?? []).length;
-  })();
+  });
 
   // Warn if approved with no assignee
   let approvedWithoutAssignee = $derived(

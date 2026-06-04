@@ -22,7 +22,9 @@
     children?: Snippet;
   } = $props();
 
-  const LS_KEY = `panel-open-${side}`;
+  const LS_KEY       = $derived(`panel-open-${side}`);
+  const chevronClose = $derived(side === 'left' ? '‹' : '›');
+  const chevronOpen  = $derived(side === 'left' ? '›' : '‹');
 
   $effect.pre(() => {
     if (typeof localStorage === 'undefined') return;
@@ -30,7 +32,6 @@
     if (stored !== null) {
       open = stored === 'true';
     } else {
-      // No stored preference — default: open on desktop, closed on mobile
       open = window.innerWidth > 768;
     }
   });
@@ -39,14 +40,12 @@
     open = !open;
     if (typeof localStorage !== 'undefined') localStorage.setItem(LS_KEY, String(open));
   }
-
-  const chevronClose = side === 'left' ? '‹' : '›';
-  const chevronOpen  = side === 'left' ? '›' : '‹';
 </script>
 
 <!-- Mobile scrim — behind this panel when open -->
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="panel-scrim" class:visible={open} onclick={() => open = false}></div>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div class="panel-scrim" class:visible={open} onclick={() => open = false}
+  role="presentation" aria-hidden="true"></div>
 
 <div class="panel panel-{side}" class:open style="--w:{width}px">
 

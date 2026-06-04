@@ -80,11 +80,3 @@ Author
 2026-06-04
 
 Created — direct application of code-over-memory policy
-
-NetYeti
-
-> _from \[\[plan-step-completion-enforcement\]\] — Problem_ When a plan task is marked `✅ Complete`, the implementation step rows in its table are not automatically updated — they remain as `⏳ Pending`. A developer reading the plan sees completed tasks with all steps still pending, which is misleading and undermines trust in the governance documents.
-> 
-> This was discovered in the Phase 1 UI Polish plan: all 4 tasks were marked complete but 15+ step rows still showed ⏳ Pending. The plan looked like it described unfinished work.
-> 
-> This is a governance failure. Plans are audit records. If the steps don't reflect what was actually built, the record is wrong.

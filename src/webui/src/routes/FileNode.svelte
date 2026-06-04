@@ -104,8 +104,9 @@
 {/if}
 
 {#if showMenu}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="menu-backdrop" onclick={() => showMenu = false}></div>
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <div class="menu-backdrop" onclick={() => showMenu = false}
+    role="presentation" aria-hidden="true"></div>
   <div class="context-menu" style="left:{menuX}px; top:{menuY}px;">
     <button class="menu-item" onclick={startRename} disabled={!isDoc}>Rename</button>
     <button class="menu-item danger" onclick={deleteFile}>Delete</button>
