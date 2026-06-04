@@ -149,18 +149,41 @@ validate_self_approval() {
 }
 
 # Detect plan status advancing to in-progress/completed without completed_date where required
+# Also enforces the two-step gate: completed requires gate_status:approved
 validate_plan_transition() {
     local FILE=$1
     [[ ! "$FILE" =~ ^plans/ ]] && return 0
     local FM=$(get_frontmatter "$FILE")
     local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
+
     if [ "$STATUS" = "completed" ]; then
+        # Must have completed_date
         echo "$FM" | grep -q "^completed_date:" || { print_error "$FILE: status=completed but missing completed_date"; return 1; }
+        # Must have gate_status:approved — prevents skipping the gate review
+        local GATE=$(echo "$FM" | grep "^gate_status:" | sed 's/^gate_status: *//')
+        if [ -n "$GATE" ] && [ "$GATE" != "approved" ] && [ "$GATE" != "waived" ]; then
+            print_error "$FILE: status=completed but gate_status='$GATE' — gate must be approved or waived by a human before marking complete"
+            print_error "  1. Human reviews the plan"
+            print_error "  2. Human sets gate_status: approved (with HUMAN_APPROVED=1)"
+            print_error "  3. Then status: completed can be committed"
+            return 1
+        fi
+        # Require HUMAN_APPROVED for completion
+        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: status=completed requires HUMAN_APPROVED=1 — only humans complete plans"; return 1; }
     fi
+
     if [ "$STATUS" = "canceled" ]; then
         echo "$FM" | grep -q "^canceled_date:" || { print_error "$FILE: status=canceled but missing canceled_date"; return 1; }
         echo "$FM" | grep -q "^cancellation_reason:" || { print_warning "$FILE: status=canceled but missing cancellation_reason"; }
+        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: status=canceled requires HUMAN_APPROVED=1"; return 1; }
     fi
+
+    # Block gate_status:approved without HUMAN_APPROVED
+    local GATE=$(echo "$FM" | grep "^gate_status:" | sed 's/^gate_status: *//')
+    if [ "$GATE" = "approved" ] || [ "$GATE" = "waived" ]; then
+        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: gate_status=$GATE requires HUMAN_APPROVED=1 — only humans can sign off phase gates"; return 1; }
+    fi
+
     return 0
 }
 

@@ -62,6 +62,12 @@ When DocWright helps a team write a proposal or plan, it should prompt them to c
 security implications, ground decisions in policy, and define how the outcome will be
 verified before it ships.
 
+**AI governance boundaries.** AI may never set `approved: true`, `status: completed`,
+or `gate_status: approved/waived` on governance documents. Never generate
+`HUMAN_APPROVED=1` in commit commands for these changes — propose the command,
+let the human add HUMAN_APPROVED=1 and run it themselves. The hook enforces this
+in code. See [[policies/core/ai-governance-boundaries.md]].
+
 **Versioning is automatic.** `0.MINOR.PATCH` — minor = phase number, patch =
 completed plans in that phase. The pre-commit hook updates `VERSION` and
 `package.json` automatically when a plan is set to `status: completed`.
