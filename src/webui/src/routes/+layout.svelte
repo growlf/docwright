@@ -26,6 +26,7 @@
   let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
   let showNewMenu  = $state(false);
   let showSidebar  = $state(true);
+  let leftView     = $state<'files' | 'settings' | 'git'>('files');
   let showRightPanel = $state(true);
   let rightTab     = $state<'properties' | 'related'>('properties');
   let collationMatches = $state<any[]>([]);
@@ -130,34 +131,54 @@
   });
 </script>
 
-<!-- Mobile top bar (hidden on desktop via CSS) -->
-<div class="mobile-topbar">
-  <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle menu">☰</button>
+<!-- Always-visible toolbar — all viewports -->
+<div class="app-toolbar">
+  <button class="hamburger" onclick={toggleSidebar} aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
   <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-  <span class="mobile-title">
+  <a href="/status" class="toolbar-brand" title="Go to {brand.name} status">
     {#if brand.logoPath}
       <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
     {:else}
-      {brand.name}
+      <span class="brand-name">{brand.name}</span>
     {/if}
-  </span>
-  <button class="gear-btn" onclick={() => showPropsPane.update(v => !v)} aria-label="Toggle properties">⚙</button>
+  </a>
+  <div class="toolbar-spacer"></div>
+  <div class="new-group">
+    <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+ New</button>
+    {#if showNewMenu}
+      <div class="new-menu" onclick={(e) => e.stopPropagation()}>
+        <button class="new-menu-item" onclick={newFile}>New File</button>
+        <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
+      </div>
+    {/if}
+  </div>
+  <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
 </div>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
+
+  <!-- Activity bar — switches left panel content -->
+  <div class="activity-bar">
+    <button class="act-btn" class:active={leftView === 'files'}
+      onclick={() => { leftView = 'files'; showSidebar = true; }}
+      title="Files">📄</button>
+    <button class="act-btn" class:active={leftView === 'settings'}
+      onclick={() => { leftView = 'settings'; showSidebar = true; }}
+      title="Settings">⚙</button>
+    <button class="act-btn" class:active={leftView === 'git'}
+      onclick={() => { leftView = 'git'; showSidebar = true; }}
+      title="Git">⎇</button>
+  </div>
+
   <Panel side="left" bind:open={showSidebar}>
     <div class="sidebar-header">
-      <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
-      <a href="/status" class="brand" title="Go to {brand.name} status">
-        {#if brand.logoPath}
-          <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
-        {:else}
-          <span class="brand-name">{brand.name}</span>
-        {/if}
-      </a>
-      <div class="new-group">
-        <button class="new-btn" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }}>+</button>
+      <span class="sidebar-view-label">
+        {leftView === 'files' ? 'Files' : leftView === 'settings' ? 'Settings' : 'Git'}
+      </span>
+      {#if leftView === 'files'}
+      <div class="new-group-inner">
+        <button class="new-btn-sm" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }} title="New document">+</button>
         {#if showNewMenu}
           <div class="new-menu" onclick={(e) => e.stopPropagation()}>
             <button class="new-menu-item" onclick={newFile}>New File</button>
@@ -165,20 +186,55 @@
           </div>
         {/if}
       </div>
+      {/if}
     </div>
-    <FileTree currentPath={$page.url.pathname} />
-    {#if projects.length > 0}
-      <div class="project-section">
-        <div class="project-heading">Projects</div>
-        {#each projects as p}
-          <a class="project-link" href={p.path}>
-            <span class="project-name">{p.name}</span>
-            <span class="project-profile">{p.profile}</span>
-          </a>
-        {/each}
+    {#if leftView === 'files'}
+      <FileTree currentPath={$page.url.pathname} />
+      {#if projects.length > 0}
+        <div class="project-section">
+          <div class="project-heading">Projects</div>
+          {#each projects as p}
+            <a class="project-link" href={p.path}>
+              <span class="project-name">{p.name}</span>
+              <span class="project-profile">{p.profile}</span>
+            </a>
+          {/each}
+        </div>
+      {/if}
+
+    {:else if leftView === 'settings'}
+      <div class="settings-view">
+        <div class="settings-group">
+          <div class="settings-group-label">AI Instructions</div>
+          <a class="settings-file" href="/CLAUDE">CLAUDE.md</a>
+          <a class="settings-file" href="/AGENTS">AGENTS.md</a>
+        </div>
+        <div class="settings-group">
+          <div class="settings-group-label">Templates</div>
+          <a class="settings-file" href="/templates/proposal-template">proposal-template.md</a>
+          <a class="settings-file" href="/templates/plan-template">plan-template.md</a>
+        </div>
+        <div class="settings-group">
+          <div class="settings-group-label">Project</div>
+          <a class="settings-file" href="/CONTRIBUTING">CONTRIBUTING.md</a>
+          <a class="settings-file" href="/SECURITY">SECURITY.md</a>
+          <a class="settings-file" href="/CHANGELOG">CHANGELOG.md</a>
+          <a class="settings-file" href="/NOTICE">NOTICE.md</a>
+        </div>
+        <div class="settings-group">
+          <div class="settings-group-label">Brand</div>
+          <a class="settings-file" href="/brand.json">brand.json</a>
+          <a class="settings-file" href="/brand/theme.css">brand/theme.css</a>
+        </div>
+        <div class="settings-hint">
+          Edit these files to customise DocWright.<br>
+          See <a href="/docs/customization">docs/customization.md</a> for details.
+        </div>
       </div>
+
+    {:else}
+      <GitPanel />
     {/if}
-    <GitPanel />
   </Panel>
   <!-- Main content + chat at bottom -->
   <main id="content">
@@ -267,42 +323,72 @@
 </footer>
 
 <style>
-  /* ── Mobile top bar ─────────────────────────────────────────────────────── */
-  .mobile-topbar {
-    display: none;          /* shown only at ≤ 768px */
-    position: fixed; top: 0; left: 0; right: 0; height: 48px;
-    align-items: center; gap: 12px; padding: 0 16px;
-    background: #111; border-bottom: 1px solid #222; z-index: 150;
+  /* old mobile-topbar removed — replaced by app-toolbar (always visible) */
+  /* ── Always-visible toolbar ─────────────────────────────────────────────── */
+  .app-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 10px;
+    background: #0f0f12;
+    border-bottom: 1px solid #1e2030;
+    flex-shrink: 0;
+    z-index: 100;
   }
-  .hamburger {
-    background: none; border: none; color: #aaa; font-size: 20px;
-    cursor: pointer; padding: 0 4px; line-height: 1;
-    min-width: 44px; min-height: 44px; display: flex; align-items: center;
-  }
-  .hamburger:hover { color: #fff; }
-  .home-btn {
-    background: none; border: none; color: #555; font-size: 16px; text-decoration: none;
-    line-height: 1; padding: 0 2px;
-  }
-  .home-btn:hover { color: #aaa; }
-  .mobile-title { font-size: 14px; font-weight: 600; color: #fff; flex: 1; }
-  .gear-btn {
-    background: none; border: none; color: #aaa; font-size: 18px;
-    cursor: pointer; padding: 0 4px; line-height: 1;
-    min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
-  }
-  .gear-btn:hover { color: #fff; }
+  .toolbar-brand { display: flex; align-items: center; text-decoration: none; }
+  .toolbar-spacer { flex: 1; }
+  .hamburger { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 3px; }
+  .hamburger:hover { color: #aaa; background: #1a1a1a; }
+  .home-btn { color: #666; font-size: 16px; text-decoration: none; padding: 4px 6px; border-radius: 3px; }
+  .home-btn:hover { color: #aaa; background: #1a1a1a; }
+  .gear-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 3px; }
+  .gear-btn:hover { color: #aaa; background: #1a1a1a; }
 
-  /* ── Sidebar scrim (mobile only) ────────────────────────────────────────── */
+  /* ── Activity bar ────────────────────────────────────────────────────────── */
+  .activity-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+    background: #0a0a0d;
+    border-right: 1px solid #1e2030;
+    flex-shrink: 0;
+    padding-top: 4px;
+    gap: 2px;
+  }
+  .act-btn {
+    width: 36px; height: 36px;
+    background: none; border: none;
+    color: #444; cursor: pointer;
+    font-size: 16px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .act-btn:hover  { color: #aaa; background: #1a1a1a; }
+  .act-btn.active { color: #ccc; background: #1a1a2a; border-left: 2px solid #58a6ff; border-radius: 0 4px 4px 0; }
+
   /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; flex: 1; min-height: 0; font-family: system-ui, -apple-system, sans-serif; }
-  .sidebar-header { padding: 10px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-shrink: 0; }
+  .sidebar-header { padding: 8px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-shrink: 0; min-height: 36px; }
+  .sidebar-view-label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .new-btn-sm { background: none; border: 1px solid #444; color: #aaa; width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .new-btn-sm:hover { background: #222; color: #fff; }
+  .new-group-inner { position: relative; }
 
-  .brand { flex: 1; min-width: 0; overflow: hidden; text-decoration: none; cursor: pointer; }
-  .brand-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
-  .brand:hover .brand-name { color: #aaa; }
-  .brand:hover .brand-logo { opacity: 0.8; }
-  .brand-logo { max-height: 24px; max-width: 120px; object-fit: contain; display: block; }
+  /* ── Settings view ───────────────────────────────────────────────────────── */
+  .settings-view { padding: 8px 0; flex: 1; overflow-y: auto; }
+  .settings-group { margin-bottom: 16px; }
+  .settings-group-label { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px 2px; }
+  .settings-file { display: block; padding: 4px 16px; font-size: 12px; color: #888; text-decoration: none; font-family: monospace; }
+  .settings-file:hover { background: #1a1a1a; color: #58a6ff; }
+  .settings-hint { padding: 12px 16px; font-size: 11px; color: #444; line-height: 1.5; border-top: 1px solid #1a1a1a; margin-top: 8px; }
+  .settings-hint a { color: #58a6ff; text-decoration: none; }
+  .settings-hint a:hover { text-decoration: underline; }
+
+  .brand-name { font-size: 13px; font-weight: 600; color: #58a6ff; white-space: nowrap; letter-spacing: 0.02em; }
+  .toolbar-brand:hover .brand-name { color: #88c4ff; }
+  .brand-logo { max-height: 22px; max-width: 110px; object-fit: contain; display: block; }
+  .toolbar-brand:hover .brand-logo { opacity: 0.8; }
 
   .app-footer {
     display: flex;
@@ -322,10 +408,9 @@
   .footer-sep { color: #222; }
 
   /* chat-fab replaced by chat-toggle (see above) */
-  .sidebar-toggle { flex-shrink: 0; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0 4px; line-height: 1; }
-  .sidebar-toggle:hover { color: #fff; }
+  /* sidebar-toggle removed — Panel.svelte provides the edge toggle */
   .new-group { position: relative; flex-shrink: 0; }
-  .new-btn { background: none; border: 1px solid #444; color: #aaa; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .new-btn { background: none; border: 1px solid #444; color: #aaa; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .new-btn:hover { background: #222; color: #fff; }
   .new-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
   .new-menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
@@ -377,8 +462,8 @@
 
   /* ── Mobile (≤ 768px) ────────────────────────────────────────────────────── */
   @media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    #content { padding-top: 48px; }
+    #content { padding-top: 0; } /* toolbar is in flow, no fixed offset needed */
     .toast-container { bottom: 80px; }
+    .activity-bar { display: none; } /* activity bar hidden on mobile — hamburger + toolbar covers it */
   }
 </style>
