@@ -354,17 +354,14 @@
       </div>
       <div class="actions">
         {#if mode !== 'read'}
-          <button class="btn save" onclick={save}>Save</button>
-          <button class="btn cancel" onclick={cancel}>Cancel</button>
+          <button class="btn save" onclick={save} title="Save changes">✓ Save</button>
+          <button class="btn cancel" onclick={cancel} title="Discard changes">✕ Cancel</button>
         {:else}
-          <button class="btn del" onclick={deleteFile}>Delete</button>
+          <button class="btn del" onclick={deleteFile} title="Delete this document">🗑 Delete</button>
         {/if}
-        <button class="btn props-toggle" onclick={toggleProps} title="Toggle properties">
-          ⊞
-        </button>
         <button class="btn mode-toggle" onclick={cycleMode}
           title={mode === 'read' ? 'Switch to WYSIWYG editor' : mode === 'edit' ? 'Switch to raw Markdown / frontmatter source' : 'Switch to read-only preview'}>
-          {mode === 'read' ? 'Edit' : mode === 'edit' ? 'Source' : 'Preview'}
+          {mode === 'read' ? '✏ Edit' : mode === 'edit' ? '⟨/⟩ Source' : '👁 Preview'}
         </button>
       </div>
     </div>
@@ -476,8 +473,7 @@
   .btn.del:hover { background: #3a1a1a; }
   .mode-toggle { border-color: #5b842b; color: #8c6; }
   .mode-toggle:hover { background: #1a3a1a; }
-  .props-toggle { border-color: #444; color: #777; font-size: 14px; padding: 2px 9px; }
-  .props-toggle:hover { color: #aaa; }
+  /* props-toggle removed — right sidebar handles properties */
   /* props-scrim removed — Panel.svelte provides the mobile scrim now */
 
   .editor { width: 100%; min-height: 60vh; background: #0a0a0a; color: #e0e0e0; border: 1px solid #333; border-radius: 6px; padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
@@ -507,7 +503,7 @@
     .toolbar { flex-wrap: wrap; gap: 4px; }
     .path { display: none; }           /* path shown in topbar on mobile; hide here */
     .doc-title { font-size: 14px; }    /* title stays visible on mobile */
-    .btn.props-toggle { display: none; }
+  /* props-toggle removed */
 
     /* Touch-friendly button sizing */
     .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }
