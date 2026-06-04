@@ -94,15 +94,16 @@ CollationPanel fixed overlay) replaced by a single `Panel.svelte` component
 with consistent slide animation, shared mobile scrim, and CollationPanel
 promoted to a tab on the right panel.
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Create `Panel.svelte` | Props: `side: 'left'\|'right'`, `defaultOpen`, `tabs?`. Desktop: docked inline. Mobile: fixed overlay with scrim. Animate via `transform: translateX()` | ⏳ Pending |
-| 2 | Refactor left sidebar | Replace `aside#sidebar` in `+layout.svelte` with `<Panel side="left">` | ⏳ Pending |
-| 3 | Refactor right panel | Replace `PropertiesPane` direct mount with `<Panel side="right" tabs={['Properties','Related']}>` | ⏳ Pending |
-| 4 | Move CollationPanel into right panel | CollationPanel becomes the "Related" tab. Remove `position: fixed` from it. "Find Related" action switches to that tab | ⏳ Pending |
-| 5 | Unified mobile scrim | One `<div class="scrim">` in layout, controlled by either panel's open state | ⏳ Pending |
-| 6 | Standardise toggle icons | Replace `☰`, `◀`, `▶`, `⊞` with consistent chevrons (`‹`, `›`) throughout | ⏳ Pending |
-| 7 | Mobile defaults | Both panels start closed on mobile; both start open on desktop | ⏳ Pending |
+| Step | Action | Status |
+|------|--------|--------|
+| 1 | `Panel.svelte` created — `side: 'left'\|'right'`, desktop strip collapse, mobile overlay, per-panel scrim | ✅ Done |
+| 2 | Left sidebar refactored to `<Panel side="left">` | ✅ Done |
+| 3 | Right panel moved to layout level; Properties/Related tabs; `currentDoc` store syncs page → layout | ✅ Done |
+| 4 | CollationPanel: `position: fixed` removed; inline in Related tab; ↺ recheck button | ✅ Done |
+| 5 | Mobile scrim: each Panel provides its own scrim; both panels close on navigation | ✅ Done |
+| 6 | Toggle icons: chevrons `‹`/`›` on panel edges replacing `◀▶⊞` mix | ✅ Done |
+| 7 | Mobile defaults: panels start closed; desktop starts open | ✅ Done |
+| + | PropertiesPane actions (Start/Complete/Cancel/Approve) fixed to pass frontmatter through callbacks | ✅ Done |
 
 ---
 
@@ -116,14 +117,16 @@ An always-visible top toolbar (desktop and mobile) anchoring the home icon
 and an activity bar providing distinct entry points for Files, Settings, and
 Git. The mobile-only top bar becomes a permanent layout element.
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Make top bar always visible | Remove `display: none` on `.mobile-topbar`; rename to `.app-toolbar`. Style for desktop. | ⏳ Pending |
-| 2 | Move home icon to toolbar | Remove home icon from sidebar header; it lives in the toolbar only | ⏳ Pending |
-| 3 | Activity bar strip | Vertical icon strip on far-left edge (outside sidebar). Icons: 📄 Files, ⚙ Settings, 🔀 Git. Clicking an icon switches the left panel's active view | ⏳ Pending |
-| 4 | Settings view in left panel | When ⚙ is active: show grouped config files (AI Instructions, Profiles, Templates, Project). Reads `EXCLUDE_ROOT` list, replaces hardcoded exclusions with `settingsFiles` in profile | ⏳ Pending |
-| 5 | Git view in left panel | When 🔀 is active: surface the existing `GitPanel.svelte` inline (currently only in sidebar footer) | ⏳ Pending |
-| 6 | Adjust layout for activity bar | `#app` gains a left margin or the activity bar is part of the flex layout (not overlapping sidebar) | ⏳ Pending |
+| Step | Action | Status |
+|------|--------|--------|
+| 1 | `.app-toolbar` always visible on all viewports (CSS grid: left / center-brand / right) | ✅ Done |
+| 2 | Brand logo centered in toolbar, acts as home button; duplicate home icon removed | ✅ Done |
+| 3 | Activity bar: 📄 Files, ⚙ Settings, ⎇ Git — switches left panel content | ✅ Done |
+| 4 | Settings view: grouped links (AI Instructions, Templates, Project, Brand) | ✅ Done |
+| 5 | Git view: `GitPanel.svelte` shown inline when ⎇ active | ✅ Done |
+| 6 | Layout: activity bar is a 40px flex column before `<Panel side="left">` | ✅ Done |
+| + | Props-toggle button removed from document toolbar (right sidebar covers it) | ✅ Done |
+| + | Button icons added: ✏ Edit, ⟨/⟩ Source, 👁 Preview, ✓ Save, ✕ Cancel, 🗑 Delete | ✅ Done |
 
 ---
 
@@ -139,13 +142,13 @@ the status page or at `/status/funnel`. No graph library needed: SVG or
 CSS-only layout. The "wow" demo that makes DocWright's model immediately
 legible to a new user.
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Create `FunnelView.svelte` | Swimlane columns: Deferred Ideas → Open Proposals → Approved → Active Plans → Completed. Data from existing `/api/status` response | ⏳ Pending |
-| 2 | Document cards | Each card: title, status badge, assigned_to, complexity chip. Clickable → navigate to document | ⏳ Pending |
-| 3 | Stage connectors | Simple SVG arrows between column headers indicating flow direction | ⏳ Pending |
-| 4 | Add to status page | Tab toggle at top of `/status`: "List" (current) / "Funnel". Persisted in `sessionStorage` | ⏳ Pending |
-| 5 | Responsive | On narrow screens: vertical stack instead of horizontal swimlanes | ⏳ Pending |
+| Step | Action | Status |
+|------|--------|--------|
+| 1 | `FunnelView.svelte` — 5 swimlane columns, color-coded per stage | ✅ Done |
+| 2 | Cards: title (2-line clamp), complexity dot, priority, assignee, clickable | ✅ Done |
+| 3 | `›` arrow connectors between column headers | ✅ Done |
+| 4 | `≡ List / ⊙ Funnel` toggle on status page, persisted in `sessionStorage` | ✅ Done |
+| 5 | Mobile: vertical stack with rotated arrows | ✅ Done |
 
 ---
 
@@ -160,7 +163,7 @@ begins:
 > You may either sign off or open a final critique round."
 
 **Gate reviewer:** NetYeti
-**Gate status:** `pending` (awaiting task completion)
+**Gate status:** `pending` (all tasks complete — awaiting NetYeti sign-off)
 
 See [[proposals/phase-gate-sign-off.md]].
 
@@ -183,3 +186,4 @@ These items were identified during Phase 1 but deferred:
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-03 | Created — Phase 1 critique session complete, remaining tasks identified | NetYeti |
+| 2026-06-04 | All 4 tasks complete; step tables updated to reflect actual implementation | NetYeti |
