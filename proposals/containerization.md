@@ -1,5 +1,5 @@
 ---
-title: "Containerization — Docker Deployment for All Three Scenarios"
+title: Containerization — Docker Deployment for All Three Scenarios
 author: NetYeti
 created: 2026-06-03
 updated: 2026-06-04
@@ -12,12 +12,13 @@ category:
   - infrastructure
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - docs/deployment.md
   - plans/phase-2-foundation.md
+_path: proposals/containerization.md
 ---
 
 ## Problem

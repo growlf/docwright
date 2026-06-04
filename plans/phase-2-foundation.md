@@ -18,6 +18,7 @@ assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
   - phase-1-containerization
+  - phase-1-plan-step-enforcement
 scenario_synthesis: "Web UI and dispatch module work; no VSCodium extension or IDE-specific steps"
 ---
 

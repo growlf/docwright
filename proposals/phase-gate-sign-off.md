@@ -10,7 +10,7 @@ tags:
   - dispatch
   - profile-engine
   - dog-fooding
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/phase-gate-sign-off.md
