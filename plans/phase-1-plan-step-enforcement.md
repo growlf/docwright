@@ -14,14 +14,14 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
-scenario_synthesis: MCP server tool additions, PreToolUse hook extension, SOP consolidation, PostToolUse hook; no deployment steps; all changes are local scripts and config files
+scenario_synthesis: MCP server tool additions, PreToolUse hook extension, SOP consolidation, PostToolUse hook, automated test suites; no deployment steps; all changes are local scripts and config files
 tags:
   - phase-1
   - governance
   - enforcement
   - mcp
   - hooks
-total_steps: 17
+total_steps: 20
 completed_steps: 12
 _path: plans/phase-1-plan-step-enforcement.md
 ---
@@ -32,19 +32,17 @@ _path: plans/phase-1-plan-step-enforcement.md
 
 Two governance gaps discovered during Phase 1 development, resolved by moving
 enforcement out of git and into the AI workflow layer. Extended through critique
-cycles into a layered reinforcement architecture with a key correction: the
-actual failure vector (Bash/Python bypassing Write/Edit tools) was not addressed
-by any of the originally proposed layers.
+cycles into a layered reinforcement architecture.
 
 **Core problem:** Governance rules are only as effective as the AI's awareness
 of the governed path. That awareness degrades mid-session as context fills,
-config files go stale, and the AI reaches for familiar shortcuts rather than
-the correct MCP tools.
+config files go stale, and the AI reaches for familiar shortcuts (Bash/Python
+writes) rather than the correct MCP tools.
 
 **The failure vector that caused plan file mangling:** AI used Python/Bash
 scripts to write plan files directly, bypassing both the PreToolUse hook and
-all three reinforcement layers. The hook only covers Claude Code Write/Edit
-tools. This gap must be closed explicitly in AGENTS.md.
+all reinforcement layers. The hook only covers Claude Code Write/Edit tools.
+This gap must be closed explicitly in AGENTS.md.
 
 **Enforcement architecture — three layers covering the Write/Edit path:**
 
@@ -78,11 +76,14 @@ See [[docs/ai-governance-enforcement.md]] and
 | 10 | Reference doc: `docs/ai-governance-enforcement.md` | Tool table, layer descriptions, failure modes, live-feed vs snapshot principle | ✅ Done |
 | 11 | CLAUDE.md + README.md + `policies/core/code-over-memory.md` updated | Philosophy entry, governance architecture section, mechanism table corrected | ✅ Done |
 | 12 | Plan-completion skill — `docs/SOPs/plan-completion.md` | Explicit 5-step MCP tool sequence; closes behavioral gap at Layer 1 | ✅ Done |
-| 13 | AGENTS.md: explicit Bash/Python write prohibition | Add rule: "Never use Bash, Python scripts, or any shell command to write plan files directly — this bypasses MCP validation and the PreToolUse hook." Closes the actual bypass vector that caused plan file mangling. | ⏳ Pending |
-| 14 | `get_plan()` governance footer — dynamic | Append a 2-3 line footer to every `get_plan()` response listing MCP mutation tools, computed from the server's registered tool names (not hardcoded) so it stays current if tools evolve | ⏳ Pending |
-| 15 | Consolidate plan-mutation SOP | Expand `docs/SOPs/plan-completion.md` into `docs/SOPs/plan-mutation.md` covering ALL plan mutation scenarios (steps, status, history, fields, structural rewrites); retire the separate plan-edit SOP concept; one authoritative source removes overlap with AGENTS.md Invariant 6 | ⏳ Pending |
-| 16 | Contextual hook error messages | Extend `claude-lifecycle-hook.sh` to emit operation-specific MCP suggestions using 3 coarse categories: Write→`write_plan`; Edit+`status:`→`update_plan_status`; Edit+step marker→`update_step`; catch-all→list all tools. No full classifier — avoids false positives from misidentification. | ⏳ Pending |
-| 17 | PostToolUse hook for AGENTS.md / CLAUDE.md changes | `.claude/settings.json` PostToolUse fires after Write/Edit to AGENTS.md or CLAUDE.md only (not all SOPs — too noisy). Message: "Governance file edited. This change takes effect in the next session. If your current task depends on a rule in this file, start a new session before proceeding." Session-boundary statement, not a re-read reminder. | ⏳ Pending |
+| 13 | AGENTS.md: explicit Bash/Python write prohibition | Add rule: never use Bash, Python scripts, or shell commands to write plan files — bypasses MCP validation and PreToolUse hook | ⏳ Pending |
+| 14 | `get_plan()` governance footer — dynamic | 2-3 line footer on every `get_plan()` response; computed from server's registered tool names (not hardcoded) so it stays current | ⏳ Pending |
+| 15 | Consolidate plan-mutation SOP | Expand `docs/SOPs/plan-completion.md` into `docs/SOPs/plan-mutation.md` covering all mutation scenarios; one authoritative source | ⏳ Pending |
+| 16 | Contextual hook error messages | `claude-lifecycle-hook.sh` 3 coarse categories: Write→`write_plan`; Edit+`status:`→`update_plan_status`; Edit+step marker→`update_step`; catch-all→list | ⏳ Pending |
+| 17 | PostToolUse hook for AGENTS.md / CLAUDE.md changes | Session-boundary statement ("takes effect next session") after Write/Edit to AGENTS.md or CLAUDE.md only | ⏳ Pending |
+| 18 | `test/hooks/test-lifecycle-hook.sh` — automated hook tests | Pipes JSON payloads to `claude-lifecycle-hook.sh`; asserts correct blocking and redirect messages for: plan Write block, plan Edit block, approved:true proposal block, contextual suggestions; committed to test suite | ⏳ Pending |
+| 19 | `test/mcp/test-plan-tools.py` — automated MCP tool tests | Python test script against fixture plans: `update_step` (replacement + recount), `update_plan_status` (blocks pending, allows clean), `append_history` (row appended), `set_plan_field` (field set; restricted fields blocked), `write_plan` (lifecycle rules, recount) | ⏳ Pending |
+| 20 | CI wiring — both test suites in `.github/workflows/ci.yml` | `node test/hooks/test-pending-steps.js` and `python3 test/mcp/test-plan-tools.py` run on every push; `mcp-server.py --test` smoke test included | ⏳ Pending |
 
 ## Design Decisions
 
@@ -90,35 +91,31 @@ See [[docs/ai-governance-enforcement.md]] and
   in table rows; ~30 lines, no deps. Lives in `lifecycle-gate.js` (JS, canonical +
   tests) and ported inline to `mcp-server.py`.
 - **Targeted MCP tools over full content replacement** — each tool mutates only the
-  specific string it owns; everything else on disk is guaranteed unchanged. Prevents
-  content drift when an AI rewrites large files.
+  specific string it owns; everything else on disk is unchanged. Prevents content
+  drift when an AI rewrites large files.
 - **PreToolUse as AI write gate** — fires before Write/Edit executes. Blanket block
   on `plans/*.md`. Covers Claude Code Write/Edit tools only; Bash writes bypass it.
 - **MCP as governed path** — recounts step counts and logs to audit trail on every
   call. No `--no-verify` escape hatch.
 - **Git pre-commit as final backstop** — `.githooks/pre-commit` calls
   `lifecycle-gate.js --check-files` on staged plans AND handles git-native concerns.
-  Discovered mid-session (was already implemented). MCP + PreToolUse prevent bad
-  state from reaching a commit; git catches anything that slips through.
-- **Bash/Python prohibition (13)** — the PreToolUse hook only covers Write/Edit tools.
-  An AI that uses Python/Bash to write plan files bypasses all enforcement. Explicit
-  prohibition in AGENTS.md closes the gap that caused the mangling incident.
-- **Dynamic footer over hardcoded (14)** — footer computed from the MCP server's
-  registered tool names, not static text. Stays current if tools evolve. Injected on
-  every `get_plan()` call; accepted tradeoff for read-only contexts.
-- **Coarse hook categories over full classifier (16)** — 3 pattern checks (Write,
-  Edit+status, Edit+step marker) rather than attempting to infer intent from content.
-  False positives from misidentification are worse than a generic list.
-- **Session-boundary statement over re-read reminder (17)** — "re-read before your
-  next action" is not mechanically enforceable. The honest and actionable message is:
-  edits to governance files take effect in the next session.
-- **Consolidated SOP over separate skill (15)** — a `plan-edit` skill with keyword
-  triggers is brittle and overlaps with existing content. One `plan-mutation.md` SOP
-  covering all scenarios provides a single authoritative source.
-- **Deliverable 17 (standalone principle doc) dropped** — documenting the live-feed
-  vs snapshot principle as its own deliverable violates code-over-memory. The principle
-  is captured in the reference doc (Deliverable 10) and enforced by Deliverables 14
-  and 17. No standalone doc needed.
+  Discovered mid-session (was already implemented).
+- **Bash/Python prohibition (13)** — PreToolUse hook only covers Write/Edit tools.
+  An AI using Python/Bash bypasses all enforcement. Explicit prohibition in AGENTS.md
+  closes the gap that caused the mangling incident. Not mechanically enforceable —
+  behavioural constraint only.
+- **Dynamic footer over hardcoded (14)** — footer computed from server's registered
+  tool names; stays current if tools evolve.
+- **Coarse hook categories over full classifier (16)** — 3 pattern checks rather than
+  content inference. Misidentification produces wrong suggestions, worse than a generic
+  list.
+- **Session-boundary statement over re-read reminder (17)** — "takes effect next
+  session" is true and actionable; "re-read before next action" is not enforceable.
+  Scoped to AGENTS.md + CLAUDE.md only (not all SOPs — too noisy).
+- **Consolidated SOP over separate skill (15)** — keyword-triggered skills are brittle
+  and overlap with existing content. One `plan-mutation.md` is one authoritative source.
+- **Test 11 (Bash prohibition) is behavioural, not mechanical** — no automated test
+  can verify an AI won't reach for Bash. The test table notes this explicitly.
 - **No HUMAN_APPROVED bypass for plan writes** — considered and reverted. The correct
   path for structural plan rewrites is `write_plan` (MCP), not a hook bypass.
 - **UI regex false-positive risk** — UI uses regex, not the state-machine parser; an
@@ -139,7 +136,9 @@ See [[docs/ai-governance-enforcement.md]] and
 - [x] Core policy and reference doc written and committed
 - [x] Plan-completion skill written (`docs/SOPs/plan-completion.md`)
 - [x] All design decisions documented
-- [ ] Deliverables 13-17 complete
+- [ ] Deliverables 13-20 complete
+- [ ] `test/hooks/test-lifecycle-hook.sh` passes in CI
+- [ ] `test/mcp/test-plan-tools.py` passes in CI
 - [ ] `tests_defined: true` set after human review of Tests section
 
 ## Tests
@@ -150,18 +149,23 @@ See [[docs/ai-governance-enforcement.md]] and
 | # | Test | Verifies | How to run | Expected result |
 |---|------|----------|------------|-----------------|
 | 1 | 8 unit tests | `hasPendingStepsInSection()` — all section/scope cases | `node test/hooks/test-pending-steps.js` | 13/13 pass |
-| 2 | 4 file-based tests | `checkPendingSteps()` reads real temp files; ok:false when completing with pending | `node test/hooks/test-pending-steps.js` | Tests 9-12 pass |
+| 2 | 4 file-based tests | `checkPendingSteps()` reads real temp files; ok:false on completing with pending | `node test/hooks/test-pending-steps.js` | Tests 9-12 pass |
 | 3 | In-progress plan with pending rows — not blocked | `checkPendingSteps()` returns ok:true for in-progress status | `node test/hooks/test-pending-steps.js` | Test 13 passes |
-| 4 | Hook blocks direct Edit | `claude-lifecycle-hook.sh` returns stop-reason for any Edit on `plans/*.md` | Claude Code: attempt any Edit to a plan file | Hook blocks; redirect message shown |
-| 5 | Hook blocks direct Write | `claude-lifecycle-hook.sh` returns stop-reason for any Write to `plans/*.md` | Claude Code: attempt any Write to a plan file | Hook blocks; redirect message shown |
-| 6 | Hook gives contextual suggestion | Block message names specific MCP call for detected operation type | Edit that changes `status:` field; check stop-reason | Message suggests `update_plan_status` not generic list |
-| 7 | MCP rejects pending on complete | `update_plan_status` blocks `completed` when pending rows remain | Call `update_plan_status('x', 'completed')` with pending rows | Returns error; no file mutation |
-| 8 | MCP `update_step` updates and recounts | Replaces status cell; updates `total_steps`/`completed_steps` | Call `update_step` on a known step; read back file | Step updated; counts correct in frontmatter |
-| 9 | MCP `append_history` adds row | Appends row with today's date and resolved author | Call `append_history('x', 'test change')` | Row appears at bottom of Document History table |
-| 10 | `get_plan()` footer is dynamic | Footer lists current registered tools, not hardcoded text | Call `get_plan()`; compare footer to actual tool list | Footer matches registered MCP tools |
-| 11 | AGENTS.md contains Bash/Python prohibition | Explicit rule present | Read AGENTS.md | Rule visible in Invariant 6 or equivalent |
-| 12 | PostToolUse fires on governance file edit | Session-boundary message emitted after AGENTS.md edit | Edit AGENTS.md in Claude Code session | Message states changes take effect next session |
-| 13 | UI Complete button disabled | PropertiesPane disables button when plan has pending steps | Open plan with pending steps; inspect Complete button | Disabled with count tooltip |
+| 4 | Hook blocks direct Edit | `claude-lifecycle-hook.sh` returns stop-reason for any Edit on `plans/*.md` | `test/hooks/test-lifecycle-hook.sh` | Exit 1; stop-reason JSON returned |
+| 5 | Hook blocks direct Write | `claude-lifecycle-hook.sh` returns stop-reason for any Write to `plans/*.md` | `test/hooks/test-lifecycle-hook.sh` | Exit 1; stop-reason JSON returned |
+| 6 | Hook blocks approved:true proposal write | Without HUMAN_APPROVED=1, writing approved:true to proposals/approved/ is blocked | `test/hooks/test-lifecycle-hook.sh` | Exit 1; authorization error |
+| 7 | Hook contextual suggestion — status change | Edit flipping `status:` field emits `update_plan_status` suggestion | `test/hooks/test-lifecycle-hook.sh` | Stop-reason names `update_plan_status` |
+| 8 | Hook contextual suggestion — step marker | Edit containing step emoji emits `update_step` suggestion | `test/hooks/test-lifecycle-hook.sh` | Stop-reason names `update_step` |
+| 9 | MCP `update_plan_status` rejects pending | Blocks `completed` when pending rows remain | `test/mcp/test-plan-tools.py` | Returns error; no file mutation |
+| 10 | MCP `update_plan_status` allows clean | Accepts `completed` when all rows done | `test/mcp/test-plan-tools.py` | Returns success; status updated |
+| 11 | MCP `update_step` updates and recounts | Replaces status cell; updates `total_steps`/`completed_steps` | `test/mcp/test-plan-tools.py` | Step updated; counts correct in frontmatter |
+| 12 | MCP `append_history` adds row | Appends row with today's date and resolved author | `test/mcp/test-plan-tools.py` | Row at bottom of Document History table |
+| 13 | MCP `write_plan` validates lifecycle rules | Blocks `status:completed` with pending rows; blocks `gate_status:approved` | `test/mcp/test-plan-tools.py` | Returns errors; no file mutation |
+| 14 | MCP `set_plan_field` blocks restricted fields | `status`, `gate_status`, `total_steps` cannot be set via this tool | `test/mcp/test-plan-tools.py` | Returns error for each restricted field |
+| 15 | `get_plan()` footer is dynamic | Footer lists current registered tools, not hardcoded text | `test/mcp/test-plan-tools.py` | Footer matches MCP server's registered tool names |
+| 16 | AGENTS.md Bash prohibition — behavioural only | Rule is present in AGENTS.md; no mechanical enforcement exists | Read AGENTS.md | Rule visible; test table notes this cannot be automated |
+| 17 | PostToolUse fires on governance file edit | Session-boundary message emitted after AGENTS.md edit | Manual: Edit AGENTS.md in Claude Code session | Message states changes take effect next session |
+| 18 | UI Complete button disabled | PropertiesPane disables button when plan has pending steps | Manual: Open plan with pending steps; inspect Complete button | Disabled with count tooltip |
 
 ## Document History
 
@@ -176,4 +180,5 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-04 | Source proposals deleted; YAML-steps idea preserved as deferred proposal | NetYeti |
 | 2026-06-04 | Plan restored from mangled state caused by chained Python string substitutions | NetYeti |
 | 2026-06-04 | Deliverables 13-17 added — three-layer reinforcement + config staleness strategy | NetYeti |
-| 2026-06-04 | Deliverables 13-17 revised after adversarial critique — Bash prohibition leads; skill replaced by SOP consolidation; hook messages scoped to 3 categories; PostToolUse message reframed as session-boundary statement; standalone principle doc dropped | NetYeti |
+| 2026-06-04 | Deliverables 13-17 revised after adversarial critique — Bash prohibition leads; SOP consolidation; coarse hook categories; session-boundary PostToolUse | NetYeti |
+| 2026-06-04 | Deliverables 18-20 added — automated hook tests, MCP tool tests, CI wiring; Test 11 corrected to note behavioural-only constraint | NetYeti |
