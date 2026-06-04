@@ -47,12 +47,21 @@ scenarios documented in `docs/deployment.md`.
 
 ### What gets containerized
 
-**DocWright container** — the SvelteKit web server + all API routes:
+**DocWright container** — the SvelteKit web server + all API routes + MCP server:
 - Node.js runtime (pinned version)
 - Built SvelteKit app
-- Python + venv + `mcp` package (for the MCP server)
+- **MCP server** (`scripts/mcp-server.py`) — baked in with its own Python venv and
+  the `mcp` package pre-installed. The container manages the venv; the host
+  machine needs nothing.
 - `DOCWRIGHT_ROOT` points to the vault volume mount
 - Eliminates the venv/system-Python ambiguity permanently
+
+**Phase 2 TypeScript MCP migration:** Phase 2 includes rewriting the MCP server
+from Python to TypeScript (`src/dispatch/mcp-server.ts`). Once complete, the
+Python layer is removed from the container entirely — the image becomes pure
+Node.js, simpler and smaller. The containerization Dockerfile is written to
+support both: if `dist/mcp-server.js` exists it is used; otherwise the Python
+server is the fallback.
 
 **Vault** — mounted as a volume, never baked into the image:
 - The vault is the user's data; the container is the runtime
@@ -177,11 +186,13 @@ On every tagged release, GitHub Actions:
 
 | Current problem | Container fix |
 |----------------|---------------|
-| `.venv` vs system Python confusion | One pinned Python inside the image |
-| `mcp` package not installed | Baked into image at build time |
-| `opencode` not on PATH | Optional sidecar, not assumed |
-| `DOCWRIGHT_ROOT` not set | Set by the container entrypoint |
-| Node version mismatch | Pinned in Dockerfile FROM |
+| MCP server hangs because `.venv/bin/python3` ≠ system `python3` | One pinned Python + venv inside the image; no host Python needed |
+| `mcp` package not installed in the right Python | Baked into image venv at build time; always present |
+| MCP server path changes between environments | Absolute path inside the container is always `/app/.venv/bin/python3` |
+| `opencode` not on PATH | Optional sidecar, not assumed to be present |
+| `DOCWRIGHT_ROOT` not set | Set by the container entrypoint from volume mount |
+| Node version mismatch between dev and production | Pinned in Dockerfile `FROM node:22-alpine` |
+| Phase 2 TypeScript MCP replaces Python | Container detects `dist/mcp-server.js` and uses it; Python layer dropped |
 
 ## Scope
 
