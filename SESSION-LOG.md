@@ -76,3 +76,34 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Web UI polish proposal created
 
 **Session notes:** Commits c7d8b4c through 0733dcd
+
+---
+
+## Session: 2026-06-04 — Chat fix, lifecycle enforcement, proposal critiques
+
+**Focus:** Chat debugging, lifecycle enforcement, proposal critique
+
+**Completed:**
+- [x] Chat panel hanging analyzed — fixes already in HEAD from prior session
+- [x] Session shutdown automation proposal → plan (proper lifecycle this time)
+- [x] Critiqued plan-test-certification proposal (7 findings)
+- [x] Critiqued and revised plan-step-completion-enforcement (replaced emoji heuristic, eliminated Phase 3 deferral)
+
+**Session note:** `docs/session-notes/session_note_202606040212.md`
+
+---
+
+## Session: 2026-06-04 — Governance enforcement, testing standards, shutdown
+
+**Focus:** AI governance boundaries, plan test certification, critique skill, versioning
+
+**Completed:**
+- [x] AI governance boundaries policy + hook enforcement (no self-completion, gate required)
+- [x] `/critique-plan` skill shipped and run on all Phase 1 + Phase 2 plans (v0.1.2)
+- [x] Plan step enforcement hook implemented — 12 tests passing (v0.1.3)
+- [x] Automatic versioning: 0.MINOR.PATCH auto-bumped by hook on plan completion
+- [x] Plan test certification: 4 design cycles → honest simplified design approved
+- [x] Session shutdown automation plan created (Ultraplan refining)
+- [x] Phase 1 UI Polish completed (v0.1.1), Phase 1 Critique Skill completed (v0.1.2)
+
+**Session note:** `docs/session-notes/session_note_202606040300.md`
