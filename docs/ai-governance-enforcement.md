@@ -55,7 +55,7 @@ for all plan writes — direct file writes are blocked.
 | `update_plan_status(name, status)` | Change status; blocks `completed` if steps pending |
 | `append_history(name, change)` | Append a Document History row; auto-fills date and author |
 | `set_plan_field(name, field, value)` | Set one frontmatter field; restricted fields blocked |
-| `write_plan(name, content)` | Full structural rewrite (escape hatch; logs as rewrite) |
+| `write_plan(name, content)` | Full structural rewrite — validates same lifecycle rules as `update_plan_status`; blocks `status: completed` with pending steps and `gate_status: approved/waived` |
 | `transition_to_completed(name)` | Archive plan: move to `plans/completed/`, generate doc |
 | `transition_to_canceled(name, reason)` | Cancel plan with mandatory reason |
 | `transition_to_approved(name)` | Move approved proposal, create plan |

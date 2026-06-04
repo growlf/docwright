@@ -744,11 +744,30 @@ async def write_plan(plan_name: str, content: str) -> str:
     Full content replacement for a plan file.
     Use only for structural rewrites — all other mutations should use
     update_step, update_plan_status, append_history, or set_plan_field.
+
+    Applies the same lifecycle validation as update_plan_status:
+    - status: completed is blocked if any pending steps remain
+    - gate_status: approved/waived cannot be set via this tool (human-only)
     Recounts and updates total_steps / completed_steps automatically.
     """
     safe = _safe_plan_name(plan_name)
     if not _extract_frontmatter_field(content, "title"):
         return "ERROR: Content is missing required 'title' frontmatter field."
+
+    new_status = _extract_frontmatter_field(content, "status")
+    if new_status == "completed" and _has_pending_steps(content):
+        return (
+            f"ERROR: Content sets status: completed but plan has ⏳ pending steps. "
+            "Clear all pending steps first, then resubmit with all steps ✅ Done, "
+            "or use update_plan_status() which enforces this check explicitly."
+        )
+
+    gate = _extract_frontmatter_field(content, "gate_status")
+    if gate in ("approved", "waived"):
+        return (
+            f"ERROR: write_plan cannot set gate_status: {gate}. "
+            "Gate sign-off requires human authorization."
+        )
 
     content = _update_step_counts(content)
     _write_file(f"plans/{safe}", content)

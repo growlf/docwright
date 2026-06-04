@@ -142,7 +142,7 @@ accidental data corruption, and confused session context (as of 2026-06-02 fix).
    - `update_plan_status(name, status)` — change status; blocks completion if steps pending
    - `append_history(name, change)` — add a Document History row
    - `set_plan_field(name, field, value)` — set one frontmatter field
-   - `write_plan(name, content)` — structural rewrite only (escape hatch)
+   - `write_plan(name, content)` — structural rewrite; validates same lifecycle rules as `update_plan_status`
    Before calling `update_plan_status(..., 'completed')`, verify every Implementation
    Steps row shows ✅ Done. If any show ⏳, report which ones and stop — do not attempt
    the call. The MCP tool also enforces this, but self-checking first is expected.

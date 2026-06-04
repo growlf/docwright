@@ -61,7 +61,7 @@ MCP tools:
 | Change plan status | `update_plan_status(name, status)` — validates pending steps on completion |
 | Add a history entry | `append_history(name, change)` — auto-fills date and author |
 | Set a frontmatter field | `set_plan_field(name, field, value)` — restricted fields blocked |
-| Structural rewrite | `write_plan(name, content)` — escape hatch; logs as rewrite |
+| Structural rewrite | `write_plan(name, content)` — validates same lifecycle rules as `update_plan_status`; not a bypass |
 | Archive a completed plan | `transition_to_completed(name)` — moves file, generates doc |
 
 The PreToolUse hook blocks any direct Write or Edit to `plans/*.md` with a clear

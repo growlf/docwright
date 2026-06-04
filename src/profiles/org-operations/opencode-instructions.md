@@ -71,7 +71,7 @@ implementation table in the same edit. Stale ⏳ rows mislead developers.
 - `update_plan_status(name, status)` — change status with pending-step validation
 - `append_history(name, change)` — append a Document History row (auto-fills date/author)
 - `set_plan_field(name, field, value)` — set one frontmatter field
-- `write_plan(name, content)` — full structural rewrite (escape hatch only)
+- `write_plan(name, content)` — full structural rewrite; validates same lifecycle rules as `update_plan_status` (not a bypass)
 
 **Lifecycle transitions:**
 - `transition_to_approved(proposal)` — move approved proposal + create plan
