@@ -384,11 +384,17 @@
         <button class="fmt-btn" onclick={() => execCmd('createLink', prompt('URL:') ?? '')} title="Link">🔗</button>
         <button class="fmt-btn" onclick={() => execCmd('formatBlock', '<pre>')} title="Code">&lt;/&gt;</button>
       </div>
+      {#if frontmatter?.title && docType !== 'page'}
+        <h1 class="doc-h1">{frontmatter.title}</h1>
+      {/if}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div id="wysiwyg-editor" class="wysiwyg" contenteditable="true"
         oninput={syncHtmlToRaw} use:setEditorHtml></div>
 
     {:else}
+      {#if frontmatter?.title && docType !== 'page'}
+        <h1 class="doc-h1">{frontmatter.title}</h1>
+      {/if}
       {#if frontmatter && Array.isArray(frontmatter.depends_on) && frontmatter.depends_on.length > 0}
         <div class="dep-row">
           <span class="dep-label">Depends on:</span>
@@ -460,6 +466,7 @@
   .nf-btn:hover { border-color: #555; color: #ccc; }
   .nf-btn.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
   .nf-btn.primary:hover { background: #1a3a5a; }
+  .doc-h1 { font-size: 1.75em; font-weight: 700; color: #fff; margin: 0 0 20px; padding-bottom: 10px; border-bottom: 1px solid #222; line-height: 1.25; }
   .body   { line-height: 1.6; }
   .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #181818; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
   .dep-label { color: #555; font-weight: 600; }
