@@ -313,7 +313,8 @@
     showToast('Marked ' + relPath + ' as subsumed', 2000);
   }
 
-  async function handleApprove() {
+  async function handleApprove(fm?: Record<string, any>) {
+    if (fm) frontmatter = { ...fm };
     if (!frontmatter) return;
     if (!frontmatter.assigned_to || String(frontmatter.assigned_to).trim() === '') {
       const who = prompt('Assign to:');

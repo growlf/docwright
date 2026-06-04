@@ -13,7 +13,7 @@
     docType: string;
     mode: 'read' | 'edit' | 'source';
     onsave?: (fm: Record<string, any>) => void;
-    onapprove?: () => void;
+    onapprove?: (fm: Record<string, any>) => void;
     onfindrelated?: () => void;
   } = $props();
 
@@ -82,7 +82,7 @@
   // Proposal actions
   function approve() {
     setField('approved', true);
-    onapprove?.();
+    onapprove?.(frontmatter);
   }
 
   function unapprove() {
