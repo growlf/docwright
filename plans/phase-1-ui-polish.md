@@ -60,8 +60,13 @@ They are recorded for the audit trail.
 | Favicon uses brand logo | session | `<link rel="icon" href="/api/brand/logo">` |
 | Deployment scenarios documented | session | `docs/deployment.md` — standalone, team server, enterprise |
 | Chat panel (direct mode) | session | `ChatPanel.svelte` — browser connects directly to client's OpenCode |
-| Chat panel send bug fixed | e0df5e9 | `message.part.updated` event structure corrected (p.part.messageID, p.delta); directory now `?directory=` query param so EventSource can carry it; 90s send timeout prevents stuck button |
+| Chat panel send bug fixed | e0df5e9 | `message.part.updated` event structure corrected (p.part.messageID, p.delta); directory now `?directory=` query param so EventSource can carry it |
 | MCP auto-registration | e0df5e9 | `/api/opencode-config` writes DocWright MCP entry into `opencode.json` on ChatPanel mount; settings panel shows registration status |
+| Chat panel rendering fixed | 49b38ba | Base `.msg` color added; `.msg.model` rule; `normalizeRole()` maps OpenCode's 'model'/'human' to 'assistant'/'user' |
+| POST response as primary source | 00a68d2 | Send uses response body as fallback; `sending` cleared in `finally` block so it can never get stuck |
+| URL self-pointing guard | 470cea6 | Warning shown in settings when OpenCode URL matches DocWright's own host |
+| Svelte 5 fixes + cancel button | 1915fdc | `msgEnd` declared as `$state()`; label `for=` attrs; elapsed timer; cancel button after 1s; heartbeats excluded from event count |
+| Chat panel working end-to-end | f0b18e9 | Confirmed working: direct mode, `http://localhost:4096`, `opencode serve --cors http://localhost:5173` |
 
 ## Remaining Tasks
 
