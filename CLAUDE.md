@@ -132,22 +132,27 @@ Delivered:
 
 **Active plans:** collation (high), git-controls (medium), phase-1-opencode-embed (high, see above)
 
-## Phase 2 (next) — Foundation
+## Phase 2 (next) — Foundation (Web-First)
 
-Goal: working extension skeleton; profile engine; zero-config; basic scaffolding;
-inbox capture (VSCodium command + localhost web form).
+Goal: profile engine, dispatch module maturity, inbox capture, CI pipeline,
+FOSS hygiene, containerization, TypeScript MCP server.
+VSCodium extension deliberately deferred to after alpha validation.
 
 Key deliverables:
-- Extension activates lazily (< 500ms)
 - Profile engine loads profile.json; falls back to org-operations
-- Dispatch module skeleton — verify no VS Code API leakage
-- `opencode serve` child process management + crash recovery
-- New Document scaffolding with auto-stage
-- Inbox capture: VSCodium command + minimal web form on localhost
+- Dispatch module CI — verify no VS Code API leakage
+- Inbox capture: minimal localhost web form
 - `author-role:` field in ALL profile templates from day one
-- GitHub Actions CI: lint + typecheck + unit tests + .vsix package
+- GitHub Actions CI: lint + typecheck + unit tests (no .vsix yet)
 - All FOSS hygiene files: CHANGELOG.md, SECURITY.md, CONTRIBUTING.md,
   NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml
+- Containerization: Dockerfile + docker-compose for multi-instance deploy
+- TypeScript MCP server replacing Python mcp-server.py
+
+## VSCodium Extension (after alpha)
+
+Goal: working extension skeleton after web tool validated by real users.
+See `plans/phase-vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
 
 ## Repo structure
 

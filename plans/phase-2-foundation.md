@@ -1,71 +1,80 @@
 ---
-title: Phase 2 — Foundation
+title: Phase 2 — Foundation (Web-First)
 status: approved
 author: NetYeti
 created: 2026-06-03
+phase: 2
+gate_reviewer: NetYeti
+gate_status: pending
 tags:
   - phase-2
-  - extension
   - profile-engine
   - dispatch
   - ci
+  - foss
 priority: high
 automated: off
 assigned_to: NetYeti
+depends_on:
+  - phase-1-ui-polish
+scenario_synthesis: "Web UI and dispatch module work; no VSCodium extension or IDE-specific steps"
 ---
 
-# Phase 2 — Foundation
+# Phase 2 — Foundation (Web-First)
 
 ## Overview
 
-Phase 1 delivered a functional Web UI prototype with full CRUD, live reload,
-lifecycle enforcement, proposal templating, git controls, and the dispatch
-module engine skeleton. Phase 2 builds the working VSCodium extension, the
-profile engine, zero-config startup, inbox capture, and full FOSS hygiene.
+Phase 1 delivered a complete, polished Web UI. Phase 2 builds the foundation
+that everything else depends on: the profile engine, dispatch module maturity,
+inbox capture, CI pipeline, and FOSS hygiene.
 
-This plan tracks all Phase 2 deliverables. Each deliverable will be broken out
-into its own plan when work begins.
+**VSCodium extension work has been extracted** to its own plan
+([[plans/phase-vscodium-extension.md]]) to begin after the web tool reaches
+alpha and real users validate the core workflow. Building the extension before
+we know the workflow is stable is wasted effort.
+
+This plan tracks all Phase 2 deliverables. Each will be broken out into its
+own sub-plan when work begins.
 
 ## Deliverables
 
 | # | Deliverable | Status | Notes |
 |---|-------------|--------|-------|
-| 1 | VSCodium extension activates lazily (< 500ms) | ⏳ Planned | Extension skeleton, lazy activation |
-| 2 | Profile engine — loads profile.json, falls back to org-operations | ⏳ Planned | `src/dispatch/profile.ts` already exists; needs loader wired into extension |
-| 3 | Dispatch module — verify zero VS Code API leakage in CI | ⏳ Planned | Add CI step that imports dispatch outside extension host |
-| 4 | `opencode serve` child process management + crash recovery | ⏳ Planned | Extension manages opencode lifecycle |
-| 5 | New Document scaffolding with auto-stage | ⏳ Planned | Extension command; uses dispatch templates |
-| 6 | Inbox capture — VSCodium command | ⏳ Planned | Quick-capture to `inbox/` |
-| 7 | Inbox capture — minimal localhost web form | ⏳ Planned | Standalone HTML form, no framework required |
-| 8 | `author-role:` in ALL profile templates | ⏳ Planned | Audit: verify every template includes the field |
-| 9 | GitHub Actions CI — lint + typecheck + unit tests + .vsix package | ⏳ Planned | `.github/workflows/ci.yml` |
-| 10 | FOSS hygiene files | ⏳ Planned | CHANGELOG.md, SECURITY.md, CONTRIBUTING.md, NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml |
+| 1 | Profile engine — loads profile.json, falls back to org-operations | ⏳ Planned | `src/dispatch/profile.ts` exists; needs loader, validation, schema |
+| 2 | Dispatch module — verify zero VS Code API leakage in CI | ⏳ Planned | CI step that imports dispatch outside extension host confirms invariant |
+| 3 | Inbox capture — minimal localhost web form | ⏳ Planned | Standalone HTML form, no framework required; inbox.ts adapter |
+| 4 | `author-role:` in ALL profile templates | ⏳ Planned | Audit: verify every template in all four bundled profiles includes the field |
+| 5 | GitHub Actions CI — lint + typecheck + unit tests | ⏳ Planned | `.github/workflows/ci.yml`; no .vsix step (that belongs in VSCodium plan) |
+| 6 | FOSS hygiene files | ⏳ Planned | CHANGELOG.md, SECURITY.md, CONTRIBUTING.md, NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml |
+| 7 | Containerization — Dockerfile + docker-compose | ⏳ Planned | Multi-stage build; enables multi-instance deployment; eliminates venv/dependency fragility. See [[proposals/containerization.md]] |
+| 8 | MCP server — TypeScript rewrite | ⏳ Planned | Replace `scripts/mcp-server.py` with `src/dispatch/mcp-server.ts`; eliminates Python venv dependency; aligns with dispatch module |
 
 ## Phase Context
 
 ### Phase 0 (complete) ✅
-Validated `opencode serve` HTTP API. Confirmed iframe SPA embed. Decided Web UI as primary surface.
+Validated `opencode serve` HTTP API. Confirmed Web UI as primary surface.
 
 ### Phase 1 (complete) ✅
-SvelteKit Web UI with full CRUD, live reload, 3-mode editor, proposal templating,
-document properties, sidebar polish, vault status page, lifecycle compliance,
-project registry, git controls, dispatch module skeleton, collation foundation,
-mobile-friendly layout.
+Complete polished Web UI: file tree, editor, properties, status, funnel view,
+AI chat panel, brand system, activity bar, phase gate, deployment docs.
 
-### Phase 2 (this plan) — Foundation
-VSCodium extension + profile engine + inbox capture + CI + FOSS hygiene.
+### Phase 2 (this plan) — Web-First Foundation
+Profile engine, dispatch CI, inbox, CI pipeline, FOSS hygiene, containerization,
+TypeScript MCP server. Web tool stable before IDE work begins.
+
+### VSCodium Extension (after alpha)
+See [[plans/phase-vscodium-extension.md]]. Begins after the web tool has been
+validated by real users in alpha testing.
 
 ### Phase 3 (future) — Profile engine full, ACL, AI integration
-Full profile engine with all bundled profiles, ACL enforcement via Forgejo team
-membership, AI writes through ACL controller with `ai-last-action:` stamps,
-wikilink graph, backlinks index.
+Full profile engine with all bundled profiles, ACL enforcement via Forgejo,
+AI writes through ACL controller, wikilink graph, backlinks index.
 
 ### Phase 4 (future) — Cascade STEAM reference deployment
-Vault seed for Cascade STEAM. vision.md and governance.md completed by leadership.
-Forgejo server provisioned. AI stack (growlf/ai-stack + growlf/meshy) connected.
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-03 | Created — Phase 1 complete, Phase 2 begins | NetYeti |
+| 2026-06-04 | VSCodium items extracted to phase-vscodium-extension plan; containerization and TypeScript MCP server added | NetYeti |
