@@ -1,7 +1,6 @@
 ---
 title: Phase 1 — Plan Step Completion Enforcement
-status: completed
-completed_date: 2026-06-04
+status: in-progress
 author: NetYeti
 created: 2026-06-04
 phase: 1
