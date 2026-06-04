@@ -71,6 +71,21 @@ is the fallback until then.
 - OR: an optional `opencode` sidecar container for server-side AI (Enterprise)
 - See `docs/deployment.md` for the AI architecture per scenario
 
+### What the container needs to include
+
+**Critical dependency: `git`** — the DocWright server calls `git` directly via
+`spawnSync` for all git operations: commit, stage, push, tag, status, undo.
+Without git in the image, the entire git panel fails silently.
+
+**Git identity** — commits require `user.name` and `user.email`. These must be
+configurable via environment variables (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`).
+
+**Git credentials for push** — pushing to Forgejo requires authentication.
+Options (user chooses one):
+- Mount SSH key: `-v ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro`
+- Pass token via env: `GIT_TOKEN=xxx` (container writes `.netrc`)
+- For standalone local git: no credentials needed
+
 ### Image design
 
 ```dockerfile
@@ -83,18 +98,42 @@ COPY src/webui/ .
 RUN npm run build
 
 FROM node:22-alpine AS runtime
-# Add Python for MCP server — install mcp directly, no venv needed in a container
-RUN apk add --no-cache python3 py3-pip && pip install --no-cache-dir mcp
+# git — server calls it directly for all git operations (commit, stage, push, etc.)
+# python3 + mcp — MCP server; no venv needed in a container
+RUN apk add --no-cache git python3 py3-pip \
+    && pip install --no-cache-dir mcp \
+    && git config --global --add safe.directory /vault
 WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
 COPY scripts/ ./scripts/
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV DOCWRIGHT_ROOT=/vault
 ENV NODE_ENV=production
 EXPOSE 5173
 VOLUME /vault
 HEALTHCHECK --interval=30s CMD wget -qO- http://localhost:5173/api/status || exit 1
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "build/index.js"]
+```
+
+**`docker-entrypoint.sh`** — sets git identity from environment before starting:
+```bash
+#!/bin/sh
+# Configure git identity if provided via environment
+if [ -n "$GIT_AUTHOR_NAME" ]; then
+  git config --global user.name "$GIT_AUTHOR_NAME"
+fi
+if [ -n "$GIT_AUTHOR_EMAIL" ]; then
+  git config --global user.email "$GIT_AUTHOR_EMAIL"
+fi
+# Write .netrc for HTTPS git auth if token provided
+if [ -n "$GIT_TOKEN" ] && [ -n "$GIT_HOST" ]; then
+  echo "machine $GIT_HOST login git password $GIT_TOKEN" > /root/.netrc
+  chmod 600 /root/.netrc
+fi
+exec "$@"
 ```
 
 ### docker-compose.yml — three scenarios
@@ -169,15 +208,34 @@ On every tagged release, GitHub Actions:
 2. Runs health check validation
 3. Pushes to `ghcr.io/growlf/docwright:{tag}` and `:latest`
 
+### What remains outside the container
+
+| Component | Why outside | How to connect |
+|-----------|-------------|----------------|
+| **The vault** (git repo) | User's data — never baked into image | `-v /path/to/vault:/vault` volume mount |
+| **OpenCode** | Each user runs their own (team server model); or optional sidecar | `OPENCODE_URL` env var |
+| **Forgejo** (git server) | Separate service | `GIT_HOST` + `GIT_TOKEN` or SSH key mount |
+| **Reverse proxy** (HTTPS) | TLS termination is infrastructure's job | Caddy/nginx in docker-compose |
+| **Git credentials** | Vault-specific auth | SSH key volume or `GIT_TOKEN` env var |
+| **DNS/hostname** | Infrastructure concern | Reverse proxy config |
+
+For **standalone local use**, none of these are needed — git is local, no push credentials required, HTTP is fine.
+
+For **team server**, only the reverse proxy and git credentials need configuration.
+
 ### Environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DOCWRIGHT_ROOT` | `/vault` | Absolute path to vault directory |
-| `ORIGIN` | `http://localhost:5173` | Public URL (required for CSRF/cookie security in production) |
-| `OPENCODE_URL` | `http://127.0.0.1:4096` | Where to find OpenCode (overridden for sidecar pattern) |
+| `DOCWRIGHT_ROOT` | `/vault` | Absolute path to vault directory inside container |
+| `ORIGIN` | `http://localhost:5173` | Public URL — required for CSRF protection in production |
+| `OPENCODE_URL` | `http://127.0.0.1:4096` | Where to find OpenCode (override for sidecar) |
 | `OPENCODE_SERVER_PASSWORD` | *(none)* | Optional OpenCode auth token |
 | `PORT` | `5173` | Internal server port |
+| `GIT_AUTHOR_NAME` | *(none)* | Git commit identity — name |
+| `GIT_AUTHOR_EMAIL` | *(none)* | Git commit identity — email |
+| `GIT_HOST` | *(none)* | Forgejo hostname for HTTPS auth (e.g. `git.cascade.steam`) |
+| `GIT_TOKEN` | *(none)* | Forgejo personal access token for HTTPS push |
 
 ### Eliminates existing fragility
 
@@ -185,9 +243,9 @@ On every tagged release, GitHub Actions:
 |----------------|---------------|
 | MCP server hangs because `.venv/bin/python3` ≠ system `python3` | Container has one Python; `mcp` installed directly via pip — no venv, no ambiguity |
 | `mcp` package not installed in the right Python | Installed into container's system Python at build time; always present |
-| MCP server path varies between host environments | Always `python3` inside the container; consistent everywhere |
-| `opencode` not on PATH | Optional sidecar, not assumed to be present |
-| `DOCWRIGHT_ROOT` not set | Set by the container entrypoint from volume mount |
+| `git` not on PATH — git panel silently broken | `git` installed in image via `apk add git`; always available to server |
+| Git identity not set — commits fail | `GIT_AUTHOR_NAME` + `GIT_AUTHOR_EMAIL` env vars; entrypoint configures git |
+| `DOCWRIGHT_ROOT` not set | Set by the container entrypoint |
 | Node version mismatch between dev and production | Pinned in Dockerfile `FROM node:22-alpine` |
 | Phase 2 TypeScript MCP replaces Python | Container detects `dist/mcp-server.js` and uses it; Python layer dropped |
 
