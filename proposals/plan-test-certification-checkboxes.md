@@ -84,96 +84,101 @@ Web UI. The critique tool generates; the human certifies.
 ### Rubber stamp without genuine review ⚠️ warn
 - **Finding:** A human under deadline pressure can click both boxes without
   writing real tests or verifying results. The checkbox certifies intent, not
-  quality. This is the "sign here that you read the ToS" problem — technically
-  compliant, substantively empty.
-- **Action:** Accept as a known human-factors limitation. The checkbox raises
-  the bar even if it cannot eliminate bad-faith use. Pair with the multi-
-  perspective review policy — a second person reviewing tests provides
-  independent verification the boxes can't fake.
-- **Resolution:**
+  quality.
+- **Action:** Structural mitigation: tests must name concrete commands and exact
+  expected outputs. Vague tests ("system works correctly") are rejected by the
+  critique tool. The certification tooltip reads: *"This test suite would catch
+  regressions if the implementation were wrong."* Cannot fully eliminate bad-faith
+  use — this is the honest limit of any human certification system.
+- **Resolution:** Accepted with structural mitigation. Specificity requirement
+  documented in plan template and enforced by critique tool output format.
 
 ### AI generates tests, AI runs tests, human clicks box ⚠️ warn
 - **Finding:** If the critique tool generates the test suite and AI reports
   results, the human is certifying AI output without independent verification.
-  AI could write tests optimized to pass trivially. The human has no way to
-  detect this without deep technical review.
-- **Action:** The `tests_defined` certification specifically covers adequacy
-  ("these tests would actually catch regressions if the implementation were
-  wrong"). Documenting this expectation in the checkbox tooltip and in the
-  plan template reminder makes the standard explicit. AI-generated tests should
-  be treated as a starting point, not a final answer.
-- **Resolution:**
+- **Action:** The `tests_defined` standard is *adequacy*, not *existence*. Tooltip
+  makes this explicit. AI-generated tests are a starting point; the human certifies
+  they would catch regressions. Critique tool must state which requirement each
+  generated test verifies.
+- **Resolution:** Accepted. Certification standard documented in PropertiesPane
+  tooltip and plan template. Critique tool output format specifies requirement
+  mapping per test.
 
 ### `tests_defined` goes stale as implementation evolves ⚠️ warn
-- **Finding:** Tests are defined and certified early. When implementation
-  diverges from the plan — scope changes, technical decisions shift — the
-  original tests may test the wrong thing, but `tests_defined: true` is
-  already checked. No re-certification trigger exists.
-- **Action:** Add a convention: if a plan's deliverable table changes
-  substantially after `tests_defined` is checked, the field should be reset
-  to `false` and re-certified. The critique tool, when run on a plan with
-  `tests_defined: true`, should check whether the test table still matches
-  the deliverable table.
-- **Resolution:**
+- **Finding:** Tests certified early may test the wrong thing after scope changes.
+  No re-certification trigger.
+- **Action:** `/critique-plan` on a plan with `tests_defined: true` counts
+  deliverable rows vs test rows. If deliverables > tests, flags staleness warning.
+  Unchecking `tests_defined` automatically unchecks `tests_passed` (resolved in
+  design decisions above).
+- **Resolution:** Resolved — staleness detection built into critique tool;
+  `tests_defined → false` cascades to `tests_passed → false`.
 
 ### All-or-nothing masks partial failures ⚠️ warn
-- **Finding:** One `tests_passed` checkbox for a seven-deliverable plan means
-  someone can check it when six of seven pass and one is "close enough." No
-  granularity, no accountability for which tests failed.
-- **Action:** The `## Tests` table includes a Status column per test. The
-  certification ("tests_passed: true") is a human judgment call based on that
-  table. Documented expectation: all rows should show ✅ Pass before checking.
-  This is still a human judgment, but the table makes the partial pass visible
-  to any reviewer.
-- **Resolution:**
+- **Finding:** One checkbox for a multi-deliverable plan allows "close enough"
+  certification when some tests fail.
+- **Action:** The `## Tests` table has a Status column per test row. The critique
+  tool, when `tests_passed: true` is set, scans the tests table and flags any
+  non-✅ rows as a contradiction. Documented expectation: ALL rows ✅ before
+  checking.
+- **Resolution:** Resolved — test table Status column provides granularity;
+  critique tool validates consistency between field and table.
 
 ### Undefined for non-code deliverables ⚠️ warn
-- **Finding:** Documentation, policy documents, brand assets — "tests" has no
-  clear meaning. What does `tests_defined: true` mean for "write CONTRIBUTING.md"?
-  Plans that block on this field for subjective deliverables add friction
-  without adding value.
-- **Action:** For plans with no automatable tests, the test suite is acceptance
-  criteria ("CONTRIBUTING.md reviewed by a second person and found complete").
-  The field stays but its meaning adapts. The `## Tests` table can contain
-  review criteria, not just executable tests. This must be documented in the
-  plan template.
-- **Resolution:**
+- **Finding:** "Tests" has no clear meaning for documentation, policies, brand
+  assets.
+- **Action:** Resolved in design decisions above — required on ALL plans, with
+  acceptance criteria valid for non-code deliverables. Plan template documents
+  both patterns with examples.
+- **Resolution:** Resolved — required universally; acceptance criteria are
+  legitimate test rows.
 
 ### The existing Testing Plan section was already ignored 📝 note
-- **Finding:** We already had `## Testing Plan` in the plan template. It became
-  decorative. Adding checkboxes risks the same fate if the culture around them
-  isn't different.
-- **Action:** The checkboxes are hook-enforced (unlike the template section),
-  which is the structural difference. But cultural expectation must be set: these
-  are not boxes to click to unblock a commit; they are certifications with real
-  meaning.
-- **Resolution:**
+- **Finding:** The old `## Testing Plan` section became decorative.
+- **Action:** Hook enforcement is the structural difference — the old section had
+  none. The new `## Tests` section is tied to a boolean field the hook checks.
+  Renaming it from "Testing Plan" to "Tests" also signals it is an artifact that
+  must be populated, not a plan for future work.
+- **Resolution:** Accepted. Hook enforcement + field naming creates structural
+  difference from the ignored predecessor.
 
 ### Does not fully solve AI governance ⚠️ warn
-- **Finding:** The hook blocks `tests_passed: true` in terminal commits without
-  `HUMAN_APPROVED=1`. But the AI governance problem is still a behavioral rule
-  about the AI not using HUMAN_APPROVED=1. The same gap that existed for
-  `status: completed` exists here for the checkbox fields.
-- **Action:** This proposal improves quality gates, not the authorization model.
-  The authorization model (AI proposes, human executes governance commits via
-  Web UI only) is a separate concern being addressed in
-  [[policies/core/ai-governance-boundaries.md]]. Both are needed; neither
-  replaces the other.
-- **Resolution:**
+- **Finding:** Checkboxes require `HUMAN_APPROVED=1` to set in terminal commits —
+  same behavioral gap as before.
+- **Action:** Explicitly out of scope. This proposal addresses quality gates.
+  Authorization model is addressed in [[policies/core/ai-governance-boundaries.md]].
+  Both are necessary; neither replaces the other.
+- **Resolution:** Accepted as out of scope. Tracked separately.
 
 ---
 
-## Open Questions Before Approval
+## Resolved Design Decisions
 
-1. Should `tests_defined` and `tests_passed` be required on ALL plans, or only
-   plans with code deliverables? (Current proposal: all plans, with acceptance
-   criteria allowed for non-code deliverables.)
+**Required on ALL plans** — yes, without exception. Plans whose deliverables
+are non-code (documentation, policy, brand assets) use *acceptance criteria*
+in the Tests table rather than executable tests. "CONTRIBUTING.md reviewed by
+a second reader and found complete" is a valid test row. The alternative
+(code-only requirement) creates an escape hatch that will be used.
 
-2. Should unchecking `tests_defined` re-lock `tests_passed` automatically?
-   (If the test suite changes, previously-passed tests may no longer be valid.)
+**Unchecking `tests_defined` automatically re-locks `tests_passed`** — yes.
+If the test suite changes enough to uncheck `tests_defined`, previously-certified
+results are no longer valid against the new test suite. The PropertiesPane
+should automatically set `tests_passed: false` when `tests_defined` changes from
+`true` to `false`. This is enforced in the UI and by the hook.
 
-3. Should the critique tool re-check `tests_defined` for staleness when
-   deliverables have changed since the field was set?
+**Critique tool checks staleness on already-defined plans** — yes. When
+`/critique-plan` runs on a plan with `tests_defined: true`, it counts
+deliverable table rows and test table rows. If deliverables > tests, it flags
+a staleness warning. Cheap to implement; catches the most common failure mode
+(new deliverable added without a corresponding test).
+
+## Certification standard for `tests_defined`
+
+The human is certifying: *"This test suite would catch regressions if the
+implementation were wrong."* Not just "tests exist." The PropertiesPane checkbox
+tooltip must show this full statement so clicking is a deliberate act with
+visible meaning. The critique tool, when generating tests, must name the
+specific requirement each test verifies.
 
 ## Out of Scope
 
@@ -188,3 +193,4 @@ Web UI. The critique tool generates; the human certifies.
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-04 | Created — proposed after AI governance incident; includes self-critique | NetYeti |
+| 2026-06-04 | All open questions resolved; all critique findings addressed; ready for approval | NetYeti |
