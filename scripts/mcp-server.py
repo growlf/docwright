@@ -3,7 +3,8 @@
 DocWright MCP Server (dw-mcp) — lifecycle state machine for this project.
 
 Serves lifecycle data as tools and owns all state transitions so agents
-never directly mutate lifecycle files. Pre-commit hook catches bypasses.
+never directly mutate lifecycle files. The Claude Code PreToolUse hook
+intercepts direct write attempts; this server validates all transition calls.
 
 Tools:
   get_session_context()       SESSION-LOG.md + active plans
@@ -12,6 +13,15 @@ Tools:
   get_plan(name)              Read a specific plan file
   get_facts()                 Project invariants and operational gotchas
   run_dry_run()               Show pending transitions (read-only)
+
+  -- Plan mutation (use these; direct file writes to plans/ are blocked) --
+  update_step(name, match, status)   Update one step row; recounts totals
+  update_plan_status(name, status)   Change status with pending-step validation
+  append_history(name, change)       Append a Document History row
+  set_plan_field(name, field, value) Set one frontmatter field (restricted fields blocked)
+  write_plan(name, content)          Full structural rewrite (escape hatch)
+
+  -- Lifecycle transitions --
   transition_to_approved()    Move approved proposal + create plan
   transition_to_completed()   Move completed plan + generate doc
   transition_to_canceled()    Cancel a plan with reason
@@ -90,6 +100,136 @@ def _set_frontmatter_field(text: str, field: str, value: str) -> str:
         count=1,
         flags=re.MULTILINE,
     )
+
+
+def _has_pending_steps(text: str) -> bool:
+    """Return True if text has ⏳ in a pipe-table row inside Implementation Steps or a ✅ task subsection."""
+    in_sec = False
+    for line in text.splitlines():
+        if line.startswith("## "):
+            in_sec = "Implementation Steps" in line
+        elif line.startswith("### "):
+            in_sec = "✅" in line
+        elif in_sec and line.startswith("|") and "⏳" in line:
+            return True
+    return False
+
+
+def _count_steps(text: str) -> tuple[int, int]:
+    """Return (total, completed) step counts from Implementation Steps / ✅ task sections."""
+    total = completed = 0
+    in_sec = False
+    for line in text.splitlines():
+        if line.startswith("## "):
+            in_sec = "Implementation Steps" in line
+        elif line.startswith("### "):
+            in_sec = "✅" in line
+        elif in_sec and line.startswith("|"):
+            if "✅" in line:
+                total += 1
+                completed += 1
+            elif "⏳" in line:
+                total += 1
+    return total, completed
+
+
+def _ensure_frontmatter_field(text: str, field: str, value: str) -> str:
+    """Set a frontmatter field, inserting it if not already present."""
+    if re.search(rf"^{field}:\s", text, re.MULTILINE):
+        return _set_frontmatter_field(text, field, value)
+    m = re.match(r"^(---\n)(.*?)(---\n)", text, re.DOTALL)
+    if m:
+        fm = m.group(2).rstrip("\n") + f"\n{field}: {value}\n"
+        return m.group(1) + fm + m.group(3) + text[m.end():]
+    return text
+
+
+def _update_step_counts(text: str) -> str:
+    """Recount steps and write total_steps / completed_steps into frontmatter."""
+    total, completed = _count_steps(text)
+    text = _ensure_frontmatter_field(text, "total_steps", str(total))
+    text = _ensure_frontmatter_field(text, "completed_steps", str(completed))
+    return text
+
+
+def _replace_step_status(text: str, step_match: str, new_status: str) -> tuple[str, bool]:
+    """Find first step row containing step_match (in any step section) and replace its status column."""
+    lines = text.split("\n")
+    in_sec = False
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            in_sec = "Implementation Steps" in line
+        elif line.startswith("### "):
+            in_sec = "✅" in line
+        elif in_sec and line.startswith("|") and step_match in line:
+            stripped = line.rstrip()
+            if stripped.endswith("|"):
+                inner = stripped[:-1].rstrip()
+                last_pipe = inner.rfind("|")
+                if last_pipe >= 0:
+                    lines[i] = inner[: last_pipe + 1] + " " + new_status + " |"
+                    return "\n".join(lines), True
+    return text, False
+
+
+def _append_history_row(text: str, change: str, author: str, date: str) -> str:
+    """Append a row to the Document History table; create the table if absent."""
+    new_row = f"| {date} | {change} | {author} |"
+    lines = text.split("\n")
+    in_history = False
+    last_table_idx = -1
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            if in_history and last_table_idx >= 0:
+                break
+            in_history = "Document History" in line
+        elif in_history and line.startswith("|"):
+            last_table_idx = i
+    if last_table_idx >= 0:
+        lines.insert(last_table_idx + 1, new_row)
+        return "\n".join(lines)
+    return text.rstrip("\n") + "\n\n## Document History\n\n| Date | Change | Author |\n|------|--------|--------|\n" + new_row + "\n"
+
+
+def _get_human_identity() -> str:
+    """Resolve human identity from .env → git config → fallback."""
+    env_file = REPO_ROOT / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if line.startswith("OPCODE_USER_NAME="):
+                name = line.split("=", 1)[1].strip().strip("\"'")
+                if name and name != "Your Full Name":
+                    return name
+    try:
+        import subprocess
+        r = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True, cwd=REPO_ROOT)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except Exception:
+        pass
+    return "NetYeti"
+
+
+_STEP_STATUS_MAP = {
+    "done": "✅ Done", "complete": "✅ Done", "completed": "✅ Done",
+    "✅": "✅ Done", "✅ done": "✅ Done",
+    "pending": "⏳ Pending", "todo": "⏳ Pending", "not done": "⏳ Pending",
+    "⏳": "⏳ Pending", "⏳ pending": "⏳ Pending",
+}
+
+_VALID_PLAN_STATUSES = {"draft", "approved", "in-progress", "completed", "canceled"}
+
+_RESTRICTED_PLAN_FIELDS = {
+    "status": "Use update_plan_status() instead.",
+    "gate_status": "gate_status must be set by a human reviewer.",
+    "approved": "Plans do not use the approved field.",
+    "total_steps": "total_steps is managed automatically.",
+    "completed_steps": "completed_steps is managed automatically.",
+}
+
+
+def _safe_plan_name(plan_name: str) -> str:
+    return Path(plan_name if plan_name.endswith(".md") else plan_name + ".md").name
 
 
 def _scan_plans(dir_name: str, *statuses: str) -> list[tuple[str, str, str]]:
@@ -477,6 +617,9 @@ async def transition_to_completed(plan_name: str) -> str:
     if status != "completed":
         return f"ERROR: Plan '{plan_name}' has status={status}. Set status: completed first."
 
+    if _has_pending_steps(text):
+        return f"ERROR: Plan '{plan_name}' has ⏳ pending steps. Mark all step rows ✅ Done before completing."
+
     _move_file(f"plans/{safe}", f"plans/completed/{safe}")
 
     doc_slug = safe
@@ -503,6 +646,124 @@ tags: {_extract_frontmatter_field(text, 'tags') or ''}
 
     _log_transition("COMPLETED", f"plan/{safe} → plans/completed/ + doc generated")
     return f"✅ Plan '{safe}' completed and moved to plans/completed/. Doc generated at docs/{doc_slug}."
+
+
+@mcp.tool()
+async def update_step(plan_name: str, step_match: str, new_status: str) -> str:
+    """
+    Update a single step row in a plan's Implementation Steps table.
+    step_match: substring that uniquely identifies the row.
+    new_status: 'done' or 'pending' (also accepts ✅/⏳ forms).
+    Updates total_steps / completed_steps counts automatically.
+    """
+    safe = _safe_plan_name(plan_name)
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/."
+
+    normalized = _STEP_STATUS_MAP.get(new_status.lower().strip())
+    if not normalized:
+        return f"ERROR: Unknown status '{new_status}'. Use: done, pending (or ✅ Done, ⏳ Pending)."
+
+    new_text, found = _replace_step_status(text, step_match, normalized)
+    if not found:
+        return f"ERROR: No step row matching '{step_match}' found in '{safe}'."
+
+    new_text = _update_step_counts(new_text)
+    _write_file(f"plans/{safe}", new_text)
+    _log_transition("STEP_UPDATE", f"plan/{safe}: '{step_match[:50]}' → {normalized}")
+    return f"✅ Step updated in '{safe}': '{step_match[:50]}' → {normalized}."
+
+
+@mcp.tool()
+async def update_plan_status(plan_name: str, new_status: str) -> str:
+    """
+    Update a plan's status field with full lifecycle validation.
+    Blocks status:completed if any ⏳ pending steps remain.
+    Updates total_steps / completed_steps counts automatically.
+    To archive a completed plan use transition_to_completed() afterward.
+    """
+    safe = _safe_plan_name(plan_name)
+    if new_status not in _VALID_PLAN_STATUSES:
+        return f"ERROR: Invalid status '{new_status}'. Valid: {', '.join(sorted(_VALID_PLAN_STATUSES))}."
+
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/."
+
+    current = _extract_frontmatter_field(text, "status")
+
+    if new_status == "completed" and _has_pending_steps(text):
+        return f"ERROR: Plan '{plan_name}' has ⏳ pending steps. Mark all step rows ✅ Done before completing."
+
+    text = _set_frontmatter_field(text, "status", new_status)
+    text = _update_step_counts(text)
+    _write_file(f"plans/{safe}", text)
+    _log_transition("STATUS_CHANGE", f"plan/{safe}: {current} → {new_status}")
+    return f"✅ Plan '{safe}' status: {current} → {new_status}."
+
+
+@mcp.tool()
+async def append_history(plan_name: str, change: str) -> str:
+    """
+    Append a row to the plan's Document History table.
+    Auto-fills today's date and resolves the human identity from .env / git config.
+    Creates the table if it doesn't exist.
+    """
+    safe = _safe_plan_name(plan_name)
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/."
+
+    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    author = _get_human_identity()
+    new_text = _append_history_row(text, change, author, date)
+    _write_file(f"plans/{safe}", new_text)
+    _log_transition("HISTORY_APPEND", f"plan/{safe}: {change[:60]}")
+    return f"✅ History entry added to '{safe}': {date} | {change} | {author}."
+
+
+@mcp.tool()
+async def set_plan_field(plan_name: str, field: str, value: str) -> str:
+    """
+    Set a single frontmatter field on a plan file.
+    Restricted fields (status, gate_status, total_steps, completed_steps) are blocked —
+    use their dedicated tools or perform the action as a human.
+    """
+    if field in _RESTRICTED_PLAN_FIELDS:
+        return f"ERROR: Field '{field}' is restricted. {_RESTRICTED_PLAN_FIELDS[field]}"
+
+    safe = _safe_plan_name(plan_name)
+    try:
+        text = _read_file(f"plans/{safe}")
+    except FileNotFoundError:
+        return f"ERROR: Plan '{plan_name}' not found in plans/."
+
+    text = _ensure_frontmatter_field(text, field, value)
+    _write_file(f"plans/{safe}", text)
+    _log_transition("FIELD_SET", f"plan/{safe}: {field} = {value}")
+    return f"✅ Field '{field}' set to '{value}' in '{safe}'."
+
+
+@mcp.tool()
+async def write_plan(plan_name: str, content: str) -> str:
+    """
+    Full content replacement for a plan file.
+    Use only for structural rewrites — all other mutations should use
+    update_step, update_plan_status, append_history, or set_plan_field.
+    Recounts and updates total_steps / completed_steps automatically.
+    """
+    safe = _safe_plan_name(plan_name)
+    if not _extract_frontmatter_field(content, "title"):
+        return "ERROR: Content is missing required 'title' frontmatter field."
+
+    content = _update_step_counts(content)
+    _write_file(f"plans/{safe}", content)
+    _log_transition("PLAN_REWRITE", f"plan/{safe}: structural rewrite")
+    return f"✅ Plan '{safe}' rewritten. Step counts updated in frontmatter."
 
 
 @mcp.tool()

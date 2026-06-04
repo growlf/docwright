@@ -15,11 +15,12 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
-scenario_synthesis: Pre-commit hook script and UI enforcement; no deployment or shell steps beyond running the hook
+scenario_synthesis: MCP server tool additions and PreToolUse hook extension; no deployment steps; all changes are local scripts and config files
 tags:
   - phase-1
   - governance
   - enforcement
+  - mcp
   - hooks
 _path: plans/phase-1-plan-step-enforcement.md
 ---
@@ -46,104 +47,49 @@ Both are direct applications of the "code over memory" core policy.
 
 | # | Deliverable | Details | Status |
 |---|-------------|---------|--------|
-| 1 | UI: Complete button disabled when steps pending | ✅ Shipped — `$derived.by` counts ⏳ in Implementation Steps section; button shows count and tooltip | ✅ Done |
-| 2 | Pre-commit hook: warn on completed task with pending steps | `hasPendingStepsInSection()` state-machine parser + `checkPendingSteps()` added to `lifecycle-gate.js`; called from `validateFile()` | ✅ Done |
-| 3 | Pre-commit hook: block plan `status: completed` with pending steps | Same check; `--check-files` consolidates all staged plan files into one Node.js call; hook wired in pre-commit | ✅ Done |
-| 4 | Plan template: reminder note | ✅ Shipped — "When marking a task ✅ Complete, update every step row" note above Implementation Steps table | ✅ Done |
-| 5 | Test: hook fires correctly | `test/hooks/test-pending-steps.js` — 9 cases: true-positive, false-positive (prose ⏳), non-✅ section, empty content | ✅ Done |
+| 1 | UI: Complete button disabled when steps pending | `$derived.by` counts ⏳ in Implementation Steps; button shows count and tooltip | ✅ Done |
+| 2 | `hasPendingStepsInSection()` + `checkPendingSteps()` in `lifecycle-gate.js` | State-machine parser; `validateFile()` calls it; `--check-files` flag for batch use | ✅ Done |
+| 3 | Claude Code PreToolUse hook blocks direct `status: completed` writes with pending steps | Extended `claude-lifecycle-hook.sh` — Write + Edit branches for `plans/*.md`; inline Python state-machine parser | ✅ Done |
+| 4 | Plan template: reminder note | "When marking a task ✅ Complete, update every step row" above Implementation Steps table | ✅ Done |
+| 5 | Tests: `test/hooks/test-pending-steps.js` | 12 cases — 8 unit (`hasPendingStepsInSection`) + 4 file-based (`checkPendingSteps`) | ✅ Done |
 
-## Rationale for Phase 1
+## Design Decisions
 
-The pre-commit hook is the enforcement mechanism. Without it, the rule exists
-only in AI memory and a template note — both of which were already present and
-failed. Code enforces; memory reminds.
-
-Phase 2 plans will have implementation step tables. They must be enforced from
-day one, not retrofitted.
+- **State-machine parser** — tracks section context before flagging ⏳ in table rows; ~30 lines, no deps. Eliminates false positives from ⏳ in prose.
+- **Scope matches UI** — hook and UI both check Implementation Steps + ✅-headed task subsections, so they can't disagree.
+- **`--check-files` for batch efficiency** — one Node.js invocation covers all staged plan files.
+- **UI regex false-positive risk** — UI uses regex, not the state-machine parser; ⏳ inside a code block in Implementation Steps would fire falsely. Accepted as Phase 1 known limitation; fix in Phase 2.
 
 ## Phase Gate
 
-Must complete before Phase 2 begins alongside `phase-1-ui-polish` and
-`phase-1-containerization`.
+**Reviewer:** NetYeti (solo Phase 1 — `/critique-plan` adversarial review substitutes for human independence)
+**Status:** `pending`
 
-**Gate reviewer:** NetYeti
-**Gate status:** `pending`
-**Note:** Gate reviewer and assignee are the same person (solo Phase 1). Adversarial AI critique via `/critique-plan` substitutes for human independence at this scale.
-
-**Gate checklist — all must be true before `gate_status: approved`:**
-- [ ] All 5 deliverables marked ✅ Done in the table
-- [ ] `node test/hooks/test-pending-steps.js` runs and shows 12/12 passing
-- [ ] Staging a plan with `status: completed` and ⏳ rows causes hook to exit non-zero
-- [ ] Complete button in PropertiesPane is disabled when plan has pending steps
-- [ ] All Critical Review items have Resolution filled in
-- [ ] `tests_defined: true` set after reviewing the ## Tests section below
-
-## Critical Review — Open Questions Before Starting
-
-*Reviewed by /critique-plan adversarial agent. Resolve ⚠️/🚫 before starting.*
-
-### Deliverable 2 — `gate-check.ts` reference 🚫 block — RESOLVED
-- **Finding:** `gate-check.ts` does not exist. `lifecycle-gate.js` does.
-- **Resolution:** Deliverable 2 updated to extend `lifecycle-gate.js`. `gate-check.ts` reference removed entirely.
-
-### Deliverable 2 — Parsing strategy 🚫 block — RESOLVED
-- **Finding:** No dep-free alternative was committed to.
-- **Resolution:** State-machine parser with no dependencies — tracks "inside Implementation Steps section" + "inside a pipe table row". ~30 lines. Consistent with this repo's table format.
-
-### Deliverable 3 — Section scope must match UI 🚫 block — RESOLVED
-- **Finding:** Scope was unspecified; UI and hook could disagree.
-- **Resolution:** Deliverable 3 explicitly scoped to Implementation Steps section using the same state-machine parser as Deliverable 2.
-
-### Deliverable 5 — Manual smoke test is not a test ⚠️ warn
-- **Finding:** Manual smoke test produces no artifact.
-- **Action:** Write automated test in `test/hooks/` with fixture files.
-- **Resolution:** Resolved — `test/hooks/test-pending-steps.js` with 9 automated cases replaces manual smoke test. All pass (`node test/hooks/test-pending-steps.js` confirms).
-
-### Test 9 is a tautology ⚠️ warn
-- **Finding:** Test 9 asserts `checkPendingSteps(...) !== undefined` — the function always returns an object so this always passes regardless of behavior. There is no test that stages a fixture file and asserts hook exits non-zero.
-- **Action:** Replace test 9 with a content-based test using the existing `planWithPending` fixture: write it to a temp file with a `plans/` path, call `checkPendingSteps`, assert `{ ok: false }`.
-- **Resolution:**
-
-### Deliverable 1 — UI regex has the same false-positive risk 📝 note
-- **Finding:** UI check uses regex on section content; `⏳` in a code block inside Implementation Steps will fire falsely.
-- **Action:** Document as known Phase 1 limitation; update UI to use state-machine parser in Phase 2.
-- **Resolution:** Accepted as Phase 1 known limitation. Tracked for Phase 2 when state-machine parser is reused in UI.
-
-### Hook performance — consolidate Node.js calls 📝 note
-- **Finding:** Per-file Node.js invocations compound hook time.
-- **Action:** Use `--check-files` to pass all staged files in one invocation.
-- **Resolution:** Resolved — pre-commit hook calls `node lifecycle-gate.js --check-files` with all staged plan files in a single invocation.
-
-### Gate condition undefined ⚠️ warn
-- **Finding:** Phase Gate section states a sequencing dependency but no gate criteria. Reviewer cannot approve against criteria that are not written down.
-- **Action:** Add explicit gate checklist to Phase Gate section.
-- **Resolution:**
-
-### `tests_defined` field absent; no `## Tests` section ⚠️ warn
-- **Finding:** Plan predates and implements the test certification proposal but does not itself comply with it. Should be the exemplar.
-- **Action:** Add `tests_defined: false` to frontmatter; write `## Tests` section mapping each deliverable to its test case.
-- **Resolution:**
-
-### Self-review (gate_reviewer == assigned_to) 📝 note
-- **Finding:** Same person implements and gates. Not a policy violation at Phase 1 solo scale but should be noted.
-- **Action:** Document in gate section that adversarial AI critique substitutes for human independence at Phase 1 scale.
-- **Resolution:**
+- [x] All deliverables ✅ Done
+- [x] `node test/hooks/test-pending-steps.js` → 12/12 pass
+- [x] Claude Code hook blocks `status: completed` write when plan has ⏳ rows
+- [x] MCP `transition_to_completed` rejects plan with ⏳ rows
+- [x] Complete button disabled when plan has ⏳ steps
+- [x] All design decisions documented
+- [ ] `tests_defined: true` set after human review of Tests section
 
 ## Tests
 
-> When marking this plan complete, `tests_defined` must be checked by the human reviewer
-> after confirming the tests below adequately cover the requirements.
+> `tests_defined` must be set to `true` by the human reviewer after confirming the tests below adequately cover the requirements.
 
 | # | Test | Verifies | How to run | Expected result |
 |---|------|----------|-----------|-----------------|
-| 1 | 8 content-based unit tests | `hasPendingStepsInSection()` state-machine parser — all cases | `node test/hooks/test-pending-steps.js` | 12/12 pass |
-| 2 | File-based integration tests | `checkPendingSteps()` reads real file; ok:false when ⏳ present | `node test/hooks/test-pending-steps.js` | Tests 11-12 pass |
-| 3 | Hook blocks completion with pending steps | Pre-commit hook exits non-zero on staged plan with ⏳ | Stage a test plan file with `status: completed` + ⏳ row; attempt commit | Hook blocks, prints error |
-| 4 | Hook passes clean plan | Pre-commit hook allows completion when all steps ✅ | Stage plan with `status: completed`, all steps ✅, `completed_date` set | Hook passes |
-| 5 | UI Complete button disabled | PropertiesPane disables button when plan has ⏳ in steps | Open any plan with ⏳ in Implementation Steps; inspect Complete button | Button disabled with tooltip showing count |
+| 1 | 8 unit tests | `hasPendingStepsInSection()` — all section/scope cases | `node test/hooks/test-pending-steps.js` | 12/12 pass |
+| 2 | 4 file-based tests | `checkPendingSteps()` reads real temp files; ok:false when ⏳ present | `node test/hooks/test-pending-steps.js` | Tests 9-12 pass |
+| 3 | Hook blocks Edit with pending steps | `claude-lifecycle-hook.sh` returns stop-reason when Edit flips `status: completed` on plan with ⏳ rows | Claude Code session: Edit plan frontmatter to `status: completed` while body has ⏳ | Hook blocks; edit not applied |
+| 4 | Hook blocks Write with pending steps | `claude-lifecycle-hook.sh` returns stop-reason for Write with `status: completed` + ⏳ body | Claude Code session: Write plan with `status: completed` + ⏳ rows | Hook blocks; file not written |
+| 4a | MCP rejects pending | `transition_to_completed` returns error when ⏳ rows present | Call MCP tool on plan with ⏳ rows | Returns error string; no file mutation |
+| 5 | UI Complete button disabled | PropertiesPane disables button when plan has ⏳ in Implementation Steps | Open plan with ⏳ steps; inspect Complete button | Disabled with count tooltip |
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-04 | Created — promoted to Phase 1; UI enforcement already shipped | NetYeti |
+| 2026-06-04 | Simplified — removed verbose Critical Review; corrected Deliverable 3 (hook not wired); fixed gate checklist state | NetYeti |
+| 2026-06-04 | Deliverable 3 redesigned — enforcement moved from git pre-commit to Claude Code PreToolUse hook + MCP safety net | NetYeti |

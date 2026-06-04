@@ -35,44 +35,78 @@ reflect what was actually built, the record is wrong.
 
 ## Proposed Solution
 
-### 1. Pre-commit hook validation
+### 1. Structured step frontmatter (replace emoji heuristic)
 
-When a plan file is staged for commit, `scripts/gate-check.ts` (the lifecycle
-gate script) also checks:
+Instead of parsing emoji from markdown tables, add a `steps` field to plan
+frontmatter — a structured YAML list with explicit status per step:
 
-- If a task section is marked `✅ Complete`, does it still have step rows
-  with `⏳ Pending`?
-- If yes: warn with a clear message and block the commit:
-
+```yaml
+steps:
+  - id: 1
+    action: "Panel.svelte created — side, collapse, overlay, scrim"
+    status: done
+  - id: 2
+    action: "Left sidebar refactored to <Panel side=\"left\">"
+    status: done
+  - id: 3
+    action: "Right panel moved to layout level"
+    status: pending
 ```
-⚠  plans/phase-1-ui-polish.md — Task 2 marked complete but 7 step rows
-   still show ⏳ Pending. Update the step table before committing.
-   (Use --no-verify to bypass if steps are intentionally omitted.)
-```
 
-The check uses a simple heuristic: look for `✅` in the task header line and
-`⏳` in the lines immediately following it within the same section.
+This makes step status:
+- **Machine-readable** — validated by JSON Schema (existing linter), no emoji parsing
+- **Queryable** across plans  — "show me all plans with pending steps"
+- **Enforceable at the schema level** — hook checks frontmatter fields, not markdown
+- **Immutable to AI bypass** — the pre-commit hook already validates frontmatter schema;
+  adding `steps` as a required field means the hook catches stale status without
+  a new heuristic
 
-### 2. AI instruction
-
-The AI assistant's working instructions (CLAUDE.md / this feedback memory)
-should explicitly state: **when marking a task complete, update all step rows
-in its table in the same edit.**
-
-### 3. Plan template reminder
-
-Add a note to `templates/plan-template.md`:
+The markdown step table in the body becomes a **rendered view** of the
+frontmatter data, not the source of truth. Plan templates get a comment:
 
 ```markdown
-> When marking a task ✅ Complete, update every step row in its table
-> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+<!-- steps are defined in frontmatter; update status there, not in this table -->
 ```
 
-### 4. Future: step status field (Phase 3)
+### 2. Migration script
 
-In Phase 3, when plan step data moves into structured frontmatter
-(not just markdown tables), step status could be tracked programmatically
-and validated automatically by the dispatch module.
+`scripts/migrate-plan-steps.sh` — one-time script that:
+
+1. Finds all plans with markdown step tables
+2. Extracts the step rows (id, action, status emoji)
+3. Appends a `steps:` block to the frontmatter
+4. Replaces the markdown table with a `<!-- generated -->` comment
+5. Runs `npm run lint` to validate the new frontmatter
+
+Existing plans are migrated in-place, not deferred.
+
+### 3. Linter rule (dispatch module)
+
+Add a rule to `src/dispatch/linter.ts`:
+
+```
+rule: plan-step-completion
+check: for each task with status: completed, all steps must be status: done
+severity: error
+```
+
+This is the same validation the emoji heuristic was trying to do, but at
+the data level instead of markdown parsing. The linter already integrates
+with the pre-commit hook and properties pane.
+
+### 4. AI instruction
+
+When marking a task complete, the AI must:
+1. Set `task.status: completed` in the frontmatter
+2. Set `step.status: done` for all steps in that task
+3. Update the rendered markdown table to match
+
+This is enforced by the linter at commit time. No separate emoji check needed.
+
+### 5. Plan template update
+
+Replace the emoji-reminder note with a structured frontmatter example in
+`templates/plan-template.md` showing the `steps:` block format.
 
 ## Dog-fooding note
 
@@ -85,10 +119,10 @@ The enforcement should be implemented before Phase 2 begins.
 | Idea | Why deferred | Deferred proposal |
 |------|-------------|-------------------|
 | Auto-updating step rows from git diff | Complex heuristic; human review of steps is better | Post-launch |
-| Step-level frontmatter (machine-readable) | Phase 3 dispatch work | Post-launch |
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-04 | Created — discovered during Phase 1 UI Polish plan review | NetYeti |
+| 2026-06-04 | Revised: emoji heuristic → structured frontmatter steps field; migration script; linter rule; Phase 3 deferral eliminated | NetYeti |

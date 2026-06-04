@@ -30,6 +30,30 @@ Pre-alpha. Phase 0 (spike) in progress. See [PROPOSAL.md](./PROPOSAL.md) for the
 # Ctrl+Shift+P → "docwright: New Inbox Item"
 ```
 
+## Governance architecture
+
+DocWright enforces lifecycle rules at the **AI workflow layer**, not in git hooks.
+
+```
+AI attempts a plan write
+        ↓
+PreToolUse hook — fires before Write/Edit; blocks direct plan mutations
+        ↓
+MCP tools — update_step, update_plan_status, append_history, set_plan_field
+            validates, recounts steps, logs audit trail on every call
+        ↓
+Web UI — PropertiesPane disables Complete button when steps pending
+        ↓
+Behavioral contract — AGENTS.md / CLAUDE.md tells AI to self-check first
+```
+
+Git pre-commit handles git-native concerns (commit format, file placement,
+required fields). Lifecycle governance lives in the tool layer where it can
+actually intercept AI actions before they land.
+
+See [docs/ai-governance-enforcement.md](./docs/ai-governance-enforcement.md)
+and [policies/core/workflow-layer-governance.md](./policies/core/workflow-layer-governance.md).
+
 ## For AI agents and Claude Code
 
 See [CLAUDE.md](./CLAUDE.md) — read this first when starting a new session. Full project context and decision log: https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-

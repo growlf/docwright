@@ -51,24 +51,33 @@ Before adding a behavioral reminder, check whether enforcement belongs in:
 
 | Mechanism | Good for |
 |-----------|----------|
-| **Pre-commit hook** (`scripts/`) | Frontmatter validation, step table consistency, lifecycle rule checking, commit message format |
-| **MCP tool** | AI-callable governance checks — lifecycle transitions, gate status, schema validation |
+| **PreToolUse hook** (`scripts/claude-lifecycle-hook.sh`) | Block AI writes to governed files before they touch disk — lifecycle fields, approval gates |
+| **MCP tools** (`scripts/mcp-server.py`) | Governed path for all plan mutations — validates, recounts, logs on every call |
+| **Pre-commit hook** (`scripts/pre-commit.sh`) | Git-native concerns: commit message format, file placement, required fields, no template vars |
+| **Behavioral contract** (AGENTS.md, CLAUDE.md) | AI intent and self-check instructions — shapes behavior before action |
 | **Dispatch module** (`src/dispatch/`) | Programmatic plan/proposal validation, status transition rules, backlink integrity |
 | **UI constraint** | Disable buttons that would create invalid state; warn before destructive actions |
 | **CI check** (`.github/workflows/`) | Cross-document consistency, broken wikilinks, orphaned references |
 | **Phase gate** | Human checkpoint before phase transition — but the gate itself is enforced by code |
 
+**Important distinction:** governance rules that apply to AI agents belong in
+the AI workflow layer (PreToolUse hook + MCP tools), not in git pre-commit.
+See [[workflow-layer-governance.md]] for the full principle.
+
 ## Examples from DocWright's own development
 
-- **Lifecycle compliance**: proposals require `approved: true` before a plan
-  can reference them — enforced by pre-commit hook, not documentation.
+- **Direct plan writes blocked**: AI cannot write to `plans/*.md` directly —
+  all mutations go through MCP tools (`update_step`, `update_plan_status`,
+  `append_history`, etc.), enforced by PreToolUse hook.
+- **Plan step completeness**: `update_plan_status(..., 'completed')` validates
+  that no ⏳ rows remain before accepting the status change — enforced by MCP
+  server, not pre-commit (see [[proposals/plan-step-completion-enforcement.md]]).
 - **Self-approval prevention**: AI cannot set `approved: true` — enforced by
-  pre-commit hook checking the commit environment.
-- **Plan step completeness**: tasks marked ✅ Complete with ⏳ Pending steps
-  is a contradiction — should be caught by pre-commit hook
-  (see [[proposals/plan-step-completion-enforcement.md]]).
+  PreToolUse hook before the write executes.
+- **Lifecycle compliance**: proposals require `approved: true` before a plan
+  can reference them — enforced by pre-commit hook (git-appropriate check).
 - **Deferred idea capture**: "Out of Scope" rows without matching proposals
-  — should be caught by pre-commit hook
+  — should be caught by dispatch linter
   (see [[proposals/built-in-deferred-idea-capture.md]]).
 - **Phase gates**: phase completion without sign-off — enforced by hook
   (see [[proposals/phase-gate-sign-off.md]]).

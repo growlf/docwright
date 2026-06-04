@@ -123,6 +123,17 @@ accidental data corruption, and confused session context (as of 2026-06-02 fix).
    include `author-role:` with default value `contributor`. This is non-negotiable.
    See CONTRIBUTING.md.
 
+6. **Never write directly to plan files. All plan mutations go through MCP tools.**
+   The PreToolUse hook blocks direct Write/Edit to `plans/*.md` entirely. Use:
+   - `update_step(name, match, status)` — mark a step ✅ Done or ⏳ Pending
+   - `update_plan_status(name, status)` — change status; blocks completion if steps pending
+   - `append_history(name, change)` — add a Document History row
+   - `set_plan_field(name, field, value)` — set one frontmatter field
+   - `write_plan(name, content)` — structural rewrite only (escape hatch)
+   Before calling `update_plan_status(..., 'completed')`, verify every Implementation
+   Steps row shows ✅ Done. If any show ⏳, report which ones and stop — do not attempt
+   the call. The MCP tool also enforces this, but self-checking first is expected.
+
 ### Profile structure
 
 Profiles live in `src/profiles/[name]/` and contain:

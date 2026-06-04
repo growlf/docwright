@@ -68,6 +68,13 @@ or `gate_status: approved/waived` on governance documents. Never generate
 let the human add HUMAN_APPROVED=1 and run it themselves. The hook enforces this
 in code. See [[policies/core/ai-governance-boundaries.md]].
 
+**Governance lives at the AI workflow layer, not in git.** All plan mutations
+go through MCP tools (`update_step`, `update_plan_status`, `append_history`,
+`set_plan_field`, `write_plan`). The PreToolUse hook blocks direct writes to
+`plans/*.md`. Git pre-commit handles git-native concerns only (commit format,
+file placement, required fields). See [[policies/core/workflow-layer-governance.md]]
+and [[docs/ai-governance-enforcement.md]].
+
 **Versioning is automatic.** `0.MINOR.PATCH` — minor = phase number, patch =
 completed plans in that phase. The pre-commit hook updates `VERSION` and
 `package.json` automatically when a plan is set to `status: completed`.

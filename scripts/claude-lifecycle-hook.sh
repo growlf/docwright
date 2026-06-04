@@ -48,6 +48,12 @@ if [[ "$TOOL_NAME" == "Write" ]]; then
         fi
     fi
 
+    # Block all direct writes to plan files — use MCP tools instead
+    if [[ "$REL" == plans/*.md ]]; then
+        BLOCK=1
+        REASON="Lifecycle gate: direct writes to plan files are not allowed. Use MCP tools: update_step, update_plan_status, append_history, set_plan_field, or write_plan for structural rewrites."
+    fi
+
 elif [[ "$TOOL_NAME" == "Edit" ]]; then
     OLD_STR=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('old_string',''))" <<< "$INPUT")
     NEW_STR=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('new_string',''))" <<< "$INPUT")
@@ -58,6 +64,12 @@ elif [[ "$TOOL_NAME" == "Edit" ]]; then
             BLOCK=1
             REASON="Lifecycle gate: edit flips 'approved: false' → 'approved: true' in $REL. Only humans may approve proposals. Run with HUMAN_APPROVED=1 if authorized."
         fi
+    fi
+
+    # Block all direct edits to plan files — use MCP tools instead
+    if [[ "$REL" == plans/*.md ]]; then
+        BLOCK=1
+        REASON="Lifecycle gate: direct edits to plan files are not allowed. Use MCP tools: update_step, update_plan_status, append_history, set_plan_field, or write_plan for structural rewrites."
     fi
 fi
 
