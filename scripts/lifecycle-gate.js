@@ -16,7 +16,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const ROOT      = process.env.DOCWRIGHT_ROOT || path.resolve(__dirname, '..');
-const AUDIT_LOG = path.join(ROOT, '.docwright', 'lifecycle-audit.jsonl');
+const AUDIT_LOG = path.join(ROOT, '.docwright', 'audit.jsonl');
 
 // ---------------------------------------------------------------------------
 // Frontmatter parser

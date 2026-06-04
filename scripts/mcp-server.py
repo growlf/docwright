@@ -48,7 +48,7 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).parent.parent.resolve()
 CACHE_FILE = Path("/tmp/docwright-status-cache.txt")
-AUDIT_LOG = REPO_ROOT / "docs" / "audit-log.md"
+AUDIT_LOG = REPO_ROOT / ".docwright" / "audit.jsonl"
 CACHE_TTL = 60
 
 mcp = FastMCP("docwright")
@@ -304,26 +304,16 @@ def _scan_docs_for_collation() -> list[dict]:
 
 
 def _log_transition(action: str, detail: str) -> None:
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    entry = f"| {ts} | {action} | {detail} |\n"
-    if AUDIT_LOG.exists():
-        content = AUDIT_LOG.read_text()
-        marker = "|-----------|--------|--------|"
-        idx = content.find(marker)
-        if idx >= 0:
-            table_start = idx + len(marker) + 1
-            body = content[table_start:].strip()
-            AUDIT_LOG.write_text(content[:table_start] + entry + "\n" + body + "\n")
-        else:
-            AUDIT_LOG.write_text(content.rstrip() + "\n" + entry + "\n")
-    else:
-        AUDIT_LOG.write_text(
-            "# Audit Log\n\n"
-            "Automated record of all lifecycle transitions.\n\n"
-            "| Timestamp | Action | Detail |\n"
-            "|-----------|--------|--------|\n"
-            f"{entry}\n"
-        )
+    import json as _json
+    AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+    entry = _json.dumps({
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "event": action,
+        "detail": detail,
+        "host": __import__("socket").gethostname(),
+    })
+    with open(AUDIT_LOG, "a") as f:
+        f.write(entry + "\n")
 
 
 def _build_status() -> str:
@@ -454,7 +444,7 @@ async def get_facts() -> str:
 - transition_to_approved: requires approved: true + non-empty assigned_to (human sets these)
 - transition_to_completed: requires all tasks completed, plan not already done
 - transition_to_canceled: requires non-empty cancellation_reason
-- All transitions are logged to docs/audit-log.md""")
+- All transitions are logged to .docwright/audit.jsonl (append-only NDJSON)""")
     try:
         sops = sorted((REPO_ROOT / "docs" / "SOPs").glob("*.md"))
         sop_list = "\n".join(f"- docs/SOPs/{p.name}" for p in sops)
@@ -802,12 +792,26 @@ async def transition_to_canceled(plan_name: str, cancellation_reason: str) -> st
 
 
 @mcp.tool()
-async def audit_log() -> str:
-    """Read back all lifecycle transitions recorded in docs/audit-log.md."""
-    try:
-        return _read_file("docs/audit-log.md")
-    except FileNotFoundError:
+async def audit_log(limit: int = 50) -> str:
+    """Read recent lifecycle transitions from .docwright/audit.jsonl (append-only NDJSON).
+    Returns the last `limit` entries (default 50) formatted as a table."""
+    import json as _json
+    if not AUDIT_LOG.exists():
         return "No audit log entries yet."
+    lines = [l for l in AUDIT_LOG.read_text().splitlines() if l.strip()]
+    entries = []
+    for l in lines[-limit:]:
+        try:
+            entries.append(_json.loads(l))
+        except ValueError:
+            pass
+    if not entries:
+        return "No audit log entries yet."
+    rows = "\n".join(
+        f"| {e.get('ts','')[:19]} | {e.get('event','')} | {e.get('detail','') or e.get('file','')} |"
+        for e in entries
+    )
+    return f"| Timestamp | Event | Detail |\n|-----------|-------|--------|\n{rows}"
 
 
 # ── Test mode ─────────────────────────────────────────────────────────────────

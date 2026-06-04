@@ -1,6 +1,11 @@
-# Audit Log
+# Audit Log — Historical Archive
 
-Automated record of all lifecycle transitions.
+> **This file is no longer the active audit log.** Active entries are written
+> to `.docwright/audit.jsonl` (append-only NDJSON, not tracked in git).
+> Use the `audit_log()` MCP tool or `node scripts/lifecycle-gate.js --audit`
+> to query the live log. This file preserves pre-migration entries only.
+
+---
 
 | Timestamp | Action | Detail |
 |-----------|--------|--------|
