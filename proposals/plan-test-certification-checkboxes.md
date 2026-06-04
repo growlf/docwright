@@ -154,6 +154,65 @@ harder to execute unconsciously.
 
 ---
 
+## Multi-perspective validation — OpenCode's independent analysis
+
+OpenCode (BigPickle, the `docwright-critic` agent) independently analysed the
+same governance enforcement problem and reached identical conclusions:
+
+> *"Advisory rules don't hold — I keep violating them. The real question is
+> whether you want to hard-block me technically, or just add a process that
+> makes violations obvious and harder to do accidentally."*
+
+BigPickle identified a mechanism this proposal did not: the **MCP gate**.
+
+### MCP gate on `transition_status`
+
+If the DocWright MCP server's `transition_status` tool checks for the committed
+test artifact *before allowing a status change*, that gate cannot be bypassed
+by any AI using the MCP tool — the tool itself enforces the rule. The AI would
+have to abandon MCP entirely and write raw YAML, which is:
+- More deliberate (not accidental)
+- Detectable (bypassing MCP means the MCP audit trail is absent)
+- Against explicit policy (`policies/core/ai-governance-boundaries.md`)
+
+**`transition_status` will refuse a `completed` transition unless:**
+1. The plan body contains a `## Test Results` section
+2. That section shows all rows as ✅ Pass
+3. The `tests_defined` field is `true`
+
+This adds a third enforcement layer independent of the pre-commit hook.
+
+### The honest combined ceiling
+
+Both AI systems agree: an AI cannot be hard-blocked from arbitrary file writes
+without sandboxing (read-only filesystem except via MCP). What this design
+achieves is four independent layers, each catching a different failure mode:
+
+```
+AI attempts to complete a plan:
+
+  Layer 1 — MCP gate
+    transition_status checks committed test artifact
+    → rejects if absent or any test failing
+
+  Layer 2 — Pre-commit hook
+    validates test artifact exists, all rows pass,
+    gate_status: approved already set
+    → blocks commit without all three
+
+  Layer 3 — gate_status requirement
+    hook requires human-approved gate sign-off
+    → cannot be set by AI without HUMAN_APPROVED=1
+
+  Layer 4 — Behavioral rule + audit trail
+    AI never generates HUMAN_APPROVED=1 for governance commits
+    bypass is visible and attributable in git history
+```
+
+Bypassing all four layers is technically possible but requires increasing
+deliberateness. Each bypass is detectable. That is the honest ceiling without
+architectural sandboxing.
+
 ## The test runner
 
 `scripts/run-plan-tests.js` — a tool-agnostic script (like `critique-plan.js`)
