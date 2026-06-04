@@ -9,6 +9,9 @@
   import { showPropsPane, showChatPanel } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
+  import PropertiesPane from '$lib/PropertiesPane.svelte';
+  import CollationPanel from '$lib/CollationPanel.svelte';
+  import { currentDoc } from '$lib/currentDoc';
 
   interface ProjectEntry {
     name: string;
@@ -19,10 +22,24 @@
 
   interface BrandConfig { name: string; logoPath: string | null; }
 
-  let projects  = $state<ProjectEntry[]>([]);
-  let brand     = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+  let projects     = $state<ProjectEntry[]>([]);
+  let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
   let showNewMenu  = $state(false);
   let showSidebar  = $state(true);
+  let showRightPanel = $state(true);
+  let rightTab     = $state<'properties' | 'related'>('properties');
+  let collationMatches = $state<any[]>([]);
+  let collationLoading = $state(false);
+
+  async function findRelated(filePath: string) {
+    rightTab = 'related';
+    showRightPanel = true;
+    collationLoading = true;
+    collationMatches = [];
+    const res = await fetch('/api/overlap?path=' + encodeURIComponent(filePath));
+    collationLoading = false;
+    if (res.ok) { const { matches } = await res.json(); collationMatches = matches; }
+  }
 
   // Close sidebar on navigation (mobile only)
   $effect(() => {
@@ -153,9 +170,54 @@
     {/if}
     <GitPanel />
   </Panel>
+  <!-- Main content + chat at bottom -->
   <main id="content">
-    <slot />
+    <div id="page-slot">
+      <slot />
+    </div>
+    <!-- AI chat — springs up from bottom of main pane -->
+    {#if $showChatPanel}
+      <div id="chat-bottom" class:expanded={$showChatPanel}>
+        <ChatPanel />
+      </div>
+    {/if}
   </main>
+
+  <!-- Right sidebar — full height, always present -->
+  <Panel side="right" bind:open={showRightPanel}>
+    <div class="right-tab-bar">
+      <button class="right-tab" class:active={rightTab === 'properties'}
+        onclick={() => rightTab = 'properties'}>Properties</button>
+      <button class="right-tab" class:active={rightTab === 'related'}
+        onclick={() => { rightTab = 'related'; if (!collationMatches.length && $currentDoc.filePath) findRelated($currentDoc.filePath); }}>
+        Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
+      </button>
+    </div>
+
+    {#if rightTab === 'properties'}
+      {#if $currentDoc.frontmatter}
+        <PropertiesPane
+          bind:frontmatter={$currentDoc.frontmatter}
+          docType={$currentDoc.docType}
+          mode={$currentDoc.mode}
+          onsave={$currentDoc.onSave}
+          onapprove={$currentDoc.onApprove}
+          onfindrelated={() => findRelated($currentDoc.filePath)}
+        />
+      {:else}
+        <div class="right-empty">Open a document to see its properties</div>
+      {/if}
+    {:else}
+      <CollationPanel
+        matches={collationMatches}
+        loading={collationLoading}
+        oninsert={() => {}}
+        onsubsume={() => {}}
+        onclose={() => { rightTab = 'properties'; collationMatches = []; }}
+      />
+    {/if}
+  </Panel>
+
   <div class="toast-container">
     {#each $toasts as toast (toast.id)}
       <div class="toast">
@@ -169,17 +231,15 @@
   </div>
 </div>
 
-<!-- Floating AI chat toggle — always accessible -->
+<!-- Chat toggle button — bottom of viewport, above footer -->
 <button
-  class="chat-fab"
+  class="chat-toggle"
   class:active={$showChatPanel}
   onclick={() => showChatPanel.update(v => !v)}
-  title={$showChatPanel ? 'Close AI chat' : 'Open AI chat'}
->⚡</button>
-
-{#if $showChatPanel}
-  <ChatPanel />
-{/if}
+  title={$showChatPanel ? 'Close AI chat' : 'Open AI chat (⚡)'}
+>
+  {$showChatPanel ? '✕ Chat' : '⚡ Chat'}
+</button>
 
 <footer class="app-footer">
   <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
@@ -248,28 +308,7 @@
   .footer-link:hover { color: #666; }
   .footer-sep { color: #222; }
 
-  /* ── AI chat floating button ── */
-  .chat-fab {
-    position: fixed;
-    bottom: 44px; /* just above the footer */
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #1a2f4a;
-    border: 1px solid #2b5b84;
-    color: #58a6ff;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 350;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-    transition: background 0.15s, transform 0.15s;
-  }
-  .chat-fab:hover  { background: #1e4a70; transform: scale(1.05); }
-  .chat-fab.active { background: #2b5b84; border-color: #58a6ff; }
+  /* chat-fab replaced by chat-toggle (see above) */
   .sidebar-toggle { flex-shrink: 0; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .sidebar-toggle:hover { color: #fff; }
   .new-group { position: relative; flex-shrink: 0; }
@@ -278,7 +317,38 @@
   .new-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
   .new-menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
   .new-menu-item:hover { background: #2b5b84; color: #fff; }
-  #content { flex: 1; overflow-y: auto; background: #1a1a1a; color: #e0e0e0; scroll-behavior: smooth; }
+  #content { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #1a1a1a; color: #e0e0e0; overflow: hidden; }
+  #page-slot { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+  #chat-bottom { flex-shrink: 0; height: 420px; border-top: 1px solid #2a2a2a; position: relative; }
+  #chat-bottom :global(.chat-panel) { position: absolute; inset: 0; height: 100% !important; bottom: 0 !important; }
+
+  /* Right sidebar tab bar */
+  .right-tab-bar { display: flex; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
+  .right-tab { flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: #555; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 8px 4px 6px; cursor: pointer; }
+  .right-tab:hover  { color: #aaa; }
+  .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
+  .right-empty { padding: 16px; font-size: 12px; color: #444; text-align: center; margin-top: 32px; }
+
+  /* Chat toggle — replaces FAB, sits at bottom of viewport above footer */
+  .chat-toggle {
+    position: fixed;
+    bottom: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 18px;
+    background: #1a2f4a;
+    border: 1px solid #2b5b84;
+    border-radius: 16px;
+    color: #58a6ff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 350;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    transition: background 0.15s;
+  }
+  .chat-toggle:hover  { background: #1e4a70; }
+  .chat-toggle.active { background: #2b5b84; }
   .toast-container { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10000; }
   .toast { display: flex; align-items: center; gap: 8px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.4); min-width: 260px; }
   .toast-msg { flex: 1; }

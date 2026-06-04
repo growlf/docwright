@@ -190,11 +190,9 @@
 
     es.onmessage = (e) => {
       sseConnected = true;
-      eventCount++;
       try {
         const ev = JSON.parse(e.data);
         lastEvent = ev.type;
-        // Don't count heartbeats as real events
         if (ev.type !== 'server.heartbeat') eventCount++;
         console.debug('[DocWright chat] SSE event:', ev.type, ev.properties);
         handleEvent(ev);
@@ -217,10 +215,11 @@
     };
   }
 
-  function handleEvent(ev: { type: string; properties?: Record<string, any> }) {
+  function handleEvent(ev: { type: string; properties?: Record<string, any>; sessionID?: string }) {
     const p = ev.properties ?? {};
+    const sessionID = p.sessionID ?? ev.sessionID;
 
-    if (ev.type === 'session.status' && p.sessionID === currentID) {
+    if (ev.type === 'session.status' && sessionID === currentID) {
       statusText = p.status ?? '';
     }
 
@@ -234,6 +233,8 @@
         if (currentID !== null) return;
       }
       if (part.type !== 'text') return;
+      // Skip if the event is explicitly for a user-role message (echo from server)
+      if (normalizeRole(part.role ?? p.role ?? 'assistant') !== 'assistant') return;
 
       // messageID: try part.messageID, part.id, flat p.messageID, then generate one
       const messageID: string = part.messageID ?? p.messageID ?? part.id ?? `ai-${Date.now()}`;
@@ -265,12 +266,12 @@
       scrollToBottom();
     }
 
-    if (ev.type === 'message.updated' && p.sessionID === currentID) {
+    if (ev.type === 'message.updated' && sessionID === currentID) {
       const tool = p.message?.parts?.find((pt: any) => pt.type === 'tool-invocation');
       if (tool?.toolName) statusText = `running: ${tool.toolName}`;
     }
 
-    if (ev.type === 'session.idle' && p.sessionID === currentID) {
+    if (ev.type === 'session.idle' && sessionID === currentID) {
       statusText = '';
       sending = false;
     }
@@ -361,7 +362,7 @@
         // Extract text from response parts — use as fallback if SSE didn't stream it
         const responseParts: any[] = data.parts ?? data.output?.parts ?? [];
         const textContent = responseParts
-          .filter((p: any) => p.type === 'text')
+          .filter((p: any) => p.type === 'text' && normalizeRole(p.role ?? 'assistant') === 'assistant')
           .map((p: any) => p.text ?? '')
           .join('');
 
@@ -467,7 +468,7 @@
       <span class="dot grey" title="Not connected"></span>
     {/if}
     <button class="icon-btn" onclick={() => showSettings = !showSettings} title="Connection settings">⚙</button>
-    <button class="icon-btn close" onclick={() => showChatPanel.set(false)} title="Close">✕</button>
+    <!-- Close via ⚡ Chat toggle button in layout -->
   </div>
 
   <!-- ── Settings ───────────────────────────────────────────────────────── -->
@@ -623,11 +624,11 @@
 
 <style>
   .chat-panel {
-    position: fixed; top: 0; right: 0; bottom: 36px;
-    width: 380px; background: #111;
-    border-left: 1px solid #2a2a2a;
+    /* Fills #chat-bottom in the layout — no longer a fixed overlay */
+    width: 100%; height: 100%;
+    background: #111;
     display: flex; flex-direction: column;
-    z-index: 400; box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+    overflow: hidden;
   }
 
   /* ── Header ── */
@@ -737,8 +738,5 @@
   .send-btn:hover:not(:disabled) { background: #1e4a70; }
   .send-btn:disabled { opacity: 0.4; cursor: default; }
 
-  /* ── Mobile ── */
-  @media (max-width: 768px) {
-    .chat-panel { width: 100%; left: 0; }
-  }
+  /* Chat fills its container — layout handles sizing */
 </style>

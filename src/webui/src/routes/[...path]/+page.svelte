@@ -5,10 +5,10 @@
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
-  import Panel from '$lib/Panel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
   import { showPropsPane } from '$lib/pane';
+  import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
   import markdownit from 'markdown-it';
 
@@ -166,6 +166,16 @@
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
     html = md.render(content);
+    // Push to layout's right sidebar
+    currentDoc.set({
+      frontmatter,
+      docType,
+      mode,
+      filePath: filePath(),
+      onSave:         saveFrontmatter,
+      onApprove:      handleApprove,
+      onFindRelated:  findRelated,
+    });
   }
 
   function filePath(): string {
@@ -183,6 +193,7 @@
     if (mode === 'read')       mode = 'edit';
     else if (mode === 'edit')  mode = 'source';
     else                       mode = 'read';
+    currentDoc.update(d => ({ ...d, mode }));
   }
 
   function setEditorHtml(node: HTMLDivElement) {
@@ -416,43 +427,6 @@
     {/if}
   </div>
 
-  <!-- Right panel — Properties + Related tabs via unified Panel component -->
-  {#if mode !== 'source'}
-    <Panel side="right" bind:open={showProps}>
-      <!-- Tab bar -->
-      <div class="right-tab-bar">
-        <button class="right-tab" class:active={rightTab === 'properties'}
-          onclick={() => rightTab = 'properties'}>Properties</button>
-        <button class="right-tab" class:active={rightTab === 'related'}
-          onclick={() => { rightTab = 'related'; if (!collationMatches.length) findRelated(); }}>
-          Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
-        </button>
-      </div>
-
-      {#if rightTab === 'properties'}
-        {#if frontmatter}
-          <PropertiesPane
-            bind:frontmatter={frontmatter}
-            {docType}
-            {mode}
-            onsave={saveFrontmatter}
-            onapprove={handleApprove}
-            onfindrelated={findRelated}
-          />
-        {:else}
-          <div class="right-empty">No properties</div>
-        {/if}
-      {:else}
-        <CollationPanel
-          matches={collationMatches}
-          loading={collationLoading}
-          oninsert={handleInsert}
-          onsubsume={handleSubsume}
-          onclose={() => { rightTab = 'properties'; collationMatches = []; }}
-        />
-      {/if}
-    </Panel>
-  {/if}
 </div>
 
 <style>
