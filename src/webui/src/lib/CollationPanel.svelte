@@ -5,6 +5,7 @@
     oninsert,
     onsubsume,
     onclose,
+    onrecheck,
   }: {
     matches: Array<{
       path: string;
@@ -16,6 +17,7 @@
     oninsert?: (slug: string, heading: string, content: string) => void;
     onsubsume?: (path: string) => void;
     onclose?: () => void;
+    onrecheck?: () => void;
   } = $props();
 
   let expanded = $state<Set<string>>(new Set());
@@ -56,17 +58,22 @@
 
 <div class="panel">
   <div class="panel-header">
-    <span class="panel-title">Related proposals</span>
-    <button class="close-btn" onclick={onclose} title="Close related proposals panel">✕</button>
+    <span class="panel-title">
+      {#if loading}Scanning…{:else}{matches.length} related{/if}
+    </span>
+    <button class="recheck-btn" onclick={onrecheck} title="Re-scan for related proposals" disabled={loading}>
+      ↺
+    </button>
+    <button class="close-btn" onclick={onclose} title="Back to Properties">← Props</button>
   </div>
 
   {#if loading}
     <div class="loading">Scanning for related proposals…</div>
   {:else if matches.length === 0}
-    <div class="empty">No significant overlaps found.</div>
+    <div class="empty">No related proposals found.<br><small>Open a proposal and click ↺ to scan.</small></div>
   {:else}
     <div class="hint">
-      Click <strong>Insert</strong> to quote a section into this document.
+      Click a result to expand. <strong>Insert</strong> quotes a section into this document.
     </div>
     {#each matches as match}
       <div class="match" class:subsumed={subsumed.has(match.path)}>
@@ -118,17 +125,12 @@
 
 <style>
   .panel {
-    position: fixed;
-    top: 0; right: 0;
-    width: 360px;
-    height: 100vh;
-    background: #111;
-    border-left: 1px solid #2a2a2a;
+    /* Fills the right sidebar tab — no longer a fixed overlay */
     display: flex;
     flex-direction: column;
-    z-index: 500;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+    flex: 1;
     overflow: hidden;
+    height: 100%;
   }
 
   .panel-header {
@@ -140,8 +142,11 @@
     flex-shrink: 0;
   }
   .panel-title { font-size: 12px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-  .close-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 14px; padding: 2px 4px; }
-  .close-btn:hover { color: #aaa; }
+  .recheck-btn { background: none; border: 1px solid #333; color: #666; cursor: pointer; font-size: 13px; padding: 1px 6px; border-radius: 3px; }
+  .recheck-btn:hover:not(:disabled) { color: #58a6ff; border-color: #2b5b84; }
+  .recheck-btn:disabled { opacity: 0.4; cursor: default; }
+  .close-btn { background: none; border: 1px solid #333; color: #555; cursor: pointer; font-size: 10px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+  .close-btn:hover { color: #aaa; border-color: #555; }
 
   .loading, .empty {
     padding: 24px 16px;

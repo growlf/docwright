@@ -175,6 +175,8 @@
       onSave:         saveFrontmatter,
       onApprove:      handleApprove,
       onFindRelated:  findRelated,
+      onInsert:       handleInsert,
+      onSubsume:      handleSubsume,
     });
   }
 

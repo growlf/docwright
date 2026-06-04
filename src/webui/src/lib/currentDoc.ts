@@ -13,6 +13,8 @@ export interface DocContext {
   onSave?: () => void;
   onApprove?: () => void;
   onFindRelated?: () => void;
+  onInsert?: (slug: string, heading: string, content: string) => void;
+  onSubsume?: (path: string) => void;
 }
 
 export const currentDoc = writable<DocContext>({
