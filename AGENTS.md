@@ -51,12 +51,25 @@ proposals/  →  proposals/approved/  →  plans/  ─→  plans/completed/ (com
 | Skill | Triggers | Source SOP |
 |-------|----------|------------|
 | `docwright-lifecycle` | lifecycle, plan, proposal, workflow | order-of-work-lifecycle SOP |
+| `docwright-plan-complete` | complete plan, mark plan done, finish plan, close plan, status completed | plan-completion SOP |
 | `docwright-git` | commit, git | git-commit-standards SOP (embedded) |
 | `docwright-security` | credential, password, vaultwarden, vlan, firewall, ssh, access | password-secret-management SOP |
 | `docwright-backup` | backup, recovery, restore | backup-recovery SOP |
 | `docwright-infra` | deployment, placement, service | infrastructure-placement SOP |
 | `docwright-project` | switch to, resume, project, registry, vault | project-registry SKILL |
 | `docwright-proposal` | new proposal, create proposal, template, draft | proposal-template SKILL |
+
+### docwright-plan-complete — Plan completion routine
+
+When triggered, follow `docs/SOPs/plan-completion.md` exactly:
+
+1. `get_plan(name)` — read current state fresh
+2. Scan every Implementation Steps row — any ⏳ found: list them, stop, ask contributor
+3. All ✅ → `update_plan_status(name, 'completed')`
+4. `append_history(name, 'Plan marked complete — all steps verified')`
+5. `transition_to_completed(name)` — archives, generates doc
+
+Never write `status: completed` directly to the file. Never skip step 2.
 
 ## Available Subagents
 

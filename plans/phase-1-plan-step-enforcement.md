@@ -22,8 +22,8 @@ tags:
   - enforcement
   - mcp
   - hooks
-total_steps: 11
-completed_steps: 11
+total_steps: 12
+completed_steps: 12
 _path: plans/phase-1-plan-step-enforcement.md
 ---
 
@@ -65,6 +65,7 @@ See [[docs/ai-governance-enforcement.md]] and
 | 9 | Core policy: `policies/core/workflow-layer-governance.md` | Why git is wrong layer; four enforcement surfaces; ships to adopters | ✅ Done |
 | 10 | Reference doc: `docs/ai-governance-enforcement.md` | Tool table, layer descriptions; links governance_enforcement_layers.svg | ✅ Done |
 | 11 | CLAUDE.md + README.md + `policies/core/code-over-memory.md` updated | Philosophy entry, governance architecture section, mechanism table corrected | ✅ Done |
+| 12 | Plan-completion skill — `docs/SOPs/plan-completion.md` | Explicit 5-step routine with MCP tool sequence; closes behavioral gap at Layer 1 | ✅ Done |
 
 ## Design Decisions
 
@@ -96,6 +97,7 @@ See [[docs/ai-governance-enforcement.md]] and
 - [x] MCP `transition_to_completed` rejects plan with ⏳ rows
 - [x] Complete button disabled when plan has ⏳ steps
 - [x] Core policy and reference doc written and committed
+- [x] Plan-completion skill written (`docs/SOPs/plan-completion.md`)
 - [x] All design decisions documented
 - [ ] `tests_defined: true` set after human review of Tests section
 
@@ -123,3 +125,4 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-04 | Simplified — removed verbose Critical Review; corrected Deliverable 3 (hook not wired); fixed gate checklist state | NetYeti |
 | 2026-06-04 | Deliverable 3 redesigned — enforcement moved from git pre-commit to Claude Code PreToolUse hook + MCP safety net | NetYeti |
 | 2026-06-04 | Expanded scope — hook upgraded to blanket plan write block; five MCP mutation tools added; policy and reference docs written | NetYeti |
+| 2026-06-04 | Deliverable 12 — plan-completion skill; fixes wrong MCP tool names in opencode-instructions.md | NetYeti |

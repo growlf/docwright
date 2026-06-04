@@ -59,16 +59,46 @@ implementation table in the same edit. Stale ⏳ rows mislead developers.
 
 ## Governance tools available (via DocWright MCP)
 
-- `check_lifecycle` — validate a document's frontmatter against the active profile
-- `transition_status` — safely change a document's lifecycle status
-- `create_document` — scaffold a new proposal, plan, or policy from the correct template
-- `update_frontmatter` — update specific frontmatter fields on a document
-- `get_related_documents` — find related proposals or plans
-- `validate_frontmatter_schema` — check frontmatter completeness
+**Read-only:**
+- `get_plan(name)` — read a plan file (use this before any plan mutation)
+- `get_status()` — full lifecycle status of the vault
+- `list_active_plans()` — plans with status approved/in-progress
+- `get_session_context()` — SESSION-LOG + active plans
+- `audit_log()` — all lifecycle transitions
 
-Use these tools when working with vault documents. Do not write raw YAML
-frontmatter mutations without going through the MCP tools — they enforce the
-lifecycle rules.
+**Plan mutations — use these instead of writing plan files directly:**
+- `update_step(name, match, status)` — mark a step done or pending; recounts totals
+- `update_plan_status(name, status)` — change status with pending-step validation
+- `append_history(name, change)` — append a Document History row (auto-fills date/author)
+- `set_plan_field(name, field, value)` — set one frontmatter field
+- `write_plan(name, content)` — full structural rewrite (escape hatch only)
+
+**Lifecycle transitions:**
+- `transition_to_approved(proposal)` — move approved proposal + create plan
+- `transition_to_completed(plan)` — archive to plans/completed/ + generate doc
+- `transition_to_canceled(plan, reason)` — cancel with mandatory reason
+
+Do not write directly to plan files — the PreToolUse hook blocks this and
+redirects to the MCP tools above, which validate, recount, and audit-log
+every mutation.
+
+---
+
+## Plan completion routine
+
+When asked to complete or close out a plan, follow these steps in order.
+**Do not skip Step 2.** The MCP tools enforce it, but self-checking first
+gives the contributor a helpful message rather than a tool error.
+
+1. `get_plan(name)` — read current state fresh from disk
+2. Scan every row in the Implementation Steps table — check each status column
+   - Any ⏳ found → list them, stop, ask which are done and which still need work
+   - All ✅ → continue
+3. `update_plan_status(name, 'completed')` — validates and sets the field
+4. `append_history(name, 'Plan marked complete — all steps verified')`
+5. `transition_to_completed(name)` — archives file, generates doc
+
+See `docs/SOPs/plan-completion.md` for the full routine with tool reference.
 
 ---
 
@@ -77,7 +107,7 @@ lifecycle rules.
 **Before creating anything:** check if a proposal already exists.
 **Before implementing:** check that the proposal is approved.
 **Before closing a task:** check for deferred ideas to capture.
-**Before changing a plan status:** check if a gate is pending.
+**Before completing a plan:** run the plan completion routine above.
 
 ---
 
