@@ -142,7 +142,9 @@
   <!-- Center: brand — acts as home button -->
   <a href="/status" class="toolbar-brand" title="Home — {brand.name} status">
     {#if brand.logoPath}
-      <img class="brand-logo" src="/api/brand/logo" alt={brand.name} />
+      <img class="brand-logo" src="/api/brand/logo" alt={brand.name}
+        onerror={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('hidden'); }} />
+      <span class="brand-name" hidden>{brand.name}</span>
     {:else}
       <span class="brand-name">{brand.name}</span>
     {/if}
@@ -400,7 +402,7 @@
 
   .brand-name { font-size: 13px; font-weight: 600; color: #58a6ff; white-space: nowrap; letter-spacing: 0.02em; }
   .toolbar-brand:hover .brand-name { color: #88c4ff; }
-  .brand-logo { max-height: 22px; max-width: 110px; object-fit: contain; display: block; }
+  .brand-logo { height: 22px; width: auto; max-width: 140px; display: block; }
   .toolbar-brand:hover .brand-logo { opacity: 0.8; }
 
   .app-footer {

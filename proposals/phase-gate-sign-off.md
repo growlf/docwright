@@ -1,6 +1,6 @@
 ---
 complexity: high
-title: "Lifecycle Gates — Checkpoint Sign-off Before Transition"
+title: Lifecycle Gates — Checkpoint Sign-off Before Transition
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -11,8 +11,9 @@ tags:
   - profile-engine
   - dog-fooding
 approved: false
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
+_path: proposals/phase-gate-sign-off.md
 ---
 
 ## Problem
