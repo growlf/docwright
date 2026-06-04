@@ -1,6 +1,6 @@
 ---
 title: Phase 1 — Plan Critique Skill
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-04
 phase: 1
@@ -11,12 +11,13 @@ proposal_source:
 priority: critical
 automated: off
 assigned_to: NetYeti
-scenario_synthesis: "Node.js script + Claude Code skill file; no deployment or infrastructure steps"
+scenario_synthesis: Node.js script + Claude Code skill file; no deployment or infrastructure steps
 tags:
   - phase-1
   - governance
   - skills
   - ai
+_path: plans/phase-1-critique-skill.md
 ---
 
 # Phase 1 — Plan Critique Skill

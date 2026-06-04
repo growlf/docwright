@@ -202,6 +202,26 @@ for FILE in $STAGED; do
     fi
 done
 
+# ── Auto-version bump ──────────────────────────────────────────────────────
+# If any staged plan file is being set to status: completed, recalculate
+# and update VERSION + package.json, then stage both.
+PLAN_COMPLETED=0
+for FILE in $STAGED; do
+    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && continue
+    STATUS=$(git show ":$FILE" 2>/dev/null | grep "^status:" | head -1 | sed 's/^status:[[:space:]]*//')
+    [[ "$STATUS" == "completed" ]] && PLAN_COMPLETED=1 && break
+done
+
+if [ $PLAN_COMPLETED -eq 1 ] && command -v node &>/dev/null; then
+    NEW_VERSION=$(node scripts/version.js --update 2>/dev/null)
+    if [ -n "$NEW_VERSION" ]; then
+        git add VERSION 2>/dev/null
+        git add src/webui/package.json 2>/dev/null
+        git add package.json 2>/dev/null
+        print_status "Version bumped to $NEW_VERSION"
+    fi
+fi
+
 [ $ERRORS -gt 0 ] && print_error "Pre-commit validation failed with $ERRORS error(s)" && exit 1
 [ $WARNINGS -gt 0 ] && print_warning "Pre-commit validation passed with $WARNINGS warning(s)"
 print_status "Pre-commit validation passed"

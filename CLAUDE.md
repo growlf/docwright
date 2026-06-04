@@ -62,6 +62,11 @@ When DocWright helps a team write a proposal or plan, it should prompt them to c
 security implications, ground decisions in policy, and define how the outcome will be
 verified before it ships.
 
+**Versioning is automatic.** `0.MINOR.PATCH` — minor = phase number, patch =
+completed plans in that phase. The pre-commit hook updates `VERSION` and
+`package.json` automatically when a plan is set to `status: completed`.
+No manual version bumping. See [[policies/core/versioning.md]].
+
 **Keep good ideas for later.** Every plan and proposal that sets something aside MUST
 capture it as a deferred proposal before closing. Good ideas not captured are good ideas
 lost. See [[policies/core/capture-deferred-ideas.md]].
