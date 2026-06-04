@@ -596,7 +596,7 @@
       {#if statusText}
         <div class="status-row">
           <span>{statusText}{sending && thinkingSecs > 0 ? ` (${thinkingSecs}s)` : ''}</span>
-          {#if sending && thinkingSecs > 3}
+          {#if sending && thinkingSecs > 1}
             <span class="event-count">
               {eventCount > 0 ? `${eventCount} events` : 'waiting…'}
               {#if lastEvent === 'server.heartbeat'}· heartbeat{:else if lastEvent}· {lastEvent}{/if}
