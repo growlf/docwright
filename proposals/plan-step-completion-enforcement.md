@@ -1,6 +1,6 @@
 ---
 complexity: medium
-title: "Plan Step Completion Enforcement"
+title: Plan Step Completion Enforcement
 author: NetYeti
 created: 2026-06-04
 tags:
@@ -10,12 +10,13 @@ tags:
   - enforcement
   - phase-1
   - dog-fooding
-approved: false
-created_by: "NetYeti@phoenix"
+approved: true
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - proposals/phase-gate-sign-off.md
   - proposals/built-in-deferred-idea-capture.md
+_path: proposals/plan-step-completion-enforcement.md
 ---
 
 ## Problem

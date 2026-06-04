@@ -74,6 +74,71 @@ AI writes through ACL controller, wikilink graph, backlinks index.
 
 ### Phase 4 (future) — Cascade STEAM reference deployment
 
+## Critical Review — Open Questions Before Starting
+
+*These issues were identified in adversarial review. Each must be resolved or
+explicitly accepted before the relevant deliverable begins.*
+
+### #1 — Profile engine
+- **What is "validation"?** `src/dispatch/profile.ts` already has a `ProfileConfig`
+  interface. The plan says "validation, schema" but doesn't define what that means.
+  JSON Schema via AJV? Runtime type-checking? Or just the existing TS interface?
+  Profiles are bundled and static — schema validation may be unnecessary. Decide
+  before building.
+- **Missing:** What does the Web UI do with the active profile? How does it know
+  which profile is loaded? This affects the UI layer, not just dispatch.
+
+### #2 — Dispatch CI
+- **Does `npm run test:dispatch` exist?** The hook in CLAUDE.md references it but
+  it may not be wired into `package.json`. Verify before claiming this is a CI step.
+
+### #3 — Inbox capture ⚠️ Possibly wrong scope
+- **Use case undefined.** Who submits to this form? Why can't they `git push` a
+  file to `inbox/` themselves? If the answer is "no git access," that's an ACL
+  problem — Phase 3, not Phase 2.
+- **Where does captured data go?** What format? How does the Web UI present it?
+  If `inbox.ts` doesn't exist, this deliverable is larger than one line suggests.
+- **Recommendation:** Either specify the use case fully, or defer to Phase 3 where
+  ACL and team membership are in place.
+
+### #4 — `author-role:` audit ⚠️ Templates don't exist
+- Only `org-operations` has any content. `doc-lifecycle`, `infra-topology`, and
+  `knowledge-base` are stubs (profile.json only, no templates).
+- **This deliverable is mislabeled.** It should be:
+  - (a) Audit `org-operations` templates for `author-role:` field *(easy)*
+  - (b) Create templates for the other three profiles *(Phase 3 scope)*
+  Change the deliverable to match reality, or move (b) explicitly to Phase 3.
+
+### #5 — CI
+- **Does `npm run test:dispatch` work today?** Must be verified before being in CI.
+- **What triggers the workflow?** Push to main? PRs? Tags? Not specified.
+
+### #6 — FOSS hygiene ⚠️ Mostly already done
+- CONTRIBUTING.md, NOTICE.md, SECURITY.md, CHANGELOG.md all exist.
+- What's actually missing: AGENTS.md, CODEOWNERS, dependabot.yml, PR template.
+- **This is maintenance, not a Phase 2 deliverable.** Consider demoting to a
+  checklist item rather than a numbered deliverable. Update the plan to reflect
+  what is already done vs what is actually pending.
+
+### #7 — TypeScript MCP server ⚠️ Severely underestimated
+- The Python server is ~600 lines. Porting to TypeScript with parity is a
+  2-3 day task, not a one-liner.
+- **Break into sub-deliverables:**
+  - 7a: Port read-only tools
+  - 7b: Port state transition tools
+  - 7c: Verify tool parity with Python version
+  - 7d: Remove Python from Dockerfile
+- **Parity matters:** If any state transition is missed, Phase 3 ACL breaks.
+
+### Cross-cutting
+- **No testing plan.** No deliverable says "how do we know this works?" Add
+  acceptance criteria to each deliverable before starting it.
+- **Test-last is risk.** Currently tests are the last deliverable everywhere.
+  Reverse this: define acceptance criteria first, build to pass them.
+- **Phase 2 must not start until all Phase 1 gates pass.** The `depends_on`
+  field enforces this structurally but must also be enforced by the phase gate
+  mechanism.
+
 ## Document History
 
 | Date | Change | Author |

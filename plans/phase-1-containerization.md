@@ -69,6 +69,34 @@ be complete before Phase 2 begins.
 Kubernetes/Helm — see [[proposals/kubernetes-deployment.md]]. Docker compose
 is sufficient for all Phase 1 and Phase 2 needs.
 
+## Critical Review — Open Questions Before Starting
+
+### Alpine Linux Python compatibility risk
+- `node:22-alpine` uses musl libc. If the Python MCP server has any native
+  C-extension dependencies (even transitive), the build will silently fail or
+  produce an unusable image.
+- **Action:** Check `scripts/mcp-server.py` imports fully. If any native deps
+  exist, switch to `node:22-bookworm` (Debian-based). Larger image, but
+  compatible.
+
+### `.netrc` for git auth is deprecated
+- Modern Forgejo and GitHub prefer SSH keys or token-based HTTPS, not `.netrc`.
+- **Action:** Change to SSH key mounting (`-v ~/.ssh:/root/.ssh:ro`) as the
+  recommended pattern. Document the token approach as a fallback only.
+
+### No `/health` endpoint on the server
+- The health check `wget -qO- http://localhost:5173/api/status` calls the full
+  status API (reads vault, parses files). This is heavy for a health check.
+- **Action:** Add a lightweight `GET /api/health` endpoint (returns `{ok:true}`)
+  and use that in HEALTHCHECK. The status page endpoint is for humans.
+
+### Deliverable 7 (test scenario) is vague
+- "docker compose up → vault accessible, git panel works, MCP registers" — how
+  do we verify these from CI? Needs:
+  - A fixture vault (minimal git repo)
+  - A curl-based verification script
+  - A definition of "MCP registers" (what endpoint proves it?)
+
 ## Document History
 
 | Date | Change | Author |

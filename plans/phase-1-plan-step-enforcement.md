@@ -67,6 +67,34 @@ Must complete before Phase 2 begins alongside `phase-1-ui-polish` and
 **Gate reviewer:** NetYeti
 **Gate status:** `pending`
 
+## Critical Review — Open Questions Before Starting
+
+### `scripts/gate-check.ts` doesn't exist yet
+- Deliverable 2 says "Extend `scripts/gate-check.ts` (or create it)" — it must
+  be created. There is a `lifecycle-gate.js` (Node.js, ~600 lines) but it is
+  not the same file. Decide: extend the existing JS, or create a new TS script.
+  Pick one before starting.
+
+### Markdown section parsing must not use regex
+- Detecting "✅ task header" + "⏳ rows in the Implementation Steps section
+  below it" requires understanding markdown structure — not just pattern matching.
+- Regex on the whole file will produce false positives (✅/⏳ in prose text,
+  code blocks, commit messages).
+- **Action:** Use `marked` or `remark` to parse the markdown AST, then walk
+  sections. This is harder but correct.
+
+### Pre-commit hook performance
+- The hook currently takes ~0.5s. Adding a Node.js script invocation adds
+  ~0.3–0.8s depending on startup time. Over threshold (>1s) harms DX.
+- **Action:** If using Node.js, compile the check to a plain JS bundle
+  (no ts-node) so startup is fast. Or implement the check purely in bash
+  (simpler, faster, but regex-only).
+
+### User experience when blocked
+- When the hook blocks a commit, what does the message say?
+- Must tell the developer: which file, which task, how many steps are pending.
+- This is UX design, not just code. Specify the error message format.
+
 ## Document History
 
 | Date | Change | Author |
