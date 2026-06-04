@@ -248,7 +248,10 @@
     }
   }
 
-  async function saveFrontmatter() {
+  async function saveFrontmatter(fm?: Record<string, any>) {
+    // When called from the layout's PropertiesPane, fm contains the mutated
+    // frontmatter — apply it to local state before saving
+    if (fm) frontmatter = { ...fm };
     if (frontmatter) raw = buildRaw(frontmatter, content);
     await save();
   }

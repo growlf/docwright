@@ -12,7 +12,7 @@
     frontmatter: Record<string, any>;
     docType: string;
     mode: 'read' | 'edit' | 'source';
-    onsave?: () => void;
+    onsave?: (fm: Record<string, any>) => void;
     onapprove?: () => void;
     onfindrelated?: () => void;
   } = $props();
@@ -87,13 +87,13 @@
 
   function unapprove() {
     setField('approved', false);
-    onsave?.();
+    onsave?.(frontmatter);
   }
 
   // Plan actions
   function setPlanStatus(status: string) {
     setField('status', status);
-    onsave?.();
+    onsave?.(frontmatter);
   }
 
   let estimating = $state(false);
@@ -158,7 +158,7 @@
         {/if}
       {/if}
       {#if mode === 'edit'}
-        <button class="act save" onclick={() => onsave?.()}
+        <button class="act save" onclick={() => onsave?.(frontmatter)}
           title="Save changes to disk and commit frontmatter">Save</button>
       {/if}
     </div>

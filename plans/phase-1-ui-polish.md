@@ -1,5 +1,5 @@
 ---
-title: "Phase 1 — UI Polish"
+title: Phase 1 — UI Polish
 status: approved
 author: NetYeti
 created: 2026-06-03
@@ -17,11 +17,12 @@ automated: guided
 assigned_to: NetYeti
 depends_on:
   - phase-1-opencode-embed
-scenario_synthesis: "UI prototype — all work is SvelteKit components and CSS; no shell execution or deployment steps"
+scenario_synthesis: UI prototype — all work is SvelteKit components and CSS; no shell execution or deployment steps
 tags:
   - phase-1
   - ui
   - polish
+_path: plans/phase-1-ui-polish.md
 ---
 
 # Phase 1 — UI Polish

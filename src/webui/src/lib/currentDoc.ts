@@ -10,7 +10,7 @@ export interface DocContext {
   docType: string;
   mode: 'read' | 'edit' | 'source';
   filePath: string;
-  onSave?: () => void;
+  onSave?: (fm: Record<string, any>) => void;
   onApprove?: () => void;
   onFindRelated?: () => void;
   onInsert?: (slug: string, heading: string, content: string) => void;
