@@ -18,16 +18,20 @@ const MCP_SERVER_PATH = path.join(REPO_ROOT, 'scripts', 'mcp-server.py');
 const NODE_MCP_PATH   = path.join(REPO_ROOT, 'dist', 'mcp-server.js');
 const OPENCODE_JSON   = path.join(REPO_ROOT, 'opencode.json');
 
+// Prefer venv Python if it exists — that's where project deps are installed
+const VENV_PYTHON = path.join(REPO_ROOT, '.venv', 'bin', 'python3');
+function getPython(): string {
+  return fs.existsSync(VENV_PYTHON) ? VENV_PYTHON : 'python3';
+}
+
 type McpStatus = 'python-ok' | 'node-ok' | 'unavailable';
 
 function probeMcpServer(): McpStatus {
-  // Quick syntax-check the Python server (doesn't run it, just validates)
   if (fs.existsSync(MCP_SERVER_PATH)) {
-    const result = spawnSync('python3', ['-c', `
-import sys, importlib.util
-spec = importlib.util.find_spec('mcp')
-sys.exit(0 if spec else 1)
-`], { timeout: 3000 });
+    const python = getPython();
+    const result = spawnSync(python, ['-c',
+      'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("mcp") else 1)'
+    ], { timeout: 3000 });
     if (result.status === 0) return 'python-ok';
   }
   if (fs.existsSync(NODE_MCP_PATH)) return 'node-ok';
@@ -38,7 +42,7 @@ function buildMcpEntry(status: McpStatus) {
   if (status === 'python-ok') {
     return {
       type: 'local',
-      command: ['python3', MCP_SERVER_PATH],
+      command: [getPython(), MCP_SERVER_PATH],
       environment: { DOCWRIGHT_ROOT: REPO_ROOT },
       enabled: true,
     };
@@ -54,10 +58,10 @@ function buildMcpEntry(status: McpStatus) {
   // Server not available — register disabled so it doesn't cause hangs
   return {
     type: 'local',
-    command: ['python3', MCP_SERVER_PATH],
+    command: [getPython(), MCP_SERVER_PATH],
     environment: { DOCWRIGHT_ROOT: REPO_ROOT },
     enabled: false,
-    _note: 'Disabled: mcp package not installed. Run: pip install mcp',
+    _note: 'Disabled: mcp package not found. Run: .venv/bin/pip install mcp',
   };
 }
 
