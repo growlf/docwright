@@ -48,6 +48,9 @@ Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` 
 
 ## Implementation Steps
 
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
 | 1 | | | ⏳ Pending |
