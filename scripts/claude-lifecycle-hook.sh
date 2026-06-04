@@ -4,6 +4,7 @@
 # Blocks lifecycle mutations that require human authorization:
 #   - Writing approved: true to proposals/approved/ without HUMAN_APPROVED=1
 #   - Editing a file to flip approved: false → approved: true
+#   - Any direct Write/Edit to plans/*.md (use MCP tools instead)
 #
 # Stdin: JSON { tool_name, tool_input: { file_path, content|old_string|new_string } }
 # Exit 0  → allow the write
