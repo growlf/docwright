@@ -126,11 +126,11 @@ Git. The mobile-only top bar becomes a permanent layout element.
 
 ---
 
-### Task 4 — Funnel View (Lifecycle Swimlanes)
+### Task 4 — Funnel View (Lifecycle Swimlanes) ✅
 
 **Proposal:** [[proposals/ui-lifecycle-graph-view.md]]
-**Effort:** M (1 day)
-**Status:** ⏳ Pending
+**Commit:** a47887c
+**Status:** ✅ Complete
 
 A visual representation of the governance pipeline — swimlane columns per
 lifecycle stage, document cards clickable to navigate. Served as a tab on
