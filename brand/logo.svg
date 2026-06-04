@@ -1,9 +1,170 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32" width="160" height="32">
-  <text
-    x="2" y="24"
-    font-family="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-    font-size="22"
-    font-weight="700"
-    fill="#58a6ff"
-  >DocWright</text>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 177 30"
+   width="177"
+   height="30"
+   style="display:block"
+   version="1.1"
+   id="svg23"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview25"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="32.105791"
+     inkscape:cx="18.470188"
+     inkscape:cy="9.1260796"
+     inkscape:window-width="1920"
+     inkscape:window-height="1102"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg23" />
+  <defs
+     id="defs7">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient1045">
+      <stop
+         style="stop-color:#769cf6;stop-opacity:1;"
+         offset="0"
+         id="stop1041" />
+      <stop
+         style="stop-color:#c6d6f9;stop-opacity:1;"
+         offset="1"
+         id="stop1043" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient1016">
+      <stop
+         style="stop-color:#000001;stop-opacity:1;"
+         offset="0"
+         id="stop1012" />
+      <stop
+         style="stop-color:#0028a7;stop-opacity:1;"
+         offset="1"
+         id="stop1014" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient835">
+      <stop
+         style="stop-color:#1e77ee;stop-opacity:1;"
+         offset="0"
+         id="stop831" />
+      <stop
+         style="stop-color:#e2e8f0;stop-opacity:1;"
+         offset="1"
+         id="stop833" />
+    </linearGradient>
+    <!-- Simplified Brand Gradient for Low Height -->
+    <linearGradient
+       id="titleGradient"
+       x1="0"
+       y1="0.5"
+       x2="1"
+       y2="0.5">
+      <stop
+         offset="0%"
+         stop-color="#1E40AF"
+         id="stop2" />
+      <!-- Deep Blue (simplified for small size) -->
+      <stop
+         offset="100%"
+         stop-color="#3B82F6"
+         id="stop4" />
+      <!-- Light Blue -->
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient835"
+       id="linearGradient837"
+       x1="16.819395"
+       y1="21.593285"
+       x2="11.534598"
+       y2="2.4067149"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1016"
+       id="linearGradient1018"
+       x1="6.9909387"
+       y1="18.711235"
+       x2="9.4355459"
+       y2="7.8720679"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-1.4950574,-1.7442336)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1045"
+       id="linearGradient1047"
+       x1="17.356888"
+       y1="0.88291728"
+       x2="18.687824"
+       y2="-14.769302"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(42.290698,22)" />
+  </defs>
+  <!-- Horizontal Icon + Text Group -->
+  <g
+     transform="matrix(1.5084138,0,0,1.5084138,-31.964926,-10.287076)"
+     id="g21">
+    <!-- Ultra-Simplified Icon (Horizontal Layout) -->
+    <g
+       transform="matrix(0.88932254,0,0,0.88932254,21.791099,5.4672361)"
+       id="g13">
+      <!-- 1. Simple Document Outline (Just a clean shape) -->
+      <path
+         d="m 0,2 h 18 l 4,4 v 10.885297 c 0,1.10457 -0.895431,2 -2,2 H 2 c -1.1045695,0 -2,-0.89543 -2,-2 z"
+         fill="#E2E8F0"
+         id="path9"
+         style="fill:url(#linearGradient837);fill-opacity:1"
+         sodipodi:nodetypes="cccssssc" />
+      <!-- Neutral light fill -->
+      <!-- 2. Integrated Checkmark (Using the brighter cyan color) -->
+      <path
+         d="m 5.2524713,11.121293 4.0000003,4 6.9050674,-10.0131801"
+         fill="none"
+         stroke="#4facfe"
+         stroke-width="3.5"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         id="path11"
+         sodipodi:nodetypes="ccc"
+         style="stroke:url(#linearGradient1018);stroke-opacity:1;stroke-width:3.72726445;stroke-dasharray:none" />
+    </g>
+    <!-- Typography (Wide, Crisp, and Simple) -->
+    <text
+       font-family="system-ui, '-apple-system', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+       font-size="20px"
+       font-weight="700"
+       fill="#0f172a"
+       letter-spacing="-0.5"
+       id="text15"
+       style="fill:url(#linearGradient1047);fill-opacity:1;stroke:#01002b;stroke-width:0.137893;stroke-dasharray:none;stroke-opacity:1"
+       x="42.290699"
+       y="22">Doc</text>
+    <text
+       x="78.290695"
+       font-family="system-ui, '-apple-system', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+       font-size="20px"
+       font-weight="400"
+       fill="#3b82f6"
+       letter-spacing="-0.2"
+       id="text17"
+       y="22">Wright</text>
+  </g>
 </svg>
