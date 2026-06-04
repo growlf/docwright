@@ -146,6 +146,9 @@ accidental data corruption, and confused session context (as of 2026-06-02 fix).
    Before calling `update_plan_status(..., 'completed')`, verify every Implementation
    Steps row shows ✅ Done. If any show ⏳, report which ones and stop — do not attempt
    the call. The MCP tool also enforces this, but self-checking first is expected.
+   **If MCP tools are unavailable:** halt and report — "MCP server is unavailable,
+   cannot safely mutate plan files." Ask the human to restart the server. Do NOT
+   fall back to direct writes. No mutation is better than an unvalidated mutation.
 
 ### Profile structure
 

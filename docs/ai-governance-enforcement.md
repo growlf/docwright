@@ -72,8 +72,11 @@ Fires **before** any Claude Code Write or Edit tool executes. Intercepts:
 - Any write of `approved: true` to `proposals/approved/` without `HUMAN_APPROVED=1`
 - Any edit that flips `approved: false → approved: true` without authorization
 
-This is the last line of defense for AI tool use. An AI that ignores Layer 1
-and tries to write a plan directly hits this layer before any file is touched.
+**Scope:** Claude Code's Write and Edit tools only. The hook is blind to writes
+that come through any other path: a Bash tool call that runs a Python script,
+an OpenCode tool on a different surface, or any direct file I/O that doesn't
+go through Claude Code's tool layer. It is surface-specific belt-and-suspenders
+for the Claude Code surface — not a universal write gate.
 
 ### Layer 4 — Skills (plan-workflow skill — planned)
 
@@ -89,6 +92,46 @@ report blockers, use `update_step` to clear them, then call
 `status: completed` is structurally only valid when `completed_steps == total_steps`.
 The MCP server maintains these counts automatically on every mutation. An AI
 reading the frontmatter can self-validate without parsing the markdown body.
+
+---
+
+## Failure modes
+
+### MCP server unavailable
+
+When `mcp-server.py` is not running, all MCP tool calls (`update_step`,
+`update_plan_status`, `append_history`, etc.) fail with a connection error.
+
+**Expected AI behavior: halt and report. Do not fall back to direct writes.**
+
+The correct response is:
+1. Surface the error clearly — "MCP server is unavailable"
+2. Tell the contributor what they need to do: `python3 scripts/mcp-server.py`
+   (or restart via however it is configured in the session)
+3. Do nothing further until the server is back
+
+**Why not fall back to direct writes:** the PreToolUse hook blocks direct
+writes to `plans/*.md` regardless of whether the MCP server is running. A
+fallback write attempt will be blocked and produce a confusing redirect
+message. More importantly, a direct write bypasses all validation — pending
+steps go unchecked, step counts go unstale, the audit log gets no entry.
+The governance architecture is intentionally **fail-closed**: no mutation is
+better than an unvalidated mutation.
+
+This is not a bug — it is the expected behavior. The MCP server is a required
+runtime dependency for plan mutations, not an optional enhancement.
+
+### PreToolUse hook not installed
+
+If `scripts/claude-lifecycle-hook.sh` is not registered in `.claude/settings.json`,
+direct writes to `plans/*.md` succeed silently. The MCP tools still validate
+when called, but the surface-specific intercept is absent.
+
+**Detection:** `cat .claude/settings.json` — verify `claude-lifecycle-hook.sh`
+appears in the `hooks.PreToolUse` array.
+
+**Impact:** reduced to behavioral contract + MCP validation only; no automatic
+block on direct writes from the Claude Code surface.
 
 ---
 

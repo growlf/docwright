@@ -82,6 +82,11 @@ Do not write directly to plan files — the PreToolUse hook blocks this and
 redirects to the MCP tools above, which validate, recount, and audit-log
 every mutation.
 
+**If MCP tools are unavailable:** halt and report — tell the contributor
+"MCP server is unavailable, cannot safely mutate plan files" and ask them
+to restart it. Do not fall back to direct file writes. The governance
+architecture is fail-closed: no mutation is better than an unvalidated one.
+
 ---
 
 ## Plan completion routine
