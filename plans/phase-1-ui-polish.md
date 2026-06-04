@@ -82,11 +82,11 @@ Source mode unaffected. Styled with bottom border and 1.75em weight.
 
 ---
 
-### Task 2 — Unified Panel System (Panel.svelte)
+### Task 2 — Unified Panel System (Panel.svelte) ✅
 
 **Proposal:** [[proposals/ui-sidebar-consistency.md]]
-**Effort:** L (1–2 days)
-**Status:** ⏳ Pending
+**Commit:** b93756a
+**Status:** ✅ Complete
 
 Three separate panel implementations (left sidebar, right properties pane,
 CollationPanel fixed overlay) replaced by a single `Panel.svelte` component
