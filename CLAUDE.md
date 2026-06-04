@@ -66,6 +66,12 @@ verified before it ships.
 capture it as a deferred proposal before closing. Good ideas not captured are good ideas
 lost. See [[policies/core/capture-deferred-ideas.md]].
 
+**Code over memory — automate process enforcement.** When a rule can be enforced
+by a pre-commit hook, MCP tool, dispatch validation, UI constraint, or CI check,
+it must be. Relying on AI memory or human discipline to enforce a process is a
+known failure mode. Ask constantly: "Can I enforce this with code?" If yes, do it.
+See [[policies/core/code-over-memory.md]].
+
 **Multiple perspectives produce better outcomes.** No single AI model, and no single
 person, has complete knowledge or perfect judgment. DocWright was built by triangulating
 between Claude, BigPickle (OpenCode's configured LLM), and the BDFL — each catching
