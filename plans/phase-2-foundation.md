@@ -80,68 +80,57 @@ AI writes through ACL controller, wikilink graph, backlinks index.
 
 ## Critical Review — Open Questions Before Starting
 
-*These issues were identified in adversarial review. Each must be resolved or
-explicitly accepted before the relevant deliverable begins.*
+*Reviewed by /critique-plan adversarial agent. Resolve ⚠️/🚫 before starting.*
 
-### #1 — Profile engine
-- **What is "validation"?** `src/dispatch/profile.ts` already has a `ProfileConfig`
-  interface. The plan says "validation, schema" but doesn't define what that means.
-  JSON Schema via AJV? Runtime type-checking? Or just the existing TS interface?
-  Profiles are bundled and static — schema validation may be unnecessary. Decide
-  before building.
-- **Missing:** What does the Web UI do with the active profile? How does it know
-  which profile is loaded? This affects the UI layer, not just dispatch.
+### #1 — Profile engine ⚠️ warn
+- **Finding:** The loader already exists (`loadProfile`, `getActiveProfile`). Notes column says "needs loader, validation, schema" — this is wrong. Real gaps: (a) no schema validation lib installed (no AJV, no Zod); (b) `getActiveProfile` uses `__dirname` for path resolution which silently falls back to DEFAULT_PROFILE outside the compiled dist tree — an existing bug; (c) plan never defines what the Web UI does differently when a non-default profile is active.
+- **Action:** Fix notes column. Decide whether schema validation is needed for static bundled profiles (probably not). File the `__dirname` bug. Define one concrete UI behavior that proves the engine does something.
+- **Resolution:**
 
-### #2 — Dispatch CI
-- **Does `npm run test:dispatch` exist?** The hook in CLAUDE.md references it but
-  it may not be wired into `package.json`. Verify before claiming this is a CI step.
+### #2 — Dispatch CI 📝 note
+- **Finding:** `npm run test:dispatch` IS wired in root `package.json`. CI workflow already calls it. 34 tests pass. This deliverable is effectively already done.
+- **Action:** Mark complete or note as already delivered in Phase 1.
+- **Resolution:**
 
-### #3 — Inbox capture ⚠️ Possibly wrong scope
-- **Use case undefined.** Who submits to this form? Why can't they `git push` a
-  file to `inbox/` themselves? If the answer is "no git access," that's an ACL
-  problem — Phase 3, not Phase 2.
-- **Where does captured data go?** What format? How does the Web UI present it?
-  If `inbox.ts` doesn't exist, this deliverable is larger than one line suggests.
-- **Recommendation:** Either specify the use case fully, or defer to Phase 3 where
-  ACL and team membership are in place.
+### #3 — Inbox capture 🚫 block
+- **Finding:** `src/dispatch/inbox.ts` does not exist. Use case still undefined. "No git access" = ACL problem = Phase 3, not Phase 2. "Power user shortcut" = nice-to-have, not foundation. Neither is specified.
+- **Action:** Do not start this until: (1) submitter persona defined, (2) data format specified, (3) confirmed it doesn't depend on Phase 3 ACL. Move to Phase 3 or extract to its own sub-plan.
+- **Resolution:**
 
-### #4 — `author-role:` audit ⚠️ Templates don't exist
-- Only `org-operations` has any content. `doc-lifecycle`, `infra-topology`, and
-  `knowledge-base` are stubs (profile.json only, no templates).
-- **This deliverable is mislabeled.** It should be:
-  - (a) Audit `org-operations` templates for `author-role:` field *(easy)*
-  - (b) Create templates for the other three profiles *(Phase 3 scope)*
-  Change the deliverable to match reality, or move (b) explicitly to Phase 3.
+### #4 — `author-role:` audit 🚫 block
+- **Finding:** No `author-role:` field exists in ANY template anywhere — not in `/templates/`, not in `.docworkbench/`. The plan says "org-operations has templates" but `src/profiles/org-operations/` has no `templates/` dir. Templates live in `/templates/` (3 files) and `.docworkbench/*/templates/` (5 files). The audit target doesn't match reality.
+- **Action:** Rewrite deliverable: (a) add `author-role:` to all `/templates/*.md` (3 files), (b) add to all `.docworkbench/*/templates/*.md` (5 files), (c) decide which template location is canonical per CLAUDE.md spec (`src/profiles/*/templates/`).
+- **Resolution:**
 
-### #5 — CI
-- **Does `npm run test:dispatch` work today?** Must be verified before being in CI.
-- **What triggers the workflow?** Push to main? PRs? Tags? Not specified.
+### #5 — CI ⚠️ warn
+- **Finding:** CI exists and mostly works. One gap: CI uses Node 20, container targets Node 22. Behavioral differences between versions won't be caught.
+- **Action:** Bump CI to Node 22. Document what events trigger the workflow.
+- **Resolution:**
 
-### #6 — FOSS hygiene ⚠️ Mostly already done
-- CONTRIBUTING.md, NOTICE.md, SECURITY.md, CHANGELOG.md all exist.
-- What's actually missing: AGENTS.md, CODEOWNERS, dependabot.yml, PR template.
-- **This is maintenance, not a Phase 2 deliverable.** Consider demoting to a
-  checklist item rather than a numbered deliverable. Update the plan to reflect
-  what is already done vs what is actually pending.
+### #6 — FOSS hygiene ⚠️ warn
+- **Finding:** CONTRIBUTING.md ✅, NOTICE.md ✅, SECURITY.md ✅, CHANGELOG.md ✅, AGENTS.md ✅ — all exist. Actually missing: CODEOWNERS and dependabot.yml only.
+- **Action:** Update deliverable to list only the two missing files. Consider demoting to a checklist item rather than a numbered deliverable.
+- **Resolution:**
 
-### #7 — TypeScript MCP server ⚠️ Severely underestimated
-- The Python server is ~600 lines. Porting to TypeScript with parity is a
-  2-3 day task, not a one-liner.
-- **Break into sub-deliverables:**
-  - 7a: Port read-only tools
-  - 7b: Port state transition tools
-  - 7c: Verify tool parity with Python version
-  - 7d: Remove Python from Dockerfile
-- **Parity matters:** If any state transition is missed, Phase 3 ACL breaks.
+### #7 — TypeScript MCP server 🚫 block
+- **Finding:** 600-line Python port with one line of description. Covers 11 async tool handlers, status cache, file operations, collation logic, dry-run state machine, 3 state transition workflows, audit log writer, self-test suite. ~3 dev days minimum.
+- **Action:** Expand to sub-deliverables: 7a read-only tools, 7b state transitions, 7c parity verification vs Python, 7d remove Python from Dockerfile. Do not switch `opencode.json` until 7c passes. Add explicit acceptance criterion: smoke test against Python output and diff.
+- **Resolution:**
 
-### Cross-cutting
-- **No testing plan.** No deliverable says "how do we know this works?" Add
-  acceptance criteria to each deliverable before starting it.
-- **Test-last is risk.** Currently tests are the last deliverable everywhere.
-  Reverse this: define acceptance criteria first, build to pass them.
-- **Phase 2 must not start until all Phase 1 gates pass.** The `depends_on`
-  field enforces this structurally but must also be enforced by the phase gate
-  mechanism.
+### #8 — MCP governance tools 🚫 block
+- **Finding:** "Additional dispatch tools beyond Phase 1 skeleton" is a placeholder, not a deliverable. No skeleton exists in TypeScript. No tools listed. No acceptance criteria. Cannot be estimated or reviewed.
+- **Action:** Either list specific tools with names and behaviors (e.g., "expose `linter.ts` as MCP lint tool"), or merge into Deliverable 7 as 7e and eliminate as separate item.
+- **Resolution:**
+
+### Cross-cutting — Template location ambiguity ⚠️ warn
+- **Finding:** Templates exist in three locations: `/templates/`, `/.docworkbench/*/templates/`, and planned-but-nonexistent `src/profiles/*/templates/`. CLAUDE.md says canonical location is `src/profiles/`. This inconsistency will confuse every template-touching deliverable.
+- **Action:** Decide canonical location before ANY template work. If `.docworkbench/` is legacy, schedule removal.
+- **Resolution:**
+
+### Cross-cutting — Phase 1 gate must actually complete 🚫 block
+- **Finding:** Plan is `status: approved` but four Phase 1 dependencies are not complete. Phase 2 work that overlaps with incomplete Phase 1 scope will rework.
+- **Action:** No Phase 2 deliverable starts until all four Phase 1 plans pass gate review.
+- **Resolution:**
 
 ## Document History
 
