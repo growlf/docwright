@@ -1,6 +1,6 @@
 ---
 complexity: high
-title: "UI Polish — Settings Access via Activity Bar / Grouped Menu"
+title: UI Polish — Settings Access via Activity Bar / Grouped Menu
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -9,9 +9,10 @@ tags:
   - activity-bar
   - settings
   - phase-1
-approved: false
-created_by: "NetYeti@phoenix"
+approved: true
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
+_path: proposals/ui-settings-activity-bar.md
 ---
 
 ## Problem

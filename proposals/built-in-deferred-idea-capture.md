@@ -10,12 +10,13 @@ tags:
   - dispatch
   - ai
   - dog-fooding
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - policies/core/capture-deferred-ideas.md
   - proposals/phase-gate-sign-off.md
+_path: proposals/built-in-deferred-idea-capture.md
 ---
 
 ## Problem

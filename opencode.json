@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "docwright": {
+      "type": "local",
+      "command": [
+        "python3",
+        "/home/netyeti/Projects/DocWright/scripts/mcp-server.py"
+      ],
+      "environment": {
+        "DOCWRIGHT_ROOT": "/home/netyeti/Projects/DocWright"
+      },
+      "enabled": true
+    }
+  }
+}

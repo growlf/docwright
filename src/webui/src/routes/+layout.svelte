@@ -8,6 +8,7 @@
   import { toasts, dismissToast } from '$lib/toast';
   import { showPropsPane, showChatPanel } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
+  import Panel from '$lib/Panel.svelte';
 
   interface ProjectEntry {
     name: string;
@@ -116,15 +117,10 @@
   <button class="gear-btn" onclick={() => showPropsPane.update(v => !v)} aria-label="Toggle properties">⚙</button>
 </div>
 
-<!-- Scrim behind open sidebar (mobile only) -->
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="sidebar-scrim" class:visible={showSidebar} onclick={toggleSidebar}></div>
-
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
-  <aside id="sidebar" class:open={showSidebar} class:collapsed={!showSidebar}>
+  <Panel side="left" bind:open={showSidebar}>
     <div class="sidebar-header">
-      <button class="sidebar-toggle" onclick={toggleSidebar} aria-label="Toggle sidebar">{showSidebar ? '◀' : '▶'}</button>
       <a href="/status" class="home-btn" title="Status dashboard">⌂</a>
       <a href="/status" class="brand" title="Go to {brand.name} status">
         {#if brand.logoPath}
@@ -156,7 +152,7 @@
       </div>
     {/if}
     <GitPanel />
-  </aside>
+  </Panel>
   <main id="content">
     <slot />
   </main>
@@ -225,34 +221,9 @@
   .gear-btn:hover { color: #fff; }
 
   /* ── Sidebar scrim (mobile only) ────────────────────────────────────────── */
-  .sidebar-scrim {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55); z-index: 149;
-  }
-  .sidebar-scrim.visible { display: block; }
-
-  /* Desktop: scrim never shows — sidebar is inline layout, not overlay */
-  @media (min-width: 769px) {
-    .sidebar-scrim.visible { display: none; }
-  }
-
   /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; flex: 1; min-height: 0; font-family: system-ui, -apple-system, sans-serif; }
-  #sidebar {
-    width: 260px; min-width: 260px; background: #111; color: #ccc;
-    display: flex; flex-direction: column; overflow-y: auto;
-    transition: width 0.2s ease, min-width 0.2s ease;
-  }
-  #sidebar.collapsed {
-    width: 32px; min-width: 32px; overflow: hidden;
-  }
-  /* Desktop: hover collapsed strip to peek full sidebar */
-  @media (min-width: 769px) {
-    #sidebar.collapsed:hover {
-      width: 260px; min-width: 260px; overflow-y: auto;
-    }
-  }
-  .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .sidebar-header { padding: 10px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-shrink: 0; }
 
   .brand { flex: 1; min-width: 0; overflow: hidden; text-decoration: none; cursor: pointer; }
   .brand-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
@@ -321,21 +292,10 @@
   .project-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .project-profile { font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; }
 
-  /* ── Mobile (≤ 768px): overlay sidebar + top bar ────────────────────────── */
+  /* ── Mobile (≤ 768px) ────────────────────────────────────────────────────── */
   @media (max-width: 768px) {
     .mobile-topbar { display: flex; }
-
-    #sidebar {
-      position: fixed; top: 0; left: -260px; height: 100vh;
-      transition: left 0.2s ease; z-index: 200;
-      width: 260px; min-width: 260px;
-    }
-    #sidebar.open { left: 0; }
-    #sidebar.collapsed { width: 260px; min-width: 260px; } /* override desktop collapsed on mobile */
-
-    #content { padding-top: 48px; } /* clear the fixed top bar */
-
-    /* Shift toasts up from git panel area */
+    #content { padding-top: 48px; }
     .toast-container { bottom: 80px; }
   }
 </style>

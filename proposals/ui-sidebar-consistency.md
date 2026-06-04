@@ -1,6 +1,6 @@
 ---
 complexity: high
-title: "UI Polish — Sidebar Consistency and Unified Panel System"
+title: UI Polish — Sidebar Consistency and Unified Panel System
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -9,9 +9,10 @@ tags:
   - sidebar
   - layout
   - phase-1
-approved: false
-created_by: "NetYeti@phoenix"
+approved: true
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
+_path: proposals/ui-sidebar-consistency.md
 ---
 
 ## Problem

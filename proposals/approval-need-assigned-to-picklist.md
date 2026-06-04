@@ -1,5 +1,5 @@
 ---
-title: "Approval — Assigned-To Picklist"
+title: Approval — Assigned-To Picklist
 author: NetYeti
 created: 2026-06-03
 tags: []
@@ -7,9 +7,10 @@ category: []
 complexity: ""
 estimated_effort: ""
 depends_on: []
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
+_path: proposals/approval-need-assigned-to-picklist.md
 ---
 ## Problem
 

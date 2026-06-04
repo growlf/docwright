@@ -1,5 +1,5 @@
 ---
-title: "UI — Immutable Document Title Rendered as H1"
+title: UI — Immutable Document Title Rendered as H1
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -7,9 +7,10 @@ tags:
   - ux
   - proposals
   - editing
-approved: false
-created_by: "NetYeti@phoenix"
+approved: true
+created_by: NetYeti@phoenix
 assigned_to: ""
+_path: proposals/ui-immutable-title-h1.md
 ---
 
 ## Problem

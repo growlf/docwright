@@ -3,11 +3,6 @@
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
-    collapsed = $bindable(
-      typeof sessionStorage !== 'undefined'
-        ? sessionStorage.getItem('propsPaneCollapsed') === 'true'
-        : false
-    ),
     docType = 'page',
     mode = 'read',
     onsave,
@@ -15,23 +10,12 @@
     onfindrelated,
   }: {
     frontmatter: Record<string, any>;
-    collapsed?: boolean;
     docType: string;
     mode: 'read' | 'edit' | 'source';
     onsave?: () => void;
     onapprove?: () => void;
     onfindrelated?: () => void;
   } = $props();
-
-  function toggleCollapsed() {
-    if (window.innerWidth <= 768) {
-      showPropsPane.set(false);
-      return;
-    }
-    collapsed = !collapsed;
-    if (typeof sessionStorage !== 'undefined')
-      sessionStorage.setItem('propsPaneCollapsed', String(collapsed));
-  }
 
   const SELECT_OPTIONS: Record<string, string[]> = {
     complexity:        ['', 'low', 'medium', 'high'],
@@ -140,15 +124,8 @@
   );
 </script>
 
-<div class="pane" class:collapsed>
-  <div class="pane-header">
-    <span class="pane-title">{collapsed ? '' : 'Properties'}</span>
-    <button class="pane-toggle" onclick={toggleCollapsed} title={collapsed ? 'Show properties' : 'Hide properties'}>
-      {collapsed ? '◀' : '▶'}
-    </button>
-  </div>
-
-  {#if !collapsed}
+<div class="pane-inner">
+  {#if true}
     <!-- Action buttons -->
     <div class="pane-actions">
       {#if docType === 'proposal'}
@@ -268,38 +245,14 @@
 </div>
 
 <style>
-  .pane {
-    position: relative;
-    width: 280px;
-    background: #111;
-    border-left: 1px solid #2a2a2a;
+  /* Panel.svelte provides the outer container — pane-inner fills it */
+  .pane-inner {
     display: flex;
     flex-direction: column;
+    flex: 1;
     overflow-y: auto;
-    transition: width 0.15s;
-    flex-shrink: 0;
+    min-height: 0;
   }
-  .pane.collapsed { width: 32px; overflow: hidden; }
-
-  .pane-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 8px 10px 12px;
-    border-bottom: 1px solid #222;
-    flex-shrink: 0;
-  }
-  .pane-title { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
-  .pane-toggle {
-    background: none;
-    border: none;
-    color: #555;
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 4px;
-    border-radius: 3px;
-  }
-  .pane-toggle:hover { color: #aaa; background: #1a1a1a; }
 
   .pane-actions {
     display: flex;
@@ -434,22 +387,5 @@
   }
   .chip-input:focus { outline: none; border-color: #2b5b84; }
 
-  /* ── Tablet (769–1024px): narrow pane ──────────────────────────────────── */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .pane { width: 220px; }
-    .pane.collapsed { width: 32px; }
-  }
-
-  /* ── Mobile (≤ 768px): right-side overlay ──────────────────────────────── */
-  @media (max-width: 768px) {
-    .pane {
-      position: fixed; top: 0; right: 0; left: auto; bottom: 0;
-      height: 100vh;
-      width: 280px !important; min-width: 0;
-      border-left: 1px solid #2a2a2a; border-top: none;
-      border-radius: 0;
-      z-index: 300;
-    }
-    .pane.collapsed { width: 0 !important; overflow: hidden; }
-  }
+  /* Panel.svelte handles all responsive sizing and positioning */
 </style>

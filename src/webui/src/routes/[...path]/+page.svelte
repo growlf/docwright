@@ -5,6 +5,7 @@
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
+  import Panel from '$lib/Panel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
   import { showPropsPane } from '$lib/pane';
@@ -44,6 +45,7 @@
 
   // Collation panel state
   let showCollation = $state(false);
+  let rightTab = $state<'properties' | 'related'>('properties');
   let collationLoading = $state(false);
   let collationMatches = $state<any[]>([]);
   let lastOverlapPath = $state(''); // avoid re-firing on the same file
@@ -255,7 +257,11 @@
   }
 
   async function findRelated() {
-    showCollation = true;
+    // Switch right panel to Related tab and load matches
+    showProps = true;
+    propsCollapsed = false;
+    showPropsPane.set(true);
+    rightTab = 'related';
     collationLoading = true;
     collationMatches = [];
     const res = await fetch('/api/overlap?path=' + encodeURIComponent(filePath()));
@@ -323,10 +329,7 @@
 
 <div class="page-wrap">
   <!-- Main content -->
-  <div class="page-body"
-    class:pane-open={showProps && mode !== 'source' && !propsCollapsed}
-    class:pane-collapsed={showProps && mode !== 'source' && propsCollapsed}
-  >
+  <div class="page-body">
     <div class="toolbar">
       <div class="doc-identity">
         {#if frontmatter?.title}
@@ -413,48 +416,56 @@
     {/if}
   </div>
 
-  <!-- Properties pane scrim (mobile only) -->
-  {#if showProps && mode !== 'source' && frontmatter}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="props-scrim" onclick={toggleProps}></div>
-  {/if}
+  <!-- Right panel — Properties + Related tabs via unified Panel component -->
+  {#if mode !== 'source'}
+    <Panel side="right" bind:open={showProps}>
+      <!-- Tab bar -->
+      <div class="right-tab-bar">
+        <button class="right-tab" class:active={rightTab === 'properties'}
+          onclick={() => rightTab = 'properties'}>Properties</button>
+        <button class="right-tab" class:active={rightTab === 'related'}
+          onclick={() => { rightTab = 'related'; if (!collationMatches.length) findRelated(); }}>
+          Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
+        </button>
+      </div>
 
-  <!-- Properties pane — hidden in source mode -->
-  {#if showProps && mode !== 'source' && frontmatter}
-    <PropertiesPane
-      bind:frontmatter={frontmatter}
-      bind:collapsed={propsCollapsed}
-      {docType}
-      {mode}
-      onsave={saveFrontmatter}
-      onapprove={handleApprove}
-      onfindrelated={findRelated}
-    />
+      {#if rightTab === 'properties'}
+        {#if frontmatter}
+          <PropertiesPane
+            bind:frontmatter={frontmatter}
+            {docType}
+            {mode}
+            onsave={saveFrontmatter}
+            onapprove={handleApprove}
+            onfindrelated={findRelated}
+          />
+        {:else}
+          <div class="right-empty">No properties</div>
+        {/if}
+      {:else}
+        <CollationPanel
+          matches={collationMatches}
+          loading={collationLoading}
+          oninsert={handleInsert}
+          onsubsume={handleSubsume}
+          onclose={() => { rightTab = 'properties'; collationMatches = []; }}
+        />
+      {/if}
+    </Panel>
   {/if}
 </div>
 
-<!-- Collation panel — fixed overlay -->
-{#if showCollation}
-  <CollationPanel
-    matches={collationMatches}
-    loading={collationLoading}
-    oninsert={handleInsert}
-    onsubsume={handleSubsume}
-    onclose={() => { showCollation = false; collationMatches = []; }}
-  />
-{/if}
-
 <style>
-  .page-wrap { display: block; min-height: 100%; }
-  .page-body { padding: 32px; }
+  /* page-wrap is always a flex row — Panel.svelte handles open/closed width */
+  .page-wrap { display: flex; min-height: 100%; align-items: flex-start; }
+  .page-body { flex: 1; min-width: 0; padding: 32px; overflow-y: auto; }
 
-  /* Desktop (≥769px): properties pane is inline via flex, not fixed overlay */
-  @media (min-width: 769px) {
-    .page-wrap { display: flex; gap: 16px; align-items: flex-start; }
-    .page-body { flex: 1; min-width: 0; }
-    .page-body.pane-open,
-    .page-body.pane-collapsed { padding-right: 32px; }
-  }
+  /* Right panel tab bar */
+  .right-tab-bar { display: flex; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
+  .right-tab { flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: #555; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 8px 4px 6px; cursor: pointer; }
+  .right-tab:hover  { color: #aaa; }
+  .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
+  .right-empty { padding: 16px; font-size: 12px; color: #444; }
 
   .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
   .not-found { text-align: center; padding: 64px 32px; }
@@ -491,7 +502,7 @@
   .mode-toggle:hover { background: #1a3a1a; }
   .props-toggle { border-color: #444; color: #777; font-size: 14px; padding: 2px 9px; }
   .props-toggle:hover { color: #aaa; }
-  .props-scrim { display: none; }
+  /* props-scrim removed — Panel.svelte provides the mobile scrim now */
 
   .editor { width: 100%; min-height: 60vh; background: #0a0a0a; color: #e0e0e0; border: 1px solid #333; border-radius: 6px; padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
 
@@ -521,9 +532,6 @@
     .path { display: none; }           /* path shown in topbar on mobile; hide here */
     .doc-title { font-size: 14px; }    /* title stays visible on mobile */
     .btn.props-toggle { display: none; }
-
-    /* Scrim behind properties pane overlay */
-    .props-scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 299; }
 
     /* Touch-friendly button sizing */
     .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }

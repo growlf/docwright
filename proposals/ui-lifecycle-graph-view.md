@@ -1,6 +1,6 @@
 ---
 complexity: medium
-title: "UI — Lifecycle Graph View"
+title: UI — Lifecycle Graph View
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -9,14 +9,15 @@ tags:
   - lifecycle
   - visualization
   - improvements
-approved: false
+approved: true
 deferred: false
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - proposals/gantt-view-dependencies.md
   - plans/phase-3-profile-acl-ai.md
   - plans/completed/collation.md
+_path: proposals/ui-lifecycle-graph-view.md
 ---
 
 ## Problem

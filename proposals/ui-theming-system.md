@@ -1,6 +1,6 @@
 ---
 complexity: medium
-title: "UI — Theming and Customization System"
+title: UI — Theming and Customization System
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -9,12 +9,13 @@ tags:
   - white-label
   - css
   - phase-1
-approved: false
-created_by: "NetYeti@phoenix"
+approved: true
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - proposals/ui-white-label-brand-settings.md
   - docs/customization.md
+_path: proposals/ui-theming-system.md
 ---
 
 ## Problem
