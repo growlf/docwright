@@ -115,6 +115,62 @@ function checkPlanHasSource(file, fm) {
   return { ok: true };
 }
 
+// ---------------------------------------------------------------------------
+// Pending step enforcement (Deliverables 2 & 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * State-machine section scanner — no dependencies, no full-file regex.
+ *
+ * Returns true if the content has ⏳ in a table row inside either:
+ *   - The "## Implementation Steps" section, OR
+ *   - Any "### Task / Deliverable ... ✅" subsection
+ *
+ * Scoped tightly: ⏳ in prose, code blocks outside these sections is ignored.
+ */
+function hasPendingStepsInSection(content) {
+  const lines = content.split('\n');
+  let inSection = false;
+
+  for (const line of lines) {
+    // Major section header (##) — enter Implementation Steps, leave anything else
+    if (/^##\s/.test(line)) {
+      inSection = /^##\s+Implementation Steps\b/i.test(line);
+      continue;
+    }
+    // Task/deliverable subsection (###) — enter if marked ✅, leave otherwise
+    if (/^###\s/.test(line)) {
+      inSection = /✅/.test(line);
+      continue;
+    }
+    if (!inSection) continue;
+    // Inside a relevant section: flag any pipe-table row containing ⏳
+    if (line.startsWith('|') && line.includes('⏳')) return true;
+  }
+  return false;
+}
+
+/**
+ * Check that a plan being set to status:completed has no ⏳ pending steps.
+ * Also warn if any ✅ task section still has ⏳ rows (regardless of status).
+ */
+function checkPendingSteps(file, fm) {
+  if (!file.startsWith('plans/') || file.startsWith('plans/completed/')) return { ok: true };
+
+  let raw;
+  try { raw = fs.readFileSync(path.join(ROOT, file), 'utf8'); }
+  catch { return { ok: true }; }
+
+  if (!hasPendingStepsInSection(raw)) return { ok: true };
+
+  const isCompleting = String(fm.status) === 'completed';
+  const msg = isCompleting
+    ? `${file}: status=completed but ⏳ Pending rows remain in Implementation Steps.\n  Update all step rows before marking this plan complete.`
+    : `${file}: task marked ✅ Complete but Implementation Steps still has ⏳ Pending rows.\n  Update the step table in the same commit.`;
+
+  return { ok: false, error: msg };
+}
+
 /**
  * Validate a lifecycle file before commit.
  * Returns array of { ok, error } objects.
@@ -124,6 +180,7 @@ function validateFile(file, oldFm, newFm) {
   results.push(checkSelfApproval(file, oldFm, newFm));
   if (file.startsWith('plans/') && !file.startsWith('plans/completed/')) {
     results.push(checkPlanHasSource(file, newFm));
+    results.push(checkPendingSteps(file, newFm));
   }
   return results;
 }
@@ -185,9 +242,24 @@ if (require.main === module) {
       errors.forEach(e => console.error('ERROR:', e.error));
       process.exit(1);
     }
+  } else if (args.includes('--check-files')) {
+    // Efficient multi-file check — one Node.js invocation for all staged plan files
+    const files = args.slice(args.indexOf('--check-files') + 1).filter(a => !a.startsWith('--'));
+    let anyError = false;
+    for (const file of files) {
+      const fm = readFm(file);
+      if (!fm) continue;
+      const results = validateFile(file, null, fm);
+      const errors = results.filter(r => !r.ok);
+      if (errors.length > 0) {
+        errors.forEach(e => console.error('ERROR:', e.error));
+        anyError = true;
+      }
+    }
+    if (anyError) process.exit(1);
   } else {
-    console.log('Usage: node scripts/lifecycle-gate.js [--status|--audit|--check <file>|--json]');
+    console.log('Usage: node scripts/lifecycle-gate.js [--status|--audit|--check <file>|--check-files <file...>|--json]');
   }
 }
 
-module.exports = { validateFile, checkSelfApproval, checkPlanHasSource, logTransition, readAuditLog, getStatus };
+module.exports = { validateFile, checkSelfApproval, checkPlanHasSource, checkPendingSteps, hasPendingStepsInSection, logTransition, readAuditLog, getStatus };

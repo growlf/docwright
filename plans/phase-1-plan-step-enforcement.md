@@ -1,6 +1,7 @@
 ---
 title: Phase 1 — Plan Step Completion Enforcement
-status: approved
+status: completed
+completed_date: 2026-06-04
 author: NetYeti
 created: 2026-06-04
 phase: 1
@@ -14,12 +15,13 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
-scenario_synthesis: "Pre-commit hook script and UI enforcement; no deployment or shell steps beyond running the hook"
+scenario_synthesis: Pre-commit hook script and UI enforcement; no deployment or shell steps beyond running the hook
 tags:
   - phase-1
   - governance
   - enforcement
   - hooks
+_path: plans/phase-1-plan-step-enforcement.md
 ---
 
 # Phase 1 — Plan Step Completion Enforcement
@@ -45,10 +47,10 @@ Both are direct applications of the "code over memory" core policy.
 | # | Deliverable | Details | Status |
 |---|-------------|---------|--------|
 | 1 | UI: Complete button disabled when steps pending | ✅ Shipped — `$derived.by` counts ⏳ in Implementation Steps section; button shows count and tooltip | ✅ Done |
-| 2 | Pre-commit hook: warn on completed task with pending steps | Extend `scripts/gate-check.ts` (or create it) — detect `✅` task header with `⏳` step rows in same section; block commit with clear message | ⏳ Pending |
-| 3 | Pre-commit hook: block plan `status: completed` with pending steps | When a plan file transitions to `status: completed`, check for `⏳` in body; block if found | ⏳ Pending |
+| 2 | Pre-commit hook: warn on completed task with pending steps | `hasPendingStepsInSection()` state-machine parser + `checkPendingSteps()` added to `lifecycle-gate.js`; called from `validateFile()` | ✅ Done |
+| 3 | Pre-commit hook: block plan `status: completed` with pending steps | Same check; `--check-files` consolidates all staged plan files into one Node.js call; hook wired in pre-commit | ✅ Done |
 | 4 | Plan template: reminder note | ✅ Shipped — "When marking a task ✅ Complete, update every step row" note above Implementation Steps table | ✅ Done |
-| 5 | Test: hook fires correctly | Verify hook blocks a commit where task is marked done but steps are pending; confirm clean commits pass | ⏳ Pending |
+| 5 | Test: hook fires correctly | `test/hooks/test-pending-steps.js` — 9 cases: true-positive, false-positive (prose ⏳), non-✅ section, empty content | ✅ Done |
 
 ## Rationale for Phase 1
 
@@ -71,20 +73,17 @@ Must complete before Phase 2 begins alongside `phase-1-ui-polish` and
 
 *Reviewed by /critique-plan adversarial agent. Resolve ⚠️/🚫 before starting.*
 
-### Deliverable 2 — `gate-check.ts` reference 🚫 block
-- **Finding:** `gate-check.ts` does not exist. `lifecycle-gate.js` (~600 lines) does. The plan says "extend gate-check.ts (or create it)" — this undecided fork is a trap. An implementer will silently make an architecture choice mid-task.
-- **Action:** Remove `gate-check.ts` from the plan entirely. Deliverable 2 must state: "Add `checkPendingSteps(file, content)` to `scripts/lifecycle-gate.js`; call from `validateFile()`; invoke via `node scripts/lifecycle-gate.js --check <file>` in the pre-commit hook."
-- **Resolution:**
+### Deliverable 2 — `gate-check.ts` reference 🚫 block — RESOLVED
+- **Finding:** `gate-check.ts` does not exist. `lifecycle-gate.js` does.
+- **Resolution:** Deliverable 2 updated to extend `lifecycle-gate.js`. `gate-check.ts` reference removed entirely.
 
-### Deliverable 2 — Parsing strategy 🚫 block
-- **Finding:** The plan warns against regex but does not commit to an alternative. `remark`/`unified` adds a dep that must be `npm install`'d before hooks work on a fresh clone. That's a real contributor friction.
-- **Action:** Use a minimal state-machine section parser (30 lines, no deps) that tracks "inside Implementation Steps section" + "inside a pipe table row". The table format in this repo is consistent. Commit to this approach in the plan before writing a line of code.
-- **Resolution:**
+### Deliverable 2 — Parsing strategy 🚫 block — RESOLVED
+- **Finding:** No dep-free alternative was committed to.
+- **Resolution:** State-machine parser with no dependencies — tracks "inside Implementation Steps section" + "inside a pipe table row". ~30 lines. Consistent with this repo's table format.
 
-### Deliverable 3 — Section scope must match UI 🚫 block
-- **Finding:** The UI check scopes to the `## Implementation Steps` section. The hook must match exactly or they disagree — one will flag a plan the other passes.
-- **Action:** Explicitly state in Deliverable 3 that the check is scoped to the Implementation Steps section only, using the same parser as Deliverable 2.
-- **Resolution:**
+### Deliverable 3 — Section scope must match UI 🚫 block — RESOLVED
+- **Finding:** Scope was unspecified; UI and hook could disagree.
+- **Resolution:** Deliverable 3 explicitly scoped to Implementation Steps section using the same state-machine parser as Deliverable 2.
 
 ### Deliverable 5 — Manual smoke test is not a test ⚠️ warn
 - **Finding:** This plan's purpose is "code enforces, not memory." A manually-verified test produces no artifact and is inconsistent with that philosophy.

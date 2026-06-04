@@ -202,6 +202,17 @@ for FILE in $STAGED; do
     fi
 done
 
+# ── Pending steps enforcement (single Node.js call for all staged plan files) ──
+STAGED_PLANS=""
+for FILE in $STAGED; do
+    [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && STAGED_PLANS="$STAGED_PLANS $FILE"
+done
+if [ -n "$STAGED_PLANS" ] && command -v node &>/dev/null; then
+    if ! node scripts/lifecycle-gate.js --check-files $STAGED_PLANS 2>&1; then
+        ((ERRORS++))
+    fi
+fi
+
 # ── Auto-version bump ──────────────────────────────────────────────────────
 # If any staged plan file is being set to status: completed, recalculate
 # and update VERSION + package.json, then stage both.
