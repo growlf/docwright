@@ -31,7 +31,16 @@
   let collationMatches = $state<any[]>([]);
   let collationLoading = $state(false);
 
+  // Clear collation when navigating to a new doc
+  $effect(() => {
+    $currentDoc.filePath;  // reactive dependency
+    collationMatches = [];
+    collationLoading = false;
+    rightTab = 'properties';  // reset to properties tab on navigation
+  });
+
   async function findRelated(filePath: string) {
+    if (!filePath) return;
     rightTab = 'related';
     showRightPanel = true;
     collationLoading = true;
@@ -195,18 +204,20 @@
     </div>
 
     {#if rightTab === 'properties'}
-      {#if $currentDoc.frontmatter}
-        <PropertiesPane
-          bind:frontmatter={$currentDoc.frontmatter}
-          docType={$currentDoc.docType}
-          mode={$currentDoc.mode}
-          onsave={$currentDoc.onSave}
-          onapprove={$currentDoc.onApprove}
-          onfindrelated={() => findRelated($currentDoc.filePath)}
-        />
-      {:else}
-        <div class="right-empty">Open a document to see its properties</div>
-      {/if}
+      {#key $currentDoc.filePath}
+        {#if $currentDoc.frontmatter}
+          <PropertiesPane
+            bind:frontmatter={$currentDoc.frontmatter}
+            docType={$currentDoc.docType}
+            mode={$currentDoc.mode}
+            onsave={$currentDoc.onSave}
+            onapprove={$currentDoc.onApprove}
+            onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
+          />
+        {:else}
+          <div class="right-empty">Open a document to see its properties</div>
+        {/if}
+      {/key}
     {:else}
       <CollationPanel
         matches={collationMatches}
