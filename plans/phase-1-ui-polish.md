@@ -105,11 +105,11 @@ promoted to a tab on the right panel.
 
 ---
 
-### Task 3 — Activity Bar and Always-Visible Toolbar
+### Task 3 — Activity Bar and Always-Visible Toolbar ✅
 
 **Proposal:** [[proposals/ui-settings-activity-bar.md]]
-**Effort:** L (1–2 days)
-**Status:** ⏳ Pending
+**Commit:** 60874c4
+**Status:** ✅ Complete
 
 An always-visible top toolbar (desktop and mobile) anchoring the home icon
 and an activity bar providing distinct entry points for Files, Settings, and
