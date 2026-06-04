@@ -13,6 +13,7 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
+  - phase-1-critique-skill
 scenario_synthesis: Docker build and deployment config; no UI changes; no shell execution beyond docker build/run testing
 tags:
   - phase-1
@@ -116,27 +117,47 @@ Kubernetes/Helm — see \[\[proposals/kubernetes-deployment.md\]\]. Docker compo
 
 ## Critical Review — Open Questions Before Starting
 
-### Alpine Linux Python compatibility risk
+*Reviewed by /critique-plan adversarial agent. Resolve ⚠️/🚫 before starting.*
 
-*   `node:22-alpine` uses musl libc. If the Python MCP server has any native C-extension dependencies (even transitive), the build will silently fail or produce an unusable image.
-*   **Action:** Check `scripts/mcp-server.py` imports fully. If any native deps exist, switch to `node:22-bookworm` (Debian-based). Larger image, but compatible.
+### Dockerfile — Alpine Linux is confirmed incompatible 🚫 block
+- **Finding:** `mcp` → `pydantic` → `pydantic-core` (Rust extension) and `mcp` → `pyjwt` → `cryptography` → `cffi` (C extension). Alpine's musl libc is ABI-incompatible. `pip install mcp` on alpine will fail or require full Rust+gcc toolchain. This is confirmed — not a risk to assess.
+- **Action:** Switch to `node:22-bookworm-slim`. Decision must be documented in writing before Dockerfile work begins.
+- **Resolution:**
 
-### `.netrc` for git auth is deprecated
+### `.dockerignore` — `opencode.json` encodes host-local paths 🚫 block
+- **Finding:** `opencode.json` has `DOCWRIGHT_ROOT` hardcoded to `/home/netyeti/Projects/DocWright` and `.venv` paths. If baked into the image it silently breaks MCP for every other user. It is NOT in `.gitignore`. `VERSION` is also new and needs handling.
+- **Action:** Add `opencode.json` and `VERSION` to `.dockerignore`. Consider adding `opencode.json` to `.gitignore`. Add a note to `docs/docker.md`: opencode.json is a workstation artifact, never include in a distributed image.
+- **Resolution:**
 
-*   Modern Forgejo and GitHub prefer SSH keys or token-based HTTPS, not `.netrc`.
-*   **Action:** Change to SSH key mounting (`-v ~/.ssh:/root/.ssh:ro`) as the recommended pattern. Document the token approach as a fallback only.
+### Deliverable 7 — MCP transport must be decided first 🚫 block
+- **Finding:** `mcp.run()` uses stdio by default — no HTTP endpoint to curl. "MCP registers" is unverifiable without choosing a transport. If SSE mode: need HTTP endpoint. If stdio mode: "registers" means "exits 0 with --test flag." Fixture vault also still unaddressed.
+- **Action:** Choose transport, document it, write the verification command before marking Deliverable 7 in-progress.
+- **Resolution:**
 
-### No `/health` endpoint on the server
+### Deliverable 2 — `.netrc` still in table description ⚠️ warn
+- **Finding:** The table says "writes .netrc for GIT_TOKEN auth" even though the plan's own review flags .netrc as deprecated. An implementer reading only the table will build the wrong thing.
+- **Action:** Update Deliverable 2 description: "mounts SSH key; .netrc is fallback-only and documented as such."
+- **Resolution:**
 
-*   The health check `wget -qO- http://localhost:5173/api/status` calls the full status API (reads vault, parses files). This is heavy for a health check.
-*   **Action:** Add a lightweight `GET /api/health` endpoint (returns `{ok:true}`) and use that in HEALTHCHECK. The status page endpoint is for humans.
+### GitHub Actions CI — Node version mismatch ⚠️ warn
+- **Finding:** `ci.yml` uses `node-version: '20'`. Dockerfile will use Node 22. Version differences won't be caught.
+- **Action:** Update CI to Node 22 when this plan is implemented.
+- **Resolution:**
 
-### Deliverable 7 (test scenario) is vague
+### `mcp-server.py` — `/tmp` cache hardcoded ⚠️ warn
+- **Finding:** `CACHE_FILE = Path("/tmp/docwright-status-cache.txt")` breaks in non-root or multi-instance containers.
+- **Action:** Parameterise via `DOCWRIGHT_CACHE_DIR` env var (default `/tmp`). One-line change.
+- **Resolution:**
 
-*   "docker compose up → vault accessible, git panel works, MCP registers" — how do we verify these from CI? Needs:
-    *   A fixture vault (minimal git repo)
-    *   A curl-based verification script
-    *   A definition of "MCP registers" (what endpoint proves it?)
+### `depends_on` missing `phase-1-critique-skill` 📝 note
+- **Finding:** Containerization should not ship before the critique skill can review the Dockerfile and compose files.
+- **Action:** Add `phase-1-critique-skill` to `depends_on:` frontmatter.
+- **Resolution:**
+
+### No `/health` endpoint 📝 note
+- **Finding:** `GET /api/status` reads the vault on every call — too heavy for HEALTHCHECK.
+- **Action:** Add lightweight `GET /api/health` returning `{ok:true}` and use that in HEALTHCHECK.
+- **Resolution:**
 
 ## Document History
 

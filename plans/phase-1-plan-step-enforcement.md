@@ -69,31 +69,37 @@ Must complete before Phase 2 begins alongside `phase-1-ui-polish` and
 
 ## Critical Review — Open Questions Before Starting
 
-### `scripts/gate-check.ts` doesn't exist yet
-- Deliverable 2 says "Extend `scripts/gate-check.ts` (or create it)" — it must
-  be created. There is a `lifecycle-gate.js` (Node.js, ~600 lines) but it is
-  not the same file. Decide: extend the existing JS, or create a new TS script.
-  Pick one before starting.
+*Reviewed by /critique-plan adversarial agent. Resolve ⚠️/🚫 before starting.*
 
-### Markdown section parsing must not use regex
-- Detecting "✅ task header" + "⏳ rows in the Implementation Steps section
-  below it" requires understanding markdown structure — not just pattern matching.
-- Regex on the whole file will produce false positives (✅/⏳ in prose text,
-  code blocks, commit messages).
-- **Action:** Use `marked` or `remark` to parse the markdown AST, then walk
-  sections. This is harder but correct.
+### Deliverable 2 — `gate-check.ts` reference 🚫 block
+- **Finding:** `gate-check.ts` does not exist. `lifecycle-gate.js` (~600 lines) does. The plan says "extend gate-check.ts (or create it)" — this undecided fork is a trap. An implementer will silently make an architecture choice mid-task.
+- **Action:** Remove `gate-check.ts` from the plan entirely. Deliverable 2 must state: "Add `checkPendingSteps(file, content)` to `scripts/lifecycle-gate.js`; call from `validateFile()`; invoke via `node scripts/lifecycle-gate.js --check <file>` in the pre-commit hook."
+- **Resolution:**
 
-### Pre-commit hook performance
-- The hook currently takes ~0.5s. Adding a Node.js script invocation adds
-  ~0.3–0.8s depending on startup time. Over threshold (>1s) harms DX.
-- **Action:** If using Node.js, compile the check to a plain JS bundle
-  (no ts-node) so startup is fast. Or implement the check purely in bash
-  (simpler, faster, but regex-only).
+### Deliverable 2 — Parsing strategy 🚫 block
+- **Finding:** The plan warns against regex but does not commit to an alternative. `remark`/`unified` adds a dep that must be `npm install`'d before hooks work on a fresh clone. That's a real contributor friction.
+- **Action:** Use a minimal state-machine section parser (30 lines, no deps) that tracks "inside Implementation Steps section" + "inside a pipe table row". The table format in this repo is consistent. Commit to this approach in the plan before writing a line of code.
+- **Resolution:**
 
-### User experience when blocked
-- When the hook blocks a commit, what does the message say?
-- Must tell the developer: which file, which task, how many steps are pending.
-- This is UX design, not just code. Specify the error message format.
+### Deliverable 3 — Section scope must match UI 🚫 block
+- **Finding:** The UI check scopes to the `## Implementation Steps` section. The hook must match exactly or they disagree — one will flag a plan the other passes.
+- **Action:** Explicitly state in Deliverable 3 that the check is scoped to the Implementation Steps section only, using the same parser as Deliverable 2.
+- **Resolution:**
+
+### Deliverable 5 — Manual smoke test is not a test ⚠️ warn
+- **Finding:** This plan's purpose is "code enforces, not memory." A manually-verified test produces no artifact and is inconsistent with that philosophy.
+- **Action:** Add a shell test in `test/hooks/` that creates a fixture file, stages it, asserts hook exits non-zero. Include true-positive, false-positive (prose `⏳`), and clean-commit cases.
+- **Resolution:**
+
+### Deliverable 1 — UI regex has the same false-positive risk 📝 note
+- **Finding:** The shipped UI check also uses regex on the section content. A `⏳` in a code block or blockquote inside the Implementation Steps section will fire falsely.
+- **Action:** Document as a known Phase 1 limitation. When Deliverable 2's state-machine parser exists, update the UI to use it for consistency.
+- **Resolution:**
+
+### Hook performance — consolidate Node.js calls 📝 note
+- **Finding:** The hook now runs `node scripts/version.js` on plan completion. Adding per-file `node lifecycle-gate.js` calls compounds cold-start time. On 3 staged plan files: 4+ Node invocations, potentially 2-4 seconds.
+- **Action:** Extend `lifecycle-gate.js --check` to also run pending-steps validation, and pass all staged files in one invocation. Do not fan out.
+- **Resolution:**
 
 ## Document History
 

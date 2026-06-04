@@ -1,6 +1,7 @@
 ---
 title: Phase 1 — UI Polish
-status: in-progress
+status: completed
+completed_date: 2026-06-04
 author: NetYeti
 created: 2026-06-03
 phase: 1
