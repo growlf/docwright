@@ -70,21 +70,15 @@ They are recorded for the audit trail.
 
 ## Remaining Tasks
 
-### Task 1 — Immutable H1 from frontmatter title
+### Task 1 — Immutable H1 from frontmatter title ✅
 
 **Proposal:** [[proposals/ui-immutable-title-h1.md]]
-**Effort:** XS (~30 min)
-**Status:** ⏳ Pending
+**Commit:** 17551ca
+**Status:** ✅ Complete
 
-Render `frontmatter.title` as a non-editable `<h1>` at the top of the document
-body in read and WYSIWYG modes. Title is outside `contenteditable`. Title
-changes go through the properties pane only. Source mode unaffected.
-
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Add H1 to read mode | Insert `<h1 class="doc-h1">{frontmatter.title}</h1>` above `<MarkdownRenderer>` in `+page.svelte`, only when `frontmatter.title` is set and `docType !== 'page'` | ⏳ Pending |
-| 2 | Exclude from WYSIWYG | Place H1 above the `wysiwyg` div, not inside `contenteditable` | ⏳ Pending |
-| 3 | Style | `.doc-h1` — consistent with document typography; clear visual separation from toolbar title | ⏳ Pending |
+Frontmatter title rendered as `<h1 class="doc-h1">` above document body in
+read and WYSIWYG modes. Outside `contenteditable`. Proposals, plans, docs only.
+Source mode unaffected. Styled with bottom border and 1.75em weight.
 
 ---
 
