@@ -10,12 +10,13 @@ tags:
   - plans
   - automation
   - phase-2
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - policies/core/multi-perspective-review.md
   - policies/core/code-over-memory.md
+_path: proposals/skill-plan-critique.md
 ---
 
 ## Problem
