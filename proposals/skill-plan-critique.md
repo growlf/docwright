@@ -9,7 +9,7 @@ tags:
   - skills
   - plans
   - automation
-  - phase-2
+  - phase-1
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti

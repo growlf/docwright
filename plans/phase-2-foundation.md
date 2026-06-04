@@ -17,9 +17,9 @@ automated: off
 assigned_to: NetYeti
 proposal_source:
   - proposals/containerization.md
-  - proposals/skill-plan-critique.md
 depends_on:
   - phase-1-ui-polish
+  - phase-1-critique-skill
   - phase-1-containerization
   - phase-1-plan-step-enforcement
 scenario_synthesis: "Web UI and dispatch module work; no VSCodium extension or IDE-specific steps"
@@ -52,7 +52,7 @@ own sub-plan when work begins.
 | 5 | GitHub Actions CI — lint + typecheck + unit tests | ⏳ Planned | `.github/workflows/ci.yml`; no .vsix step (that belongs in VSCodium plan) |
 | 6 | FOSS hygiene files | ⏳ Planned | CHANGELOG.md, SECURITY.md, CONTRIBUTING.md, NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml |
 | 7 | MCP server — TypeScript rewrite | ⏳ Planned | Replace `scripts/mcp-server.py` with `src/dispatch/mcp-server.ts`; eliminates Python dependency from container; aligns with dispatch module |
-| 8 | `/critique-plan` skill — `scripts/critique-plan.js` | ⏳ Planned | Tool-agnostic context gatherer; works with Claude, OpenCode, and any AI. See [[proposals/skill-plan-critique.md]] |
+| 8 | MCP server tools — expand governance tool coverage | ⏳ Planned | Additional dispatch tools beyond Phase 1 skeleton |
 
 ## Phase Context
 
