@@ -7,7 +7,7 @@ tags:
   - infrastructure
   - deployment
   - docker
-  - phase-2
+  - phase-1
 category:
   - infrastructure
 complexity: medium

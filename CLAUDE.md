@@ -146,8 +146,8 @@ Key deliverables:
 - GitHub Actions CI: lint + typecheck + unit tests (no .vsix yet)
 - All FOSS hygiene files: CHANGELOG.md, SECURITY.md, CONTRIBUTING.md,
   NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml
-- Containerization: Dockerfile + docker-compose for multi-instance deploy
 - TypeScript MCP server replacing Python mcp-server.py
+- (Containerization completed in Phase 1)
 
 ## VSCodium Extension (after alpha)
 

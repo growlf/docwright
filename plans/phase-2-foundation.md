@@ -17,6 +17,7 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
+  - phase-1-containerization
 scenario_synthesis: "Web UI and dispatch module work; no VSCodium extension or IDE-specific steps"
 ---
 
@@ -46,8 +47,7 @@ own sub-plan when work begins.
 | 4 | `author-role:` in ALL profile templates | ⏳ Planned | Audit: verify every template in all four bundled profiles includes the field |
 | 5 | GitHub Actions CI — lint + typecheck + unit tests | ⏳ Planned | `.github/workflows/ci.yml`; no .vsix step (that belongs in VSCodium plan) |
 | 6 | FOSS hygiene files | ⏳ Planned | CHANGELOG.md, SECURITY.md, CONTRIBUTING.md, NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml |
-| 7 | Containerization — Dockerfile + docker-compose | ⏳ Planned | Multi-stage build; enables multi-instance deployment; eliminates venv/dependency fragility. See [[proposals/containerization.md]] |
-| 8 | MCP server — TypeScript rewrite | ⏳ Planned | Replace `scripts/mcp-server.py` with `src/dispatch/mcp-server.ts`; eliminates Python venv dependency; aligns with dispatch module |
+| 7 | MCP server — TypeScript rewrite | ⏳ Planned | Replace `scripts/mcp-server.py` with `src/dispatch/mcp-server.ts`; eliminates Python dependency from container; aligns with dispatch module |
 
 ## Phase Context
 
@@ -59,8 +59,9 @@ Complete polished Web UI: file tree, editor, properties, status, funnel view,
 AI chat panel, brand system, activity bar, phase gate, deployment docs.
 
 ### Phase 2 (this plan) — Web-First Foundation
-Profile engine, dispatch CI, inbox, CI pipeline, FOSS hygiene, containerization,
-TypeScript MCP server. Web tool stable before IDE work begins.
+Profile engine, dispatch CI, inbox, CI pipeline, FOSS hygiene, TypeScript MCP
+server. Containerization completed in Phase 1 — Phase 2 begins from a stable
+containerized base.
 
 ### VSCodium Extension (after alpha)
 See [[plans/phase-vscodium-extension.md]]. Begins after the web tool has been
