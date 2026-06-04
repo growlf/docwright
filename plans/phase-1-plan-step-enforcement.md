@@ -58,7 +58,6 @@ Git pre-commit (`.githooks/pre-commit`) remains the final backstop via
 See [[docs/ai-governance-enforcement.md]] and
 [[policies/core/workflow-layer-governance.md]] for the full architecture.
 
-![AI governance enforcement layers](../docs/governance_enforcement_layers.svg)
 
 ## Implementation Steps
 

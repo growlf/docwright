@@ -11,9 +11,10 @@
   import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
   import markdownit from 'markdown-it';
+  import taskLists from 'markdown-it-task-lists';
 
   const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
-  const md = markdownit({ html: true, linkify: false });
+  const md = markdownit({ html: true, linkify: false }).use(taskLists, { enabled: true });
 
   let raw = $state('');
   let content = $state('');

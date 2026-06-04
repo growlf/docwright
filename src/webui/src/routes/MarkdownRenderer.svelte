@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import markdownit from 'markdown-it';
   import anchor from 'markdown-it-anchor';
+  import taskLists from 'markdown-it-task-lists';
 
   let { content }: { content: string } = $props();
 
@@ -12,7 +13,8 @@
       permalink: false,
       slugify: (s: string) =>
         s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, ''),
-    });
+    })
+    .use(taskLists, { enabled: true });
 
   function handleClick(e: MouseEvent) {
     const el = (e.target as HTMLElement).closest('a');
