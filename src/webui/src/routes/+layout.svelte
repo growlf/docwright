@@ -31,12 +31,13 @@
   let collationMatches = $state<any[]>([]);
   let collationLoading = $state(false);
 
-  // Clear collation when navigating to a new doc
+  // On navigation: clear stale collation data; honour the active tab
   $effect(() => {
-    $currentDoc.filePath;  // reactive dependency
+    const fp = $currentDoc.filePath;
     collationMatches = [];
     collationLoading = false;
-    rightTab = 'properties';  // reset to properties tab on navigation
+    // If Related tab is active, auto-rescan for the new document
+    if (rightTab === 'related' && fp) findRelated(fp);
   });
 
   async function findRelated(filePath: string) {
