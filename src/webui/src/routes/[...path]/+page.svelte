@@ -354,7 +354,7 @@
     <div class="toolbar">
       <div class="doc-identity">
         {#if frontmatter?.title}
-          <span class="doc-title">{frontmatter.title}</span>
+          <h1 class="doc-title">{frontmatter.title}</h1>
           <span class="path">{filePath()}</span>
         {:else}
           <span class="path path-only">{filePath()}</span>
@@ -405,17 +405,11 @@
         <button class="fmt-btn" onclick={() => execCmd('createLink', prompt('URL:') ?? '')} title="Link">🔗</button>
         <button class="fmt-btn" onclick={() => execCmd('formatBlock', '<pre>')} title="Code">&lt;/&gt;</button>
       </div>
-      {#if frontmatter?.title && docType !== 'page'}
-        <h1 class="doc-h1">{frontmatter.title}</h1>
-      {/if}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div id="wysiwyg-editor" class="wysiwyg" contenteditable="true"
         oninput={syncHtmlToRaw} use:setEditorHtml></div>
 
     {:else}
-      {#if frontmatter?.title && docType !== 'page'}
-        <h1 class="doc-h1">{frontmatter.title}</h1>
-      {/if}
       {#if frontmatter && Array.isArray(frontmatter.depends_on) && frontmatter.depends_on.length > 0}
         <div class="dep-row">
           <span class="dep-label">Depends on:</span>
@@ -458,7 +452,6 @@
   .nf-btn:hover { border-color: #555; color: #ccc; }
   .nf-btn.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
   .nf-btn.primary:hover { background: #1a3a5a; }
-  .doc-h1 { font-size: 1.75em; font-weight: 700; color: #fff; margin: 0 0 20px; padding-bottom: 10px; border-bottom: 1px solid #222; line-height: 1.25; }
   .body   { line-height: 1.6; }
   .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #181818; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
   .dep-label { color: #555; font-weight: 600; }
@@ -468,7 +461,7 @@
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; gap: 12px; }
   .doc-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-  .doc-title { font-size: 15px; font-weight: 600; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-title { font-size: 1.4em; font-weight: 700; color: #fff; margin: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .path   { font-size: 11px; color: #555; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .path-only { font-size: 13px; color: #888; }
   .actions { display: flex; gap: 6px; }
@@ -510,7 +503,7 @@
     /* Toolbar: keep it compact, hide low-priority actions */
     .toolbar { flex-wrap: wrap; gap: 4px; }
     .path { display: none; }           /* path shown in topbar on mobile; hide here */
-    .doc-title { font-size: 14px; }    /* title stays visible on mobile */
+    .doc-title { font-size: 1.1em; }   /* title stays visible on mobile */
   /* props-toggle removed */
 
     /* Touch-friendly button sizing */
