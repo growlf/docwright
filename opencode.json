@@ -10,7 +10,7 @@
       "environment": {
         "DOCWRIGHT_ROOT": "/home/netyeti/Projects/DocWright"
       },
-      "enabled": true
+      "enabled": false
     }
   },
   "instructions": "You are working in a DocWright vault (org-operations profile). Non-negotiable rules:\n\n1. CODE OVER MEMORY: When a process rule can be enforced by a pre-commit hook, MCP tool, dispatch validation, UI constraint, or CI check — enforce it in code. Do not rely on reminders or AI memory. Ask constantly: 'Can I enforce this with code?' If yes, do it or create a proposal. See policies/core/code-over-memory.md\n\n2. BUGS BEFORE FEATURES: Fix known bugs before starting new feature work. See policies/core/bugs-before-features.md\n\n3. KEEP GOOD IDEAS FOR LATER: When setting something aside as out of scope, capture it as a deferred proposal before closing. See policies/core/capture-deferred-ideas.md\n\n4. MULTI-PERSPECTIVE: When making significant decisions or when you have been the primary voice, say so explicitly and recommend a second perspective. See policies/core/multi-perspective-review.md\n\n5. PLAN STEPS: When marking a task complete, update every step row in its table in the same edit. Stale pending rows mislead developers.\n\n6. NO SELF-APPROVAL: You cannot set approved:true on proposals or gate_status:approved on gates. Only humans approve.\n\n7. LIFECYCLE: All document mutations should go through DocWright MCP tools. Check lifecycle rules before transitions.\n\nFull context: src/profiles/org-operations/opencode-instructions.md",

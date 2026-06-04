@@ -96,6 +96,8 @@
   let checking      = $state(true);
   let showSettings  = $state(false);
   let mcpRegistered = $state(false);
+  let mcpEnabled    = $state(false);
+  let mcpStatus     = $state('');
   let procStatus    = $state<ProcStatus>('stopped');
   let starting      = $state(false);
   let startMsg      = $state('');
@@ -339,6 +341,16 @@
     messages = [...messages, { id: 'tmp-' + Date.now(), role: 'user', parts: [{ type: 'text', text }] }];
     scrollToBottom();
 
+    // Safety timeout: if the POST doesn't resolve within 60s of starting,
+    // force-clear the sending state so the UI doesn't hang.
+    sendTimeout = setTimeout(() => {
+      if (!sending) return;
+      console.warn('[DocWright chat] Send safety timeout — forcing idle');
+      sending = false;
+      statusText = '';
+      if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+    }, 60000);
+
     try {
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
@@ -365,27 +377,36 @@
           .filter((p: any) => p.type === 'text' && normalizeRole(p.role ?? 'assistant') === 'assistant')
           .map((p: any) => p.text ?? '')
           .join('');
+        if (!textContent) return;
 
-        const msgId = data.info?.id ?? data.message?.id ?? data.id ?? `ai-${Date.now()}`;
+        const msgId = data.info?.id ?? data.message?.id ?? data.id;
 
-        // Only add if SSE hasn't already added this message
-        const alreadyAdded = messages.some(m => m.id === msgId);
-        if (!alreadyAdded && textContent) {
-          messages = [...messages, {
-            id: msgId,
-            role: 'assistant',
-            parts: [{ type: 'text', text: textContent }],
-          }];
-          scrollToBottom();
-        } else if (alreadyAdded && textContent) {
-          // SSE may have partial text; update with complete response
-          const idx = messages.findIndex(m => m.id === msgId);
+        // Try to find an existing assistant message to update.
+        // Match by: (1) exact ID, or (2) content overlap (SSE may use a different ID).
+        let target = msgId ? messages.find(m => m.id === msgId) : undefined;
+        if (!target) {
+          target = messages.find(m =>
+            m.role === 'assistant' &&
+            m.parts.some(p => p.type === 'text' && p.text && textContent.startsWith(p.text.substring(0, 80)))
+          );
+        }
+
+        if (target) {
+          const idx = messages.indexOf(target);
           if (idx >= 0) {
             const updated = [...messages];
             const tp = updated[idx].parts.find(p => p.type === 'text');
             if (tp) tp.text = textContent;
             messages = updated;
           }
+        } else {
+          // No pre-existing assistant message at all — add from POST response
+          messages = [...messages, {
+            id: msgId ?? `ai-${Date.now()}`,
+            role: 'assistant',
+            parts: [{ type: 'text', text: textContent }],
+          }];
+          scrollToBottom();
         }
       }
     } catch (e) {
@@ -422,14 +443,28 @@
 
   async function ensureMcp() {
     try {
-      // Check current state
       const check = await fetch('/api/opencode-config');
       if (!check.ok) return;
       const state = await check.json();
-      if (state.registered) { mcpRegistered = true; return; }
-      // Register if not already
+      mcpStatus = state.mcpStatus ?? '';
+      if (state.registered) {
+        mcpRegistered = true;
+        mcpEnabled = state.enabled === true;
+        // Re-register if registered but enabled state is wrong
+        if (!mcpEnabled && state.mcpStatus !== 'unavailable') {
+          const reg = await fetch('/api/opencode-config', { method: 'POST' });
+          if (reg.ok) { const d = await reg.json(); mcpEnabled = d.enabled; mcpStatus = d.mcpStatus; }
+        }
+        return;
+      }
+      // Register fresh
       const reg = await fetch('/api/opencode-config', { method: 'POST' });
-      if (reg.ok) { const d = await reg.json(); mcpRegistered = d.registered; }
+      if (reg.ok) {
+        const d = await reg.json();
+        mcpRegistered = d.registered;
+        mcpEnabled    = d.enabled;
+        mcpStatus     = d.mcpStatus ?? '';
+      }
     } catch { /* non-critical */ }
   }
 
@@ -501,8 +536,12 @@
       {/if}
       <div class="setting-row">
         <span class="setting-label">MCP</span>
-        {#if mcpRegistered}
-          <span class="mcp-ok">✓ DocWright tools registered</span>
+        {#if mcpEnabled}
+          <span class="mcp-ok">✓ MCP active ({mcpStatus})</span>
+        {:else if mcpRegistered}
+          <span class="mcp-warn">⚠ Registered but disabled</span>
+          <span class="mcp-hint">{mcpStatus === 'unavailable' ? 'Run: pip install mcp' : ''}</span>
+          <button class="setting-retry" onclick={ensureMcp}>Retry</button>
         {:else}
           <span class="mcp-warn">⚠ Not registered</span>
           <button class="setting-retry" onclick={ensureMcp}>Register</button>
@@ -673,6 +712,7 @@
   .setting-retry:hover { border-color: #555; color: #ccc; }
   .mcp-ok       { font-size: 11px; color: #6d6; }
   .mcp-warn     { font-size: 11px; color: #cc6; }
+  .mcp-hint     { font-size: 10px; color: #555; font-family: monospace; }
   .setting-warn { font-size: 10px; color: #e87; background: #2a1500; border: 1px solid #553300; border-radius: 3px; padding: 4px 8px; }
   .setting-warn code { color: #58a6ff; font-family: monospace; }
 

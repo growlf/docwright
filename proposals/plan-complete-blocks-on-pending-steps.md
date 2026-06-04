@@ -15,6 +15,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/plan-step-completion-enforcement.md
   - policies/core/code-over-memory.md
+  - proposals/phase-gate-sign-off.md
 _path: proposals/plan-complete-blocks-on-pending-steps.md
 ---
 ## Problem

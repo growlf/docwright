@@ -1,13 +1,12 @@
 /**
- * Ensures opencode.json in the vault root has the DocWright MCP server
- * registered. Merges into any existing config — never overwrites.
- *
- * Called by the ChatPanel on mount so the AI has governance tools
- * available from the first session.
+ * Manages the DocWright MCP entry in opencode.json.
+ * Only enables the MCP server if it can actually start — a broken MCP
+ * entry causes OpenCode to hang on every message while it retries.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { json } from '@sveltejs/kit';
 
 const REPO_ROOT = (() => {
@@ -16,12 +15,27 @@ const REPO_ROOT = (() => {
 })();
 
 const MCP_SERVER_PATH = path.join(REPO_ROOT, 'scripts', 'mcp-server.py');
+const NODE_MCP_PATH   = path.join(REPO_ROOT, 'dist', 'mcp-server.js');
 const OPENCODE_JSON   = path.join(REPO_ROOT, 'opencode.json');
 
-function buildMcpEntry() {
-  // Use Python if mcp-server.py exists; fall back to node dist when TypeScript version ships
-  const hasPython = fs.existsSync(MCP_SERVER_PATH);
-  if (hasPython) {
+type McpStatus = 'python-ok' | 'node-ok' | 'unavailable';
+
+function probeMcpServer(): McpStatus {
+  // Quick syntax-check the Python server (doesn't run it, just validates)
+  if (fs.existsSync(MCP_SERVER_PATH)) {
+    const result = spawnSync('python3', ['-c', `
+import sys, importlib.util
+spec = importlib.util.find_spec('mcp')
+sys.exit(0 if spec else 1)
+`], { timeout: 3000 });
+    if (result.status === 0) return 'python-ok';
+  }
+  if (fs.existsSync(NODE_MCP_PATH)) return 'node-ok';
+  return 'unavailable';
+}
+
+function buildMcpEntry(status: McpStatus) {
+  if (status === 'python-ok') {
     return {
       type: 'local',
       command: ['python3', MCP_SERVER_PATH],
@@ -29,28 +43,40 @@ function buildMcpEntry() {
       enabled: true,
     };
   }
-  // TypeScript MCP server (Phase 2 dispatch module)
-  const nodePath = path.join(REPO_ROOT, 'dist', 'mcp-server.js');
+  if (status === 'node-ok') {
+    return {
+      type: 'local',
+      command: ['node', NODE_MCP_PATH],
+      environment: { DOCWRIGHT_ROOT: REPO_ROOT },
+      enabled: true,
+    };
+  }
+  // Server not available — register disabled so it doesn't cause hangs
   return {
     type: 'local',
-    command: ['node', nodePath],
+    command: ['python3', MCP_SERVER_PATH],
     environment: { DOCWRIGHT_ROOT: REPO_ROOT },
-    enabled: true,
+    enabled: false,
+    _note: 'Disabled: mcp package not installed. Run: pip install mcp',
   };
 }
 
-/** GET — returns current opencode.json content + whether MCP is registered */
+/** GET — status: registered, enabled, mcp server availability */
 export function GET() {
   let existing: Record<string, any> = {};
   if (fs.existsSync(OPENCODE_JSON)) {
     try { existing = JSON.parse(fs.readFileSync(OPENCODE_JSON, 'utf-8')); } catch { /* ignore */ }
   }
-  const registered = !!existing?.mcp?.docwright;
-  return json({ config: existing, registered, mcpServerExists: fs.existsSync(MCP_SERVER_PATH) });
+  const entry = existing?.mcp?.docwright;
+  const registered = !!entry;
+  const enabled    = registered && entry.enabled === true;
+  const mcpStatus  = probeMcpServer();
+  return json({ registered, enabled, mcpStatus, mcpServerExists: fs.existsSync(MCP_SERVER_PATH) });
 }
 
-/** POST — merge DocWright MCP entry into opencode.json */
+/** POST — register MCP entry; enable only if server is actually usable */
 export function POST() {
+  const mcpStatus = probeMcpServer();
   let existing: Record<string, any> = {};
   if (fs.existsSync(OPENCODE_JSON)) {
     try { existing = JSON.parse(fs.readFileSync(OPENCODE_JSON, 'utf-8')); } catch { /* start fresh */ }
@@ -60,13 +86,22 @@ export function POST() {
     ...existing,
     mcp: {
       ...(existing.mcp ?? {}),
-      docwright: buildMcpEntry(),
+      docwright: buildMcpEntry(mcpStatus),
     },
   };
 
   try {
     fs.writeFileSync(OPENCODE_JSON, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
-    return json({ ok: true, registered: true, config: merged });
+    const ok = mcpStatus !== 'unavailable';
+    return json({
+      ok,
+      registered: true,
+      enabled: ok,
+      mcpStatus,
+      message: ok
+        ? 'MCP server registered and enabled'
+        : 'MCP server registered but disabled — mcp package not installed (pip install mcp)',
+    });
   } catch (e: any) {
     return json({ ok: false, error: e.message }, { status: 500 });
   }
