@@ -38,9 +38,9 @@ See [[proposals/skill-plan-critique.md]] for the full specification.
 
 | # | Deliverable | Details | Status |
 |---|-------------|---------|--------|
-| 1 | `scripts/critique-plan.js` | Reads plan + referenced proposals + downstream plans + core policies; outputs structured context block with critic questions embedded. Pure context-gathering — no AI reasoning. | ⏳ Pending |
-| 2 | `.claude/skills/critique-plan.md` | Claude Code wrapper: runs script, passes output to Agent, presents findings for human review, commits on approval with HUMAN_APPROVED=1 | ⏳ Pending |
-| 3 | OpenCode usage documented | Instructions in `docs/skills.md` for piping script output to any AI session (OpenCode, BigPickle, any model) | ⏳ Pending |
+| 1 | `scripts/critique-plan.js` | Reads plan + referenced proposals + downstream plans + core policies; outputs structured context block with critic questions embedded. Pure context-gathering — no AI reasoning. | ✅ Done |
+| 2 | `.claude/skills/critique-plan.md` | Claude Code wrapper: runs script, passes output to Agent, presents findings for human review, commits on approval with HUMAN_APPROVED=1 | ✅ Done |
+| 3 | OpenCode usage documented | Instructions in `docs/skills.md` for piping script output to any AI session (OpenCode, BigPickle, any model) | ✅ Done |
 | 4 | Run on all existing Phase 1 plans | Execute `/critique-plan` on phase-1-containerization, phase-1-plan-step-enforcement; update Critical Review sections with any new findings | ⏳ Pending |
 | 5 | Run on Phase 2 plan | Execute on phase-2-foundation; update Critical Review section | ⏳ Pending |
 
