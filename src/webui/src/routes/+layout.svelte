@@ -275,6 +275,7 @@
         {#if $currentDoc.frontmatter}
           <PropertiesPane
             bind:frontmatter={$currentDoc.frontmatter}
+            body={$currentDoc.body}
             docType={$currentDoc.docType}
             mode={$currentDoc.mode}
             onsave={$currentDoc.onSave}

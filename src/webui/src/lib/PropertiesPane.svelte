@@ -3,6 +3,7 @@
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
+    body = '',
     docType = 'page',
     mode = 'read',
     onsave,
@@ -10,6 +11,7 @@
     onfindrelated,
   }: {
     frontmatter: Record<string, any>;
+    body?: string;
     docType: string;
     mode: 'read' | 'edit' | 'source';
     onsave?: (fm: Record<string, any>) => void;
@@ -117,6 +119,15 @@
     }
   }
 
+  // Count ⏳ Pending step rows — blocks Complete button
+  let pendingSteps = $derived(() => {
+    if (docType !== 'plan' || !body) return 0;
+    // Only count rows inside the Implementation Steps section
+    const stepsMatch = body.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
+    const section = stepsMatch ? stepsMatch[0] : body;
+    return (section.match(/⏳/g) ?? []).length;
+  })();
+
   // Warn if approved with no assignee
   let approvedWithoutAssignee = $derived(
     docType === 'proposal' && frontmatter.approved === true &&
@@ -150,7 +161,12 @@
         {/if}
         {#if frontmatter.status === 'in-progress'}
           <button class="act complete" onclick={() => setPlanStatus('completed')}
-            title="Set status: completed and move plan to plans/completed/">Complete</button>
+            disabled={pendingSteps > 0}
+            title={pendingSteps > 0
+              ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still ⏳ Pending — update the step table first`
+              : 'Set status: completed and move plan to plans/completed/'}>
+            Complete{pendingSteps > 0 ? ` (${pendingSteps} pending)` : ''}
+          </button>
         {/if}
         {#if frontmatter.status !== 'completed' && frontmatter.status !== 'canceled'}
           <button class="act cancel-plan" onclick={() => setPlanStatus('canceled')}

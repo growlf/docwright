@@ -7,6 +7,7 @@ import { writable } from 'svelte/store';
 
 export interface DocContext {
   frontmatter: Record<string, any> | null;
+  body: string;
   docType: string;
   mode: 'read' | 'edit' | 'source';
   filePath: string;
@@ -19,6 +20,7 @@ export interface DocContext {
 
 export const currentDoc = writable<DocContext>({
   frontmatter: null,
+  body: '',
   docType: 'page',
   mode: 'read',
   filePath: '',

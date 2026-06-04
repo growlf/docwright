@@ -169,6 +169,7 @@
     // Push to layout's right sidebar
     currentDoc.set({
       frontmatter,
+      body: content,
       docType,
       mode,
       filePath: filePath(),
