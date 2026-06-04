@@ -4,7 +4,11 @@
  * Run: node test/hooks/test-pending-steps.js
  */
 
+const fs   = require('fs');
+const path = require('path');
 const { hasPendingStepsInSection, checkPendingSteps } = require('../../scripts/lifecycle-gate.js');
+
+const ROOT = path.resolve(__dirname, '../..');
 
 let passed = 0;
 let failed = 0;
@@ -77,15 +81,9 @@ Just some text
 | row | ⏳ Pending |
 `));
 
-// ── checkPendingSteps with status:completed ─────────────────────────────────
+// ── checkPendingSteps with a real fixture file ──────────────────────────────
 
-console.log('\ncheckPendingSteps (status:completed + pending steps):');
-
-// Create a temp file for testing
-const fs   = require('fs');
-const path = require('path');
-const os   = require('os');
-const tmp  = path.join(os.tmpdir(), 'docwright-test-' + Date.now() + '.md');
+console.log('\ncheckPendingSteps (real file with pending steps):');
 
 const planWithPending = `---
 title: Test Plan
@@ -105,14 +103,22 @@ phase: 1
 | 1 | Task | ✅ Done |
 `;
 
-// Write temp plan files for testing (use plans/ prefix trick via ROOT override)
-// We test the function directly to avoid filesystem complexity
-assert('status:completed + ⏳ → not ok',
-  checkPendingSteps('plans/test.md', { status: 'completed' })
-    // Will try to read the file — since it doesn't exist, returns ok:true
-    // We test hasPendingStepsInSection directly above for content validation
-    !== undefined
-);
+// Content-based checks (hasPendingStepsInSection underlies checkPendingSteps)
+assert('planWithPending content has ⏳ → true', hasPendingStepsInSection(planWithPending));
+assert('planAllDone content has no ⏳ → false', !hasPendingStepsInSection(planAllDone));
+
+// checkPendingSteps only processes paths starting with 'plans/' — use that prefix
+const testFixture = path.join(ROOT, 'plans', '_test-fixture.md');
+
+fs.writeFileSync(testFixture, planWithPending, 'utf-8');
+const resultPending = checkPendingSteps('plans/_test-fixture.md', { status: 'completed' });
+assert('checkPendingSteps: status:completed + ⏳ file → ok:false', resultPending.ok === false);
+
+fs.writeFileSync(testFixture, planAllDone, 'utf-8');
+const resultDone = checkPendingSteps('plans/_test-fixture.md', { status: 'completed' });
+assert('checkPendingSteps: status:completed + all-done file → ok:true', resultDone.ok === true);
+
+fs.unlinkSync(testFixture);
 
 // ── Summary ─────────────────────────────────────────────────────────────────
 

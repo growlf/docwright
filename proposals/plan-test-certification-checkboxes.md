@@ -1,6 +1,6 @@
 ---
 complexity: medium
-title: "Plan Test Certification — Honest Simplified Design"
+title: Plan Test Certification — Honest Simplified Design
 author: NetYeti
 created: 2026-06-04
 tags:
@@ -11,7 +11,7 @@ tags:
   - phase-1
 category:
   - governance
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
@@ -19,6 +19,7 @@ related_to:
   - proposals/plan-complete-blocks-on-pending-steps.md
   - policies/core/ai-governance-boundaries.md
   - proposals/skill-plan-critique.md
+_path: proposals/plan-test-certification-checkboxes.md
 ---
 
 ## The Honest Problem Statement

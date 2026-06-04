@@ -4,6 +4,8 @@ Automated record of all lifecycle transitions.
 
 | Timestamp | Action | Detail |
 |-----------|--------|--------|
+| 2026-06-04 08:34:31 UTC | APPROVED | proposal/session-shutdown-automation.md → proposals/approved/ + plan created |
+
 | 2026-06-03 08:39:52 UTC | CANCELED | plan/_tut_cancel_success.md → plans/completed/ (reason: Test cancellation) |
 
 | 2026-06-03 08:38:02 UTC | CANCELED | plan/_tut_cancel_success.md → plans/completed/ (reason: Test cancellation) |
