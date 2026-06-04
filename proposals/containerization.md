@@ -50,18 +50,17 @@ scenarios documented in `docs/deployment.md`.
 **DocWright container** — the SvelteKit web server + all API routes + MCP server:
 - Node.js runtime (pinned version)
 - Built SvelteKit app
-- **MCP server** (`scripts/mcp-server.py`) — baked in with its own Python venv and
-  the `mcp` package pre-installed. The container manages the venv; the host
-  machine needs nothing.
+- **MCP server** (`scripts/mcp-server.py`) — Python and `mcp` package installed
+  directly into the container's system Python via `pip install --no-cache-dir mcp`.
+  No venv inside the container — the container IS the isolation layer, making
+  a venv redundant and a source of the exact path confusion it is meant to prevent.
 - `DOCWRIGHT_ROOT` points to the vault volume mount
-- Eliminates the venv/system-Python ambiguity permanently
 
-**Phase 2 TypeScript MCP migration:** Phase 2 includes rewriting the MCP server
-from Python to TypeScript (`src/dispatch/mcp-server.ts`). Once complete, the
-Python layer is removed from the container entirely — the image becomes pure
-Node.js, simpler and smaller. The containerization Dockerfile is written to
-support both: if `dist/mcp-server.js` exists it is used; otherwise the Python
-server is the fallback.
+**Phase 2 TypeScript MCP migration:** Phase 2 rewrites the MCP server from
+Python to TypeScript (`src/dispatch/mcp-server.ts`). Once complete, Python is
+removed from the container entirely — the image becomes pure Node.js, smaller
+and simpler. The Dockerfile detects `dist/mcp-server.js` and prefers it; Python
+is the fallback until then.
 
 **Vault** — mounted as a volume, never baked into the image:
 - The vault is the user's data; the container is the runtime
@@ -84,14 +83,12 @@ COPY src/webui/ .
 RUN npm run build
 
 FROM node:22-alpine AS runtime
-# Add Python for MCP server
-RUN apk add --no-cache python3 py3-pip
+# Add Python for MCP server — install mcp directly, no venv needed in a container
+RUN apk add --no-cache python3 py3-pip && pip install --no-cache-dir mcp
 WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
 COPY scripts/ ./scripts/
-# Install Python MCP deps into a clean venv
-RUN python3 -m venv .venv && .venv/bin/pip install mcp
 ENV DOCWRIGHT_ROOT=/vault
 ENV NODE_ENV=production
 EXPOSE 5173
@@ -186,9 +183,9 @@ On every tagged release, GitHub Actions:
 
 | Current problem | Container fix |
 |----------------|---------------|
-| MCP server hangs because `.venv/bin/python3` ≠ system `python3` | One pinned Python + venv inside the image; no host Python needed |
-| `mcp` package not installed in the right Python | Baked into image venv at build time; always present |
-| MCP server path changes between environments | Absolute path inside the container is always `/app/.venv/bin/python3` |
+| MCP server hangs because `.venv/bin/python3` ≠ system `python3` | Container has one Python; `mcp` installed directly via pip — no venv, no ambiguity |
+| `mcp` package not installed in the right Python | Installed into container's system Python at build time; always present |
+| MCP server path varies between host environments | Always `python3` inside the container; consistent everywhere |
 | `opencode` not on PATH | Optional sidecar, not assumed to be present |
 | `DOCWRIGHT_ROOT` not set | Set by the container entrypoint from volume mount |
 | Node version mismatch between dev and production | Pinned in Dockerfile `FROM node:22-alpine` |
