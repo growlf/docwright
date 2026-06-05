@@ -174,6 +174,53 @@ def _update_step_counts(text: str) -> str:
     return text
 
 
+def _check_completion_gate(text: str, plan_name: str) -> str | None:
+    """
+    Validate that a plan is ready to be marked completed.
+    Returns an error string if any gate check fails, or None if all pass.
+    Checks (in order):
+      1. tests_defined: true must be set in frontmatter
+      2. A ## Phase Gate section must exist
+      3. No unchecked [ ] items in the Phase Gate section
+    """
+    tests_defined = _extract_frontmatter_field(text, "tests_defined")
+    if tests_defined != "true":
+        return (
+            f"ERROR: Plan '{plan_name}' has tests_defined: {tests_defined or 'missing'}. "
+            "A human reviewer must set tests_defined: true after confirming test "
+            "coverage is adequate before the plan can be completed."
+        )
+
+    in_gate = False
+    gate_found = False
+    unchecked = 0
+    for line in text.splitlines():
+        if line.startswith("## "):
+            if in_gate:
+                break
+            in_gate = "Phase Gate" in line
+            if in_gate:
+                gate_found = True
+        elif in_gate and "- [ ]" in line:
+            unchecked += 1
+
+    if not gate_found:
+        return (
+            f"ERROR: Plan '{plan_name}' has no ## Phase Gate section. "
+            "All plans must have a Phase Gate section that is fully signed off "
+            "before completion."
+        )
+
+    if unchecked > 0:
+        return (
+            f"ERROR: Plan '{plan_name}' has {unchecked} unchecked Phase Gate "
+            f"item{'s' if unchecked != 1 else ''}. All Phase Gate items must be "
+            "checked [x] before the plan can be completed."
+        )
+
+    return None
+
+
 def _replace_step_status(text: str, step_match: str, new_status: str) -> tuple[str, bool]:
     """Find first step row containing step_match (in any step section) and replace its status column."""
     lines = text.split("\n")
@@ -711,6 +758,11 @@ async def update_plan_status(plan_name: str, new_status: str) -> str:
     if new_status == "completed" and _has_pending_steps(text):
         return f"ERROR: Plan '{plan_name}' has ⏳ pending steps. Mark all step rows ✅ Done before completing."
 
+    if new_status == "completed":
+        gate_err = _check_completion_gate(text, plan_name)
+        if gate_err:
+            return gate_err
+
     text = _set_frontmatter_field(text, "status", new_status)
     text = _update_step_counts(text)
     _write_file(f"plans/{safe}", text)
@@ -784,6 +836,11 @@ async def write_plan(plan_name: str, content: str) -> str:
             "Clear all pending steps first, then resubmit with all steps ✅ Done, "
             "or use update_plan_status() which enforces this check explicitly."
         )
+
+    if new_status == "completed":
+        gate_err = _check_completion_gate(content, safe)
+        if gate_err:
+            return gate_err
 
     gate = _extract_frontmatter_field(content, "gate_status")
     if gate in ("approved", "waived"):

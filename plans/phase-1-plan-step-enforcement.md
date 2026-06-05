@@ -22,7 +22,7 @@ tags:
   - mcp
   - hooks
 total_steps: 21
-completed_steps: 20
+completed_steps: 21
 _path: plans/phase-1-plan-step-enforcement.md
 ---
 
@@ -85,13 +85,13 @@ See [[docs/ai-governance-enforcement.md]] and
 | 18 | `test/hooks/test-lifecycle-hook.sh` — automated hook tests | Pipes JSON payloads to `claude-lifecycle-hook.sh`; asserts correct blocking and redirect messages for: plan Write block, plan Edit block, approved:true proposal block, contextual suggestions; committed to test suite | ✅ Done |
 | 19 | `test/mcp/test-plan-tools.py` — automated MCP tool tests | Python test script against fixture plans: `update_step` (replacement + recount), `update_plan_status` (blocks pending, allows clean), `append_history` (row appended), `set_plan_field` (field set; restricted fields blocked), `write_plan` (lifecycle rules, recount) | ✅ Done |
 | 20 | CI wiring — both test suites in `.github/workflows/ci.yml` | `node test/hooks/test-pending-steps.js` and `python3 test/mcp/test-plan-tools.py` run on every push; `mcp-server.py --test` smoke test included | ✅ Done |
-| 21 | `update_plan_status` + `write_plan`: enforce `tests_defined` and Phase Gate before `completed` | Add `_count_unchecked_gate_items()` helper; reject `completed` when `tests_defined != true` or gate has `[ ]` items; same check in `write_plan`; update `test/mcp/test-plan-tools.py` with tests 19-21 | ⏳ Pending |
+| 21 | `update_plan_status` + `write_plan`: enforce `tests_defined` and Phase Gate before `completed` | Add `_count_unchecked_gate_items()` helper; reject `completed` when `tests_defined != true` or gate has `[ ]` items; same check in `write_plan`; update `test/mcp/test-plan-tools.py` with tests 19-21 | ✅ Done |
 
 ## Bugs
 
 | ID | Description | Status |
 |----|-------------|--------|
-| B1 | `update_plan_status` accepts `status: completed` without checking `tests_defined: true` or Phase Gate checkbox completion — D21 addresses this mechanically | 🐛 Open |
+| B1 | `update_plan_status` accepts `status: completed` without checking `tests_defined: true` or Phase Gate checkbox completion — D21 addresses this mechanically | ✅ Fixed (D21) |
 | B2 | AI proceeds to implement steps before design questions posed to the human are answered — no mechanical enforcement exists to prevent this; behavioral contracts (AGENTS.md) are insufficient | 🐛 Open |
 
 ## Design Decisions
@@ -206,3 +206,4 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests_defined + Phase Gate checks) before D21 implementation | NetYeti |
 | 2026-06-05 | D21 added to Implementation Steps — enforce tests_defined + Phase Gate in update_plan_status/write_plan | NetYeti |
 | 2026-06-05 | Bugs section added — B1 (gate enforcement gap) and B2 (AI implements before design questions answered, no mechanical enforcement) | NetYeti |
+| 2026-06-05 | D21 complete — _check_completion_gate() added; update_plan_status and write_plan enforce tests_defined:true and Phase Gate before accepting status:completed; tests T19-T21 all pass (38/38 MCP tests) | NetYeti |

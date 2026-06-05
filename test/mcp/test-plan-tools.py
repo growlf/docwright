@@ -112,6 +112,94 @@ completed_steps: 2
 | 2026-06-04 | Created fixture | Test |
 """
 
+# Gate-ready: all steps done, tests_defined:true, Phase Gate fully checked
+PLAN_GATE_READY = """\
+---
+title: Test Fixture Plan
+status: in-progress
+phase: 1
+tests_defined: true
+total_steps: 2
+completed_steps: 2
+---
+# Test Fixture Plan
+
+## Implementation Steps
+
+| # | Action | Status |
+|---|--------|--------|
+| 1 | First step done | ✅ Done |
+| 2 | Second step done | ✅ Done |
+
+## Phase Gate
+
+- [x] All steps complete
+- [x] Tests reviewed and passing
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-04 | Created fixture | Test |
+"""
+
+# Gate-incomplete: all steps done but tests_defined:false, gate has unchecked items
+PLAN_GATE_INCOMPLETE = """\
+---
+title: Test Fixture Plan
+status: in-progress
+phase: 1
+tests_defined: false
+total_steps: 2
+completed_steps: 2
+---
+# Test Fixture Plan
+
+## Implementation Steps
+
+| # | Action | Status |
+|---|--------|--------|
+| 1 | First step done | ✅ Done |
+| 2 | Second step done | ✅ Done |
+
+## Phase Gate
+
+- [x] All steps complete
+- [ ] Tests reviewed and passing
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-04 | Created fixture | Test |
+"""
+
+# No gate: all steps done, tests_defined:true, but no Phase Gate section
+PLAN_NO_GATE_SECTION = """\
+---
+title: Test Fixture Plan
+status: in-progress
+phase: 1
+tests_defined: true
+total_steps: 2
+completed_steps: 2
+---
+# Test Fixture Plan
+
+## Implementation Steps
+
+| # | Action | Status |
+|---|--------|--------|
+| 1 | First step done | ✅ Done |
+| 2 | Second step done | ✅ Done |
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-04 | Created fixture | Test |
+"""
+
 
 # ── update_step ───────────────────────────────────────────────────────────────
 
@@ -156,10 +244,10 @@ async def test_update_step():
 async def test_update_plan_status():
     print("\nupdate_plan_status:")
 
-    # in-progress with all steps done → completed allowed
-    write_fixture(PLAN_ALL_DONE)
+    # all steps done + gate clear → completed allowed
+    write_fixture(PLAN_GATE_READY)
     result = await update_plan_status(FIXTURE_NAME, "completed")
-    assert_ok("all steps done → completed allowed", result)
+    assert_ok("all steps done + gate clear → completed allowed", result)
     if "status: completed" in read_fixture():
         ok("file reflects status: completed")
     else:
@@ -288,6 +376,54 @@ async def test_write_plan():
         ok("write_plan non-existent plan handled (error or created)")
 
 
+# ── completion gate (tests 19-21) ─────────────────────────────────────────────
+
+async def test_completion_gate():
+    print("\ncompletion gate (tests_defined + Phase Gate):")
+
+    # T19 — rejects completed when tests_defined: false
+    write_fixture(PLAN_GATE_INCOMPLETE)
+    result = await update_plan_status(FIXTURE_NAME, "completed")
+    assert_error("T19: rejects completed when tests_defined: false", result, "tests_defined")
+
+    # T19 via write_plan — same check applies
+    bad = PLAN_GATE_INCOMPLETE.replace("status: in-progress", "status: completed")
+    result = await write_plan(FIXTURE_NAME, bad)
+    assert_error("T19 write_plan: rejects completed when tests_defined: false", result, "tests_defined")
+
+    # T20 — rejects completed when Phase Gate has unchecked items
+    # (tests_defined is false in PLAN_GATE_INCOMPLETE, so fix that first to isolate T20)
+    gate_unchecked = PLAN_GATE_INCOMPLETE.replace("tests_defined: false", "tests_defined: true")
+    write_fixture(gate_unchecked)
+    result = await update_plan_status(FIXTURE_NAME, "completed")
+    assert_error("T20: rejects completed when Phase Gate has [ ] items", result, "unchecked")
+
+    # T20 via write_plan
+    bad2 = gate_unchecked.replace("status: in-progress", "status: completed")
+    result = await write_plan(FIXTURE_NAME, bad2)
+    assert_error("T20 write_plan: rejects completed when Phase Gate has [ ] items", result, "unchecked")
+
+    # T20b — rejects completed when no Phase Gate section at all
+    write_fixture(PLAN_NO_GATE_SECTION)
+    result = await update_plan_status(FIXTURE_NAME, "completed")
+    assert_error("T20b: rejects completed when no Phase Gate section", result, "Phase Gate")
+
+    # T21 — allows completed when tests_defined:true and all gate items [x]
+    write_fixture(PLAN_GATE_READY)
+    result = await update_plan_status(FIXTURE_NAME, "completed")
+    assert_ok("T21: allows completed when gate is fully clear", result)
+    if "status: completed" in read_fixture():
+        ok("T21: file reflects status: completed")
+    else:
+        fail("T21: status: completed not written to file")
+
+    # T21 via write_plan
+    write_fixture(PLAN_GATE_READY)
+    good = PLAN_GATE_READY.replace("status: in-progress", "status: completed")
+    result = await write_plan(FIXTURE_NAME, good)
+    assert_ok("T21 write_plan: allows completed when gate is fully clear", result)
+
+
 # ── Run all ───────────────────────────────────────────────────────────────────
 
 async def main():
@@ -297,6 +433,7 @@ async def main():
         await test_append_history()
         await test_set_plan_field()
         await test_write_plan()
+        await test_completion_gate()
     finally:
         if FIXTURE.exists():
             FIXTURE.unlink()
