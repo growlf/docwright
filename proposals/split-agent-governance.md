@@ -196,6 +196,12 @@ easiest deployment but the least private.
   the session is blocked with a prompt explaining what data will leave the local
   system. Acceptance is logged to `.docwright/audit.jsonl`. This is enforceable;
   "warn once verbally" is not.
+
+  **Open design decision (resolve before Phase 2):** Where does the acceptance
+  record live? Options: `opencode.json` (simple, already the config file);
+  `.docwright/config.json` (cleaner separation, gitignored like `.env`);
+  `.docwright/audit.jsonl` (searchable but awkward to query as a flag). The
+  chosen location must also be the place the session-start check reads from.
 - Suitable for: individual contributors, open-source projects with no sensitive
   strategy, early evaluation
 - DocWright calls the cloud API directly (Meshy optional in this mode)
@@ -395,8 +401,8 @@ wants to add local LLMs, they install Meshy and switch the endpoint URL — no c
 change in DocWright.
 
 **DocWright ships:**
-- Reference Meshy config for `full-local` profile
-- Reference Meshy config for `hybrid` profile
+- `configs/meshy/full-local.yaml` — reference Meshy routing config for `full-local` profile
+- `configs/meshy/hybrid.yaml` — reference Meshy routing config for `hybrid` profile
 - Documentation for `full-cloud` (no Meshy config needed)
 
 ---
@@ -492,6 +498,28 @@ not required milestones — the system is fully operational at Phase 2.
 - Reviews and approves proposals before implementation begins
 - Signs off gates and tests_defined before plans complete
 - Sets pace and priority; AI follows
+
+---
+
+## Phase 1 Implementation (after approval)
+
+These are the only changes required immediately after approval. No new code,
+no web UI changes, no MCP server changes, no test suite changes.
+
+| # | Deliverable | Location |
+|---|-------------|----------|
+| 1 | Add Orchestrator / Code Agent role definitions and classification decision tree | `AGENTS.md` |
+| 2 | Update enforcement model for two-actor architecture | `docs/ai-governance-enforcement.md` |
+| 3 | Add orchestrator-only preamble to plan mutation SOP | `docs/SOPs/plan-mutation.md` |
+| 4 | Rework enforcement layers diagram | `docs/governance_enforcement_layers.svg` |
+| 5 | Extend orchestrator behavior to log classification/routing decisions to `.docwright/audit.jsonl` | Behavioral (Phase 1); dispatch module (Phase 2) |
+| 6 | Decide full-cloud acceptance flag location and implement persistence check | Config TBD (design decision above) |
+| 7 | Update `opencode.json` orchestrator instructions with classification discipline note | `opencode.json` |
+
+**What this proposal does NOT change:** the MCP server, the existing
+enforcement hooks, the web UI, the test suites, the git pre-commit gate,
+the profile system, or the document lifecycle. All Phase 1 enforcement
+infrastructure remains unchanged and is the foundation Phase 2 builds on.
 
 ---
 
