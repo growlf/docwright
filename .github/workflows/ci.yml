@@ -21,7 +21,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install mcp
+
+      - name: Install Node dependencies
         run: npm ci
 
       - name: Lint
@@ -32,7 +40,14 @@ jobs:
 
       - name: Test dispatch module (outside extension host)
         run: npm run test:dispatch
-
-      # This step intentionally runs tests WITHOUT the VS Code extension host.
       # If test:dispatch fails because of a vscode import in src/dispatch/,
       # that is correct behaviour — fix the import, not the test.
+
+      - name: Test lifecycle-gate pending-step detection
+        run: npm run test:hooks:pending
+
+      - name: Test claude-lifecycle-hook PreToolUse gate
+        run: npm run test:hooks
+
+      - name: Test MCP plan mutation tools
+        run: python3 test/mcp/test-plan-tools.py

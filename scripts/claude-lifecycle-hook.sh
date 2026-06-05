@@ -49,10 +49,10 @@ if [[ "$TOOL_NAME" == "Write" ]]; then
         fi
     fi
 
-    # Block all direct writes to plan files — use MCP tools instead
+    # Block all direct writes to plan files — full file write belongs in write_plan MCP tool
     if [[ "$REL" == plans/*.md ]]; then
         BLOCK=1
-        REASON="Lifecycle gate: direct writes to plan files are not allowed. Use MCP tools: update_step, update_plan_status, append_history, set_plan_field, or write_plan for structural rewrites."
+        REASON="Lifecycle gate: direct writes to plan files are not allowed. To rewrite the full file content, use: write_plan(\"${REL#plans/}\", content). This validates lifecycle rules before writing. For targeted edits use: update_step, update_plan_status, append_history, or set_plan_field."
     fi
 
 elif [[ "$TOOL_NAME" == "Edit" ]]; then
@@ -67,10 +67,26 @@ elif [[ "$TOOL_NAME" == "Edit" ]]; then
         fi
     fi
 
-    # Block all direct edits to plan files — use MCP tools instead
-    if [[ "$REL" == plans/*.md ]]; then
-        BLOCK=1
-        REASON="Lifecycle gate: direct edits to plan files are not allowed. Use MCP tools: update_step, update_plan_status, append_history, set_plan_field, or write_plan for structural rewrites."
+    # Block direct edits to plan files — with contextual guidance based on what the edit is doing
+    if [[ "$REL" == plans/*.md && "$BLOCK" -eq 0 ]]; then
+        PLAN="${REL#plans/}"
+
+        # Category A: status field change → update_plan_status
+        if echo "$NEW_STR" | grep -qE "^status: "; then
+            NEW_STATUS=$(echo "$NEW_STR" | grep -oE "^status: \S+" | head -1 | awk '{print $2}')
+            BLOCK=1
+            REASON="Lifecycle gate: to change plan status, use: update_plan_status(\"$PLAN\", \"$NEW_STATUS\"). This validates pending steps and logs the transition before writing."
+
+        # Category B: step marker change → update_step
+        elif echo "$NEW_STR" | grep -qE '[⏳✅]'; then
+            BLOCK=1
+            REASON="Lifecycle gate: to update a step's status marker, use: update_step(\"$PLAN\", \"<step description substring>\", \"done\") or update_step(\"$PLAN\", \"<step>\", \"pending\"). This recounts total_steps/completed_steps automatically."
+
+        # Category C: catch-all — list all mutation tools
+        else
+            BLOCK=1
+            REASON="Lifecycle gate: direct edits to plan files are not allowed. Choose the right MCP tool for your change: update_step (step status) · update_plan_status (status field) · append_history (history row) · set_plan_field (frontmatter field) · write_plan (full rewrite). See docs/SOPs/plan-mutation.md for the full guide."
+        fi
     fi
 fi
 

@@ -51,10 +51,32 @@ CACHE_FILE = Path("/tmp/docwright-status-cache.txt")
 AUDIT_LOG = REPO_ROOT / ".docwright" / "audit.jsonl"
 CACHE_TTL = 60
 
+# Single source of truth for mutation tool names — footer reads from this list.
+# Add a new mutation tool here and the get_plan() governance footer updates automatically.
+PLAN_MUTATION_TOOLS = [
+    "update_step",
+    "update_plan_status",
+    "append_history",
+    "set_plan_field",
+    "write_plan",
+]
+
 mcp = FastMCP("docwright")
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
+
+
+def _governance_footer() -> str:
+    """Footer appended to every get_plan() response — reminds agents to use MCP tools."""
+    tools = " · ".join(PLAN_MUTATION_TOOLS)
+    return (
+        "\n\n---\n"
+        f"⚠ **Governance:** mutate this plan via MCP only — {tools}. "
+        "Direct writes to `plans/*.md` are blocked by the PreToolUse hook. "
+        "Bash/Python writes bypass the hook and are equally prohibited (AGENTS.md §Invariant 6). "
+        "If MCP is unavailable: halt and report, do not fall back to direct writes."
+    )
 
 
 def _read_file(rel_path: str) -> str:
@@ -410,14 +432,15 @@ async def list_active_plans() -> str:
 @mcp.tool()
 async def get_plan(name: str) -> str:
     """Read a specific plan file. Pass filename with or without .md extension."""
+    footer = _governance_footer()
     try:
         safe = Path(name if name.endswith(".md") else name + ".md").name
         text = _read_file(f"plans/{safe}")
-        return text
+        return text + footer
     except FileNotFoundError:
         try:
             text = _read_file(f"plans/completed/{safe}")
-            return f"[completed plan]\n\n{text}"
+            return f"[completed plan]\n\n{text}" + footer
         except FileNotFoundError:
             return f"Plan '{name}' not found. Use list_active_plans() or get_status()."
     except Exception as e:

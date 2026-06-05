@@ -30,7 +30,9 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "test:dispatch": "mocha --require ts-node/register 'test/dispatch/**/*.test.ts'",
-    "test": "npm run test:dispatch",
+    "test:hooks:pending": "node test/hooks/test-pending-steps.js",
+    "test:hooks": "bash test/hooks/test-lifecycle-hook.sh",
+    "test": "npm run test:dispatch && npm run test:hooks:pending && npm run test:hooks",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile"
   },

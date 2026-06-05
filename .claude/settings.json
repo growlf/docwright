@@ -12,6 +12,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/netyeti/Projects/DocWright/scripts/claude-session-boundary-hook.sh",
+            "timeout": 5,
+            "statusMessage": "Session boundary check…"
+          }
+        ]
+      }
     ]
   }
 }
