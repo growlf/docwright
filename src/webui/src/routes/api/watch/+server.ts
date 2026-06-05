@@ -16,7 +16,7 @@ export function GET({ request }) {
         if (closed) return;
         try {
           controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
-        } catch {}
+        } catch { /* ignore closed stream */ }
       };
 
       try {

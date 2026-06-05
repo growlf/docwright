@@ -11,7 +11,7 @@ const MSG_RE = /^(feat|fix|docs|refactor|test|chore|policy|decision): .+/;
 
 // Injection guard — message must not contain shell metacharacters beyond what
 // a conventional commit message would normally use
-const SAFE_RE = /^[\w\s:.,!?()\[\]{}\-_@#/'"*+<>~`|&=]+$/;
+const SAFE_RE = /^[\w\s:.,!?()[\]{}\-_@#/'"*+<>~`|&=]+$/;
 
 export async function POST({ request }) {
   const body = await request.json().catch(() => null);

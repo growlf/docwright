@@ -137,7 +137,7 @@ See [[docs/ai-governance-enforcement.md]] and
 - [x] Core policy and reference doc written and committed
 - [x] Plan-completion skill written (`docs/SOPs/plan-completion.md`)
 - [x] All design decisions documented
-- [ ] Deliverables 13-20 complete
+- [x] Deliverables 13-20 complete
 - [ ] `test/hooks/test-lifecycle-hook.sh` passes in CI
 - [ ] `test/mcp/test-plan-tools.py` passes in CI
 - [ ] `tests_defined: true` set after human review of Tests section

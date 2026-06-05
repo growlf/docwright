@@ -22,7 +22,7 @@ function scan(dir: string, base: string, all: boolean): any[] {
         entries.push({ name, path: rel, type: 'file' });
       }
     }
-  } catch {}
+  } catch { /* ignore unreadable entries */ }
   return entries;
 }
 
