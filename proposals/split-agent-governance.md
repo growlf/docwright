@@ -102,6 +102,18 @@ profiles by virtue of classification + routing. If all local backends for a
 Governance-class request are unavailable, the system fails fast — it does not
 silently degrade to cloud.
 
+**Multi-user model:** the architecture assumes a team, not a solo operator.
+Multiple users run simultaneous orchestrator sessions — each with their own AI
+session, their own `.docwright/config.json` acceptance record, and their own
+agent role context. The MCP server is the coordination point: plan mutations are
+serialized through it, preventing write conflicts regardless of how many sessions
+are active. Git handles document version coordination. The web UI's SSE live
+reload surfaces changes made by other users' sessions in real time. Document
+presence indicators (Phase 2) will show when another session has a file active.
+Live collaborative editing (CRDT-based, e.g. Yjs) is architecturally possible
+and captured as a Phase 3 option — git merge covers the multi-user baseline
+without that complexity.
+
 ---
 
 ## Content Classification
@@ -439,9 +451,11 @@ for detecting misclassification in the absence of mechanical enforcement.
 
 Each entry records:
 - Timestamp
+- User identity (from `.env` `OPCODE_USER_NAME`; automation sessions use `automation@hostname`)
 - Content class assigned (Governance / Design / Code / Routine)
 - Rule that triggered the classification (context / path / heuristic)
 - Routing destination (local model name, or cloud provider)
+- Node trust level (`internal` / `external`)
 - Session ID
 
 This makes "governance content went to cloud" a detectable event, not just a
@@ -692,6 +706,16 @@ infrastructure remains unchanged and is the foundation Phase 2 builds on.
   `cloud_allowed_for`-restricted classes from reaching `trust: external` nodes
   at the HTTP layer. Cross-project requirement: changes needed in the Meshy
   project as well as DocWright's reference routing configs.
+- **Multi-user audit identity** — user identity field (`OPCODE_USER_NAME`) on
+  every audit trail entry; automation sessions tagged `automation@hostname`
+- **Document presence indicator** — web UI surfaces when another user's session
+  has a file open; prevents silent overwrites in collaborative editing scenarios
+- **MCP server watch/subscription capability** — design the event notification
+  model that the automation agent will depend on; do not close this off with a
+  purely synchronous design
+- **`automation-playbook` stub document type** — add to profile.json as a
+  document type with no behavior yet; retrofitting later across all profiles is
+  costly
 
 **Deferred proposal — secrets manager integration:** DocWright should natively
 support referencing secrets from a password/secrets manager rather than embedding
@@ -702,10 +726,30 @@ DocWright resolves the value at use time from the configured manager — the
 document itself never contains the plaintext. Capture as a standalone proposal
 before Phase 2 planning begins.
 
+**Deferred proposal — automation agent (Phase 3+):** A third AI actor that runs
+without an active human session, triggered by document state changes (proposal
+approved, plan step completed, SOP updated) or time-based schedules. Enables:
+fully automated maintenance cycles, overnight sequential builds on slow local
+models, and async multi-user coordination (User A approves → automation kicks
+off → User B alerted, no simultaneous presence required). The automation agent
+is the most restricted actor in the system: it runs only tasks backed by an
+approved automation playbook (a governance document that has completed the full
+lifecycle), cannot ask design questions, and must fail safe — stop, log, alert —
+rather than proceed past any ambiguity.
+
+DocWright owns: playbook definitions, trigger conditions, governance constraints,
+audit trail. Meshy owns: task queuing, scheduling, model routing for batch tasks
+(slow cheap local models overnight). The automation agent is a client of both.
+Capture as standalone proposal `proposals/automation-agent.md` before Phase 3
+planning begins.
+
 ## Deferred to Phase 3 (optional hardening)
 
 - Proxy-level Meshy enforcement — reject Governance→cloud at HTTP layer
 - Formal per-agent tool restrictions (if Claude Code ever exposes this)
+- **Live collaborative editing** — CRDT-based real-time co-editing (e.g. Yjs,
+  Automerge); git merge covers the multi-user baseline without this complexity;
+  add only if adoption warrants the operational overhead
 
 ---
 
