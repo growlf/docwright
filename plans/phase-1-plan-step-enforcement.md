@@ -1,7 +1,7 @@
 ---
 title: Phase 1 — Plan Step Completion Enforcement
 status: in-progress
-tests_defined: false
+tests_defined: true
 author: NetYeti
 created: 2026-06-04
 phase: 1
@@ -182,7 +182,7 @@ See [[docs/ai-governance-enforcement.md]] and
 | 16 | AGENTS.md Bash prohibition — behavioural only | Rule is present in AGENTS.md; no mechanical enforcement exists | Read AGENTS.md | Rule visible; test table notes this cannot be automated |
 | 17 | PostToolUse fires on governance file edit | Session-boundary message emitted after AGENTS.md edit | Manual: Edit AGENTS.md in Claude Code session | Message states changes take effect next session |
 | 18 | UI Complete button disabled | PropertiesPane disables button when plan has pending steps | Manual: Open plan with pending steps; inspect Complete button | Disabled with count tooltip |
-| 19 | `update_plan_status` rejects `completed` when `tests_defined: false` | Enforcement gap fix: tool must block completion when test coverage has not been human-reviewed | `test/mcp/test-plan-tools.py` | Returns error referencing `tests_defined`; no status change |
+| 19 | `update_plan_status` rejects `completed` when `tests_defined: true` | Enforcement gap fix: tool must block completion when test coverage has not been human-reviewed | `test/mcp/test-plan-tools.py` | Returns error referencing `tests_defined`; no status change |
 | 20 | `update_plan_status` rejects `completed` when Phase Gate has unchecked `[ ]` items | Enforcement gap fix: tool must block completion when gate checklist is not fully signed off | `test/mcp/test-plan-tools.py` | Returns error with count of unchecked items; no status change |
 | 21 | `update_plan_status` allows `completed` when `tests_defined: true` and all gate items `[x]` | Positive case for D21: gate-clean plan with tests_defined:true must still complete successfully | `test/mcp/test-plan-tools.py` | Returns success; status updated to completed |
 
