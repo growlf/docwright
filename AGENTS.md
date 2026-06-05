@@ -137,15 +137,19 @@ accidental data corruption, and confused session context (as of 2026-06-02 fix).
    See CONTRIBUTING.md.
 
 6. **Never write directly to plan files. All plan mutations go through MCP tools.**
-   The PreToolUse hook blocks direct Write/Edit to `plans/*.md` entirely. Use:
-   - `update_step(name, match, status)` — mark a step ✅ Done or ⏳ Pending
+   This means never using the Write tool, the Edit tool, Bash commands, Python
+   scripts, `cat >`, `tee`, or any other method that writes to `plans/*.md` directly.
+   The PreToolUse hook only covers Write/Edit tools — Bash and Python writes bypass
+   it silently and bypass all MCP validation. This is the bypass vector that caused
+   the plan file mangling incident. There are no exceptions. Use:
+   - `update_step(name, match, status)` — mark a step done or pending
    - `update_plan_status(name, status)` — change status; blocks completion if steps pending
    - `append_history(name, change)` — add a Document History row
    - `set_plan_field(name, field, value)` — set one frontmatter field
-   - `write_plan(name, content)` — structural rewrite; validates same lifecycle rules as `update_plan_status`
+   - `write_plan(name, content)` — structural rewrite; validates same lifecycle rules
    Before calling `update_plan_status(..., 'completed')`, verify every Implementation
-   Steps row shows ✅ Done. If any show ⏳, report which ones and stop — do not attempt
-   the call. The MCP tool also enforces this, but self-checking first is expected.
+   Steps row shows done. If any are pending, report which ones and stop — do not
+   attempt the call. The MCP tool also enforces this, but self-checking first is expected.
    **If MCP tools are unavailable:** halt and report — "MCP server is unavailable,
    cannot safely mutate plan files." Ask the human to restart the server. Do NOT
    fall back to direct writes. No mutation is better than an unvalidated mutation.
