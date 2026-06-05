@@ -14,6 +14,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test", "spike"]
+  "include": ["src/dispatch/**/*.ts", "src/extension/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "spike", "src/webui"]
 }
