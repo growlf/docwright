@@ -473,11 +473,16 @@ change in DocWright.
 - Checks its own work against policy before reporting done
 
 **What humans do:**
+- Originate proposals, ideas, and raw creative direction — the wellspring of
+  what gets built; AI drafts and refines, but humans conceive
+- Bring imagination, creativity, and critical thought throughout: challenge AI
+  conclusions, question assumptions, envision what doesn't yet exist
+- Maintain strategic oversight and direction — set priorities, redirect work,
+  decide what matters and what doesn't
 - Answer design questions with judgment and context AI cannot have
 - Approve proposals before they affect any work
 - Sign off Phase Gate checkboxes (attesting that review actually happened)
 - Set `tests_defined: true` (attesting that test coverage is adequate)
-- Provide strategy, priority, and tiebreaking under genuine uncertainty
 - Decide when something is "done enough" vs. when to keep improving
 
 **Enforcement:** The gate architecture makes human input structurally required:
