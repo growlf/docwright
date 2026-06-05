@@ -54,6 +54,30 @@ requirement for any compliance-sensitive organization adopting DocWright.
 
 ---
 
+## Current State (pre-this-proposal)
+
+What exists in the codebase today — the baseline this proposal builds from:
+
+| Component | Status |
+|-----------|--------|
+| PreToolUse hook blocks direct writes to `plans/*.md` | ✅ Implemented |
+| MCP mutation tools (`update_step`, `update_plan_status`, etc.) | ✅ Implemented |
+| `_check_completion_gate()` — enforces `tests_defined` + Phase Gate | ✅ Implemented |
+| Audit log (`.docwright/audit.jsonl`) — basic fields: `ts`, `event`, `detail`, `host` | ✅ Implemented (needs enrichment) |
+| Content classification code | ❌ Does not exist |
+| `cloud_allowed_for` field or session-start routing check | ❌ Does not exist |
+| Hook coverage of `policies/`, `docs/SOPs/`, `AGENTS.md` | ❌ Plans only |
+| MCP server concurrency locking | ❌ No file locking |
+| `DOCWRIGHT_AGENT_ROLE` env var or role-based hook enforcement | ❌ Phase 2 |
+| Meshy node trust tags or proxy-layer enforcement | ❌ Phase 2 / cross-project |
+
+This proposal defines the architecture, commits to specific Phase 1 code
+changes (see Phase 1 Implementation below), and defers mechanical enforcement
+to Phase 2. Phase 1 is behavioral + the specific deliverables listed. Phase 2
+is mechanical. The architecture section describes the full target state.
+
+---
+
 ## Architecture
 
 ```
@@ -92,22 +116,28 @@ Meshy / Olla  (routing layer — uniform OpenAI-compatible endpoint)
      Result → Orchestrator validates → updates plan via MCP
 ```
 
-The orchestrator **cannot** implement code (convention, enforced by hook in Phase 2).
-The code agent **cannot** touch governance state (no MCP tools; hook blocks direct
-writes). B2 becomes impossible by construction: the actor that asks design questions
-cannot implement before receiving answers.
+The orchestrator **cannot** implement code (Phase 1: behavioral convention;
+Phase 2: enforced by `DOCWRIGHT_AGENT_ROLE` hook). The code agent **cannot**
+touch governance state (Phase 1: no MCP tools in context by convention; hook
+blocks direct writes to `plans/`; Phase 2: hook covers all governance dirs).
+**B2 is addressed by behavioral convention in Phase 1 and becomes impossible
+by construction in Phase 2**, when the role hook is active and the orchestrator
+physically cannot write to code dirs nor the code agent to governance dirs.
 
-Sensitive governance content **cannot** reach the cloud in `full-local` or `hybrid`
-profiles by virtue of classification + routing. If all local backends for a
-Governance-class request are unavailable, the system fails fast — it does not
-silently degrade to cloud.
+Sensitive governance content **will not reach cloud** once `cloud_allowed_for`
+enforcement is implemented (Phase 1 deliverable — see Phase 1 Implementation
+below). Before that deliverable is shipped, routing is behavioral + detectable
+via audit trail. Full mechanical prevention — where the system hard-errors
+before a prompt is assembled — arrives in Phase 2. If all local backends for a
+Governance-class request are unavailable, the system fails fast at any phase.
 
 **Multi-user model:** the architecture assumes a team, not a solo operator.
 Multiple users run simultaneous orchestrator sessions — each with their own AI
 session, their own `.docwright/config.json` acceptance record, and their own
-agent role context. The MCP server is the coordination point: plan mutations are
-serialized through it, preventing write conflicts regardless of how many sessions
-are active. Git handles document version coordination. The web UI's SSE live
+agent role context. The MCP server is the single write path for plan mutations
+(correct architecture for serialization). **Phase 1: concurrent writes to the
+same file are not yet locked — last write wins.** Phase 2 adds file-level
+locking. Git handles document version coordination. Git handles document version coordination. The web UI's SSE live
 reload surfaces changes made by other users' sessions in real time. Document
 presence indicators (Phase 2) will show when another session has a file active.
 Live collaborative editing (CRDT-based, e.g. Yjs) is architecturally possible
@@ -158,6 +188,13 @@ only Code-class material.
   context, regardless of profile.
 - When in doubt, classify up (Governance > Design > Code > Routine).
 
+**Phase 1 enforcement:** behavioral — orchestrator discipline. The orchestrator
+is instructed to classify before dispatch; the audit trail (Phase 1 deliverable)
+makes misclassification detectable. **Phase 2 enforcement:** the dispatch path
+includes a pre-dispatch content scanner that rejects any code-agent prompt
+containing governance markers (file paths, frontmatter fields). Classification
+error becomes a hard error, not a logged event.
+
 ### Secrets — Absolute Routing Override
 
 Secret-bearing content — credentials, API keys, private keys, tokens, passwords,
@@ -183,22 +220,28 @@ in the Meshy section below.
 
 **Detection — defense-in-depth (no single layer is sufficient):**
 
-1. **Architectural** — secrets must not appear in governance documents at all.
-   Store in a secrets manager and reference by name only. Secrets that never
-   enter documents cannot leak through routing. DocWright should integrate with
-   common secrets managers as a first-class feature — see deferred proposal below.
-2. **Pre-commit** — existing `no-secrets.md` hook rejects staged secrets before
-   they reach the repository.
-3. **Orchestrator behavioral** — never include secret-bearing content in any
-   dispatch to an external node. Phase 1 enforcement.
-4. **Pattern matching** — known secret formats (PEM blocks, bearer tokens,
-   `password:` fields, `-----BEGIN * KEY-----`) detected as a secondary check.
-   Catches common formats; not exhaustive.
-5. **Meshy proxy enforcement** — external nodes refuse prompts containing detected
-   secret patterns. Phase 2 cross-project requirement (see Meshy section).
+1. **Architectural** *(always — not phase-specific)* — secrets must not appear
+   in governance documents at all. Store in a secrets manager and reference by
+   name only. Secrets that never enter documents cannot leak through routing.
+   DocWright should integrate with common secrets managers as a first-class
+   feature — see deferred proposal below.
+2. **Pre-commit hook** *(Phase 1 — exists today)* — `no-secrets.md` policy;
+   hook rejects staged secrets before they reach the repository. Note: can be
+   bypassed with `git commit --no-verify`; server-side hooks (Forgejo) close
+   this for regulated deployments (see Phase 1 deliverable 14).
+3. **Orchestrator behavioral** *(Phase 1 — discipline only)* — never include
+   secret-bearing content in any dispatch to an external node.
+4. **Pattern matching** *(Phase 1 deliverable)* — known secret formats (PEM
+   blocks, bearer tokens, `password:` fields, `-----BEGIN * KEY-----`) detected
+   in pre-dispatch content scan. Catches common formats; not exhaustive.
+   Implemented as part of Phase 1 Implementation item 8.
+5. **Meshy proxy enforcement** *(Phase 2 — cross-project)* — external nodes
+   refuse prompts containing detected secret patterns at the HTTP layer.
+   Requires changes to the Meshy project (see Node Trust Classification).
 
 No detection method is complete for arbitrary text. The primary mitigation is
 architectural: layer 1 ensures secrets are not in documents in the first place.
+Layers 2-5 reduce but cannot eliminate residual risk.
 
 ---
 
@@ -397,21 +440,39 @@ boundary explicit.
 
 ### Current (Phase 1 — behavioral + partial mechanical)
 
-| Threat | Enforcement |
-|--------|-------------|
-| Code agent writes to `plans/` | PreToolUse hook blocks Write/Edit to `plans/*.md` |
-| Code agent calls plan MCP tools | Behavioral — code agent not given MCP tools in context |
-| Orchestrator implements before design settled | Behavioral — AGENTS.md Invariant |
-| Completing plan with pending steps | MCP `update_plan_status` blocks if ⏳ rows remain |
-| Completing plan without gate sign-off | MCP `update_plan_status` blocks if `tests_defined: false` or `[ ]` items in Phase Gate |
-| Governance content routed to cloud | Classification + routing; `cloud_allowed_for` org ceiling checked at session start; hard error if class not permitted; misclassification detectable via audit trail |
-| Cloud class permitted but not individually accepted | Prompt at session start; write `cloud_accepted_for` to `.docwright/config.json`; log to audit trail |
-| Individual attempts to exceed org ceiling | Hard error — `cloud_allowed_for` takes precedence over local acceptance record; no bypass |
-| Secret-bearing content dispatched to external node | Hard error — secrets absolute override; no profile, acceptance flag, or `cloud_allowed_for` setting permits this; audit trail entry; no bypass |
+Items marked **[exists]** are implemented today. Items marked **[P1 deliverable]**
+are committed by this proposal and will be built before Phase 2 begins.
 
-The hook is context-blind at this phase. It blocks bad writes regardless of who is
-writing, providing a floor. Role boundary enforcement is behavioral; the audit trail
-makes violations detectable.
+| Threat | Enforcement | Status |
+|--------|-------------|--------|
+| Code agent writes to `plans/` | PreToolUse hook blocks Write/Edit to `plans/*.md` | **[exists]** |
+| Code agent writes to `policies/`, `docs/SOPs/`, `AGENTS.md` | Hook extended to all governance dirs | **[P1 deliverable 11]** |
+| Code agent calls plan MCP tools | Behavioral — code agent not given MCP tools in context | **[exists — behavioral]** |
+| Orchestrator implements before design settled | Behavioral — AGENTS.md Invariant | **[exists — behavioral]** |
+| Completing plan with pending steps | MCP `update_plan_status` blocks if ⏳ rows remain | **[exists]** |
+| Completing plan without gate sign-off | MCP `update_plan_status` blocks if `tests_defined: false` or `[ ]` in Phase Gate | **[exists]** |
+| Governance content routed to cloud | Behavioral + `cloud_allowed_for` ceiling check + audit trail detection | **[P1 deliverable 8]** |
+| Cloud class permitted but not individually accepted | Prompt at session start; write `cloud_accepted_for` to `.docwright/config.json` | **[P1 deliverable 8]** |
+| Individual attempts to exceed org ceiling | Hard error — `cloud_allowed_for` takes precedence | **[P1 deliverable 8]** |
+| Secret-bearing content dispatched to external node | Hard error — secrets absolute override; no bypass | **[P1 deliverable 8 + behavioral]** |
+| `cloud_allowed_for` changed without approval | Hook blocks changes without HUMAN_APPROVED=1 | **[P1 deliverable 12]** |
+| Concurrent plan mutations overwriting each other | MCP file-level write locking | **[P1 deliverable 13]** |
+
+The hook is context-blind in Phase 1 — it blocks bad writes regardless of who
+is writing, providing a floor. Role boundary enforcement is behavioral until
+Phase 2. The audit trail (enriched in Phase 1) makes violations detectable
+after the fact; Phase 2 makes them impossible before the fact.
+
+**What changes from Phase 1 → Phase 2:**
+
+| Property | Phase 1 | Phase 2 |
+|----------|---------|---------|
+| B2 (orchestrator implements early) | Behavioral convention | `DOCWRIGHT_AGENT_ROLE` hook — mechanical |
+| Cloud routing enforcement | Behavioral + audit detection | Hook-enforced + Meshy proxy |
+| MCP concurrency | File locking (P1 deliverable) | Already addressed in P1 |
+| Governance dir coverage | Extended hook (P1 deliverable) | Already addressed in P1 |
+| Node trust enforcement | Behavioral | Meshy proxy-layer (cross-project) |
+| Secrets detection depth | Layers 1-4 | Layer 5 (Meshy proxy) added |
 
 ### Phase 2 — Hook-enforced role separation
 
@@ -445,12 +506,14 @@ sufficient final enforcement state.
 ## Routing Audit Trail
 
 Every classification decision and routing decision is logged to
-`.docwright/audit.jsonl` (the existing audit log used for MCP mutations). This is
-a **Phase 1 requirement**, not a Phase 2 addition — it is the primary mechanism
-for detecting misclassification in the absence of mechanical enforcement.
+`.docwright/audit.jsonl` (the existing audit log used for MCP mutations).
+The audit trail is the primary mechanism for detecting misclassification
+in Phase 1, before mechanical enforcement exists.
 
-Each entry records:
-- Timestamp
+**Currently logged** (pre-this-proposal): `ts`, `event`, `detail`, `host`
+
+**Phase 1 adds** (deliverable 10 — see Phase 1 Implementation):
+
 - User identity (from `.env` `OPCODE_USER_NAME`; automation sessions use `automation@hostname`)
 - Content class assigned (Governance / Design / Code / Routine)
 - Rule that triggered the classification (context / path / heuristic)
@@ -458,8 +521,11 @@ Each entry records:
 - Node trust level (`internal` / `external`)
 - Session ID
 
-This makes "governance content went to cloud" a detectable event, not just a
-theoretical risk. Compliance audit reviews the log, not the AI's memory.
+Once these fields are implemented, "governance content went to cloud" becomes
+a detectable event, not just a theoretical risk. Compliance audit reviews the
+log, not the AI's memory. Note: Phase 1 audit trail is detective, not
+preventive — a leak is detectable after the fact, not blocked in advance.
+Phase 2 mechanical enforcement adds the synchronous gate.
 
 ---
 
@@ -488,7 +554,7 @@ Model swappability is free: update a local model without touching DocWright.
 
 | Failure | Behaviour |
 |---------|-----------|
-| Governance/Design LLMs all down | **Fail fast** — error returned, ask human to restore local LLM. Never degrade to cloud. |
+| Governance/Design LLMs all down | **Fail fast** — error returned. Human checks: `systemctl status ollama` / `ollama ps`. If restoration takes time, human may acknowledge risk and proceed with an audit-logged override — governance work pauses until LLMs restored. Never degrade to cloud silently. |
 | Meshy unreachable | **Fail fast** — no silent cloud fallback. Error surfaces to orchestrator. |
 | Code-class local LLM down, cloud fallback available | Use cloud fallback per routing table |
 | Code-class LLM down, no fallback, hybrid profile | Error — ask human or switch profile |
@@ -675,23 +741,38 @@ not required milestones — the system is fully operational at Phase 2.
 
 ## Phase 1 Implementation (after approval)
 
-These are the only changes required immediately after approval. No new code,
-no web UI changes, no MCP server changes, no test suite changes.
+Changes required after approval, grouped by type. Items 1-7 are documentation
+and behavioral changes. Items 8-14 are code changes — this is what approving
+this proposal commits us to building before Phase 2 begins.
+
+**Documentation and behavioral changes:**
 
 | # | Deliverable | Location |
 |---|-------------|----------|
 | 1 | Add Orchestrator / Code Agent role definitions and classification decision tree | `AGENTS.md` |
-| 2 | Update enforcement model for two-actor architecture | `docs/ai-governance-enforcement.md` |
+| 2 | Update enforcement model for two-actor architecture with honest phase labels | `docs/ai-governance-enforcement.md` |
 | 3 | Add orchestrator-only preamble to plan mutation SOP | `docs/SOPs/plan-mutation.md` |
 | 4 | Rework enforcement layers diagram | `docs/governance_enforcement_layers.svg` |
-| 5 | Extend orchestrator behavior to log classification/routing decisions to `.docwright/audit.jsonl` | Behavioral (Phase 1); dispatch module (Phase 2) |
-| 6 | Add `deployment.cloud_allowed_for` to `opencode.json`; implement session-start ceiling check and per-machine acceptance prompt writing to `.docwright/config.json` | `opencode.json` + `.docwright/config.json` |
-| 7 | Update `opencode.json` orchestrator instructions with classification discipline note | `opencode.json` |
+| 5 | Update `opencode.json` orchestrator instructions with classification discipline note | `opencode.json` |
 
-**What this proposal does NOT change:** the MCP server, the existing
-enforcement hooks, the web UI, the test suites, the git pre-commit gate,
-the profile system, or the document lifecycle. All Phase 1 enforcement
-infrastructure remains unchanged and is the foundation Phase 2 builds on.
+**Code changes (committed by this proposal):**
+
+| # | Deliverable | Location | Addresses |
+|---|-------------|----------|-----------|
+| 6 | Add `deployment.cloud_allowed_for` to `opencode.json`; implement session-start ceiling check, hard error on violation, per-machine acceptance prompt, write `cloud_accepted_for` to `.docwright/config.json`; log to audit trail | `opencode.json`, session-start hook | OC3 |
+| 7 | Add JSON Schema for `.docwright/config.json`; validate at session start with clear error on malformed file | `docs/schemas/docwright-config.json`, session-start logic | OG4 |
+| 8 | Extend audit trail: add `user_identity`, `content_class`, `routing_destination`, `node_trust`, `session_id` to `_log_transition()` | `scripts/mcp-server.py` | OC4 |
+| 9 | Extend PreToolUse hook to block direct writes to `policies/`, `docs/SOPs/`, `AGENTS.md`, `CLAUDE.md` | `scripts/claude-lifecycle-hook.sh` | OC5 |
+| 10 | Add governance gate: changes to `cloud_allowed_for` in `opencode.json` require `HUMAN_APPROVED=1` | `scripts/claude-lifecycle-hook.sh` | ME4 |
+| 11 | Add file-level write locking to MCP server plan mutations (prevents concurrent write interleave) | `scripts/mcp-server.py` | OC2 |
+| 12 | Add basic secret pattern scan to pre-dispatch orchestrator behavior (PEM blocks, bearer tokens, `password:` fields) | Orchestrator instructions + session-start hook | SR1 Layer 4 |
+| 13 | Add `configs/meshy/full-local.yaml` and `configs/meshy/hybrid.yaml` reference configs with `trust:` tags on all nodes | `configs/meshy/` | Node trust |
+| 14 | Document `git commit --no-verify` bypass risk; recommend Forgejo server-side hooks for regulated deployments | `docs/deployment/server-side-hooks.md` | SR2 |
+
+**What this proposal does NOT change:** the web UI, the test suites for Phase 1
+plan enforcement, the document lifecycle state machine, or the profile system.
+All existing Phase 1 enforcement infrastructure remains and is the foundation
+Phase 2 builds on.
 
 ---
 
