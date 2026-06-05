@@ -39,16 +39,13 @@ After a new proposal is saved for the first time (heuristic: no prior git commit
 
 This is already specified in [[proposals/ai-proposal-improve-on-save.md]] (On-save suggestion trigger). This proposal confirms and reiterates that requirement.
 
-### 3. Auto-create draft plan on proposal approval
+### 3. (Superseded — see Plan Button proposal)
 
-When a proposal transitions to `approved: true`:
-
-- Automatically scaffold a plan file in `plans/` using the approved proposal's frontmatter (`title`, `author`, `tags`, `assigned_to`) and the profile's plan template
-- Pre-populate the `proposal_source` field with the proposal's path
-- Optionally trigger an AI critique pass on the draft plan (via `skill-plan-critique.md`) and surface the critique as a non-blocking notification attached to the new plan
-- The plan is created in `status: draft` — it does not skip the approval process, it just eliminates the manual scaffolding step
-
-The auto-creation fires on the same action that sets `approved: true`, so the approver sees the result immediately.
+The original item 3 called for auto-creating a plan on proposal approval.
+This has been replaced by the explicit **"Plan" button** in
+[[proposals/proposal-relationship-engine-and-plan-button.md]] (Part 3),
+which triggers relationship scanning and bundled plan creation only when
+the user clicks it — no noise, no isolated plans.
 
 ### 4. Configurable per-profile
 
@@ -58,7 +55,6 @@ Each profile's `profile.json` gains automation flags:
 {
   "auto_open_edit_on_create": true,
   "auto_improve_on_first_save": true,
-  "auto_create_plan_on_approval": true,
   "auto_critique_draft_plan": true
 }
 ```
@@ -71,8 +67,7 @@ Profiles that prefer a more manual workflow (e.g. lightweight personal vaults) c
 |---------|-------------|
 | [[proposals/approved/ux-new-proposal.md]] | Already specifies auto-edit-mode (#1) |
 | [[proposals/ai-proposal-improve-on-save.md]] | Already specifies auto-improve on save (#2) |
-| [[proposals/skill-plan-critique.md]] | Critique pass for draft plans (#3) |
-| [[proposals/plan-test-certification-checkboxes.md]] | Plan scaffolding structure (#3) |
+| [[proposals/proposal-relationship-engine-and-plan-button.md]] | Replaces item 3 with manual Plan button + relationship scanning |
 
 ## Out of Scope
 
