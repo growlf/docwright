@@ -421,7 +421,7 @@
       {/if}
       <div class="body">
         {#if content}
-          <MarkdownRenderer {content} />
+          <MarkdownRenderer {content} docPath={filePath()} />
         {:else}
           <p class="muted">Empty file</p>
         {/if}

@@ -4,9 +4,23 @@
   import anchor from 'markdown-it-anchor';
   import taskLists from 'markdown-it-task-lists';
 
-  let { content }: { content: string } = $props();
+  let { content, docPath = '' }: { content: string; docPath?: string } = $props();
 
   let html = $state('');
+
+  // Resolve a relative image src against the document's location in the vault,
+  // then rewrite to /api/asset?path=... so the server can serve vault files.
+  function resolveImageSrc(src: string): string {
+    if (!src || src.startsWith('http') || src.startsWith('/') || src.startsWith('data:')) return src;
+    const dir = docPath ? docPath.split('/').slice(0, -1).join('/') : '';
+    const parts = (dir ? dir + '/' + src : src).split('/');
+    const out: string[] = [];
+    for (const p of parts) {
+      if (p === '..') out.pop();
+      else if (p && p !== '.') out.push(p);
+    }
+    return `/api/asset?path=${encodeURIComponent(out.join('/'))}`;
+  }
 
   const md = markdownit({ html: true })
     .use(anchor, {
@@ -15,6 +29,19 @@
         s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, ''),
     })
     .use(taskLists, { enabled: true });
+
+  // Rewrite relative image sources through the asset API
+  const defaultImageRender = md.renderer.rules.image;
+  md.renderer.rules.image = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const srcIdx = token.attrIndex('src');
+    if (srcIdx >= 0 && token.attrs) {
+      token.attrs[srcIdx][1] = resolveImageSrc(token.attrs[srcIdx][1]);
+    }
+    return defaultImageRender
+      ? defaultImageRender(tokens, idx, options, env, self)
+      : self.renderToken(tokens, idx, options);
+  };
 
   function handleClick(e: MouseEvent) {
     const el = (e.target as HTMLElement).closest('a');
