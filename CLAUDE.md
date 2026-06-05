@@ -2,6 +2,26 @@
 # Auto-read by Claude Code on session start.
 # Keep this lean — full context is in the Drive folder and PROPOSAL.md.
 
+## Available skills
+
+DocWright ships workflow skills under `.opencode/skills/`. Each directory
+contains a `SKILL.md` with detection heuristics and step-by-step instructions.
+When a task matches a skill's triggers, read its `SKILL.md` and follow the process:
+
+| Skill | For tasks involving |
+|-------|---------------------|
+| `docwright-raw-proposal` | detecting and drafting raw/incomplete proposals |
+| `docwright-proposal` | creating new proposals with proper frontmatter |
+| `docwright-lifecycle` | lifecycle transitions (proposal→plan→completed) |
+| `docwright-git` | git commit standards |
+| `docwright-shutdown` | session shutdown and note capture |
+| `docwright-security` | credential management and system hardening |
+| `docwright-infra` | infrastructure placement and reliability |
+| `docwright-backup` | backup and recovery procedures |
+| `docwright-project` | project registry and vault switching |
+| `docwright-templates` | document format templates |
+| `docwright-tools` | security audit tool references |
+
 ## What this repo is
 
 docwright is a FOSS organizational operating system for policy-driven teams.
