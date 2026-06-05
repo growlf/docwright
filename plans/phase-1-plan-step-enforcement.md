@@ -119,6 +119,13 @@ See [[docs/ai-governance-enforcement.md]] and
   can verify an AI won't reach for Bash. The test table notes this explicitly.
 - **No HUMAN_APPROVED bypass for plan writes** — considered and reverted. The correct
   path for structural plan rewrites is `write_plan` (MCP), not a hook bypass.
+- **Known gap — Phase Gate not mechanically enforced (D21 candidate)** —
+  `update_plan_status` checks ⏳ Implementation Steps rows but does NOT check:
+  (a) `tests_defined: true` in frontmatter, or (b) unchecked `[ ]` items in
+  the Phase Gate section. An AI can propose — and the tool will allow — `status:
+  completed` even when the gate is visibly not clear. Fix: parse `tests_defined`
+  and count unchecked Phase Gate items in `update_plan_status` before accepting
+  `completed`. Discovered when AI began pushing plan closure before gate was clear.
 - **UI regex false-positive risk** — UI uses regex, not the state-machine parser; an
   emoji inside a code block in Implementation Steps would fire falsely. Accepted as
   Phase 1 known limitation; fix in Phase 2 when dispatch linter is wired up.
@@ -167,6 +174,9 @@ See [[docs/ai-governance-enforcement.md]] and
 | 16 | AGENTS.md Bash prohibition — behavioural only | Rule is present in AGENTS.md; no mechanical enforcement exists | Read AGENTS.md | Rule visible; test table notes this cannot be automated |
 | 17 | PostToolUse fires on governance file edit | Session-boundary message emitted after AGENTS.md edit | Manual: Edit AGENTS.md in Claude Code session | Message states changes take effect next session |
 | 18 | UI Complete button disabled | PropertiesPane disables button when plan has pending steps | Manual: Open plan with pending steps; inspect Complete button | Disabled with count tooltip |
+| 19 | `update_plan_status` rejects `completed` when `tests_defined: false` | Enforcement gap fix: tool must block completion when test coverage has not been human-reviewed | `test/mcp/test-plan-tools.py` | Returns error referencing `tests_defined`; no status change |
+| 20 | `update_plan_status` rejects `completed` when Phase Gate has unchecked `[ ]` items | Enforcement gap fix: tool must block completion when gate checklist is not fully signed off | `test/mcp/test-plan-tools.py` | Returns error with count of unchecked items; no status change |
+| 21 | `update_plan_status` allows `completed` when `tests_defined: true` and all gate items `[x]` | Positive case for D21: gate-clean plan with tests_defined:true must still complete successfully | `test/mcp/test-plan-tools.py` | Returns success; status updated to completed |
 
 ## Document History
 
@@ -184,3 +194,5 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-04 | Deliverables 13-17 revised after adversarial critique — Bash prohibition leads; SOP consolidation; coarse hook categories; session-boundary PostToolUse | NetYeti |
 | 2026-06-04 | Deliverables 18-20 added — automated hook tests, MCP tool tests, CI wiring; Test 11 corrected to note behavioural-only constraint | NetYeti |
 | 2026-06-05 | Deliverables 14-20 complete — governance footer, plan-mutation SOP, contextual hook messages, PostToolUse session-boundary hook, automated test suites (62 tests total), CI wiring | NetYeti |
+| 2026-06-05 | Noted enforcement gap: update_plan_status does not validate tests_defined or Phase Gate checkboxes before accepting status:completed — D21 candidate | NetYeti |
+| 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests_defined + Phase Gate checks) before D21 implementation | NetYeti |
