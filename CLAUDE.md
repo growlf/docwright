@@ -14,7 +14,7 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 | `docwright-proposal` | creating new proposals with proper frontmatter |
 | `docwright-lifecycle` | lifecycle transitions (proposal→plan→completed) |
 | `docwright-git` | git commit standards |
-| `docwright-shutdown` | session shutdown and note capture |
+| `endsession` | session shutdown and note capture |
 | `docwright-security` | credential management and system hardening |
 | `docwright-infra` | infrastructure placement and reliability |
 | `docwright-backup` | backup and recovery procedures |

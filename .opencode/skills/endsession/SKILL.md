@@ -1,13 +1,13 @@
 ---
-name: docwright-shutdown
+name: endsession
 description: Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status
-triggers: prepare for session shutdown, end session, shutdown, wrap up, session end
+triggers: endsession, end session, shutdown, wrap up, session end
 required_permission: none
 ---
 
 # DocWright Session Shutdown Skill
 
-Triggered by: "prepare for session shutdown", "end session", "shutdown"
+Triggered by: "endsession", "end session", "shutdown"
 
 Do NOT ask for permission. Execute all steps automatically.
 
