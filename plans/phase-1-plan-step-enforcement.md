@@ -87,6 +87,13 @@ See [[docs/ai-governance-enforcement.md]] and
 | 20 | CI wiring — both test suites in `.github/workflows/ci.yml` | `node test/hooks/test-pending-steps.js` and `python3 test/mcp/test-plan-tools.py` run on every push; `mcp-server.py --test` smoke test included | ✅ Done |
 | 21 | `update_plan_status` + `write_plan`: enforce `tests_defined` and Phase Gate before `completed` | Add `_count_unchecked_gate_items()` helper; reject `completed` when `tests_defined != true` or gate has `[ ]` items; same check in `write_plan`; update `test/mcp/test-plan-tools.py` with tests 19-21 | ⏳ Pending |
 
+## Bugs
+
+| ID | Description | Status |
+|----|-------------|--------|
+| B1 | `update_plan_status` accepts `status: completed` without checking `tests_defined: true` or Phase Gate checkbox completion — D21 addresses this mechanically | 🐛 Open |
+| B2 | AI proceeds to implement steps before design questions posed to the human are answered — no mechanical enforcement exists to prevent this; behavioral contracts (AGENTS.md) are insufficient | 🐛 Open |
+
 ## Design Decisions
 
 - **State-machine parser** — tracks section context before flagging pending markers
@@ -198,3 +205,4 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-05 | Noted enforcement gap: update_plan_status does not validate tests_defined or Phase Gate checkboxes before accepting status:completed — D21 candidate | NetYeti |
 | 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests_defined + Phase Gate checks) before D21 implementation | NetYeti |
 | 2026-06-05 | D21 added to Implementation Steps — enforce tests_defined + Phase Gate in update_plan_status/write_plan | NetYeti |
+| 2026-06-05 | Bugs section added — B1 (gate enforcement gap) and B2 (AI implements before design questions answered, no mechanical enforcement) | NetYeti |
