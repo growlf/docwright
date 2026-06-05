@@ -469,6 +469,8 @@ change in DocWright.
 - Drafts proposals, plans, code, and tests
 - Searches, classifies, routes, and implements
 - Recounts step completions and appends history
+- Critiques proposals, plans, tests, and process for gaps, security issues, and
+  logical fallacies — systematically and at a speed no human reviewer can match
 - Flags ambiguity and surfaces it to the human (via AskUserQuestion)
 - Checks its own work against policy before reporting done
 
@@ -479,11 +481,21 @@ change in DocWright.
   conclusions, question assumptions, envision what doesn't yet exist
 - Maintain strategic oversight and direction — set priorities, redirect work,
   decide what matters and what doesn't
+- Critique proposals, plans, tests, and process with lived experience,
+  organizational context, and intuition about what actually matters
 - Answer design questions with judgment and context AI cannot have
 - Approve proposals before they affect any work
 - Sign off Phase Gate checkboxes (attesting that review actually happened)
 - Set `tests_defined: true` (attesting that test coverage is adequate)
 - Decide when something is "done enough" vs. when to keep improving
+
+**The review duality:** Both humans and AI critique — but differently. AI scans
+systematically, quickly, and without fatigue; humans bring experience, intuition,
+and awareness of organizational context that no model has. Neither catches
+everything the other does. Running both perspectives is what
+`policies/core/multi-perspective-review.md` formalizes: DocWright itself was
+built by triangulating between Claude, BigPickle, and NetYeti — each catching
+what the others missed. Every adopting organization inherits this practice.
 
 **Enforcement:** The gate architecture makes human input structurally required:
 - `update_plan_status("completed")` is blocked mechanically until `tests_defined: true`
