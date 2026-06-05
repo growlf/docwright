@@ -25,24 +25,15 @@ total_steps: 21
 completed_steps: 21
 _path: plans/phase-1-plan-step-enforcement.md
 ---
-
 # Phase 1 — Plan Step Completion Enforcement
 
 ## Overview
 
-Two governance gaps discovered during Phase 1 development, resolved by moving
-enforcement out of git and into the AI workflow layer. Extended through critique
-cycles into a layered reinforcement architecture.
+Two governance gaps discovered during Phase 1 development, resolved by moving enforcement out of git and into the AI workflow layer. Extended through critique cycles into a layered reinforcement architecture.
 
-**Core problem:** Governance rules are only as effective as the AI's awareness
-of the governed path. That awareness degrades mid-session as context fills,
-config files go stale, and the AI reaches for familiar shortcuts (Bash/Python
-writes) rather than the correct MCP tools.
+**Core problem:** Governance rules are only as effective as the AI's awareness of the governed path. That awareness degrades mid-session as context fills, config files go stale, and the AI reaches for familiar shortcuts (Bash/Python writes) rather than the correct MCP tools.
 
-**The failure vector that caused plan file mangling:** AI used Python/Bash
-scripts to write plan files directly, bypassing both the PreToolUse hook and
-all reinforcement layers. The hook only covers Claude Code Write/Edit tools.
-This gap must be closed explicitly in AGENTS.md.
+**The failure vector that caused plan file mangling:** AI used Python/Bash scripts to write plan files directly, bypassing both the PreToolUse hook and all reinforcement layers. The hook only covers Claude Code Write/Edit tools. This gap must be closed explicitly in AGENTS.md.
 
 **Enforcement architecture — three layers covering the Write/Edit path:**
 
@@ -52,19 +43,16 @@ get_plan() footer    plan-mutation SOP       contextual hook message
 (Layer 3)           (Layer 2)               (Layer 1)
 ```
 
-Git pre-commit (`.githooks/pre-commit`) remains the final backstop via
-`lifecycle-gate.js --check-files` for anything that reaches commit time.
+Git pre-commit (`.githooks/pre-commit`) remains the final backstop via `lifecycle-gate.js --check-files` for anything that reaches commit time.
 
-See [[docs/ai-governance-enforcement.md]] and
-[[policies/core/workflow-layer-governance.md]] for the full architecture.
+See \[\[docs/ai-governance-enforcement.md\]\] and \[\[policies/core/workflow-layer-governance.md\]\] for the full architecture.
 
 ![AI governance enforcement layers](../docs/governance_enforcement_layers.svg)
-
 
 ## Implementation Steps
 
 | # | Deliverable | Details | Status |
-|---|-------------|---------|--------|
+| --- | --- | --- | --- |
 | 1 | UI: Complete button disabled when steps pending | `$derived.by` counts pending markers in Implementation Steps; button shows count and tooltip | ✅ Done |
 | 2 | `hasPendingStepsInSection()` + `checkPendingSteps()` in `lifecycle-gate.js` | State-machine parser; `validateFile()` calls it; `--check-files` flag for batch use | ✅ Done |
 | 3 | PreToolUse hook blocks ALL direct writes/edits to `plans/*.md` | `claude-lifecycle-hook.sh` — blanket Write + Edit block; redirects to MCP tools | ✅ Done |
@@ -90,86 +78,57 @@ See [[docs/ai-governance-enforcement.md]] and
 ## Bugs
 
 | ID | Description | Status |
-|----|-------------|--------|
+| --- | --- | --- |
 | B1 | `update_plan_status` accepts `status: completed` without checking `tests_defined: true` or Phase Gate checkbox completion — D21 addresses this mechanically | ✅ Fixed (D21) |
 | B2 | AI proceeds to implement steps before design questions posed to the human are answered — no mechanical enforcement exists to prevent this; behavioral contracts (AGENTS.md) are insufficient | 🐛 Open |
 
 ## Design Decisions
 
-- **State-machine parser** — tracks section context before flagging pending markers
-  in table rows; ~30 lines, no deps. Lives in `lifecycle-gate.js` (JS, canonical +
-  tests) and ported inline to `mcp-server.py`.
-- **Targeted MCP tools over full content replacement** — each tool mutates only the
-  specific string it owns; everything else on disk is unchanged. Prevents content
-  drift when an AI rewrites large files.
-- **PreToolUse as AI write gate** — fires before Write/Edit executes. Blanket block
-  on `plans/*.md`. Covers Claude Code Write/Edit tools only; Bash writes bypass it.
-- **MCP as governed path** — recounts step counts and logs to audit trail on every
-  call. No `--no-verify` escape hatch.
-- **Git pre-commit as final backstop** — `.githooks/pre-commit` calls
-  `lifecycle-gate.js --check-files` on staged plans AND handles git-native concerns.
-  Discovered mid-session (was already implemented).
-- **Bash/Python prohibition (13)** — PreToolUse hook only covers Write/Edit tools.
-  An AI using Python/Bash bypasses all enforcement. Explicit prohibition in AGENTS.md
-  closes the gap that caused the mangling incident. Not mechanically enforceable —
-  behavioural constraint only.
-- **Dynamic footer over hardcoded (14)** — footer computed from server's registered
-  tool names; stays current if tools evolve.
-- **Coarse hook categories over full classifier (16)** — 3 pattern checks rather than
-  content inference. Misidentification produces wrong suggestions, worse than a generic
-  list.
-- **Session-boundary statement over re-read reminder (17)** — "takes effect next
-  session" is true and actionable; "re-read before next action" is not enforceable.
-  Scoped to AGENTS.md + CLAUDE.md only (not all SOPs — too noisy).
-- **Consolidated SOP over separate skill (15)** — keyword-triggered skills are brittle
-  and overlap with existing content. One `plan-mutation.md` is one authoritative source.
-- **Test 11 (Bash prohibition) is behavioural, not mechanical** — no automated test
-  can verify an AI won't reach for Bash. The test table notes this explicitly.
-- **No HUMAN_APPROVED bypass for plan writes** — considered and reverted. The correct
-  path for structural plan rewrites is `write_plan` (MCP), not a hook bypass.
-- **Known gap — Phase Gate not mechanically enforced (D21 candidate)** —
-  `update_plan_status` checks ⏳ Implementation Steps rows but does NOT check:
-  (a) `tests_defined: true` in frontmatter, or (b) unchecked `[ ]` items in
-  the Phase Gate section. An AI can propose — and the tool will allow — `status:
-  completed` even when the gate is visibly not clear. Fix: parse `tests_defined`
-  and count unchecked Phase Gate items in `update_plan_status` before accepting
-  `completed`. Discovered when AI began pushing plan closure before gate was clear.
-- **UI regex false-positive risk** — UI uses regex, not the state-machine parser; an
-  emoji inside a code block in Implementation Steps would fire falsely. Accepted as
-  Phase 1 known limitation; fix in Phase 2 when dispatch linter is wired up.
+*   **State-machine parser** — tracks section context before flagging pending markers in table rows; ~30 lines, no deps. Lives in `lifecycle-gate.js` (JS, canonical + tests) and ported inline to `mcp-server.py`.
+*   **Targeted MCP tools over full content replacement** — each tool mutates only the specific string it owns; everything else on disk is unchanged. Prevents content drift when an AI rewrites large files.
+*   **PreToolUse as AI write gate** — fires before Write/Edit executes. Blanket block on `plans/*.md`. Covers Claude Code Write/Edit tools only; Bash writes bypass it.
+*   **MCP as governed path** — recounts step counts and logs to audit trail on every call. No `--no-verify` escape hatch.
+*   **Git pre-commit as final backstop** — `.githooks/pre-commit` calls `lifecycle-gate.js --check-files` on staged plans AND handles git-native concerns. Discovered mid-session (was already implemented).
+*   **Bash/Python prohibition (13)** — PreToolUse hook only covers Write/Edit tools. An AI using Python/Bash bypasses all enforcement. Explicit prohibition in AGENTS.md closes the gap that caused the mangling incident. Not mechanically enforceable — behavioural constraint only.
+*   **Dynamic footer over hardcoded (14)** — footer computed from server's registered tool names; stays current if tools evolve.
+*   **Coarse hook categories over full classifier (16)** — 3 pattern checks rather than content inference. Misidentification produces wrong suggestions, worse than a generic list.
+*   **Session-boundary statement over re-read reminder (17)** — "takes effect next session" is true and actionable; "re-read before next action" is not enforceable. Scoped to AGENTS.md + CLAUDE.md only (not all SOPs — too noisy).
+*   **Consolidated SOP over separate skill (15)** — keyword-triggered skills are brittle and overlap with existing content. One `plan-mutation.md` is one authoritative source.
+*   **Test 11 (Bash prohibition) is behavioural, not mechanical** — no automated test can verify an AI won't reach for Bash. The test table notes this explicitly.
+*   **No HUMAN\_APPROVED bypass for plan writes** — considered and reverted. The correct path for structural plan rewrites is `write_plan` (MCP), not a hook bypass.
+*   **Known gap — Phase Gate not mechanically enforced (D21 candidate)** — `update_plan_status` checks ⏳ Implementation Steps rows but does NOT check: (a) `tests_defined: true` in frontmatter, or (b) unchecked `[ ]` items in the Phase Gate section. An AI can propose — and the tool will allow — `status: completed` even when the gate is visibly not clear. Fix: parse `tests_defined` and count unchecked Phase Gate items in `update_plan_status` before accepting `completed`. Discovered when AI began pushing plan closure before gate was clear.
+*   **UI regex false-positive risk** — UI uses regex, not the state-machine parser; an emoji inside a code block in Implementation Steps would fire falsely. Accepted as Phase 1 known limitation; fix in Phase 2 when dispatch linter is wired up.
 
 ## Phase Gate
 
-**Reviewer:** NetYeti (solo Phase 1 — `/critique-plan` adversarial review substitutes for human independence)
-**Status:** `pending`
+**Reviewer:** NetYeti (solo Phase 1 — `/critique-plan` adversarial review substitutes for human independence) **Status:** `pending`
 
-- [x] All deliverables 1-12 ✅ Done
-- [x] `node test/hooks/test-pending-steps.js` → 13/13 pass
-- [x] PreToolUse hook blocks direct Write/Edit to any `plans/*.md`
-- [x] MCP `update_plan_status(..., 'completed')` rejects plan with pending rows
-- [x] MCP `transition_to_completed` rejects plan with pending rows
-- [x] Complete button disabled when plan has pending steps
-- [x] Core policy and reference doc written and committed
-- [x] Plan-completion skill written (`docs/SOPs/plan-completion.md`)
-- [x] All design decisions documented
-- [x] Deliverables 13-20 complete
-- [ ] `test/hooks/test-lifecycle-hook.sh` passes in CI
-- [ ] `test/mcp/test-plan-tools.py` passes in CI
-- [ ] `tests_defined: true` set after human review of Tests section
+*    All deliverables 1-12 ✅ Done
+*    `node test/hooks/test-pending-steps.js` → 13/13 pass
+*    PreToolUse hook blocks direct Write/Edit to any `plans/*.md`
+*    MCP `update_plan_status(..., 'completed')` rejects plan with pending rows
+*    MCP `transition_to_completed` rejects plan with pending rows
+*    Complete button disabled when plan has pending steps
+*    Core policy and reference doc written and committed
+*    Plan-completion skill written (`docs/SOPs/plan-completion.md`)
+*    All design decisions documented
+*    Deliverables 13-20 complete
+*    `test/hooks/test-lifecycle-hook.sh` passes in CI
+*    `test/mcp/test-plan-tools.py` passes in CI
+*    `tests_defined: true` set after human review of Tests section
 
 ## Tests
 
-> `tests_defined` must be set to `true` by the human reviewer after confirming
-> the tests below adequately cover the requirements.
+> `tests_defined` must be set to `true` by the human reviewer after confirming the tests below adequately cover the requirements.
 
 | # | Test | Verifies | How to run | Expected result |
-|---|------|----------|------------|-----------------|
+| --- | --- | --- | --- | --- |
 | 1 | 8 unit tests | `hasPendingStepsInSection()` — all section/scope cases | `node test/hooks/test-pending-steps.js` | 13/13 pass |
 | 2 | 4 file-based tests | `checkPendingSteps()` reads real temp files; ok:false on completing with pending | `node test/hooks/test-pending-steps.js` | Tests 9-12 pass |
 | 3 | In-progress plan with pending rows — not blocked | `checkPendingSteps()` returns ok:true for in-progress status | `node test/hooks/test-pending-steps.js` | Test 13 passes |
 | 4 | Hook blocks direct Edit | `claude-lifecycle-hook.sh` returns stop-reason for any Edit on `plans/*.md` | `test/hooks/test-lifecycle-hook.sh` | Exit 1; stop-reason JSON returned |
 | 5 | Hook blocks direct Write | `claude-lifecycle-hook.sh` returns stop-reason for any Write to `plans/*.md` | `test/hooks/test-lifecycle-hook.sh` | Exit 1; stop-reason JSON returned |
-| 6 | Hook blocks approved:true proposal write | Without HUMAN_APPROVED=1, writing approved:true to proposals/approved/ is blocked | `test/hooks/test-lifecycle-hook.sh` | Exit 1; authorization error |
+| 6 | Hook blocks approved:true proposal write | Without HUMAN\_APPROVED=1, writing approved:true to proposals/approved/ is blocked | `test/hooks/test-lifecycle-hook.sh` | Exit 1; authorization error |
 | 7 | Hook contextual suggestion — status change | Edit flipping `status:` field emits `update_plan_status` suggestion | `test/hooks/test-lifecycle-hook.sh` | Stop-reason names `update_plan_status` |
 | 8 | Hook contextual suggestion — step marker | Edit containing step emoji emits `update_step` suggestion | `test/hooks/test-lifecycle-hook.sh` | Stop-reason names `update_step` |
 | 9 | MCP `update_plan_status` rejects pending | Blocks `completed` when pending rows remain | `test/mcp/test-plan-tools.py` | Returns error; no file mutation |
@@ -184,12 +143,12 @@ See [[docs/ai-governance-enforcement.md]] and
 | 18 | UI Complete button disabled | PropertiesPane disables button when plan has pending steps | Manual: Open plan with pending steps; inspect Complete button | Disabled with count tooltip |
 | 19 | `update_plan_status` rejects `completed` when `tests_defined: true` | Enforcement gap fix: tool must block completion when test coverage has not been human-reviewed | `test/mcp/test-plan-tools.py` | Returns error referencing `tests_defined`; no status change |
 | 20 | `update_plan_status` rejects `completed` when Phase Gate has unchecked `[ ]` items | Enforcement gap fix: tool must block completion when gate checklist is not fully signed off | `test/mcp/test-plan-tools.py` | Returns error with count of unchecked items; no status change |
-| 21 | `update_plan_status` allows `completed` when `tests_defined: true` and all gate items `[x]` | Positive case for D21: gate-clean plan with tests_defined:true must still complete successfully | `test/mcp/test-plan-tools.py` | Returns success; status updated to completed |
+| 21 | `update_plan_status` allows `completed` when `tests_defined: true` and all gate items `[x]` | Positive case for D21: gate-clean plan with tests\_defined:true must still complete successfully | `test/mcp/test-plan-tools.py` | Returns success; status updated to completed |
 
 ## Document History
 
 | Date | Change | Author |
-|------|--------|--------|
+| --- | --- | --- |
 | 2026-06-04 | Created — promoted to Phase 1; UI enforcement already shipped | NetYeti |
 | 2026-06-04 | Simplified — removed verbose Critical Review; corrected Deliverable 3 (hook not wired) | NetYeti |
 | 2026-06-04 | Deliverable 3 redesigned — enforcement moved to Claude Code PreToolUse hook + MCP | NetYeti |
@@ -202,8 +161,8 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-04 | Deliverables 13-17 revised after adversarial critique — Bash prohibition leads; SOP consolidation; coarse hook categories; session-boundary PostToolUse | NetYeti |
 | 2026-06-04 | Deliverables 18-20 added — automated hook tests, MCP tool tests, CI wiring; Test 11 corrected to note behavioural-only constraint | NetYeti |
 | 2026-06-05 | Deliverables 14-20 complete — governance footer, plan-mutation SOP, contextual hook messages, PostToolUse session-boundary hook, automated test suites (62 tests total), CI wiring | NetYeti |
-| 2026-06-05 | Noted enforcement gap: update_plan_status does not validate tests_defined or Phase Gate checkboxes before accepting status:completed — D21 candidate | NetYeti |
-| 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests_defined + Phase Gate checks) before D21 implementation | NetYeti |
-| 2026-06-05 | D21 added to Implementation Steps — enforce tests_defined + Phase Gate in update_plan_status/write_plan | NetYeti |
+| 2026-06-05 | Noted enforcement gap: update\_plan\_status does not validate tests\_defined or Phase Gate checkboxes before accepting status:completed — D21 candidate | NetYeti |
+| 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests\_defined + Phase Gate checks) before D21 implementation | NetYeti |
+| 2026-06-05 | D21 added to Implementation Steps — enforce tests\_defined + Phase Gate in update\_plan\_status/write\_plan | NetYeti |
 | 2026-06-05 | Bugs section added — B1 (gate enforcement gap) and B2 (AI implements before design questions answered, no mechanical enforcement) | NetYeti |
-| 2026-06-05 | D21 complete — _check_completion_gate() added; update_plan_status and write_plan enforce tests_defined:true and Phase Gate before accepting status:completed; tests T19-T21 all pass (38/38 MCP tests) | NetYeti |
+| 2026-06-05 | D21 complete — \_check\_completion\_gate() added; update\_plan\_status and write\_plan enforce tests\_defined:true and Phase Gate before accepting status:completed; tests T19-T21 all pass (38/38 MCP tests) | NetYeti |

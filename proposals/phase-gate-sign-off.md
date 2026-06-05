@@ -18,7 +18,7 @@ _path: proposals/phase-gate-sign-off.md
 
 ## Problem
 
-DocWright tracks work through lifecycle states — phases complete, plans
+DocWright tracks work through life-cycle states — phases complete, plans
 transition, proposals get approved, policies go active, devices get
 decommissioned. Currently nothing enforces a human checkpoint before any of
 those transitions happen. Work moves forward because the tooling allows it, not

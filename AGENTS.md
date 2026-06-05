@@ -1,5 +1,4 @@
 # AGENTS.md — Agent Guidelines for DocWright
-
 ## Core Principles
 
 **Security first. Policy driven. Test verified at every stage.**
