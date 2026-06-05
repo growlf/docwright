@@ -174,12 +174,15 @@ Priority order — higher rules override lower:
    `gate_status:`, `assigned_to:`) → Governance; code fences with language
    tags → Code.
 
-**Edge case — mixed-context tasks:** "Read this proposal and write a unit test for
-it." The moment the proposal loads into the orchestrator's context, the session
-becomes Governance class. The test-writing sub-task is dispatched as a **new
-code-agent invocation** with only the test specification in its context — no
-proposal content. The orchestrator writes the specification; the code agent sees
-only Code-class material.
+**Mixed-context tasks — the common case, not the edge case:** Any session that
+reads a plan, proposal, or policy — which is most working sessions — is
+permanently Governance-class. This is the correct security behavior, but it
+has an operational consequence: all code work in that session must be dispatched
+as a fresh code-agent invocation (no governance context in the prompt). The
+orchestrator writes a complete, self-contained specification; the code agent
+sees only Code-class material. The overhead is intentional — it is the
+mechanism that prevents governance content from reaching cloud AI. Plan for
+this to be the normal workflow, not an exception.
 
 **Key invariants:**
 - Classification happens **before** the prompt is assembled. The orchestrator does
@@ -486,6 +489,15 @@ This makes role boundary enforcement mechanical rather than behavioral. A code
 agent running with `DOCWRIGHT_AGENT_ROLE=code` cannot write to governance dirs
 regardless of what it attempts.
 
+**Phase 2 known limitation:** the env var itself can be set by any process in
+the shell. A code agent that sets `DOCWRIGHT_AGENT_ROLE=orchestrator` before
+running would bypass the role restriction. The Phase 2 plan must address this
+— options include: the orchestrator generates a session token written to a
+protected location that the hook validates, or the hook derives the role from
+a trusted source (Forgejo OAuth session, OS user) rather than a self-declared
+env var. Until then, Phase 2 is significantly stronger than Phase 1 behavioral
+enforcement, but not tamper-proof.
+
 Routing enforcement at the Meshy proxy level (rejecting Governance→cloud requests
 at the HTTP layer) is **optional defense-in-depth** — not a Phase 2 requirement.
 Classification + routing config is the primary enforcement gate; proxy-level
@@ -514,7 +526,7 @@ in Phase 1, before mechanical enforcement exists.
 
 **Phase 1 adds** (deliverable 10 — see Phase 1 Implementation):
 
-- User identity (from `.env` `OPCODE_USER_NAME`; automation sessions use `automation@hostname`)
+- User identity (from `.env` `OPCODE_USER_NAME`; automation sessions use `automation@hostname`) — **Phase 1 known limitation:** this value is unverified; any process can set it to any value. Audit attribution is only as trustworthy as operator honesty. Phase 2 ties identity to Forgejo OAuth session (web UI primary path) for verified attribution.
 - Content class assigned (Governance / Design / Code / Routine)
 - Rule that triggered the classification (context / path / heuristic)
 - Routing destination (local model name, or cloud provider)
