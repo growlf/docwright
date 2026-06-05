@@ -64,19 +64,20 @@ Human
   ▼
 Orchestrator AI  (always local for Governance/Design content)
   │
-  │  1. Classifies request by content sensitivity
+  │  1. Classifies request by content sensitivity (decision tree below)
   │  2. Calls MCP plan tools (sole write path to plans/ etc.)
   │  3. Poses design questions via AskUserQuestion
-  │  4. Dispatches code tasks with content-class tag
+  │  4. Dispatches code tasks — code-class context only
+  │  5. Logs every classification + routing decision to audit trail
   │
   ▼
 Meshy / Olla  (routing layer — uniform OpenAI-compatible endpoint)
   │
-  │  Routes by: content-class tag × deployment profile
-  │  Governance/Design → local LLM (always)
+  │  Routes by: content class × deployment profile config
+  │  Governance/Design → local LLM (always, fail-fast if unavailable)
   │  Code/Routine → local or cloud per profile
   │
-  ├──→ Local LLMs (Ollama)       ← governance, design, code in full-local/hybrid
+  ├──→ Local LLMs (Ollama)       ← governance, design, all in full-local/hybrid
   └──→ Cloud API (Anthropic etc) ← code/routine in hybrid/full-cloud only
           │
           ▼
@@ -97,49 +98,65 @@ writes). B2 becomes impossible by construction: the actor that asks design quest
 cannot implement before receiving answers.
 
 Sensitive governance content **cannot** reach the cloud in `full-local` or `hybrid`
-profiles: Meshy enforces the routing rule mechanically before the request leaves the
-host.
+profiles by virtue of classification + routing. If all local backends for a
+Governance-class request are unavailable, the system fails fast — it does not
+silently degrade to cloud.
 
 ---
 
 ## Content Classification
 
 Before routing or dispatching any AI request, the orchestrator classifies the
-content by sensitivity. This classification drives all routing decisions.
+content by sensitivity. This classification drives all routing decisions and is
+logged to the audit trail on every dispatch.
 
 | Class | Examples | Default routing |
 |-------|----------|-----------------|
 | **Governance** | proposals, plans, policies, strategy, org context | Local only — never to cloud |
 | **Design** | architecture decisions, technical tradeoffs, threat models | Local only — same class as Governance |
 | **Code** | src/, test/, scripts/, config files | Profile-dependent (see Deployment Profiles) |
-| **Routine** | status checks, history appends, list operations, file counts | Fastest available — typically tiny local model |
+| **Routine** | status checks, history appends, list operations, file counts | Fastest available local model |
 
-**Classification method:** lightweight rule-set, not ML. In order:
+### Classification Decision Tree
 
-1. **File path patterns** — `plans/`, `proposals/`, `policies/` → Governance;
-   `src/`, `test/` → Code; no file context → Routine
-2. **Content heuristics** — presence of frontmatter fields (`approved:`,
-   `gate_status:`, `assigned_to:`) → Governance; code fences with language tags → Code
-3. **Conversation context** — orchestrator maintains a session classification that
-   upgrades when sensitive content enters context and never downgrades within a session
+Priority order — higher rules override lower:
+
+1. **Conversation context (highest priority)** — if governance or design content has
+   entered the orchestrator's context at any point this session, the **entire session**
+   is Governance class. This never downgrades within a session.
+
+2. **File path patterns** — `plans/`, `proposals/`, `policies/` → Governance;
+   `src/`, `test/`, `scripts/` → Code; no file context → Routine.
+
+3. **Content heuristics (tiebreaker)** — frontmatter fields (`approved:`,
+   `gate_status:`, `assigned_to:`) → Governance; code fences with language
+   tags → Code.
+
+**Edge case — mixed-context tasks:** "Read this proposal and write a unit test for
+it." The moment the proposal loads into the orchestrator's context, the session
+becomes Governance class. The test-writing sub-task is dispatched as a **new
+code-agent invocation** with only the test specification in its context — no
+proposal content. The orchestrator writes the specification; the code agent sees
+only Code-class material.
 
 **Key invariants:**
-- Governance and Design content is classified **before** the request is formed,
-  not after. The orchestrator does not assemble a prompt containing governance
-  content and then decide where to send it — classification happens first.
-- Within a session, if governance content has been loaded into context, the
-  **entire session** is treated as governance-class for routing purposes.
-- Code agents receive **only** code-class content in their context. Governance
-  context is never included in a code agent dispatch.
+- Classification happens **before** the prompt is assembled. The orchestrator does
+  not form a prompt containing governance content and then decide where to send it.
+- Governance and Design content is **never** included in a code agent dispatch
+  context, regardless of profile.
+- When in doubt, classify up (Governance > Design > Code > Routine).
 
 ---
 
 ## Deployment Profiles
 
-A deployment profile defines routing behaviour for the entire installation. It is
-set once during setup and stored in the DocWright configuration. Agents do not know
-which backend they are hitting — Meshy presents a uniform OpenAI-compatible endpoint
-regardless of profile.
+A deployment profile is a **named reference configuration** — a Meshy routing
+config file, not a hardcoded application state. Organizations can define custom
+profiles beyond the three shipped defaults. DocWright stores the active profile
+name; Meshy reads the corresponding config file to determine routing behaviour.
+
+Agents do not know which backend they are hitting — Meshy presents a uniform
+OpenAI-compatible endpoint regardless of profile.
 
 ### `full-local` — Enterprise / Compliance
 
@@ -157,7 +174,7 @@ server running Ollama (or compatible).
 Governance and Design content stays local. Code and Routine can go to cloud for
 speed or capability, per the routing table.
 
-- Governance / Design → local LLMs (enforced)
+- Governance / Design → local LLMs; fail fast if unavailable (no cloud fallback)
 - Code → local preferred; cloud fallback if local model lacks tool support
 - Routine → smallest capable local model (reduces cloud token usage to near zero
   for operational queries)
@@ -170,10 +187,15 @@ No local GPU required. All requests go to configured cloud API(s). This is the
 easiest deployment but the least private.
 
 - All content classes → cloud API
-- **One-time warning at profile setup:** "Governance documents, proposals, plans,
-  and policies will be sent to your configured cloud provider. If this is a
-  concern, use the `hybrid` or `full-local` profile instead." User accepts once;
-  no per-request nagging thereafter.
+- **Persistent acceptance required:** first activation writes an acceptance record
+  to the DocWright config:
+  ```json
+  { "full_cloud_accepted": true, "accepted_at": "2026-06-05T..." }
+  ```
+  Each new session with `full-cloud` active checks for this record. If absent,
+  the session is blocked with a prompt explaining what data will leave the local
+  system. Acceptance is logged to `.docwright/audit.jsonl`. This is enforceable;
+  "warn once verbally" is not.
 - Suitable for: individual contributors, open-source projects with no sensitive
   strategy, early evaluation
 - DocWright calls the cloud API directly (Meshy optional in this mode)
@@ -188,11 +210,11 @@ easiest deployment but the least private.
 implement directly.
 
 **Capabilities:**
-- Classify incoming requests by content sensitivity before any dispatch
+- Classify incoming requests by content sensitivity (decision tree above)
 - All MCP plan mutation tools — sole write path to `plans/`, `proposals/`, `policies/`
 - `AskUserQuestion` — the only channel for posing design questions to the human
 - Read access to all repository files (for context and validation)
-- Dispatch code tasks to code agents with content-class tag attached
+- Dispatch code tasks — code-class context only included in the dispatch
 
 **Prohibitions:**
 - No direct `Edit` / `Write` to `src/`, `test/`, `scripts/` — dispatch instead
@@ -203,12 +225,31 @@ implement directly.
 - No including governance/design content in a code agent dispatch context
 
 **Dispatch protocol:**
-1. Classify the task (content class → routing profile)
+1. Classify the task (decision tree → content class)
 2. All design questions answered via `AskUserQuestion`; answers recorded in plan
-3. Write a complete, self-contained specification — no ambiguity for the code agent
-4. Tag the dispatch with content class
-5. Code agent executes and reports results back
-6. Orchestrator validates results, then updates plan via MCP
+3. Write a complete, self-contained specification containing only code-class context
+4. Log the dispatch (classification, destination, model) to audit trail
+5. Invoke the code agent (see Dispatch Mechanism below)
+6. Receive result; validate; update plan via MCP
+
+**Dispatch mechanism — concrete:**
+- **Claude Code:** use the `Agent` tool. The `prompt` parameter contains only the
+  code-class specification — no governance docs, no proposal content. The agent
+  receives only what the orchestrator explicitly puts in the prompt.
+- **OpenCode:** start a `mode` session (e.g. `docwright-assist`) with a prompt
+  containing only the code-class specification. Governance context from the
+  orchestrator's session is not inherited.
+- The "content-class tag" is not a literal field — it is enforced by what context
+  the orchestrator chooses to include. Governance content is kept out of the
+  dispatch prompt by the orchestrator's discipline (Phase 1) and by context
+  template enforcement (Phase 2).
+
+**Known Phase 1 limitation:** if the orchestrator misclassifies content and
+includes governance material in a code agent dispatch prompt, the hook still
+blocks the code agent from writing plan files — but content leakage to cloud is
+not mechanically prevented. The routing audit trail makes this detectable after
+the fact. Phase 2 env-var enforcement reduces this risk by making the role
+boundary explicit.
 
 ### Code Agent
 
@@ -218,22 +259,15 @@ implement directly.
 - `Edit`, `Write`, `Bash` in code directories: `src/`, `test/`, `scripts/`
   (excluding governance scripts — see Prohibitions)
 - Run tests and report output
-- Receive code-class context only — never sees governance docs
+- Receives code-class context only — never sees governance docs
 
 **Prohibitions:**
 - No MCP plan mutation tools
 - No `Edit` / `Write` to `plans/`, `proposals/`, `policies/`, `docs/SOPs/`,
   `AGENTS.md`, `CLAUDE.md`
 - No posing design questions to the human — if the specification is ambiguous,
-  report the ambiguity to the orchestrator; do not decide
+  return the ambiguity to the orchestrator; do not decide
 - No self-directed plan updates of any kind
-
-### Classifier (optional — Tier 2 deployments)
-
-A tiny local model (e.g. qwen2.5:1.5b) that pre-screens requests and adds a
-content-class tag before Meshy routing. Eliminates classification latency from
-the orchestrator's hot path. Optional — orchestrator handles classification inline
-in simple deployments.
 
 ### Human
 
@@ -258,24 +292,58 @@ in simple deployments.
 | Orchestrator implements before design settled | Behavioral — AGENTS.md Invariant |
 | Completing plan with pending steps | MCP `update_plan_status` blocks if ⏳ rows remain |
 | Completing plan without gate sign-off | MCP `update_plan_status` blocks if `tests_defined: false` or `[ ]` items in Phase Gate |
-| Governance content routed to cloud | Behavioral — routing config; no code enforcement yet |
+| Governance content routed to cloud | Classification + routing config; misclassification detectable via audit trail |
+| full-cloud used without acceptance | Persistent acceptance flag checked each session |
 
 The hook is context-blind at this phase. It blocks bad writes regardless of who is
-writing, providing a floor. Role boundary enforcement is behavioral.
+writing, providing a floor. Role boundary enforcement is behavioral; the audit trail
+makes violations detectable.
 
-### Phase 2 (mechanical role + routing enforcement)
+### Phase 2 — Hook-enforced role separation
 
-**Role enforcement:**
-- `DOCWRIGHT_AGENT_ROLE=orchestrator|code` env var set by orchestrator when spawning agents
+- `DOCWRIGHT_AGENT_ROLE=orchestrator|code` env var set by orchestrator when
+  spawning agents
 - Hook reads `${DOCWRIGHT_AGENT_ROLE:-orchestrator}` on every Write/Edit
 - Role `code` → block writes to all governance dirs (not just `plans/`)
 - Role `orchestrator` → current behaviour applies
 
-**Routing enforcement:**
-- Content classification runs before every dispatch; result logged to audit trail
-- Meshy config enforces routing rules independently of application code
-- `full-local` and `hybrid` profiles: Meshy rejects cloud API calls for
-  Governance/Design content at the proxy level — not just the application level
+This makes role boundary enforcement mechanical rather than behavioral. A code
+agent running with `DOCWRIGHT_AGENT_ROLE=code` cannot write to governance dirs
+regardless of what it attempts.
+
+Routing enforcement at the Meshy proxy level (rejecting Governance→cloud requests
+at the HTTP layer) is **optional defense-in-depth** — not a Phase 2 requirement.
+Classification + routing config is the primary enforcement gate; proxy-level
+rejection is a secondary backstop if desired.
+
+### Phase 3 — Optional hardening
+
+- Proxy-level enforcement in Meshy (reject Governance→cloud at HTTP layer)
+- Formal per-agent tool restrictions if Claude Code ever exposes this capability
+
+**Note:** Phase 3 items are optional hardening, not required milestones. The system
+is fully operational and secure at Phase 2. If Claude Code never adds formal
+per-agent tool restrictions, the hook + env-var approach from Phase 2 is the
+sufficient final enforcement state.
+
+---
+
+## Routing Audit Trail
+
+Every classification decision and routing decision is logged to
+`.docwright/audit.jsonl` (the existing audit log used for MCP mutations). This is
+a **Phase 1 requirement**, not a Phase 2 addition — it is the primary mechanism
+for detecting misclassification in the absence of mechanical enforcement.
+
+Each entry records:
+- Timestamp
+- Content class assigned (Governance / Design / Code / Routine)
+- Rule that triggered the classification (context / path / heuristic)
+- Routing destination (local model name, or cloud provider)
+- Session ID
+
+This makes "governance content went to cloud" a detectable event, not just a
+theoretical risk. Compliance audit reviews the log, not the AI's memory.
 
 ---
 
@@ -283,35 +351,48 @@ writing, providing a floor. Role boundary enforcement is behavioral.
 
 Meshy (growlf/meshy) is a transparent AI inference proxy that presents a single
 OpenAI-compatible endpoint to DocWright. Internally it routes requests to local
-LLMs (via Ollama) or cloud APIs based on a routing profile.
+LLMs (via Ollama) or cloud APIs based on a routing profile config file.
 
 **Why this matters for DocWright:**
 
 DocWright never needs to know which model handled a request. The same application
-code works in `full-local`, `hybrid`, and `full-cloud` deployments — only the
-Meshy configuration changes. Model swappability is free: swap a local model version
-without touching DocWright.
+code works across all deployment profiles — only the Meshy configuration changes.
+Model swappability is free: update a local model without touching DocWright.
 
 **Routing table (hybrid profile reference):**
 
 | Content class | Primary backend | Fallback |
 |---------------|-----------------|---------|
-| Governance | `qwen2.5:14b` (local, Ollama) | `mistral-small3.2:24b` (local) — no cloud fallback |
-| Design | `deepseek-r1:14b` (local, reasoning) | `mistral-small3.2:24b` (local) — no cloud fallback |
+| Governance | `qwen2.5:14b` (local) | `mistral-small3.2:24b` (local) — **no cloud fallback** |
+| Design | `deepseek-r1:14b` (local, reasoning) | `mistral-small3.2:24b` (local) — **no cloud fallback** |
 | Code | `mistral-small3.2:24b` (local, tool-capable) | `claude-haiku` (cloud) |
 | Routine | `qwen2.5:1.5b` (local, tiny, fast) | Any available local |
 
+**Failure SOPs:**
+
+| Failure | Behaviour |
+|---------|-----------|
+| Governance/Design LLMs all down | **Fail fast** — error returned, ask human to restore local LLM. Never degrade to cloud. |
+| Meshy unreachable | **Fail fast** — no silent cloud fallback. Error surfaces to orchestrator. |
+| Code-class local LLM down, cloud fallback available | Use cloud fallback per routing table |
+| Code-class LLM down, no fallback, hybrid profile | Error — ask human or switch profile |
+| full-cloud API rate-limited | Standard retry/backoff; no special handling |
+
+The invariant: **Governance and Design class never fall back to cloud**, regardless
+of profile, unless `full-cloud` was explicitly chosen and the acceptance record is
+present in config.
+
 **Meshy as a diagnostic tool:**
 
-If a model produces poor results on a task, the orchestrator re-dispatches to a
-different node without losing workflow state. "Try a different node" becomes a
-first-class recovery action — model swapping without session restart.
+If a model produces poor results, the orchestrator re-dispatches to a different
+node without losing workflow state. Model swapping becomes a first-class recovery
+action rather than a session restart.
 
 **Deployment without Meshy (full-cloud profile):**
 
-DocWright calls the cloud API directly using the standard OpenAI-compatible client.
-Meshy is not required. When the user later wants to add local LLMs, they install
-Meshy and switch the endpoint URL — no code change.
+DocWright calls the cloud API directly. Meshy is not required. When the user later
+wants to add local LLMs, they install Meshy and switch the endpoint URL — no code
+change in DocWright.
 
 **DocWright ships:**
 - Reference Meshy config for `full-local` profile
@@ -363,15 +444,15 @@ through the same flow the architecture governs: proposal → human approval → 
 **The enforcement strengthening arc:**
 
 ```
-Phase 1  →  Behavioral + partial mechanical
-Phase 2  →  Hook-enforced role separation + Meshy routing enforcement
-Phase 3  →  Formal sandboxing (Claude Code per-agent tool restrictions)
+Phase 1  →  Behavioral + partial mechanical + routing audit trail
+Phase 2  →  Hook-enforced role separation (DOCWRIGHT_AGENT_ROLE)
+Phase 3  →  Optional: proxy-level Meshy enforcement; Claude Code sandboxing
 Phase N  →  Continuous improvement via governed proposals
 ```
 
 Each phase strengthens enforcement without breaking existing rules. Behavioral
-contracts become MCP-validated, then hook-enforced, then mechanically sandboxed.
-Rules don't get weaker; they get harder to violate.
+contracts become MCP-validated, then hook-enforced. Phase 3 items are hardening,
+not required milestones — the system is fully operational at Phase 2.
 
 **Regression protection:**
 - Every enforcement rule ships with an automated test that verifies it works
@@ -391,19 +472,19 @@ Rules don't get weaker; they get harder to violate.
 
 ### Orchestrator (this session and beyond)
 
-- Classifies content before dispatch (new responsibility)
+- Classifies content before dispatch using the decision tree
 - Uses `AskUserQuestion` for all design questions — not inline text
-- Dispatches code tasks with content-class tag
+- Dispatches code tasks with code-class-only context
+- Logs every classification and routing decision to audit trail
 - Does not include governance content in code agent context
 - Does not write code files directly — dispatches instead
 - Validates agent results before calling `update_step`
 
 ### Code Agent
 
-- Receives complete, design-resolved specifications with content-class tag
-- Operates on code-class content only
-- Returns structured result to orchestrator; no plan updates
+- Receives complete, design-resolved specifications with code-class context only
 - Reports ambiguity upward; does not decide
+- Returns result to orchestrator; no plan updates
 
 ### Human
 
@@ -417,14 +498,14 @@ Rules don't get weaker; they get harder to violate.
 ## Deferred to Phase 2
 
 - `DOCWRIGHT_AGENT_ROLE` env-var hook enforcement (mechanical role separation)
-- Content classification running before every dispatch (inline in orchestrator for now)
-- Meshy reference configs for all three deployment profiles
-- Per-profile routing tables (content class → model tier → fallback chain)
 - Code agent context template — standardized, governance-knowledge-free
-- Classifier model (optional, Tier 2+): tiny local model pre-screening requests
 - CI enforcement: verify code agent context cannot trigger plan mutations
 - Encryption at rest for governance content (enterprise profile)
-- Formal sandboxing when Claude Code exposes per-agent tool restrictions
+
+## Deferred to Phase 3 (optional hardening)
+
+- Proxy-level Meshy enforcement — reject Governance→cloud at HTTP layer
+- Formal per-agent tool restrictions (if Claude Code ever exposes this)
 
 ---
 
