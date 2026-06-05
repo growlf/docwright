@@ -107,3 +107,51 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Phase 1 UI Polish completed (v0.1.1), Phase 1 Critique Skill completed (v0.1.2)
 
 **Session note:** `docs/session-notes/session_note_202606040300.md`
+
+---
+
+## Session: 2026-06-05 — Plan population + Tests section
+
+**Focus:** Populate proposal-relationship-engine plan with implementation steps and tests
+
+**Completed:**
+- [x] Combined 3 overlapping proposals into one unified proposal
+- [x] Deleted old raw proposals (doc-automations, hierarchy-position, making-plans-scans)
+- [x] Populated plan with 12 implementation steps across 4 parts
+- [x] Added Tests section with checkboxes grouped by component
+- [x] Updated docwright-raw-proposal skill and CLAUDE.md skills reference
+
+**Session note:** `docs/session-notes/session_note_202606051526.md`
+
+---
+
+## Session: 2026-06-05 — Split-agent governance critique and revision
+
+**Focus:** Adversarial critique and full revision of split-agent-governance proposal
+
+**Completed:**
+- [x] Added org-ceiling model: `cloud_allowed_for` (opencode.json) + `cloud_accepted_for` (.docwright/config.json)
+- [x] Secrets absolute override — no cloud path for secrets regardless of profile
+- [x] Node trust classification: `internal|external` on Meshy nodes; untagged defaults external
+- [x] AI critique role and review duality added to Human Augmentation Principles
+- [x] Multi-user document-base established as baseline architectural assumption
+- [x] Automation agent and secrets manager captured as deferred proposals
+- [x] Full adversarial critique — 7 categories of findings identified
+- [x] Proposal revised: Current State table, honest phase labels, 14 Phase 1 deliverables
+- [x] All 3 outstanding critique findings annotated (OG2, AP4, SR3)
+- [x] Proposal ready for NetYeti approval
+
+**Session note:** `docs/session-notes/session_note_202606052300.md`
+
+---
+
+## Session: 2026-06-05 — Rename endsession skill
+
+**Focus:** Skill rename: docwright-shutdown → endsession
+
+**Completed:**
+- [x] Renamed `.opencode/skills/docwright-shutdown/` → `.opencode/skills/endsession/`
+- [x] Updated SKILL.md frontmatter name and triggers
+- [x] Updated CLAUDE.md skills table
+
+**Session note:** `docs/session-notes/session_note_202606052330.md`
