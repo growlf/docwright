@@ -146,6 +146,48 @@ only Code-class material.
   context, regardless of profile.
 - When in doubt, classify up (Governance > Design > Code > Routine).
 
+### Secrets — Absolute Routing Override
+
+Secret-bearing content — credentials, API keys, private keys, tokens, passwords,
+connection strings, PII — is subject to a routing restriction that **overrides
+all other classification decisions, profile settings, and `cloud_allowed_for`
+configuration**: secrets never reach an external node. Ever.
+
+This rule has no exceptions, no waivers, and no profile that enables it.
+`cloud_allowed_for: ["Governance"]` does not override it. Individual acceptance
+does not override it. It is a hard invariant of the architecture.
+
+**What counts as secret-bearing:** content containing or referencing credentials,
+authentication tokens, private keys, connection strings with embedded passwords,
+PII, or any data whose exposure would constitute a security or legal breach. When
+in doubt, treat as secret.
+
+**"External" vs "internal" nodes:** not all remote nodes are cloud. An
+organization's own Meshy instance accessed over VPN is an internal node — data
+stays within the trust boundary. A public cloud API (Anthropic, OpenAI, etc.) is
+an external node regardless of contractual privacy terms. The distinction is
+organizational trust boundary, not network topology. See Node Trust Classification
+in the Meshy section below.
+
+**Detection — defense-in-depth (no single layer is sufficient):**
+
+1. **Architectural** — secrets must not appear in governance documents at all.
+   Store in a secrets manager and reference by name only. Secrets that never
+   enter documents cannot leak through routing. DocWright should integrate with
+   common secrets managers as a first-class feature — see deferred proposal below.
+2. **Pre-commit** — existing `no-secrets.md` hook rejects staged secrets before
+   they reach the repository.
+3. **Orchestrator behavioral** — never include secret-bearing content in any
+   dispatch to an external node. Phase 1 enforcement.
+4. **Pattern matching** — known secret formats (PEM blocks, bearer tokens,
+   `password:` fields, `-----BEGIN * KEY-----`) detected as a secondary check.
+   Catches common formats; not exhaustive.
+5. **Meshy proxy enforcement** — external nodes refuse prompts containing detected
+   secret patterns. Phase 2 cross-project requirement (see Meshy section).
+
+No detection method is complete for arbitrary text. The primary mitigation is
+architectural: layer 1 ensures secrets are not in documents in the first place.
+
 ---
 
 ## Deployment Profiles
@@ -353,6 +395,7 @@ boundary explicit.
 | Governance content routed to cloud | Classification + routing; `cloud_allowed_for` org ceiling checked at session start; hard error if class not permitted; misclassification detectable via audit trail |
 | Cloud class permitted but not individually accepted | Prompt at session start; write `cloud_accepted_for` to `.docwright/config.json`; log to audit trail |
 | Individual attempts to exceed org ceiling | Hard error — `cloud_allowed_for` takes precedence over local acceptance record; no bypass |
+| Secret-bearing content dispatched to external node | Hard error — secrets absolute override; no profile, acceptance flag, or `cloud_allowed_for` setting permits this; audit trail entry; no bypass |
 
 The hook is context-blind at this phase. It blocks bad writes regardless of who is
 writing, providing a floor. Role boundary enforcement is behavioral; the audit trail
@@ -440,6 +483,51 @@ Model swappability is free: update a local model without touching DocWright.
 The invariant: **Governance and Design class never fall back to cloud**, regardless
 of profile, unless `full-cloud` was explicitly chosen and the acceptance record is
 present in config.
+
+### Node Trust Classification
+
+Not all remote Meshy nodes are "cloud." An organization may operate nodes that
+are remote — accessed over VPN, a private network, or an internal domain — but
+remain within the organizational trust boundary. These are **internal** nodes.
+Public cloud API endpoints are **external** nodes regardless of any contractual
+privacy guarantees. The distinction is organizational trust boundary, not network
+topology or latency.
+
+This classification is required because the secrets absolute override (above)
+depends on knowing which nodes are safe recipients. Every Meshy routing config
+must tag each node with a trust level:
+
+```yaml
+nodes:
+  - id: local-ollama
+    endpoint: http://localhost:11434
+    trust: internal          # local — trivially within boundary
+  - id: company-meshy
+    endpoint: https://meshy.company.internal
+    trust: internal          # remote but within org boundary
+  - id: anthropic-cloud
+    endpoint: https://api.anthropic.com
+    trust: external          # outside org boundary — secrets never routed here
+  - id: openai
+    endpoint: https://api.openai.com
+    trust: external
+```
+
+The reference Meshy configs DocWright ships (`configs/meshy/full-local.yaml`,
+`configs/meshy/hybrid.yaml`) include trust tags for all nodes. Organizations
+adding custom nodes must tag them explicitly — untagged nodes default to
+`trust: external` (fail-safe).
+
+**This is a cross-project requirement.** DocWright defines the policy and
+configuration contract; the Meshy project must implement:
+- The `trust` field on node definitions
+- Routing enforcement: reject requests to `trust: external` nodes when the
+  content contains detected secret patterns (Phase 2)
+- A hard block for content classes restricted from cloud by `cloud_allowed_for`
+
+Phase 1: orchestrator behavioral enforcement — never dispatch secrets or
+restricted content to external nodes. Phase 2: Meshy proxy enforcement at the
+HTTP layer, removing dependence on orchestrator discipline.
 
 **Meshy as a diagnostic tool:**
 
@@ -599,6 +687,20 @@ infrastructure remains unchanged and is the foundation Phase 2 builds on.
 - Code agent context template — standardized, governance-knowledge-free
 - CI enforcement: verify code agent context cannot trigger plan mutations
 - Encryption at rest for governance content (enterprise profile)
+- **Meshy node trust tagging** — implement `trust: internal|external` on node
+  definitions; proxy-layer enforcement rejecting secret-bearing content and
+  `cloud_allowed_for`-restricted classes from reaching `trust: external` nodes
+  at the HTTP layer. Cross-project requirement: changes needed in the Meshy
+  project as well as DocWright's reference routing configs.
+
+**Deferred proposal — secrets manager integration:** DocWright should natively
+support referencing secrets from a password/secrets manager rather than embedding
+them in documents. Candidate integrations: Bitwarden / Vaultwarden (self-hosted,
+open-source — preferred for FOSS alignment), 1Password (teams), HashiCorp Vault
+(enterprise). The pattern: documents reference `{{secret:my-api-key}}` and
+DocWright resolves the value at use time from the configured manager — the
+document itself never contains the plaintext. Capture as a standalone proposal
+before Phase 2 planning begins.
 
 ## Deferred to Phase 3 (optional hardening)
 
