@@ -21,7 +21,7 @@ tags:
   - enforcement
   - mcp
   - hooks
-total_steps: 20
+total_steps: 21
 completed_steps: 20
 _path: plans/phase-1-plan-step-enforcement.md
 ---
@@ -85,6 +85,7 @@ See [[docs/ai-governance-enforcement.md]] and
 | 18 | `test/hooks/test-lifecycle-hook.sh` — automated hook tests | Pipes JSON payloads to `claude-lifecycle-hook.sh`; asserts correct blocking and redirect messages for: plan Write block, plan Edit block, approved:true proposal block, contextual suggestions; committed to test suite | ✅ Done |
 | 19 | `test/mcp/test-plan-tools.py` — automated MCP tool tests | Python test script against fixture plans: `update_step` (replacement + recount), `update_plan_status` (blocks pending, allows clean), `append_history` (row appended), `set_plan_field` (field set; restricted fields blocked), `write_plan` (lifecycle rules, recount) | ✅ Done |
 | 20 | CI wiring — both test suites in `.github/workflows/ci.yml` | `node test/hooks/test-pending-steps.js` and `python3 test/mcp/test-plan-tools.py` run on every push; `mcp-server.py --test` smoke test included | ✅ Done |
+| 21 | `update_plan_status` + `write_plan`: enforce `tests_defined` and Phase Gate before `completed` | Add `_count_unchecked_gate_items()` helper; reject `completed` when `tests_defined != true` or gate has `[ ]` items; same check in `write_plan`; update `test/mcp/test-plan-tools.py` with tests 19-21 | ⏳ Pending |
 
 ## Design Decisions
 
@@ -196,3 +197,4 @@ See [[docs/ai-governance-enforcement.md]] and
 | 2026-06-05 | Deliverables 14-20 complete — governance footer, plan-mutation SOP, contextual hook messages, PostToolUse session-boundary hook, automated test suites (62 tests total), CI wiring | NetYeti |
 | 2026-06-05 | Noted enforcement gap: update_plan_status does not validate tests_defined or Phase Gate checkboxes before accepting status:completed — D21 candidate | NetYeti |
 | 2026-06-05 | Tests 19-21 added — cover enforcement gap (tests_defined + Phase Gate checks) before D21 implementation | NetYeti |
+| 2026-06-05 | D21 added to Implementation Steps — enforce tests_defined + Phase Gate in update_plan_status/write_plan | NetYeti |
