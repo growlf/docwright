@@ -22,7 +22,7 @@ tags:
   - mcp
   - hooks
 total_steps: 20
-completed_steps: 19
+completed_steps: 20
 _path: plans/phase-1-plan-step-enforcement.md
 ---
 
@@ -77,7 +77,7 @@ See [[docs/ai-governance-enforcement.md]] and
 | 10 | Reference doc: `docs/ai-governance-enforcement.md` | Tool table, layer descriptions, failure modes, live-feed vs snapshot principle | ✅ Done |
 | 11 | CLAUDE.md + README.md + `policies/core/code-over-memory.md` updated | Philosophy entry, governance architecture section, mechanism table corrected | ✅ Done |
 | 12 | Plan-completion skill — `docs/SOPs/plan-completion.md` | Explicit 5-step MCP tool sequence; closes behavioral gap at Layer 1 | ✅ Done |
-| 13 | AGENTS.md: explicit Bash/Python write prohibition | Add rule: never use Bash, Python scripts, or shell commands to write plan files — bypasses MCP validation and PreToolUse hook | ⏳ Pending |
+| 13 | AGENTS.md: explicit Bash/Python write prohibition | Add rule: never use Bash, Python scripts, or shell commands to write plan files — bypasses MCP validation and PreToolUse hook | ✅ Done |
 | 14 | `get_plan()` governance footer — dynamic | 2-3 line footer on every `get_plan()` response; computed from server's registered tool names (not hardcoded) so it stays current | ✅ Done |
 | 15 | Consolidate plan-mutation SOP | Expand `docs/SOPs/plan-completion.md` into `docs/SOPs/plan-mutation.md` covering all mutation scenarios; one authoritative source | ✅ Done |
 | 16 | Contextual hook error messages | `claude-lifecycle-hook.sh` 3 coarse categories: Write→`write_plan`; Edit+`status:`→`update_plan_status`; Edit+step marker→`update_step`; catch-all→list | ✅ Done |
