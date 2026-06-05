@@ -152,8 +152,12 @@ only Code-class material.
 
 A deployment profile is a **named reference configuration** — a Meshy routing
 config file, not a hardcoded application state. Organizations can define custom
-profiles beyond the three shipped defaults. DocWright stores the active profile
-name; Meshy reads the corresponding config file to determine routing behaviour.
+profiles beyond the three shipped defaults.
+
+The three profiles below are documentation shorthand for common configurations.
+**Enforcement is not based on profile names** — it is based on `cloud_allowed_for`
+in `opencode.json`, which declares a per-content-class ceiling on what the
+org permits to be routed to cloud (see Org Policy and Individual Acceptance below).
 
 Agents do not know which backend they are hitting — Meshy presents a uniform
 OpenAI-compatible endpoint regardless of profile.
@@ -187,24 +191,72 @@ No local GPU required. All requests go to configured cloud API(s). This is the
 easiest deployment but the least private.
 
 - All content classes → cloud API
-- **Persistent acceptance required:** first activation writes an acceptance record
-  to the DocWright config:
-  ```json
-  { "full_cloud_accepted": true, "accepted_at": "2026-06-05T..." }
-  ```
-  Each new session with `full-cloud` active checks for this record. If absent,
-  the session is blocked with a prompt explaining what data will leave the local
-  system. Acceptance is logged to `.docwright/audit.jsonl`. This is enforceable;
-  "warn once verbally" is not.
-
-  **Open design decision (resolve before Phase 2):** Where does the acceptance
-  record live? Options: `opencode.json` (simple, already the config file);
-  `.docwright/config.json` (cleaner separation, gitignored like `.env`);
-  `.docwright/audit.jsonl` (searchable but awkward to query as a flag). The
-  chosen location must also be the place the session-start check reads from.
+- Equivalent to `"cloud_allowed_for": ["Code", "Routine", "Design", "Governance"]`
+  in `opencode.json`; per-machine acceptance required for all classes (see
+  Org Policy and Individual Acceptance below)
 - Suitable for: individual contributors, open-source projects with no sensitive
   strategy, early evaluation
 - DocWright calls the cloud API directly (Meshy optional in this mode)
+
+### Org Policy and Individual Acceptance
+
+The profile names above are shorthand. The actual enforcement is a two-field
+ceiling-and-acknowledgment pair.
+
+**`cloud_allowed_for` — org/project policy (`opencode.json`, committed to git):**
+
+```json
+"deployment": {
+  "cloud_allowed_for": ["Code", "Routine"]
+}
+```
+
+Declares which content classes the organization permits to be routed to cloud APIs.
+This is the **ceiling** — no individual can send a content class to cloud that is
+not in this list, regardless of their local config or personal acceptance.
+
+| `cloud_allowed_for` value | Profile equivalent | Typical use case |
+|---------------------------|--------------------|-----------------|
+| `[]` or field absent | `full-local` | Regulated org; nothing leaves the building |
+| `["Code", "Routine"]` | `hybrid` | Team with local GPU; governance always local |
+| `["Code", "Routine", "Design", "Governance"]` | `full-cloud` | Solo dev; OSS contributor without GPU |
+
+**`cloud_accepted_for` — per-machine acknowledgment (`.docwright/config.json`, gitignored):**
+
+```json
+{
+  "cloud_accepted_for": ["Code", "Routine"],
+  "accepted_at": "2026-06-05T..."
+}
+```
+
+Each person must explicitly acknowledge the content classes they are routing to
+cloud on their machine. This file is gitignored — acceptance is a per-person,
+per-checkout decision, not a repo decision. A fresh clone has no acceptance record
+and will prompt before routing anything to cloud.
+
+**Session-start enforcement:**
+
+1. Read `cloud_allowed_for` from `opencode.json` → the org ceiling
+2. Read `cloud_accepted_for` from `.docwright/config.json` → per-machine acceptance
+3. If any routing decision would send a class to cloud that is not in
+   `cloud_allowed_for`: **hard error** — org policy ceiling violated; no bypass;
+   logged to audit trail
+4. If `cloud_allowed_for` permits a class but the individual has not yet accepted
+   it: **prompt for acceptance**, write accepted class to `.docwright/config.json`,
+   log to audit trail
+5. Individual acceptance of a class not in `cloud_allowed_for` is silently ignored
+   — the ceiling takes precedence
+
+**Why this design handles both enterprise and open-source:**
+
+An enterprise org sets `"cloud_allowed_for": []` in the committed `opencode.json`.
+No individual can override this — there is no path to cloud regardless of what they
+put in their local config. An open-source project sets `"cloud_allowed_for":
+["Code", "Routine", "Design", "Governance"]` — fully permissive. Each contributor
+accepts whichever classes match their local setup. The governance model scales
+from one person on a laptop to a compliance team in a regulated environment without
+any code change — only the `cloud_allowed_for` list changes.
 
 ---
 
@@ -298,8 +350,9 @@ boundary explicit.
 | Orchestrator implements before design settled | Behavioral — AGENTS.md Invariant |
 | Completing plan with pending steps | MCP `update_plan_status` blocks if ⏳ rows remain |
 | Completing plan without gate sign-off | MCP `update_plan_status` blocks if `tests_defined: false` or `[ ]` items in Phase Gate |
-| Governance content routed to cloud | Classification + routing config; misclassification detectable via audit trail |
-| full-cloud used without acceptance | Persistent acceptance flag checked each session |
+| Governance content routed to cloud | Classification + routing; `cloud_allowed_for` org ceiling checked at session start; hard error if class not permitted; misclassification detectable via audit trail |
+| Cloud class permitted but not individually accepted | Prompt at session start; write `cloud_accepted_for` to `.docwright/config.json`; log to audit trail |
+| Individual attempts to exceed org ceiling | Hard error — `cloud_allowed_for` takes precedence over local acceptance record; no bypass |
 
 The hook is context-blind at this phase. It blocks bad writes regardless of who is
 writing, providing a floor. Role boundary enforcement is behavioral; the audit trail
@@ -513,7 +566,7 @@ no web UI changes, no MCP server changes, no test suite changes.
 | 3 | Add orchestrator-only preamble to plan mutation SOP | `docs/SOPs/plan-mutation.md` |
 | 4 | Rework enforcement layers diagram | `docs/governance_enforcement_layers.svg` |
 | 5 | Extend orchestrator behavior to log classification/routing decisions to `.docwright/audit.jsonl` | Behavioral (Phase 1); dispatch module (Phase 2) |
-| 6 | Decide full-cloud acceptance flag location and implement persistence check | Config TBD (design decision above) |
+| 6 | Add `deployment.cloud_allowed_for` to `opencode.json`; implement session-start ceiling check and per-machine acceptance prompt writing to `.docwright/config.json` | `opencode.json` + `.docwright/config.json` |
 | 7 | Update `opencode.json` orchestrator instructions with classification discipline note | `opencode.json` |
 
 **What this proposal does NOT change:** the MCP server, the existing
