@@ -119,6 +119,40 @@
     onsave?.(frontmatter);
   }
 
+  // Plan: run tests and auto-certify on pass
+  let testRunning = $state(false);
+  let testOutput  = $state('');
+  let testPassed  = $state<boolean | null>(null);
+
+  async function runTests() {
+    const planPath = frontmatter._path ?? '';
+    const planName = planPath.replace(/^plans\//, '').replace(/\.md$/, '');
+    if (!planName) return;
+    testRunning = true;
+    testOutput  = '';
+    testPassed  = null;
+    try {
+      const res = await fetch('/api/lifecycle/run-tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const data = await res.json();
+      testPassed  = data.passed ?? false;
+      testOutput  = data.blocker ?? data.output ?? '';
+      if (data.passed) {
+        // Server already wrote tests_defined: true — sync local state
+        setField('tests_defined', true);
+        onsave?.(frontmatter);
+      }
+    } catch (e: any) {
+      testPassed = false;
+      testOutput = String(e);
+    } finally {
+      testRunning = false;
+    }
+  }
+
   // Plan actions
   function setPlanStatus(status: string) {
     setField('status', status);
@@ -190,27 +224,30 @@
           <button class="act start" onclick={() => setPlanStatus('in-progress')}
             title="Set status: in-progress — marks this plan as actively being worked">Start</button>
         {/if}
-        {#if frontmatter.status === 'in-progress' || frontmatter.status === 'approved'}
+        {#if frontmatter.status === 'in-progress'}
           {#if !frontmatter.tests_defined}
-            <button class="act estimate" onclick={certifyTests}
-              title="I've reviewed these tests and they would catch regressions if the implementation were wrong.">
-              ✓ Certify tests
+            <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
+            <button class="act estimate" onclick={runTests}
+              disabled={testRunning || pendingSteps > 0}
+              title={pendingSteps > 0
+                ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps first`
+                : 'Run the test suite — Complete button appears when all tests pass'}>
+              {testRunning ? '⏳ Running…' : '▶ Run Tests'}
             </button>
           {:else}
+            <!-- Tests passing — show Complete -->
+            <button class="act complete" onclick={() => setPlanStatus('completed')}
+              disabled={pendingSteps > 0}
+              title={pendingSteps > 0
+                ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still ⏳ Pending`
+                : 'All tests pass — complete and archive this plan'}>
+              Complete
+            </button>
             <button class="act unapprove" onclick={uncertifyTests}
-              title="Unset tests_defined — re-review the test suite">
-              ✓ Tests certified
+              title="Re-run tests — resets back to Run Tests button">
+              ✓ Tests
             </button>
           {/if}
-        {/if}
-        {#if frontmatter.status === 'in-progress'}
-          <button class="act complete" onclick={() => setPlanStatus('completed')}
-            disabled={pendingSteps > 0}
-            title={pendingSteps > 0
-              ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still ⏳ Pending — update the step table first`
-              : 'Set status: completed and move plan to plans/completed/'}>
-            Complete{pendingSteps > 0 ? ` (${pendingSteps} pending)` : ''}
-          </button>
         {/if}
         {#if frontmatter.status !== 'completed' && frontmatter.status !== 'canceled'}
           <button class="act cancel-plan" onclick={() => setPlanStatus('canceled')}
@@ -225,6 +262,11 @@
 
     {#if approvedWithoutAssignee}
       <div class="warn">Approved but no assignee set</div>
+    {/if}
+    {#if testOutput}
+      <div class="test-output" class:test-fail={testPassed === false} class:test-pass={testPassed === true}>
+        <pre>{testOutput}</pre>
+      </div>
     {/if}
     {#if estimateHint}
       <div class="estimate-hint">{estimateHint}</div>
@@ -335,6 +377,19 @@
     &.cancel-plan{ @include act-variant($red,     $red-bg,     $red-bdr); }
     &.related    { @include act-variant($purple,  $purple-bg,  $purple-bdr); }
     &.estimate   { @include act-variant($teal,    $teal-bg,    $teal-bdr); }
+  }
+
+  .test-output {
+    margin: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid $border;
+    background: $bg;
+    font-size: 10px;
+    max-height: 180px;
+    overflow-y: auto;
+    pre { margin: 0; padding: 6px 8px; white-space: pre-wrap; word-break: break-all; font-family: monospace; color: $fg-dim; }
+    &.test-pass { border-color: $green-bdr; background: $green-bg; pre { color: $green; } }
+    &.test-fail { border-color: $red-bdr;   background: $red-bg;   pre { color: $red; } }
   }
 
   .estimate-hint {

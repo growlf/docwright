@@ -731,6 +731,8 @@ async def update_step(plan_name: str, step_match: str, new_status: str) -> str:
         return f"ERROR: No step row matching '{step_match}' found in '{safe}'."
 
     new_text = _update_step_counts(new_text)
+    # Reset tests_defined when a step changes — tests must be re-run to re-certify.
+    new_text = _set_frontmatter_field(new_text, "tests_defined", "false")
     _write_file(f"plans/{safe}", new_text)
     _log_transition("STEP_UPDATE", f"plan/{safe}: '{step_match[:50]}' → {normalized}")
     return f"✅ Step updated in '{safe}': '{step_match[:50]}' → {normalized}."

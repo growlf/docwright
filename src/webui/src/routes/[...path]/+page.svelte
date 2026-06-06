@@ -259,6 +259,14 @@
     // frontmatter — apply it to local state before saving
     const prevStatus = frontmatter?.status;
     if (fm) frontmatter = { ...fm };
+    // If the plan body was edited (not just frontmatter), reset tests_defined
+    // so the user must re-run tests before completing.
+    if (docType === 'plan' && frontmatter?.tests_defined === true) {
+      const prevContent = splitFrontmatter(raw).body;
+      if (content !== prevContent) {
+        frontmatter = { ...frontmatter, tests_defined: false };
+      }
+    }
     if (frontmatter) raw = buildRaw(frontmatter, content);
     await save();
 
