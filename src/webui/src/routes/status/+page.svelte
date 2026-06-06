@@ -48,7 +48,7 @@
   }
 
   // Collapsed state per section, persisted in sessionStorage
-  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'completed', 'deferred'];
+  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'completed', 'deferred', 'audit'];
   function isCollapsed(key: string): boolean {
     if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
     const val = sessionStorage.getItem('status-collapsed-' + key);
@@ -73,6 +73,7 @@
 
   onMount(() => {
     load();
+    if (!collapsed['audit']) loadAudit();
     return fileChanged.subscribe((change) => {
       if (change) load();
     });
@@ -80,6 +81,29 @@
 
   function navTo(entry: DocEntry) {
     goto('/' + entry.path.replace(/\.md$/, ''));
+  }
+
+  // Audit log state
+  let auditFilter = $state({ doc_path: '', actor: '', actor_type: '', transition_to: '' });
+  let auditEntries = $state<any[]>([]);
+  let auditTotal = $state(0);
+  let auditLoading = $state(false);
+
+  async function loadAudit() {
+    auditLoading = true;
+    const params = new URLSearchParams();
+    if (auditFilter.doc_path) params.set('doc_path', auditFilter.doc_path);
+    if (auditFilter.actor) params.set('actor', auditFilter.actor);
+    if (auditFilter.actor_type) params.set('actor_type', auditFilter.actor_type);
+    if (auditFilter.transition_to) params.set('transition_to', auditFilter.transition_to);
+    params.set('limit', '100');
+    const res = await fetch('/api/audit-query?' + params.toString());
+    if (res.ok) {
+      const data = await res.json();
+      auditEntries = data.entries;
+      auditTotal = data.total;
+    }
+    auditLoading = false;
   }
 
   function statusBadgeClass(status: string): string {
@@ -321,9 +345,62 @@
       </section>
     {/if}
 
+    <!-- Audit Log -->
+    <section class="section">
+      <button class="section-header" onclick={() => toggleSection('audit')}>
+        <span class="section-title">Audit Log</span>
+        <span class="badge">{auditTotal}</span>
+        <span class="chevron">{collapsed['audit'] ? '▸' : '▾'}</span>
+      </button>
+      {#if !collapsed['audit']}
+        <div class="audit-controls">
+          <input type="text" placeholder="Filter by doc path…" bind:value={auditFilter.doc_path} class="audit-input" oninput={loadAudit} />
+          <input type="text" placeholder="Filter by actor…" bind:value={auditFilter.actor} class="audit-input" oninput={loadAudit} />
+          <select bind:value={auditFilter.actor_type} class="audit-select" onchange={loadAudit}>
+            <option value="">Any actor type</option>
+            <option value="human">Human</option>
+            <option value="ai">AI</option>
+          </select>
+          <select bind:value={auditFilter.transition_to} class="audit-select" onchange={loadAudit}>
+            <option value="">Any transition</option>
+            <option value="approved">→ approved</option>
+            <option value="in-progress">→ in-progress</option>
+            <option value="completed">→ completed</option>
+            <option value="canceled">→ canceled</option>
+          </select>
+        </div>
+        {#if auditLoading}
+          <div class="empty">Loading…</div>
+        {:else if auditEntries.length === 0}
+          <div class="empty">No audit entries match filter</div>
+        {:else}
+          <table class="items-table">
+            <thead><tr><th>Date</th><th>Document</th><th>Transition</th><th>Actor</th><th>Type</th><th>Gate</th></tr></thead>
+            <tbody>
+              {#each auditEntries as e}
+                <tr class="item-row" onclick={() => goto('/' + e.doc_path.replace(/\.md$/, ''))}>
+                  <td class="item-date">{e.ts.slice(0, 10)}</td>
+                  <td class="item-title">{e.doc_path}</td>
+                  <td>{e.transition_from} → {e.transition_to}</td>
+                  <td>{e.actor}</td>
+                  <td><span class="tag">{e.actor_type}</span></td>
+                  <td>{e.gate_id || '—'}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+          {#if auditTotal > auditEntries.length}
+            <div class="empty muted">{auditTotal} total entries — showing {auditEntries.length}</div>
+          {/if}
+        {/if}
+      {/if}
+    </section>
+
     {/if} <!-- end {:else} list view -->
   {/if}
 </div>
+
+
 
 <style>
   /* Phase card */
@@ -444,4 +521,10 @@
   .gate-badge { background: #2a2000; color: #cc6; border: 1px solid #554400; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
   .gate-reason { flex: 1; min-width: 120px; }
   .gate-reviewer { color: #888; font-size: 10px; }
+
+  /* Audit log */
+  .audit-controls { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; background: #141414; border-bottom: 1px solid #222; }
+  .audit-input { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #ccc; font-size: 11px; padding: 4px 8px; flex: 1; min-width: 120px; }
+  .audit-input:focus { border-color: #555; outline: none; }
+  .audit-select { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #aaa; font-size: 11px; padding: 4px 6px; }
 </style>

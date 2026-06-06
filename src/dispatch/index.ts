@@ -18,10 +18,14 @@
 // Barrel export
 export * from './registry';
 export * from './profile';
+export * from './relationships';
+export { tokenize, jaccard, parseSections, stripFrontmatter, getFrontmatterTitle, KeywordEngine, OpenCodeEngine, getAIEngine } from './ai';
 export * from './vault-index';
 export * from './linter';
 export * from './ai';
 export * from './wikilinks';
 export * from './acl';
+export * from './gates';
+export * from './audit';
 
 export const DISPATCH_VERSION = '0.1.0';
