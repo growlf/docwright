@@ -30,7 +30,8 @@
       "reviewers": ["steward", "governance"],
       "quorum": 1,
       "blocks": "next-phase-activation",
-      "description": "Phase completion sign-off before next phase begins"
+      "description": "Phase completion sign-off before next phase begins",
+      "ai_pre_review_prompt": "You are auditing a phase completion gate. Review the phase summary, all completed plans, and any outstanding items. Check: (1) Are all required plans complete? (2) Are there unresolved critiques or blockers? (3) Does the phase have unaddressed risks? Provide a readiness assessment."
     },
     {
       "id": "policy-activate",
@@ -41,7 +42,8 @@
       "reviewer_field": "gate_reviewer",
       "reviewers": ["governance"],
       "quorum": 1,
-      "description": "Policy must be reviewed before going active"
+      "description": "Policy must be reviewed before going active",
+      "ai_pre_review_prompt": "You are reviewing a policy for activation. Check: (1) Is the policy content complete and coherent? (2) Are dependencies or related policies referenced? (3) Is there a clear effective date and scope? (4) Are there any security, compliance, or operational risks? Provide a readiness assessment."
     },
     {
       "id": "plan-complete",
@@ -52,7 +54,8 @@
       "reviewer_field": "assigned_to",
       "reviewers": ["contributor", "steward"],
       "quorum": 1,
-      "description": "Plan owner confirms completion before closing"
+      "description": "Plan owner confirms completion before closing",
+      "ai_pre_review_prompt": "You are auditing a plan completion. Review the plan body for: (1) Are all implementation steps marked done? (2) Are there pending (⏳) items? (3) Is test coverage verified? (4) Are rollback procedures documented? (5) Are there unresolved risks? Provide a readiness assessment."
     },
     {
       "id": "policy-review",
@@ -64,7 +67,8 @@
       "reviewers": ["steward"],
       "quorum": 1,
       "blocks": "policy-status-change",
-      "description": "Active policies must be reviewed quarterly"
+      "description": "Active policies must be reviewed quarterly",
+      "ai_pre_review_prompt": "You are auditing a scheduled policy review. Check: (1) Is the policy still relevant? (2) Are there references to superseded documents or systems? (3) Are there gaps identified since the last review? (4) Does the policy need updates? Provide a readiness assessment with specific recommendations."
     }
   ],
   "features": {

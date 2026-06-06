@@ -26,6 +26,8 @@ export interface GateDefinition {
   cadence?: string;
   /** Phase 1b — only documents in these statuses are evaluated by schedule gates */
   status_filter?: string[];
+  /** Phase 3 — AI pre-review prompt (optional, per gate type). Overrides the default prompt. */
+  ai_pre_review_prompt?: string;
 }
 
 export interface GateReview {

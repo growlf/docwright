@@ -90,6 +90,19 @@
   let auditLoading = $state(false);
   let auditFindings = $state<any[]>([]);
   let auditRunning = $state(false);
+  let aiPreReviewResults = $state<Record<string, any>>({});
+  let aiPreReviewLoading = $state<Record<string, boolean>>({});
+
+  async function runAiPreReview(docPath: string, gateId: string, _title: string) {
+    const key = docPath + '/' + gateId;
+    aiPreReviewLoading = { ...aiPreReviewLoading, [key]: true };
+    const res = await fetch('/api/gate-pre-review?doc_path=' + encodeURIComponent(docPath) + '&gate_id=' + encodeURIComponent(gateId));
+    if (res.ok) {
+      const data = await res.json();
+      aiPreReviewResults = { ...aiPreReviewResults, [key]: data.result };
+    }
+    aiPreReviewLoading = { ...aiPreReviewLoading, [key]: false };
+  }
 
   async function runGateAudit() {
     auditRunning = true;
@@ -214,7 +227,20 @@
               <span class="gate-badge">{g.gate_id}</span>
               <span class="gate-reason">{g.reason}</span>
               <span class="gate-reviewer">Reviewer: {g.reviewer || 'unassigned'}</span>
+              <button class="gate-ai-btn" onclick={(e) => { e.stopPropagation(); runAiPreReview(g.path, g.gate_id, g.title); }}
+                title="Run AI pre-review for this gate">AI</button>
             </div>
+            {#if aiPreReviewResults[g.path + '/' + g.gate_id]}
+              {@const r = aiPreReviewResults[g.path + '/' + g.gate_id]}
+              <div class="ai-pre-review" class:ready={r.readiness === 'ready'} class:needs-work={r.readiness === 'needs-work'} class:blocked={r.readiness === 'blocked'}>
+                <div class="ai-summary">{r.summary}</div>
+                {#if r.concerns.length > 0}
+                  <div class="ai-concerns">
+                    {#each r.concerns as c}<span class="ai-concern">⚠ {c}</span>{/each}
+                  </div>
+                {/if}
+              </div>
+            {/if}
           </div>
         {/each}
       </div>
@@ -559,6 +585,15 @@
   .gate-badge { background: #2a2000; color: #cc6; border: 1px solid #554400; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
   .gate-reason { flex: 1; min-width: 120px; }
   .gate-reviewer { color: #888; font-size: 10px; }
+  .gate-ai-btn { background: #1a2a3a; border: 1px solid #2a4a6a; color: #7ab; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer; margin-left: auto; }
+  .gate-ai-btn:hover { background: #1e3040; }
+  .ai-pre-review { margin-top: 6px; padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #2a2a2a; }
+  .ai-pre-review.ready { background: #0a1a0a; border-color: #2a4a2a; }
+  .ai-pre-review.needs-work { background: #1a1a00; border-color: #4a4a2a; }
+  .ai-pre-review.blocked { background: #1a0a0a; border-color: #4a2a2a; }
+  .ai-summary { color: #bbb; line-height: 1.4; }
+  .ai-concerns { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+  .ai-concern { color: #cc6; font-size: 10px; }
 
   /* Audit log */
   .audit-controls { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; background: #141414; border-bottom: 1px solid #222; }

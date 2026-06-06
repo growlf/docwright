@@ -13,10 +13,26 @@ export interface SimilarityResult {
   sections: Section[];
 }
 
+export interface GatePreReviewResult {
+  summary: string;
+  concerns: string[];
+  incomplete_items: string[];
+  readiness: 'ready' | 'needs-work' | 'blocked';
+}
+
 export interface AIEngine {
   findSimilar(targetPath: string, candidates: string[], vaultRoot: string): Promise<SimilarityResult[]>;
   fillProposal(fm: Record<string, any>, body: string): Promise<string>;
   critiqueDocument(content: string): Promise<string>;
+  /** Phase 3 — AI pre-review for lifecycle gates */
+  gatePreReview(
+    gateId: string,
+    gateDescription: string,
+    docTitle: string,
+    docBody: string,
+    scopeDocs: Array<{ path: string; title: string; excerpt: string }>,
+    aiPrompt?: string,
+  ): Promise<GatePreReviewResult>;
 }
 
 // ── Shared helpers ──────────────────────────────────────────────────────────────
@@ -29,7 +45,7 @@ const STOP = new Set([
   'proposals','plans','document',
 ]);
 
-function tokenize(text: string): Set<string> {
+export function tokenize(text: string): Set<string> {
   return new Set(
     text.toLowerCase()
       .replace(/```[\s\S]*?```/g, '')
@@ -39,7 +55,7 @@ function tokenize(text: string): Set<string> {
   );
 }
 
-function jaccard(a: Set<string>, b: Set<string>): number {
+export function jaccard(a: Set<string>, b: Set<string>): number {
   let n = 0;
   for (const w of a) if (b.has(w)) n++;
   const union = new Set([...a, ...b]).size;
@@ -106,6 +122,27 @@ export class KeywordEngine implements AIEngine {
   async critiqueDocument(_content: string): Promise<string> {
     return '*(Critique unavailable — OpenCode not configured)*';
   }
+
+  async gatePreReview(
+    _gateId: string,
+    _gateDescription: string,
+    _docTitle: string,
+    docBody: string,
+    _scopeDocs: Array<{ path: string; title: string; excerpt: string }>,
+    _aiPrompt?: string,
+  ): Promise<GatePreReviewResult> {
+    // Keyword fallback: count implementation steps and check for incomplete items
+    const pendingSteps = (docBody.match(/⏳/g) ?? []).length;
+    const completedSteps = (docBody.match(/✅/g) ?? []).length;
+    const concerns: string[] = [];
+    if (pendingSteps > 0) concerns.push(`${pendingSteps} step(s) still pending`);
+    return {
+      summary: `Pre-review: ${completedSteps} steps done, ${pendingSteps} pending.`,
+      concerns,
+      incomplete_items: pendingSteps > 0 ? ['Pending implementation steps'] : [],
+      readiness: pendingSteps === 0 ? 'ready' : 'needs-work',
+    };
+  }
 }
 
 // ── OpenCodeEngine (real LLM) ──────────────────────────────────────────────────
@@ -164,6 +201,62 @@ export class OpenCodeEngine implements AIEngine {
   async critiqueDocument(content: string): Promise<string> {
     // TODO: implement via OpenCode session API
     return content;
+  }
+
+  async gatePreReview(
+    gateId: string,
+    gateDescription: string,
+    docTitle: string,
+    docBody: string,
+    scopeDocs: Array<{ path: string; title: string; excerpt: string }>,
+    aiPrompt?: string,
+  ): Promise<GatePreReviewResult> {
+    const defaultPrompt = `You are a gate review assistant for a governance system.
+Gate "${gateId}": ${gateDescription}
+Document: "${docTitle}"
+
+Read the document body and any related scope documents below, then produce a readiness assessment.
+
+Respond in valid JSON:
+{
+  "summary": "Brief readiness summary (2-3 sentences)",
+  "concerns": ["Specific concern 1", "Specific concern 2"],
+  "incomplete_items": ["Item 1 not ready", "Item 2 not ready"],
+  "readiness": "ready | needs-work | blocked"
+}`;
+
+    const prompt = `${aiPrompt || defaultPrompt}
+
+--- DOCUMENT BODY ---
+${docBody.slice(0, 3000)}
+
+--- SCOPE DOCUMENTS ---
+${scopeDocs.map(d => `[${d.path}] ${d.title}\n${d.excerpt.slice(0, 500)}`).join('\n\n')}
+
+--- END ---
+Respond with ONLY valid JSON:`;
+
+    try {
+      const res = await fetch(`${this.url}/api/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const match = text.match(/\{[\s\S]*"readiness"[\s\S]*\}/);
+      if (!match) throw new Error('No JSON in response');
+      return JSON.parse(match[0]) as GatePreReviewResult;
+    } catch {
+      // Fallback to keyword engine logic
+      const pendingSteps = (docBody.match(/⏳/g) ?? []).length;
+      return {
+        summary: `Pre-review (LLM unavailable): ${pendingSteps > 0 ? `${pendingSteps} steps still pending` : 'No obvious blockers found'}.`,
+        concerns: pendingSteps > 0 ? ['Pending implementation steps'] : [],
+        incomplete_items: pendingSteps > 0 ? ['Implementation steps not completed'] : [],
+        readiness: pendingSteps === 0 ? 'ready' : 'needs-work',
+      };
+    }
   }
 }
 
