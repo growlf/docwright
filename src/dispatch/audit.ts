@@ -53,27 +53,26 @@ export interface AuditFilter {
 
 // ── Path resolution ────────────────────────────────────────────────────────
 
-const REPO_ROOT = process.env.DOCWRIGHT_ROOT
-  ? path.resolve(process.env.DOCWRIGHT_ROOT)
-  : (() => {
-      // Walk up from the dispatch directory to find repo root
-      let dir = __dirname;
-      while (dir !== path.dirname(dir)) {
-        if (fs.existsSync(path.join(dir, '.docwright'))) return dir;
-        dir = path.dirname(dir);
-      }
-      // Fallback: check DOCWRIGHT_ROOT env or cwd
-      return process.cwd();
-    })();
+// Resolve repo root lazily (__dirname not available in ESM/Vite SSR)
+function getRepoRoot(): string {
+  return process.env.DOCWRIGHT_ROOT
+    ? path.resolve(process.env.DOCWRIGHT_ROOT)
+    : process.cwd();
+}
 
-const AUDIT_DIR = path.join(REPO_ROOT, 'audit');
-const AUDIT_FILE = path.join(AUDIT_DIR, 'lifecycle.jsonl');
+function getAuditDir(): string {
+  return path.join(getRepoRoot(), 'audit');
+}
+
+function getAuditFile(): string {
+  return path.join(getAuditDir(), 'lifecycle.jsonl');
+}
 
 // ── Git helper ─────────────────────────────────────────────────────────────
 
 function getGitCommit(): string {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: REPO_ROOT, encoding: 'utf-8' }).trim();
+    return execSync('git rev-parse --short HEAD', { cwd: getRepoRoot(), encoding: 'utf-8' }).trim();
   } catch {
     return '';
   }
@@ -86,7 +85,9 @@ function getGitCommit(): string {
  * Auto-fills ts and git_commit if not provided.
  */
 export function writeAuditEntry(entry: Omit<AuditEntry, 'ts' | 'git_commit'> & { ts?: string; git_commit?: string }): void {
-  if (!fs.existsSync(AUDIT_DIR)) fs.mkdirSync(AUDIT_DIR, { recursive: true });
+  const auditDir = getAuditDir();
+  const auditFile = getAuditFile();
+  if (!fs.existsSync(auditDir)) fs.mkdirSync(auditDir, { recursive: true });
 
   const full: AuditEntry = {
     ts: entry.ts ?? new Date().toISOString(),
@@ -100,7 +101,7 @@ export function writeAuditEntry(entry: Omit<AuditEntry, 'ts' | 'git_commit'> & {
     git_commit: entry.git_commit ?? getGitCommit(),
   };
 
-  fs.appendFileSync(AUDIT_FILE, JSON.stringify(full) + '\n', 'utf-8');
+  fs.appendFileSync(auditFile, JSON.stringify(full) + '\n', 'utf-8');
 }
 
 /**
@@ -131,8 +132,9 @@ export function logTransition(
  * Read all entries from the audit log.
  */
 export function readAllEntries(): AuditEntry[] {
-  if (!fs.existsSync(AUDIT_FILE)) return [];
-  const raw = fs.readFileSync(AUDIT_FILE, 'utf-8');
+  const auditFile = getAuditFile();
+  if (!fs.existsSync(auditFile)) return [];
+  const raw = fs.readFileSync(auditFile, 'utf-8');
   const entries: AuditEntry[] = [];
   for (const line of raw.split('\n').filter(Boolean)) {
     try {
