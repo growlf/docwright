@@ -12,6 +12,7 @@
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
+  import PoliciesPanel from '$lib/PoliciesPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
   interface ProjectEntry {
@@ -28,7 +29,7 @@
   let showNewMenu  = $state(false);
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
-  let leftView       = $state<'files' | 'search' | 'settings' | 'git'>('files');
+  let leftView       = $state<'files' | 'search' | 'policies' | 'settings' | 'git'>('files');
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related'>('properties');
@@ -256,6 +257,9 @@
     <button class="act-btn" class:active={leftView === 'search'}
       onclick={() => { leftView = 'search'; showSidebar = true; setTimeout(() => searchPanel?.focusSearch(), 50); }}
       title="Search (Ctrl+K)">🔍</button>
+    <button class="act-btn" class:active={leftView === 'policies'}
+      onclick={() => { leftView = 'policies'; showSidebar = true; }}
+      title="Policies">📋</button>
     <button class="act-btn" class:active={leftView === 'settings'}
       onclick={() => { leftView = 'settings'; showSidebar = true; }}
       title="Settings">⚙</button>
@@ -267,7 +271,7 @@
   <Panel side="left" bind:open={showSidebar}>
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'settings' ? 'Settings' : 'Git'}
+        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'settings' ? 'Settings' : 'Git'}
       </span>
       {#if leftView === 'files'}
       <div class="new-group-inner">
@@ -283,6 +287,8 @@
     </div>
     {#if leftView === 'search'}
       <SearchPanel bind:this={searchPanel} />
+    {:else if leftView === 'policies'}
+      <PoliciesPanel />
     {:else if leftView === 'files'}
       <FileTree currentPath={$page.url.pathname} />
       {#if projects.length > 0}
