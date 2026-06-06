@@ -45,13 +45,13 @@
 
 /* Slightly warmer sidebar background to distinguish from content */
 #sidebar {
-  background: #0f0f12;
+  background: var(--bg-2, #0f0f12);
 }
 
 /* Sidebar header — tighter border, subtle gradient feel */
 .sidebar-header {
-  background: #0f0f12;
-  border-bottom-color: #1e2030;
+  background: var(--bg-2, #0f0f12);
+  border-bottom-color: var(--border, #1e2030);
 }
 
 /* Brand name — match the DocWright blue accent */
@@ -64,13 +64,13 @@
 }
 
 /* Scrollbar — slightly more visible thumb on the warmer sidebar */
-#sidebar ::-webkit-scrollbar-track { background: #0f0f12; }
-#sidebar ::-webkit-scrollbar-thumb { background: #252535; }
+#sidebar ::-webkit-scrollbar-track { background: var(--bg-2, #0f0f12); }
+#sidebar ::-webkit-scrollbar-thumb { background: var(--bg-3, #252535); }
 
 /* Footer — match the sidebar tone */
 .app-footer {
-  background: #0a0a0d;
-  border-top-color: #1e2030;
+  background: var(--bg-2, #0a0a0d);
+  border-top-color: var(--border, #1e2030);
 }
 
 /* Status page — section header slightly elevated */
@@ -83,15 +83,15 @@
 
 /* Toolbar — tighten the bottom border */
 .toolbar {
-  border-bottom-color: #1e2030;
+  border-bottom-color: var(--border, #1e2030);
 }
 
 /* Properties pane — match sidebar tone */
 .pane {
-  background: #0f0f12;
-  border-left-color: #1e2030;
+  background: var(--bg-2, #0f0f12);
+  border-left-color: var(--border, #1e2030);
 }
 .pane-header {
-  background: #0f0f12;
-  border-bottom-color: #1e2030;
+  background: var(--bg-2, #0f0f12);
+  border-bottom-color: var(--border, #1e2030);
 }

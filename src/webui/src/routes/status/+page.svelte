@@ -618,6 +618,7 @@
     .view-toggle { background: #e8e8e8; border-color: #ccc; }
     .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d8d8d8; color: #1a1a1a; } }
     .audit-controls, .audit-toolbar { background: #f0f0f0; border-bottom-color: #d0d0d0; }
+    .audit-btn { background: #ddeeff; border-color: #aaccee; color: #2a6090; &:hover { background: #cce0ff; } }
     .audit-input, .audit-select { background: #fff; border-color: #ccc; color: #333; }
     .audit-finding { border-bottom-color: #ebebeb; &:hover { background: #f5f5f5; } }
     .audit-findings-header { background: #fff8cc; color: #7a6000; }
