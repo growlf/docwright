@@ -88,6 +88,18 @@
   let auditEntries = $state<any[]>([]);
   let auditTotal = $state(0);
   let auditLoading = $state(false);
+  let auditFindings = $state<any[]>([]);
+  let auditRunning = $state(false);
+
+  async function runGateAudit() {
+    auditRunning = true;
+    const res = await fetch('/api/gate-audit');
+    if (res.ok) {
+      const data = await res.json();
+      auditFindings = data.findings;
+    }
+    auditRunning = false;
+  }
 
   async function loadAudit() {
     auditLoading = true;
@@ -369,6 +381,32 @@
             <option value="canceled">→ canceled</option>
           </select>
         </div>
+        <div class="audit-toolbar">
+          <button class="act audit-btn" onclick={runGateAudit} disabled={auditRunning}>
+            {auditRunning ? 'Scanning…' : '🔍 Run Gate Audit'}
+          </button>
+          {#if auditFindings.length > 0}
+            <span class="badge badge-warn">{auditFindings.length} findings</span>
+          {/if}
+        </div>
+
+        {#if auditFindings.length > 0}
+        <div class="audit-findings">
+          <div class="audit-findings-header">Gate Compliance Findings</div>
+          {#each auditFindings as f}
+            <div class="audit-finding" onclick={() => goto('/' + f.path.replace(/\.md$/, ''))}>
+              <div class="finding-title">{f.title}</div>
+              <div class="finding-meta">
+                <span class="gate-badge">{f.gate_id}</span>
+                <span>{f.transition_from} → {f.transition_to}</span>
+                <span>Reviewer: {f.expected_reviewer}</span>
+                <span>Status: {f.current_gate_status}</span>
+              </div>
+            </div>
+          {/each}
+        </div>
+        {/if}
+
         {#if auditLoading}
           <div class="empty">Loading…</div>
         {:else if auditEntries.length === 0}
@@ -524,6 +562,16 @@
 
   /* Audit log */
   .audit-controls { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; background: #141414; border-bottom: 1px solid #222; }
+  .audit-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #141414; border-bottom: 1px solid #222; }
+  .audit-btn { background: #1a2a3a; border: 1px solid #2a4a6a; color: #7ab; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+  .audit-btn:hover { background: #1e3040; }
+  .audit-btn:disabled { opacity: 0.5; cursor: default; }
+  .audit-findings { border-bottom: 1px solid #222; }
+  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: #cc6; font-weight: 600; background: #1e1800; }
+  .audit-finding { padding: 8px 16px; cursor: pointer; border-bottom: 1px solid #1a1a1a; }
+  .audit-finding:hover { background: #1c1c1c; }
+  .finding-title { font-size: 12px; color: #ddd; font-weight: 500; margin-bottom: 2px; }
+  .finding-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: #777; }
   .audit-input { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #ccc; font-size: 11px; padding: 4px 8px; flex: 1; min-width: 120px; }
   .audit-input:focus { border-color: #555; outline: none; }
   .audit-select { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #aaa; font-size: 11px; padding: 4px 6px; }

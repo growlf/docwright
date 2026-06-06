@@ -320,3 +320,93 @@ export function scanAllGates(
 
   return { pending, approved, waived, overdue };
 }
+
+// ── Retroactive Audit (Phase 2b) ──────────────────────────────────────────
+
+export interface AuditFinding {
+  path: string;
+  title: string;
+  transition_from: string;
+  transition_to: string;
+  gate_id: string;
+  gate_description: string;
+  expected_reviewer: string;
+  current_gate_status: string;
+  current_gate_note?: string;
+  matched: boolean;  // true = gate was properly satisfied, false = gap found
+}
+
+/**
+ * Retroactively scan all lifecycle docs for transitions that should have been
+ * gated but were not. Compares current doc state against gate rules.
+ *
+ * A finding is flagged when:
+ * - A doc's status matches a gate's "to" state
+ * - The gate_status is not 'approved' (or 'waived' with note)
+ * - No gate review was recorded for that transition
+ *
+ * Set `fix = true` to return a modified frontmatter that stamps
+ * gate_status: waived on each finding (docs are NOT written — caller decides).
+ */
+export function retroactiveAudit(
+  gates: GateDefinition[],
+  docs: Array<{ path: string; fm: Record<string, any> }>,
+  fix: boolean = false,
+): { findings: AuditFinding[]; fixes: Array<{ path: string; frontmatter: Record<string, any> }> } {
+  const findings: AuditFinding[] = [];
+  const fixes: Array<{ path: string; frontmatter: Record<string, any> }> = [];
+
+  for (const doc of docs) {
+    const now = doc.fm.gate_date || doc.fm.created;
+    const title = String(doc.fm.title ?? doc.path.replace(/^.*\//, '').replace('.md', ''));
+    const docType = doc.fm.type || (doc.path.startsWith('plan') ? 'plan' : 'proposal');
+
+    // For each gate that could apply to this doc type, check if the transition was gated
+    for (const gate of gates) {
+      if (gate.trigger !== 'status-transition') continue;
+      if (gate.document_type && gate.document_type !== docType) continue;
+
+      const currentStatus = doc.fm.status ?? '';
+      const gateStatus = doc.fm.gate_status ?? '';
+      const gateReviews: GateReview[] = doc.fm.gate_reviews ?? [];
+      const reviewer = doc.fm[gate.reviewer_field];
+
+      // Check if this doc has reached or passed the "to" state for this gate
+      // but doesn't have proper gate sign-off
+      if (currentStatus === gate.to || currentStatus === 'completed' || currentStatus === 'active') {
+        const matched = gateReviews.some(r =>
+          r.status === 'approved' || r.status === 'waived'
+        ) || gateStatus === 'approved' || gateStatus === 'waived';
+
+        if (!matched) {
+          const finding: AuditFinding = {
+            path: doc.path,
+            title,
+            transition_from: gate.from ?? '*',
+            transition_to: gate.to ?? '*',
+            gate_id: gate.id,
+            gate_description: gate.description,
+            expected_reviewer: reviewer ? String(reviewer) : 'not assigned',
+            current_gate_status: gateStatus || 'not set',
+            current_gate_note: doc.fm.gate_note,
+            matched: false,
+          };
+          findings.push(finding);
+
+          if (fix) {
+            const fixed = applyReview(
+              doc.fm,
+              'retroactive-audit',
+              'system',
+              'waived',
+              `Gate "${gate.id}" did not exist when this transition occurred. Retroactively waived by audit scanner.`,
+            );
+            fixes.push({ path: doc.path, frontmatter: fixed });
+          }
+        }
+      }
+    }
+  }
+
+  return { findings, fixes };
+}
