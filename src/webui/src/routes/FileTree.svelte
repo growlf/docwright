@@ -104,24 +104,24 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
+  @use '../lib/tokens' as *;
+
   .mode-bar { display: flex; gap: 0; padding: 8px 12px 4px; }
   .mode-btn {
     flex: 1; padding: 3px 0; font-size: 11px; cursor: pointer;
-    border: 1px solid var(--border, #333); background: var(--bg, #0d0d0d); color: var(--muted, #555);
+    border: 1px solid $border; background: $bg; color: $muted;
+    &:first-child { border-radius: 4px 0 0 4px; }
+    &:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
+    &.active      { @include act-variant($blue, $blue-bg, $blue-bdr); }
+    &:not(.active):hover { background: $bg-hover; color: $fg-dim; }
   }
-  .mode-btn:first-child { border-radius: 4px 0 0 4px; }
-  .mode-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
-  .mode-btn.active { background: #1a3a5a; color: #58a6ff; border-color: #2b5b84; }
-  .mode-btn:not(.active):hover { background: var(--bg-hover, #1a1a1a); color: var(--fg-dim, #aaa); }
 
-  .muted { padding: 12px 16px; color: var(--muted, #666); font-size: 13px; }
+  .muted { padding: 12px 16px; color: $muted; font-size: 13px; }
   .tree { padding: 8px 0; flex: 1; overflow-y: auto; }
-  .archived-toggle { padding: 6px 12px 8px; border-top: 1px solid var(--border, #1a1a1a); margin-top: auto; }
-  .archived-btn { background: none; border: none; color: var(--muted, #444); font-size: 11px; cursor: pointer; padding: 2px 0; }
-  .archived-btn:hover { color: var(--fg-dim, #888); }
+  .archived-toggle { padding: 6px 12px 8px; border-top: 1px solid $border; margin-top: auto; }
+  .archived-btn { @include flat-btn; font-size: 11px; padding: 2px 0; &:hover { color: $fg-dim; } }
 
-  /* ── Mobile touch targets ───────────────────────────────────────────────── */
   @media (max-width: 768px) {
     .mode-btn { min-height: 44px; font-size: 13px; }
     .archived-btn { min-height: 44px; display: flex; align-items: center; font-size: 13px; }

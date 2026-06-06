@@ -477,86 +477,102 @@
 
 </div>
 
-<style>
+<style lang="scss">
+  @use '../../lib/tokens' as *;
+
   /* page-wrap is always a flex row — Panel.svelte handles open/closed width */
   .page-wrap { display: flex; min-height: 100%; align-items: flex-start; }
   .page-body { flex: 1; min-width: 0; padding: 32px; overflow-y: auto; }
 
   /* Right panel tab bar */
-  .right-tab-bar { display: flex; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
-  .right-tab { flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: #555; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 8px 4px 6px; cursor: pointer; }
-  .right-tab:hover  { color: #aaa; }
-  .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
-  .right-empty { padding: 16px; font-size: 12px; color: #444; }
+  .right-tab-bar { display: flex; border-bottom: 1px solid $border; flex-shrink: 0; }
+  .right-tab {
+    flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+    color: $muted; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.4px; padding: 8px 4px 6px; cursor: pointer;
+    &:hover { color: $fg-dim; }
+    &.active { color: $fg; border-bottom-color: $blue; }
+  }
+  .right-empty { padding: 16px; font-size: 12px; color: $muted; }
 
-  .error  { color: #e44; padding: 16px; background: #2a1111; border-radius: 6px; }
+  .error { color: $red; padding: 16px; background: $red-bg; border-radius: 6px; }
+
   .not-found { text-align: center; padding: 64px 32px; }
-  .nf-icon { font-size: 48px; color: #333; margin-bottom: 16px; }
-  .nf-title { font-size: 18px; color: #666; font-weight: 500; margin: 0 0 8px; }
-  .nf-path { font-size: 12px; color: #444; font-family: monospace; margin: 0 0 24px; }
+  .nf-icon  { font-size: 48px; color: $border; margin-bottom: 16px; }
+  .nf-title { font-size: 18px; color: $muted; font-weight: 500; margin: 0 0 8px; }
+  .nf-path  { font-size: 12px; color: $muted; font-family: monospace; margin: 0 0 24px; }
   .nf-actions { display: flex; gap: 10px; justify-content: center; }
-  .nf-btn { padding: 6px 16px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid #333; background: #1a1a1a; color: #888; text-decoration: none; display: inline-block; }
-  .nf-btn:hover { border-color: #555; color: #ccc; }
-  .nf-btn.primary { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
-  .nf-btn.primary:hover { background: #1a3a5a; }
-  .body   { line-height: 1.6; }
-  .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #181818; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
-  .dep-label { color: #555; font-weight: 600; }
-  .dep-link { color: #58a6ff; text-decoration: none; border: 1px solid #1e3a5a; border-radius: 10px; padding: 1px 8px; }
-  .dep-link:hover { background: #1a3a5a; }
-  .muted  { color: #666; }
+  .nf-btn {
+    @include act-base;
+    padding: 6px 16px; font-size: 12px; text-decoration: none; display: inline-block;
+    &.primary { @include act-variant($blue, $blue-bg, $blue-bdr); }
+  }
 
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; gap: 12px; }
+  .body { line-height: 1.6; }
+  .dep-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: $bg-2; border-radius: 4px; margin-bottom: 16px; font-size: 12px; }
+  .dep-label { color: $muted; font-weight: 600; }
+  .dep-link { color: $blue; text-decoration: none; border: 1px solid $blue-bdr; border-radius: 10px; padding: 1px 8px; &:hover { background: $blue-bg; } }
+  .muted { color: $muted; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid $border; gap: 12px; }
   .doc-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-  .doc-title { font-size: 1.4em; font-weight: 700; color: #fff; margin: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .path   { font-size: 11px; color: #555; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .path-only { font-size: 13px; color: #888; }
-  .actions { display: flex; gap: 6px; }
-  .btn    { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid #444; background: #222; color: #ccc; }
-  .btn:hover { background: #333; color: #fff; }
-  .btn.save  { border-color: #2b5b84; color: #58a6ff; }
-  .btn.save:hover { background: #1a3a5a; }
-  .btn.cancel { border-color: #555; color: #999; }
-  .btn.del  { border-color: #842b2b; color: #e44; }
-  .btn.del:hover { background: #3a1a1a; }
-  .mode-toggle { border-color: #5b842b; color: #8c6; }
-  .mode-toggle:hover { background: #1a3a1a; }
-  /* props-toggle removed — right sidebar handles properties */
-  /* props-scrim removed — Panel.svelte provides the mobile scrim now */
+  .doc-title { font-size: 1.4em; font-weight: 700; color: $fg; margin: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .path      { font-size: 11px; color: $muted; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .path-only { font-size: 13px; color: $fg-dim; }
+  .actions   { display: flex; gap: 6px; }
 
-  .editor { width: 100%; min-height: 60vh; background: #0a0a0a; color: #e0e0e0; border: 1px solid #333; border-radius: 6px; padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
+  .btn {
+    @include act-base;
+    padding: 4px 12px;
+    &.save   { @include act-variant($blue,  $blue-bg,  $blue-bdr); }
+    &.cancel { border-color: $muted; color: $fg-dim; }
+    &.del    { @include act-variant($red,   $red-bg,   $red-bdr); }
+  }
+  .mode-toggle { border-color: $teal-bdr; color: $teal; &:hover { background: $teal-bg; } }
 
-  .wysiwyg-toolbar { display: flex; gap: 2px; align-items: center; padding: 6px 8px; background: #222; border: 1px solid #333; border-bottom: none; border-radius: 6px 6px 0 0; flex-wrap: wrap; }
-  .fmt-btn { background: none; border: 1px solid transparent; color: #ccc; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 13px; height: 26px; }
-  .fmt-btn:hover { background: #333; border-color: #444; }
-  .sep { width: 1px; height: 18px; background: #444; margin: 0 4px; }
-  .wysiwyg { width: 100%; min-height: 60vh; background: #0a0a0a; color: #e0e0e0; border: 1px solid #333; border-radius: 0 0 6px 6px; padding: 16px; font-size: 15px; line-height: 1.6; outline: none; box-sizing: border-box; }
-  .wysiwyg:focus { border-color: #2b5b84; }
-  .wysiwyg :global(h1) { font-size: 1.8em; margin: 0.5em 0; color: #fff; }
-  .wysiwyg :global(h2) { font-size: 1.4em; margin: 0.5em 0; color: #eee; }
-  .wysiwyg :global(h3) { font-size: 1.2em; margin: 0.5em 0; color: #ddd; }
-  .wysiwyg :global(p)  { margin: 0.5em 0; }
-  .wysiwyg :global(code) { background: #1a1a1a; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 13px; }
-  .wysiwyg :global(pre) { background: #111; padding: 12px; border-radius: 6px; overflow-x: auto; }
-  .wysiwyg :global(pre code) { background: none; padding: 0; }
+  .editor {
+    width: 100%; min-height: 60vh;
+    background: $bg; color: $fg;
+    border: 1px solid $border; border-radius: 6px;
+    padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5;
+    resize: vertical; box-sizing: border-box;
+  }
+
+  .wysiwyg-toolbar {
+    display: flex; gap: 2px; align-items: center; padding: 6px 8px;
+    background: $bg-3; border: 1px solid $border; border-bottom: none;
+    border-radius: 6px 6px 0 0; flex-wrap: wrap;
+  }
+  .fmt-btn {
+    background: none; border: 1px solid transparent; color: $fg-dim;
+    padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 13px; height: 26px;
+    &:hover { background: $bg-hover; border-color: $border; }
+  }
+  .sep { width: 1px; height: 18px; background: $border; margin: 0 4px; }
+
+  .wysiwyg {
+    width: 100%; min-height: 60vh;
+    background: $bg; color: $fg;
+    border: 1px solid $border; border-radius: 0 0 6px 6px;
+    padding: 16px; font-size: 15px; line-height: 1.6; outline: none; box-sizing: border-box;
+    &:focus { border-color: $blue-bdr; }
+    :global(h1) { font-size: 1.8em; margin: 0.5em 0; color: $fg; }
+    :global(h2) { font-size: 1.4em; margin: 0.5em 0; color: $fg; }
+    :global(h3) { font-size: 1.2em; margin: 0.5em 0; color: $fg-dim; }
+    :global(p)  { margin: 0.5em 0; }
+    :global(code) { background: $bg-2; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+    :global(pre) { background: $bg; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    :global(pre code) { background: none; padding: 0; }
+  }
 
   /* ── Mobile (≤ 768px) ───────────────────────────────────────────────────── */
   @media (max-width: 768px) {
-    /* Reset to block layout (no flex) */
     .page-wrap { display: block; padding: 0; }
-    /* Content padding */
     .page-body { padding: 16px; }
-
-    /* Toolbar: keep it compact, hide low-priority actions */
     .toolbar { flex-wrap: wrap; gap: 4px; }
-    .path { display: none; }           /* path shown in topbar on mobile; hide here */
-    .doc-title { font-size: 1.1em; }   /* title stays visible on mobile */
-  /* props-toggle removed */
-
-    /* Touch-friendly button sizing */
+    .path { display: none; }
+    .doc-title { font-size: 1.1em; }
     .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }
-
-    /* Touch-friendly WYSIWYG toolbar */
     .fmt-btn { min-height: 44px; padding: 0 10px; }
   }
 </style>

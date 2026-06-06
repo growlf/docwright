@@ -88,21 +88,47 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="markdown" onclick={handleClick} onkeydown={handleClick}>{@html html}</div>
 
-<style>
-  .markdown { color: #e0e0e0; font-size: 15px; }
-  .markdown :global(h1) { font-size: 22px; color: #fff; margin: 0 0 16px; }
-  .markdown :global(h2) { font-size: 18px; color: #fff; margin: 24px 0 12px; }
-  .markdown :global(h3) { font-size: 16px; color: #ddd; margin: 20px 0 8px; }
-  .markdown :global(p) { margin: 0 0 12px; }
-  .markdown :global(a) { color: #58a6ff; }
-  .markdown :global(code) { background: #2a2a2a; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
-  .markdown :global(pre) { background: #111; padding: 16px; border-radius: 6px; overflow-x: auto; }
-  .markdown :global(pre code) { background: none; padding: 0; }
-  .markdown :global(ul), .markdown :global(ol) { padding-left: 24px; margin: 0 0 12px; }
-  .markdown :global(li) { margin: 4px 0; }
-  .markdown :global(blockquote) { border-left: 3px solid #444; padding-left: 16px; color: #999; margin: 0 0 12px; }
-  .markdown :global(table) { border-collapse: collapse; margin: 0 0 12px; width: 100%; }
-  .markdown :global(th), .markdown :global(td) { border: 1px solid #333; padding: 8px 12px; text-align: left; }
-  .markdown :global(th) { background: #222; color: #fff; }
-  .markdown :global(hr) { border: none; border-top: 1px solid #333; margin: 24px 0; }
+<style lang="scss">
+  @use '../lib/tokens' as *;
+
+  .markdown {
+    color: $fg;
+    font-size: 15px;
+
+    :global(h1) { font-size: 22px; color: $fg;    margin: 0 0 16px; }
+    :global(h2) { font-size: 18px; color: $fg;    margin: 24px 0 12px; }
+    :global(h3) { font-size: 16px; color: $fg-dim; margin: 20px 0 8px; }
+    :global(p)  { margin: 0 0 12px; }
+    :global(a)  { color: $blue; }
+
+    :global(code) {
+      background: $bg-3;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+    :global(pre) {
+      background: $bg;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      :global(code) { background: none; padding: 0; }
+    }
+
+    :global(ul), :global(ol) { padding-left: 24px; margin: 0 0 12px; }
+    :global(li) { margin: 4px 0; }
+
+    :global(blockquote) {
+      border-left: 3px solid $border;
+      padding-left: 16px;
+      color: $muted;
+      margin: 0 0 12px;
+    }
+
+    :global(table) { border-collapse: collapse; margin: 0 0 12px; width: 100%; }
+    :global(th), :global(td) { border: 1px solid $border; padding: 8px 12px; text-align: left; }
+    :global(th) { background: $bg-3; color: $fg; }
+
+    :global(hr) { border: none; border-top: 1px solid $border; margin: 24px 0; }
+  }
 </style>
