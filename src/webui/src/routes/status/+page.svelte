@@ -524,7 +524,7 @@
   .section { margin-bottom: 8px; border: 1px solid $border; border-radius: 6px; overflow: hidden; }
   .section-header {
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px;
-    background: $bg-header; border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
+    background: var(--bg-header, #1a1a1a); border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
     &:hover { background: $bg-hover; }
   }
   .section-title { flex: 1; }

@@ -75,10 +75,10 @@
 
 /* Status page — section header slightly elevated */
 .section-header {
-  background: #131318 !important;
+  background: var(--bg-header, #131318);
 }
 .section-header:hover {
-  background: #1a1a22 !important;
+  background: var(--bg-hover, #1a1a22);
 }
 
 /* Toolbar — tighten the bottom border */
