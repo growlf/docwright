@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "dw-mcp": {
+      "type": "stdio",
+      "command": "/home/netyeti/Projects/DocWright/.venv/bin/python3",
+      "args": ["/home/netyeti/Projects/DocWright/scripts/mcp-server.py"],
+      "env": {
+        "DOCWRIGHT_ROOT": "/home/netyeti/Projects/DocWright"
+      }
+    }
+  }
+}
