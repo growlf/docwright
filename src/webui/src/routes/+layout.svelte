@@ -31,6 +31,17 @@
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
   let leftView       = $state<'files' | 'search' | 'policies' | 'tags' | 'settings' | 'git'>('files');
+  type Theme = 'dark' | 'light' | 'system';
+  const THEMES: Theme[] = ['dark', 'light', 'system'];
+  const THEME_ICONS: Record<Theme, string> = { dark: '🌙', light: '☀️', system: '💻' };
+  let theme = $state<Theme>('dark');
+
+  function applyTheme(t: Theme) {
+    theme = t;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('dw-theme', t);
+    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-theme', t);
+  }
+  function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related'>('properties');
@@ -210,6 +221,11 @@
       }
     }
     document.addEventListener('keydown', handleGlobalKey);
+
+    // Restore persisted theme
+    const saved = localStorage.getItem('dw-theme') as Theme | null;
+    if (saved && THEMES.includes(saved)) applyTheme(saved);
+
     return () => document.removeEventListener('keydown', handleGlobalKey);
   });
 </script>
@@ -435,6 +451,11 @@
   <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
     github.com/growlf/docwright
   </a>
+  <span class="footer-spacer"></span>
+  <button class="theme-btn" onclick={cycleTheme}
+    title="Theme: {theme} · Click to cycle (dark → light → system)">
+    {THEME_ICONS[theme]} {theme}
+  </button>
 </footer>
 
 <style>
@@ -586,4 +607,87 @@
     .toast-container { bottom: 80px; }
     .activity-bar { display: none; } /* activity bar hidden on mobile — hamburger + toolbar covers it */
   }
+
+  /* ── Theme picker button ─────────────────────────────────────────────────── */
+  .footer-spacer { flex: 1; }
+  .theme-btn {
+    background: none; border: 1px solid var(--border, #2a2a2a);
+    color: var(--muted, #666); border-radius: 4px;
+    padding: 1px 8px; font-size: 11px; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .theme-btn:hover { color: var(--fg, #ccc); border-color: var(--muted, #666); }
 </style>
+
+<svelte:head>
+  <style>
+    /* ── CSS variable definitions ─────────────────────────────────────────── */
+    :root {
+      --bg:       #111;
+      --bg-2:     #161616;
+      --bg-3:     #2a2a2a;
+      --bg-hover: #1e1e1e;
+      --fg:       #ddd;
+      --fg-dim:   #aaa;
+      --muted:    #666;
+      --border:   #2a2a2a;
+      --accent:   #7c9ef7;
+    }
+
+    /* ── Light theme ──────────────────────────────────────────────────────── */
+    html[data-theme="light"] {
+      --bg:       #f5f5f5;
+      --bg-2:     #ffffff;
+      --bg-3:     #e8e8e8;
+      --bg-hover: #ebebeb;
+      --fg:       #1a1a1a;
+      --fg-dim:   #444;
+      --muted:    #777;
+      --border:   #d0d0d0;
+      --accent:   #4a6cf7;
+      color-scheme: light;
+    }
+    html[data-theme="light"] body {
+      background: var(--bg);
+      color: var(--fg);
+    }
+    html[data-theme="light"] .app-toolbar {
+      background: #fff;
+      border-bottom-color: #d0d0d0;
+    }
+    html[data-theme="light"] .app-footer {
+      background: #fff;
+      border-top-color: #d0d0d0;
+      color: #666;
+    }
+    html[data-theme="light"] .act-btn { color: #888; }
+    html[data-theme="light"] .act-btn:hover { background: #ebebeb; color: #333; }
+    html[data-theme="light"] .act-btn.active { color: #333; background: #e0e8ff; border-left-color: #4a6cf7; }
+    html[data-theme="light"] .activity-bar { background: #f0f0f0; border-right-color: #d0d0d0; }
+    html[data-theme="light"] .app-layout { background: var(--bg); }
+    html[data-theme="light"] a { color: #4a6cf7; }
+
+    /* ── System theme: follows OS preference ─────────────────────────────── */
+    @media (prefers-color-scheme: light) {
+      html[data-theme="system"] {
+        --bg:       #f5f5f5;
+        --bg-2:     #ffffff;
+        --bg-3:     #e8e8e8;
+        --bg-hover: #ebebeb;
+        --fg:       #1a1a1a;
+        --fg-dim:   #444;
+        --muted:    #777;
+        --border:   #d0d0d0;
+        --accent:   #4a6cf7;
+        color-scheme: light;
+      }
+      html[data-theme="system"] body { background: var(--bg); color: var(--fg); }
+      html[data-theme="system"] .app-toolbar { background: #fff; border-bottom-color: #d0d0d0; }
+      html[data-theme="system"] .app-footer  { background: #fff; border-top-color: #d0d0d0; }
+      html[data-theme="system"] .activity-bar { background: #f0f0f0; border-right-color: #d0d0d0; }
+      html[data-theme="system"] .act-btn { color: #888; }
+      html[data-theme="system"] .act-btn:hover { background: #ebebeb; color: #333; }
+      html[data-theme="system"] .act-btn.active { color: #333; background: #e0e8ff; border-left-color: #4a6cf7; }
+    }
+  </style>
+</svelte:head>
