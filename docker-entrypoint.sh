@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
 
-# ── Git identity ──────────────────────────────────────────────────────────────
+# ── Git identity + safe directory ────────────────────────────────────────────
 git config --global user.name  "${GIT_USER_NAME:-DocWright User}"
 git config --global user.email "${GIT_USER_EMAIL:-docwright@localhost}"
+git config --global --add safe.directory "${DOCWRIGHT_ROOT:-/vault}"
 
 # ── Git credentials (HTTPS) ───────────────────────────────────────────────────
 # For SSH key auth: mount your key at /root/.ssh/id_ed25519 instead.

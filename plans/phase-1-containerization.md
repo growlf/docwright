@@ -21,7 +21,7 @@ tags:
   - docker
 tests_defined: true
 total_steps: 7
-completed_steps: 6
+completed_steps: 7
 ---
 
 ## Overview
@@ -45,7 +45,7 @@ for the full specification.
 | 4 | `.dockerignore` | Excludes vault data, node_modules, .venv, opencode.json, VERSION, secrets | ✅ |
 | 5 | `docs/docker.md` — deployment guide | One-command quickstart; all three scenarios; env vars reference; git credentials setup | ✅ |
 | 6 | GitHub Actions CI — image build + health check | Build on every PR; push to ghcr.io on tagged releases; Node version bumped to 22 | ✅ |
-| 7 | Test: standalone scenario works | `docker compose up` → `/api/health` returns `{"ok":true}`; git panel works; MCP SSE on :3002 | ⏳ |
+| 7 | Test: standalone scenario works | `docker compose up` → `/api/health` returns `{"ok":true}`; git panel works; MCP SSE on :3002 | ✅ Done |
 
 ## Tests
 
@@ -123,3 +123,4 @@ sufficient for all Phase 1 and Phase 2 needs.
 |------|--------|--------|
 | 2026-06-04 | Created — promoted from Phase 2; stability warrants Phase 1 | NetYeti |
 | 2026-06-06 | All deliverables implemented (1-6); all blocker resolutions documented; D7 live test pending | NetYeti |
+| 2026-06-06 | All 7 deliverables complete — D7 verified: health ✓, git panel ✓, file tree ✓, MCP SSE ✓. Added safe.directory fix for mounted vault. | NetYeti |
