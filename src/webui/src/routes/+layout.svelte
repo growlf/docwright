@@ -649,6 +649,12 @@
     .right-tab        { color: #888; }
     .right-tab.active { color: #333; border-bottom-color: #4a6cf7; }
     .toast { background: #fff; border-color: #d0d0d0; color: #333; }
+    .chat-toggle { background: #ddeeff; border-color: #aaccee; color: #2a6090; }
+    .chat-toggle:hover  { background: #cce0ff; }
+    .chat-toggle.active { background: #aaccee; }
+    .toast-action { background: none; border-color: #aaccee; color: #2a6090; }
+    .toast-action:hover { background: #ddeeff; }
+    .toast-close { color: #888; }
     #content { background: #f5f5f5; color: #1a1a1a; }
   }
 </style>
