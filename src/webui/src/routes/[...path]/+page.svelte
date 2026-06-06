@@ -285,7 +285,8 @@
       });
       if (transRes.ok) {
         const { doc } = await transRes.json();
-        showToast(`Plan archived → ${doc || 'plans/completed/'}`, 4000);
+        showToast(`Plan complete ✓ — archived to ${doc || 'plans/completed/'}`, 3000);
+        setTimeout(() => goto('/status'), 800);
       } else {
         const { error } = await transRes.json().catch(() => ({ error: 'Transition failed' }));
         showToast(`⚠ ${error}`, 5000);
