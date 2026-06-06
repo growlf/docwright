@@ -1,0 +1,39 @@
+# Dependencies — always rebuilt inside the image
+node_modules/
+src/webui/node_modules/
+.venv/
+venv/
+
+# Build artifacts
+src/webui/build/
+src/webui/.svelte-kit/
+
+# Vault data — always mounted as a volume, never baked in
+proposals/
+plans/
+docs/
+policies/
+inbox/
+example-vault/
+
+# Host-local config — contains hardcoded paths specific to the dev machine
+opencode.json
+.env
+.env.*
+.docwright/
+
+# Version file regenerated from git tags
+VERSION
+
+# Git and editor
+.git/
+.github/
+*.md
+!README.md
+
+# Logs and caches
+.logs/
+*.log
+
+# Test files (not needed in runtime image)
+test/

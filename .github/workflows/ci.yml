@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Setup Python
@@ -51,3 +51,48 @@ jobs:
 
       - name: Test MCP plan mutation tools
         run: python3 test/mcp/test-plan-tools.py
+
+  docker:
+    name: Docker build + health check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t docwright:ci .
+
+      - name: Start container (example-vault as vault)
+        run: |
+          docker run -d --name dw-ci \
+            -e GIT_USER_NAME="CI Bot" \
+            -e GIT_USER_EMAIL="ci@docwright" \
+            -v "${{ github.workspace }}/example-vault":/vault \
+            -p 5173:5173 \
+            docwright:ci
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:5173/api/health | grep -q '"ok":true'; then
+              echo "healthy"; exit 0
+            fi
+            echo "attempt $i — waiting..."; sleep 3
+          done
+          echo "health check timed out"; docker logs dw-ci; exit 1
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f dw-ci || true
+
+      - name: Push to ghcr.io (tagged releases only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }},ghcr.io/${{ github.repository }}:latest
+        env:
+          DOCKER_USERNAME: ${{ github.actor }}
+          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

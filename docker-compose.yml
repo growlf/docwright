@@ -1,0 +1,122 @@
+# DocWright — docker compose scenarios
+#
+# Three scenarios are provided. Uncomment the one that fits your deployment.
+# Only ONE scenario should be active at a time.
+#
+# Required for all scenarios:
+#   GIT_USER_NAME   — name used for git commits from the web UI
+#   GIT_USER_EMAIL  — email used for git commits from the web UI
+#
+# Optional:
+#   GIT_TOKEN       — GitHub/Forgejo personal access token for HTTPS push
+#                     (alternative: mount SSH key — see docs/docker.md)
+
+# ── Scenario 1: Standalone (local developer) ─────────────────────────────────
+# Mount a local vault directory. Access the UI at http://localhost:5173.
+# Suitable for a single developer running DocWright on their workstation.
+
+services:
+  docwright:
+    build: .
+    volumes:
+      - ${VAULT_PATH:-./example-vault}:/vault
+    ports:
+      - "${PORT:-5173}:5173"
+      # Uncomment to expose MCP SSE for external tooling:
+      # - "3002:3002"
+    environment:
+      GIT_USER_NAME:  ${GIT_USER_NAME:-DocWright User}
+      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-docwright@localhost}
+      GIT_TOKEN:      ${GIT_TOKEN:-}
+    restart: unless-stopped
+
+# ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────
+# Caddy handles TLS termination and routes public traffic to DocWright.
+# Suitable for a shared team installation behind a domain name.
+# Uncomment this block and comment out Scenario 1 above.
+
+# services:
+#   docwright:
+#     build: .
+#     expose:
+#       - "5173"
+#     volumes:
+#       - vault_data:/vault
+#     environment:
+#       GIT_USER_NAME:  ${GIT_USER_NAME}
+#       GIT_USER_EMAIL: ${GIT_USER_EMAIL}
+#       GIT_TOKEN:      ${GIT_TOKEN:-}
+#     restart: unless-stopped
+#
+#   caddy:
+#     image: caddy:2-alpine
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+#       - caddy_data:/data
+#       - caddy_config:/config
+#     restart: unless-stopped
+#
+# volumes:
+#   vault_data:
+#   caddy_data:
+#   caddy_config:
+
+# ── Scenario 3: Enterprise (OpenCode sidecar) ─────────────────────────────────
+# OpenCode serve runs as a companion container, sharing the vault volume.
+# Suitable for air-gapped or enterprise deployments with a managed AI backend.
+# Uncomment this block and comment out Scenario 1 above.
+#
+# Note: requires opencode to have a published Docker image, or build from source.
+# See https://opencode.ai for the latest deployment options.
+
+# services:
+#   docwright:
+#     build: .
+#     expose:
+#       - "5173"
+#     volumes:
+#       - vault_data:/vault
+#     environment:
+#       GIT_USER_NAME:  ${GIT_USER_NAME}
+#       GIT_USER_EMAIL: ${GIT_USER_EMAIL}
+#       GIT_TOKEN:      ${GIT_TOKEN:-}
+#       # Tell the UI where OpenCode serve lives
+#       OPENCODE_URL: http://opencode:4096
+#     depends_on:
+#       - opencode
+#     restart: unless-stopped
+#
+#   opencode:
+#     image: ghcr.io/sst/opencode:latest   # replace with actual image when published
+#     command:
+#       - serve
+#       - --cors
+#       - http://docwright:5173
+#       - --hostname
+#       - 0.0.0.0
+#     expose:
+#       - "4096"
+#     volumes:
+#       - vault_data:/vault
+#     environment:
+#       OPENCODE_DIR: /vault
+#     restart: unless-stopped
+#
+#   caddy:
+#     image: caddy:2-alpine
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+#       - caddy_data:/data
+#       - caddy_config:/config
+#     restart: unless-stopped
+#
+# volumes:
+#   vault_data:
+#   caddy_data:
+#   caddy_config:

@@ -47,7 +47,7 @@ except ImportError:
     sys.exit(1)
 
 REPO_ROOT = Path(__file__).parent.parent.resolve()
-CACHE_FILE = Path("/tmp/docwright-status-cache.txt")
+CACHE_FILE = Path(os.environ.get("DOCWRIGHT_CACHE_DIR", "/tmp")) / "docwright-status-cache.txt"
 AUDIT_LOG = REPO_ROOT / ".docwright" / "audit.jsonl"
 CACHE_TTL = 60
 
