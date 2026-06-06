@@ -96,3 +96,4 @@ Phase 1: Multi-reviewer quorum + time-based triggers Phase 2: Governance audit l
 | 2026-06-06 | Phase 2b complete: retroactive audit scanner in gates.ts, /api/gate-audit endpoint with --fix, findings display on Audit tab | NetYeti |
 | 2026-06-06 | Phase 3 complete: AI gatePreReview() engine, /api/gate-pre-review endpoint, AI button per pending gate with inline readiness summary, profile-configurable AI prompts per gate type | NetYeti |
 | 2026-06-06 | Step 15 complete — 6 retroactiveAudit tests (fix mode, mixed states, type filtering) + 6 gatePreReview tests (ready/needs-work, step counts, interface conformance) written and passing. 90/90 dispatch tests green. | NetYeti |
+| 2026-06-06 | Deferred proposal captured: automated-test-lifecycle.md — AI auto-generates tests on step completion, resets tests_defined on mutation, auto-certifies when coverage is full. Builds on Phase 3 AI scaffolding from this plan. | NetYeti |
