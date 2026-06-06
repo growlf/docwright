@@ -632,6 +632,7 @@
       --muted:    #666;
       --border:   #2a2a2a;
       --accent:   #7c9ef7;
+      --bg-header: #1a1a1a;
       --tag:      #7ab;
       --tag-bg:   #1e2a3a;
       --tag-bdr:  #2b3a4a;
@@ -648,6 +649,7 @@
       --muted:    #777;
       --border:   #d0d0d0;
       --accent:   #4a6cf7;
+      --bg-header: #e8e8e8;
       --tag:      #2a6090;
       --tag-bg:   #ddeeff;
       --tag-bdr:  #aaccee;
@@ -718,6 +720,7 @@
         --muted:    #777;
         --border:   #d0d0d0;
         --accent:   #4a6cf7;
+        --bg-header: #e8e8e8;
         --tag:      #2a6090;
         --tag-bg:   #ddeeff;
         --tag-bdr:  #aaccee;

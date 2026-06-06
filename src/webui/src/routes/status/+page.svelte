@@ -524,7 +524,7 @@
   .section { margin-bottom: 8px; border: 1px solid $border; border-radius: 6px; overflow: hidden; }
   .section-header {
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px;
-    background: $bg-3; border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
+    background: $bg-header; border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
     &:hover { background: $bg-hover; }
   }
   .section-title { flex: 1; }
@@ -567,9 +567,9 @@
 
   // ── Gates ───────────────────────────────────────────────────────────────────
   .gates-section { margin-bottom: 8px; border: 1px solid $amber-bdr; border-radius: 6px; overflow: hidden; }
-  .gates-header  { background: #1e1800; }
-  .overdue-header { background: #1e0e00; }
-  .waived-header { background: #1a0e0e; }
+  .gates-header   { background: color-mix(in srgb, $bg-header 80%, #ffcc00 20%); }
+  .overdue-header { background: color-mix(in srgb, $bg-header 80%, #ff6600 20%); }
+  .waived-header  { background: color-mix(in srgb, $bg-header 80%, #cc4444 20%); }
   .gates-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
   .gate-item {
     padding: 8px 10px; background: $bg-2; border: 1px solid $border; border-radius: 4px; cursor: pointer;
