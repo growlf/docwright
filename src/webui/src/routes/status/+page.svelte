@@ -536,7 +536,7 @@
   .badge-approved { background: $blue-bg;       color: #7ab;     border-color: #2a4a6a; }
   .badge-done     { background: $green-bg;      color: $green;   border-color: $green-bdr; }
   .badge-canceled { background: $red-bg;        color: #966;     border-color: #4a2a2a; }
-  .badge-warn     { background: #2a2000;        color: $amber;   border-color: $amber-bdr; }
+  .badge-warn     { background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); color: $amber; border-color: $amber-bdr; }
   .badge-default  { background: $bg-2;          color: $muted;   border-color: $border; }
 
   .empty { padding: 10px 16px; font-size: 12px; color: $muted; }
@@ -577,10 +577,10 @@
   }
   .gate-title  { font-size: 13px; color: $fg; font-weight: 500; margin-bottom: 4px; }
   .gate-meta   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: $muted; }
-  .gate-badge  { background: #2a2000; color: $amber; border: 1px solid $amber-bdr; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
+  .gate-badge  { background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); color: $amber; border: 1px solid $amber-bdr; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
   .gate-reason { flex: 1; min-width: 120px; }
   .gate-reviewer { color: $fg-dim; font-size: 10px; }
-  .gate-ai-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer; margin-left: auto; &:hover { background: #1e3040; } }
+  .gate-ai-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer; margin-left: auto; &:hover { background: $blue-bg; } }
   .ai-pre-review { margin-top: 6px; padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid $border;
     &.ready      { background: #0a1a0a; border-color: #2a4a2a; }
     &.needs-work { background: #1a1a00; border-color: #4a4a2a; }
@@ -593,9 +593,9 @@
   // ── Audit log ───────────────────────────────────────────────────────────────
   .audit-controls { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; background: $bg; border-bottom: 1px solid $border; }
   .audit-toolbar  { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: $bg; border-bottom: 1px solid $border; }
-  .audit-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; &:hover { background: #1e3040; } &:disabled { opacity: 0.5; cursor: default; } }
+  .audit-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; &:hover { background: $blue-bg; } &:disabled { opacity: 0.5; cursor: default; } }
   .audit-findings { border-bottom: 1px solid $border; }
-  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: $amber; font-weight: 600; background: #1e1800; }
+  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: $amber; font-weight: 600; background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); }
   .audit-finding { padding: 8px 16px; cursor: pointer; border-bottom: 1px solid $border; &:hover { background: $bg-hover; } }
   .finding-title { font-size: 12px; color: $fg; font-weight: 500; margin-bottom: 2px; }
   .finding-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: $muted; }
