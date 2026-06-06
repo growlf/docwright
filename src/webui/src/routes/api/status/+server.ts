@@ -116,9 +116,46 @@ export function GET() {
     .map(({ path: p, fm }) => entry(p, fm));
 
   const completedCount = readDir(path.join(REPO_ROOT, 'plans', 'completed')).length;
+
+  // Phase/roadmap data
+  // Current phase: highest `phase:` value among active or completed plans
+  const allPlans = [
+    ...readDir(path.join(REPO_ROOT, 'plans')),
+    ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
+  ];
+  let currentPhase = 1;
+  for (const { fm } of allPlans) {
+    const p = parseInt(String(fm.phase ?? '0'), 10);
+    if (!isNaN(p) && p > currentPhase) currentPhase = p;
+  }
+  // Phase plans: phase-level planning docs (phase-N-* names), excluding completed/canceled stubs
+  const phasePlans = readDir(path.join(REPO_ROOT, 'plans'))
+    .filter(({ path: p, fm }) =>
+      /phase-\d/.test(p) &&
+      !['completed', 'canceled', 'proposal'].includes(String(fm.status ?? ''))
+    )
+    .map(({ path: p, fm }) => ({
+      path: p,
+      title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+      status: String(fm.status ?? 'draft'),
+      phase: parseInt(String(fm.phase ?? '0'), 10) || null,
+    }))
+    .sort((a, b) => (a.phase ?? 99) - (b.phase ?? 99));
+
+  // VERSION file
+  let version = '';
+  try { version = fs.readFileSync(path.join(REPO_ROOT, 'VERSION'), 'utf-8').trim(); } catch { /* ok */ }
+
   const vaultName = path.basename(REPO_ROOT);
 
-  const data = { vaultName, proposals: { open, approved_pending: approvedPending, deferred }, plans: { active, completed_count: completedCount } };
+  const data = {
+    vaultName,
+    version,
+    currentPhase,
+    phasePlans,
+    proposals: { open, approved_pending: approvedPending, deferred },
+    plans: { active, completed_count: completedCount },
+  };
   cache = { data, at: Date.now() };
   return json(data);
 }

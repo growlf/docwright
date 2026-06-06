@@ -9,8 +9,14 @@
     tags: string[]; category: string[]; complexity: string;
     status: string; priority: string; assigned_to: string;
   }
+  interface PhasePlan {
+    path: string; title: string; status: string; phase: number | null;
+  }
   interface StatusData {
     vaultName: string;
+    version: string;
+    currentPhase: number;
+    phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
     plans: { active: DocEntry[]; completed_count: number };
   }
@@ -102,6 +108,26 @@
         completedCount={data.plans.completed_count}
       />
     {:else}
+
+    <!-- Phase/roadmap card -->
+    {#if data.phasePlans.length > 0}
+    <div class="phase-card">
+      <div class="phase-card-header">
+        <span class="phase-label">Phase {data.currentPhase}</span>
+        {#if data.version}<span class="phase-version">v{data.version}</span>{/if}
+        <span class="phase-stat">{data.plans.completed_count} plans completed</span>
+      </div>
+      <div class="phase-plan-list">
+        {#each data.phasePlans as pp}
+          <a class="phase-plan-item status-{pp.status}" href="/{pp.path.replace(/\.md$/, '')}">
+            <span class="phase-plan-status-dot"></span>
+            <span class="phase-plan-title">{pp.title}</span>
+            <span class="phase-plan-badge">{pp.status}</span>
+          </a>
+        {/each}
+      </div>
+    </div>
+    {/if}
 
     <!-- Open proposals -->
     <section class="section">
@@ -223,6 +249,48 @@
 </div>
 
 <style>
+  /* Phase card */
+  .phase-card {
+    background: linear-gradient(135deg, #1a1f3a 0%, #111 100%);
+    border: 1px solid #2a3060; border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 20px;
+  }
+  .phase-card-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .phase-label {
+    font-size: 14px; font-weight: 700; color: #7c9ef7;
+    letter-spacing: 0.3px;
+  }
+  .phase-version {
+    font-size: 11px; color: #555; font-family: monospace;
+    background: #1a1a1a; border: 1px solid #333;
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .phase-stat { font-size: 11px; color: #555; margin-left: auto; }
+  .phase-plan-list { display: flex; flex-direction: column; gap: 4px; }
+  .phase-plan-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 6px; border-radius: 4px;
+    text-decoration: none; transition: background 0.1s;
+  }
+  .phase-plan-item:hover { background: #1e2340; }
+  .phase-plan-status-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .status-in-progress .phase-plan-status-dot { background: #4caf50; box-shadow: 0 0 4px #4caf5088; }
+  .status-approved .phase-plan-status-dot    { background: #f59e0b; }
+  .status-draft .phase-plan-status-dot       { background: #444; }
+  .status-completed .phase-plan-status-dot   { background: #555; }
+  .phase-plan-title { font-size: 12px; color: #bbb; flex: 1; }
+  .status-in-progress .phase-plan-title { color: #ddd; font-weight: 500; }
+  .phase-plan-badge {
+    font-size: 10px; padding: 1px 6px; border-radius: 3px;
+    color: #888; background: #1a1a1a; border: 1px solid #2a2a2a;
+  }
+  .status-in-progress .phase-plan-badge { color: #4caf50; border-color: #4caf5044; }
+  .status-approved .phase-plan-badge    { color: #f59e0b; border-color: #f59e0b44; }
+
   .status-page { padding: 32px; }
 
   .status-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
