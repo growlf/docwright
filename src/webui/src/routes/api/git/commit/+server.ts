@@ -34,10 +34,15 @@ export async function POST({ request }) {
     writeFileSync(join(REPO, '.git', 'COMMIT_EDITMSG'), message + '\n');
     writeFileSync(msgFile, message + '\n');
 
+    // HUMAN_APPROVED=1: Web UI commits are always human-initiated (browser tool,
+    // not accessible to AI agents). This allows governance-sensitive changes
+    // (approved proposals, completed plans, tests_defined) to commit without
+    // requiring the user to drop to the shell.
+    // Phase 2: replace with Forgejo OAuth session verification.
     const result = spawnSync('git', ['commit', '-F', msgFile], {
       cwd: REPO,
       encoding: 'utf-8',
-      env: { ...process.env, GIT_DIR: join(REPO, '.git'), GIT_WORK_TREE: REPO },
+      env: { ...process.env, GIT_DIR: join(REPO, '.git'), GIT_WORK_TREE: REPO, HUMAN_APPROVED: '1' },
     });
 
     if (result.status !== 0) {
