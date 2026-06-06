@@ -524,7 +524,7 @@
   .section { margin-bottom: 8px; border: 1px solid $border; border-radius: 6px; overflow: hidden; }
   .section-header {
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px;
-    background: $bg-2; border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
+    background: $bg-3; border: none; color: $fg; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
     &:hover { background: $bg-hover; }
   }
   .section-title { flex: 1; }
@@ -553,7 +553,7 @@
   .item-date    { color: $muted; font-size: 11px; }
 
   // ── Tags & complexity chips ──────────────────────────────────────────────────
-  .tag        { display: inline-block; background: $blue-bg; border: 1px solid $blue-bdr; border-radius: 8px; padding: 0 6px; font-size: 10px; color: #7ab; margin-right: 3px; }
+  .tag        { display: inline-block; background: $tag-bg; border: 1px solid $tag-bdr; border-radius: 8px; padding: 0 6px; font-size: 10px; color: $tag; margin-right: 3px; }
   .complexity { display: inline-block; background: $bg-3; border: 1px solid $border; border-radius: 4px; padding: 0 5px; font-size: 10px; color: $muted; }
 
   .pri { font-size: 11px; }

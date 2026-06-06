@@ -632,6 +632,9 @@
       --muted:    #666;
       --border:   #2a2a2a;
       --accent:   #7c9ef7;
+      --tag:      #7ab;
+      --tag-bg:   #1e2a3a;
+      --tag-bdr:  #2b3a4a;
     }
 
     /* ── Light theme ──────────────────────────────────────────────────────── */
@@ -645,6 +648,9 @@
       --muted:    #777;
       --border:   #d0d0d0;
       --accent:   #4a6cf7;
+      --tag:      #2a6090;
+      --tag-bg:   #ddeeff;
+      --tag-bdr:  #aaccee;
       color-scheme: light;
     }
     html[data-theme="light"] body, html[data-theme="light"] .app-layout { background: #f0f0f0; color: #1a1a1a; }
@@ -712,6 +718,9 @@
         --muted:    #777;
         --border:   #d0d0d0;
         --accent:   #4a6cf7;
+        --tag:      #2a6090;
+        --tag-bg:   #ddeeff;
+        --tag-bdr:  #aaccee;
         color-scheme: light;
       }
       html[data-theme="system"] body, html[data-theme="system"] .app-layout { background: #f0f0f0; color: #1a1a1a; }

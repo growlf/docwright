@@ -391,19 +391,19 @@
   .chips { display: flex; flex-wrap: wrap; gap: 3px; }
 
   .chip {
-    background: #1e2a3a;
-    border: 1px solid #2b3a4a;
+    background: $tag-bg;
+    border: 1px solid $tag-bdr;
     border-radius: 10px;
     padding: 1px 7px;
     font-size: 11px;
-    color: #7ab;
+    color: $tag;
     &.rm { padding-right: 3px; }
   }
 
   .chip-x {
     background: none;
     border: none;
-    color: #556;
+    color: $muted;
     cursor: pointer;
     font-size: 11px;
     padding: 0 2px;

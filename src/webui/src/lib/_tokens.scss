@@ -40,6 +40,12 @@ $magenta:   #b58;
 $magenta-bg:#2a1a3a;
 $magenta-bdr:#5b2b84;
 
+// ── Tag / chip (used for category and tag pills) ──────────────────────────────
+// Distinct from $blue — softer, less saturated; works as a category indicator
+$tag:       var(--tag,     #7ab);
+$tag-bg:    var(--tag-bg,  #1e2a3a);
+$tag-bdr:   var(--tag-bdr, #2b3a4a);
+
 // ── Mixins ────────────────────────────────────────────────────────────────────
 
 // Base action button — all .act buttons share this
