@@ -1,11 +1,29 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGatesForDocument, isOverdue, getLastGateDate, parseCadence } from '../../../../../dispatch/gates';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
   return path.resolve(process.cwd(), '../..');
 })();
+
+// Cache gate definitions from profile.json
+let gateDefsCache: { gates: any[]; at: number } | null = null;
+function getGateDefs(): any[] {
+  const profilePath = path.join(REPO_ROOT, 'src', 'profiles', 'org-operations', 'profile.json');
+  if (!fs.existsSync(profilePath)) return [];
+  if (gateDefsCache && Date.now() - gateDefsCache.at < 30000) return gateDefsCache.gates;
+  try {
+    const raw = fs.readFileSync(profilePath, 'utf-8');
+    const profile = JSON.parse(raw);
+    const gates = getGateDefinition(profile);
+    gateDefsCache = { gates, at: Date.now() };
+    return gates;
+  } catch {
+    return [];
+  }
+}
 
 // Simple frontmatter parser — handles strings, booleans, and block arrays
 function parseFm(raw: string): Record<string, any> {
@@ -152,6 +170,74 @@ export function GET() {
   let version = '';
   try { version = fs.readFileSync(path.join(REPO_ROOT, 'VERSION'), 'utf-8').trim(); } catch { /* ok */ }
 
+  // Gate scanning
+  const gates = getGateDefs();
+  const pendingGates: Array<{ path: string; title: string; gate_id: string; reason: string; gate_status: string; reviewer: string; reviews: number }> = [];
+  const waivedGates: Array<{ path: string; title: string; gate_id: string; note: string }> = [];
+  const overdueGates: Array<{ path: string; title: string; gate_id: string; next_review: string; document_type: string }> = [];
+
+  if (gates.length > 0) {
+    const allLifecycleDocs = [
+      ...readDir(path.join(REPO_ROOT, 'plans')),
+      ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
+      ...readDir(path.join(REPO_ROOT, 'proposals', 'approved')),
+      ...readDir(path.join(REPO_ROOT, 'proposals')),
+    ];
+    for (const doc of allLifecycleDocs) {
+      // Transition-triggered gates
+      const matched = getGatesForTransition(gates, {
+        document_type: doc.fm.type || 'plan',
+        from: doc.fm.status,
+        to: doc.fm._next_status,
+        phase: doc.fm.phase,
+      });
+      for (const gate of matched) {
+        const result = evaluateGate(gate, doc.fm);
+        const title = String(doc.fm.title ?? doc.path.replace(/^.*\//, '').replace('.md', ''));
+        if (result.blocked) {
+          pendingGates.push({
+            path: doc.path,
+            title,
+            gate_id: gate.id,
+            reason: result.reason ?? '',
+            gate_status: doc.fm.gate_status ?? 'pending',
+            reviewer: Array.isArray(doc.fm[gate.reviewer_field])
+              ? doc.fm[gate.reviewer_field].join(', ')
+              : String(doc.fm[gate.reviewer_field] ?? ''),
+            reviews: result.reviews.length,
+          });
+        }
+        if (doc.fm.gate_status === 'waived') {
+          waivedGates.push({
+            path: doc.path,
+            title,
+            gate_id: gate.id,
+            note: doc.fm.gate_note ?? '',
+          });
+        }
+      }
+
+      // Schedule-triggered gates (Phase 1b) — check for overdue reviews
+      const scheduleGates = getScheduleGatesForDocument(gates, doc.fm);
+      for (const gate of scheduleGates) {
+        if (isOverdue(gate, doc.fm)) {
+          const lastDate = getLastGateDate(doc.fm);
+          const cadenceMs = parseCadence(gate.cadence!);
+          const nextReview = lastDate && cadenceMs
+            ? new Date(lastDate.getTime() + cadenceMs).toISOString().slice(0, 10)
+            : 'initial review needed';
+          overdueGates.push({
+            path: doc.path,
+            title: String(doc.fm.title ?? doc.path.replace(/^.*\//, '').replace('.md', '')),
+            gate_id: gate.id,
+            next_review: nextReview,
+            document_type: doc.fm.type ?? doc.fm._type ?? '',
+          });
+        }
+      }
+    }
+  }
+
   const vaultName = path.basename(REPO_ROOT);
 
   const data = {
@@ -161,6 +247,7 @@ export function GET() {
     phasePlans,
     proposals: { open, approved_pending: approvedPending, deferred },
     plans: { active, completed_count: completedCount },
+    gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
   };
   cache = { data, at: Date.now() };
   return json(data);

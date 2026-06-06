@@ -20,12 +20,64 @@
   "requiredFrontmatter": ["type", "status", "created", "author", "author-role"],
   "optionalFrontmatter": ["parent", "policy-area", "tags", "origin", "ai-last-action",
     "category", "complexity", "estimated_effort", "depends_on", "due_date", "subsumed_by"],
-  "sidebarExcludePatterns": ["AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "NOTICE.md", "SECURITY.md", "PROPOSAL.md", "SESSION-LOG.md"],
+  "sidebarExcludePatterns": ["AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "NOTICE.md", "SECURITY.md", "SESSION-LOG.md"],
   "hiddenDirectories": ["proposals/approved", "plans/completed"],
+  "gates": [
+    {
+      "id": "phase-complete",
+      "trigger": "all-plans-in-phase-completed",
+      "reviewer_field": "gate_reviewer",
+      "reviewers": ["steward", "governance"],
+      "quorum": 1,
+      "blocks": "next-phase-activation",
+      "description": "Phase completion sign-off before next phase begins"
+    },
+    {
+      "id": "policy-activate",
+      "trigger": "status-transition",
+      "from": "draft",
+      "to": "active",
+      "document_type": "policy",
+      "reviewer_field": "gate_reviewer",
+      "reviewers": ["governance"],
+      "quorum": 1,
+      "description": "Policy must be reviewed before going active"
+    },
+    {
+      "id": "plan-complete",
+      "trigger": "status-transition",
+      "from": "in-progress",
+      "to": "completed",
+      "document_type": "plan",
+      "reviewer_field": "assigned_to",
+      "reviewers": ["contributor", "steward"],
+      "quorum": 1,
+      "description": "Plan owner confirms completion before closing"
+    },
+    {
+      "id": "policy-review",
+      "trigger": "schedule",
+      "cadence": "quarterly",
+      "status_filter": ["active"],
+      "document_type": "policy",
+      "reviewer_field": "gate_reviewer",
+      "reviewers": ["steward"],
+      "quorum": 1,
+      "blocks": "policy-status-change",
+      "description": "Active policies must be reviewed quarterly"
+    }
+  ],
   "features": {
     "wikilinks": true,
     "graph": true,
     "naming": true,
     "llmWiki": false
+  },
+  "relationshipEngine": {
+    "auto_detect_on_create": true,
+    "auto_detect_on_update": true,
+    "auto_detect_on_approval": true,
+    "similarity_threshold": 0.35,
+    "show_plan_button": true
   }
 }

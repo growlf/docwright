@@ -12,6 +12,17 @@
   interface PhasePlan {
     path: string; title: string; status: string; phase: number | null;
   }
+  interface PendingGate {
+    path: string; title: string; gate_id: string;
+    reason: string; gate_status: string; reviewer: string; reviews: number;
+  }
+  interface WaivedGate {
+    path: string; title: string; gate_id: string; note: string;
+  }
+  interface OverdueGate {
+    path: string; title: string; gate_id: string;
+    next_review: string; document_type: string;
+  }
   interface StatusData {
     vaultName: string;
     version: string;
@@ -19,6 +30,7 @@
     phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
     plans: { active: DocEntry[]; completed_count: number };
+    gates: { pending: PendingGate[]; waived: WaivedGate[]; overdue: OverdueGate[] };
   }
 
   let data = $state<StatusData | null>(null);
@@ -127,6 +139,71 @@
         {/each}
       </div>
     </div>
+    {/if}
+
+    <!-- Overdue Reviews (Phase 1b — schedule triggers) -->
+    {#if data.gates.overdue.length > 0}
+    <section class="section gates-section">
+      <div class="section-header overdue-header">
+        <span class="section-title">⏰ Overdue Reviews</span>
+        <span class="badge badge-warn">{data.gates.overdue.length}</span>
+      </div>
+      <div class="gates-list">
+        {#each data.gates.overdue as g}
+          <div class="gate-item" onclick={() => goto('/' + g.path.replace(/\.md$/, ''))}>
+            <div class="gate-title">{g.title}</div>
+            <div class="gate-meta">
+              <span class="gate-badge">{g.gate_id}</span>
+              <span class="gate-reason">Next review: {g.next_review}</span>
+              <span class="gate-reviewer">{g.document_type}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
+    {/if}
+
+    <!-- Pending Gates -->
+    {#if data.gates.pending.length > 0}
+    <section class="section gates-section">
+      <div class="section-header gates-header">
+        <span class="section-title">⚠ Pending Gates</span>
+        <span class="badge badge-warn">{data.gates.pending.length}</span>
+      </div>
+      <div class="gates-list">
+        {#each data.gates.pending as g}
+          <div class="gate-item" onclick={() => goto('/' + g.path.replace(/\.md$/, ''))}>
+            <div class="gate-title">{g.title}</div>
+            <div class="gate-meta">
+              <span class="gate-badge">{g.gate_id}</span>
+              <span class="gate-reason">{g.reason}</span>
+              <span class="gate-reviewer">Reviewer: {g.reviewer || 'unassigned'}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
+    {/if}
+
+    <!-- Waived Gates -->
+    {#if data.gates.waived.length > 0}
+    <section class="section gates-section">
+      <div class="section-header waived-header">
+        <span class="section-title">⚡ Waived Gates (audit)</span>
+        <span class="badge badge-default">{data.gates.waived.length}</span>
+      </div>
+      <div class="gates-list">
+        {#each data.gates.waived as g}
+          <div class="gate-item" onclick={() => goto('/' + g.path.replace(/\.md$/, ''))}>
+            <div class="gate-title">{g.title}</div>
+            <div class="gate-meta">
+              <span class="gate-badge">{g.gate_id}</span>
+              <span class="gate-reason">"{(g.note || 'No note')}"</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
     {/if}
 
     <!-- Open proposals -->
@@ -353,4 +430,18 @@
   .deferred-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 4px; }
   .deferred-item { background: none; border: none; color: #444; font-size: 12px; text-align: left; cursor: pointer; padding: 2px 0; }
   .deferred-item:hover { color: #888; }
+
+  /* Gates section */
+  .gates-section { margin-bottom: 8px; border: 1px solid #3a3020; border-radius: 6px; overflow: hidden; }
+  .gates-header { background: #1e1800; }
+  .overdue-header { background: #1e0e00; }
+  .waived-header { background: #1a0e0e; }
+  .gates-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .gate-item { padding: 8px 10px; background: #161616; border: 1px solid #2a2a2a; border-radius: 4px; cursor: pointer; }
+  .gate-item:hover { background: #1c1c1c; border-color: #3a3a3a; }
+  .gate-title { font-size: 13px; color: #ddd; font-weight: 500; margin-bottom: 4px; }
+  .gate-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: #777; }
+  .gate-badge { background: #2a2000; color: #cc6; border: 1px solid #554400; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
+  .gate-reason { flex: 1; min-width: 120px; }
+  .gate-reviewer { color: #888; font-size: 10px; }
 </style>
