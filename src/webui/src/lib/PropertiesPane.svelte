@@ -109,6 +109,16 @@
     onsave?.(frontmatter);
   }
 
+  // Plan: certify test suite (human commitment — saves immediately like Approve)
+  function certifyTests() {
+    setField('tests_defined', true);
+    onsave?.(frontmatter);
+  }
+  function uncertifyTests() {
+    setField('tests_defined', false);
+    onsave?.(frontmatter);
+  }
+
   // Plan actions
   function setPlanStatus(status: string) {
     setField('status', status);
@@ -179,6 +189,19 @@
         {#if frontmatter.status === 'approved'}
           <button class="act start" onclick={() => setPlanStatus('in-progress')}
             title="Set status: in-progress — marks this plan as actively being worked">Start</button>
+        {/if}
+        {#if frontmatter.status === 'in-progress' || frontmatter.status === 'approved'}
+          {#if !frontmatter.tests_defined}
+            <button class="act estimate" onclick={certifyTests}
+              title="I've reviewed these tests and they would catch regressions if the implementation were wrong.">
+              ✓ Certify tests
+            </button>
+          {:else}
+            <button class="act unapprove" onclick={uncertifyTests}
+              title="Unset tests_defined — re-review the test suite">
+              ✓ Tests certified
+            </button>
+          {/if}
         {/if}
         {#if frontmatter.status === 'in-progress'}
           <button class="act complete" onclick={() => setPlanStatus('completed')}
