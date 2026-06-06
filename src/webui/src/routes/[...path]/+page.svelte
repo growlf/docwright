@@ -7,7 +7,7 @@
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
-  import { showPropsPane } from '$lib/pane';
+  import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
   import { tables, strikethrough } from 'turndown-plugin-gfm';
@@ -47,12 +47,8 @@
     showPropsPane.set(showProps);
   }
 
-  // Collation panel state
-  let showCollation = $state(false);
-  let rightTab = $state<'properties' | 'related'>('properties');
-  let collationLoading = $state(false);
-  let collationMatches = $state<any[]>([]);
-  let lastOverlapPath = $state(''); // avoid re-firing on the same file
+  // Collation panel state — body-length tracking avoids re-scan on frontmatter-only saves
+  let lastBodyLen = $state(0);
 
   let docType = $derived(
     filePath().startsWith('proposals/') ? 'proposal'
@@ -177,11 +173,13 @@
       docType,
       mode,
       filePath: filePath(),
-      onSave:         saveFrontmatter,
-      onApprove:      handleApprove,
-      onFindRelated:  findRelated,
-      onAddRelated:   handleAddRelated,
-      onSubsume:      handleSubsume,
+      onSave:          saveFrontmatter,
+      onApprove:       handleApprove,
+      onFindRelated:   findRelated,
+      onAddRelated:    handleAddRelated,
+      onAddDepends:    handleAddDepends,
+      onAddBlocks:     handleAddBlocks,
+      onSubsume:       handleSubsume,
     });
   }
 
@@ -249,7 +247,10 @@
       content = parsed.body;
       html = md.render(content);
       showToast('Saved', 2000);
-      if (docType === 'proposal') checkOverlap();
+      if (docType === 'proposal') {
+        if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
+        else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
+      }
     }
   }
 
@@ -262,34 +263,42 @@
   }
 
   async function checkOverlap() {
+    if (content.length === lastBodyLen) return; // body unchanged — skip re-scan
+    lastBodyLen = content.length;
     const fp = filePath();
-    if (lastOverlapPath === fp) return;
-    lastOverlapPath = fp;
     const res = await fetch('/api/overlap?path=' + encodeURIComponent(fp));
     if (!res.ok) return;
-    const { matches } = await res.json();
+    const { matches, relationships } = await res.json();
     if (matches.length === 0) return;
-    collationMatches = matches;
+    collationMatches.set(matches);
+    collationRelationships.set(relationships || []);
     showToast(
       `${matches.length} related proposal${matches.length === 1 ? '' : 's'} found`,
       8000,
-      { label: 'Review', onclick: () => { showCollation = true; } }
+      {
+        label: 'Review',
+        onclick: () => {
+          showPropsPane.set(true);
+          showRelatedTab.set(true);
+        }
+      }
     );
   }
 
   async function findRelated() {
-    // Switch right panel to Related tab and load matches
     showProps = true;
     propsCollapsed = false;
     showPropsPane.set(true);
-    rightTab = 'related';
-    collationLoading = true;
-    collationMatches = [];
+    showRelatedTab.set(true);
+    collationLoading.set(true);
+    collationMatches.set([]);
+    collationRelationships.set([]);
     const res = await fetch('/api/overlap?path=' + encodeURIComponent(filePath()));
-    collationLoading = false;
+    collationLoading.set(false);
     if (res.ok) {
-      const { matches } = await res.json();
-      collationMatches = matches;
+      const data = await res.json();
+      collationMatches.set(data.matches || []);
+      collationRelationships.set(data.relationships || []);
     }
   }
 
@@ -321,6 +330,28 @@
     showToast('Marked ' + relPath + ' as subsumed', 2000);
   }
 
+  async function handleAddDepends(relPath: string) {
+    if (!frontmatter) return;
+    const current: string[] = Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on : [];
+    const norm = relPath.endsWith('.md') ? relPath : relPath + '.md';
+    const alreadyIn = current.some(r => r === relPath || r === norm || r.replace(/\.md$/, '') === relPath.replace(/\.md$/, ''));
+    if (alreadyIn) return;
+    const updated = { ...frontmatter, depends_on: [...current, relPath] };
+    await saveFrontmatter(updated);
+    showToast('Added to depends_on: ' + relPath.split('/').pop(), 2500);
+  }
+
+  async function handleAddBlocks(relPath: string) {
+    if (!frontmatter) return;
+    const current: string[] = Array.isArray(frontmatter.blocks) ? frontmatter.blocks : [];
+    const norm = relPath.endsWith('.md') ? relPath : relPath + '.md';
+    const alreadyIn = current.some(r => r === relPath || r === norm || r.replace(/\.md$/, '') === relPath.replace(/\.md$/, ''));
+    if (alreadyIn) return;
+    const updated = { ...frontmatter, blocks: [...current, relPath] };
+    await saveFrontmatter(updated);
+    showToast('Added to blocks: ' + relPath.split('/').pop(), 2500);
+  }
+
   async function handleApprove(fm?: Record<string, any>) {
     if (fm) frontmatter = { ...fm };
     if (!frontmatter) return;
@@ -329,7 +360,19 @@
       if (who) frontmatter = { ...frontmatter, assigned_to: who };
     }
     await saveFrontmatter();
-    showToast('Approved — assigned to ' + (frontmatter.assigned_to || 'unassigned'), 3000);
+    const fp = filePath();
+    const res = await fetch('/api/approve-proposal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: fp }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast('Approve failed: ' + (data.error || res.statusText), 4000);
+      return;
+    }
+    showToast('Approved! Plan created at ' + data.planPath, 3000);
+    goto('/' + data.planPath.replace(/\.md$/, ''));
   }
 
   function cancel() { mode = 'read'; loadFile(); }

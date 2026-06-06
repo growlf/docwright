@@ -101,14 +101,20 @@ export function GET() {
     .map(({ path: p, fm }) => entry(p, fm));
 
   // Approved proposals not yet promoted to a plan
-  const approvedPending = readDir(path.join(REPO_ROOT, 'proposals', 'approved'))
-    .filter(({ path: p, fm }) =>
-      !referencedByPlan.has(p) &&
-      fm.deferred !== true &&
-      fm.approved === true &&
-      !p.includes('phase-0-spike-decision')
-    )
-    .map(({ path: p, fm }) => entry(p, fm));
+  // Check both proposals/approved/ AND proposals/ (files with approved: true not yet moved)
+  const approvedPending = [
+    ...readDir(path.join(REPO_ROOT, 'proposals', 'approved'))
+      .filter(({ path: p }) => p.endsWith('.md')),
+    ...readDir(path.join(REPO_ROOT, 'proposals'))
+      .filter(({ path: p, fm }) =>
+        p.endsWith('.md') && fm.approved === true
+      ),
+  ].filter(({ path: p, fm }) =>
+    !referencedByPlan.has(p) &&
+    fm.deferred !== true &&
+    fm.approved === true &&
+    !p.includes('phase-0-spike-decision')
+  ).map(({ path: p, fm }) => entry(p, fm));
 
   // Active plans
   const active = readDir(path.join(REPO_ROOT, 'plans'))
