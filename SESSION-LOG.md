@@ -202,3 +202,25 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Proposal approved by NetYeti; plan file auto-generated (untracked)
 
 **Session note:** `docs/session-notes/session_note_202606061400.md`
+
+---
+
+## Session: 2026-06-06 — Phase 2 UI Polish + Lifecycle UX Overhaul
+
+**Focus:** UI polish bundle shipped, theming fixed, lifecycle UX made fully Web UI-operable
+
+**Completed:**
+- [x] Phase 2 UI Polish Bundle — 7 deliverables shipped (search, policies, phase card, tags, panels, shortcuts, theme)
+- [x] Full SCSS migration across all components + `_tokens.scss` design token system
+- [x] Theming root cause found: `brand/theme.css` had `!important` blocking all cascade work
+- [x] CSS variables moved to `app.html`; `:global()` pattern established for component overrides
+- [x] Web UI commits now carry `HUMAN_APPROVED=1` — shell no longer required for lifecycle
+- [x] `Certify tests` button added — saves immediately like Approve
+- [x] `Complete` button now fully archives plan + generates doc + redirects to /status
+- [x] `Run Tests` gates the Complete button — must pass before Complete appears
+- [x] Step changes reset `tests_defined: false` automatically (MCP + Web UI)
+- [x] lifecycle-gates-extension-bundle: tests written, all 90 passing
+- [x] automated-test-lifecycle proposal captured
+- [x] v0.2.1 tagged and pushed
+
+**Session note:** `docs/session-notes/session_note_202606062200.md`
