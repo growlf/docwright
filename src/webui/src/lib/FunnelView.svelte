@@ -22,11 +22,11 @@
   } = $props();
 
   const STAGES = [
-    { id: 'deferred',   label: 'Deferred Ideas',     color: '#333',    textColor: '#555',  items: () => deferred },
-    { id: 'open',       label: 'Open Proposals',      color: '#1a2f4a', textColor: '#58a6ff', items: () => open },
-    { id: 'approved',   label: 'Approved',            color: '#1a3a2a', textColor: '#6d6',  items: () => approved },
-    { id: 'active',     label: 'Active Plans',        color: '#2a1a4a', textColor: '#a78bfa', items: () => active },
-    { id: 'completed',  label: 'Completed',           color: '#1a2a1a', textColor: '#4a8', items: () => [] },
+    { id: 'deferred',   label: 'Deferred Ideas',  items: () => deferred },
+    { id: 'open',       label: 'Open Proposals',  items: () => open },
+    { id: 'approved',   label: 'Approved',        items: () => approved },
+    { id: 'active',     label: 'Active Plans',    items: () => active },
+    { id: 'completed',  label: 'Completed',       items: () => [] },
   ];
 
   function navTo(entry: DocEntry) {
@@ -53,22 +53,21 @@
     {@const count = stage.id === 'completed' ? completedCount : items.length}
 
     <div class="stage">
-      <div class="stage-header" style="background:{stage.color}; border-color:{stage.textColor}20">
-        <span class="stage-label" style="color:{stage.textColor}">{stage.label}</span>
-        <span class="stage-count" style="color:{stage.textColor}">{count}</span>
+      <div class="stage-header stage-{stage.id}">
+        <span class="stage-label">{stage.label}</span>
+        <span class="stage-count">{count}</span>
       </div>
 
       <div class="cards">
         {#if stage.id === 'completed'}
-          <div class="completed-pill" style="border-color:{stage.textColor}40; color:{stage.textColor}">
+          <div class="completed-pill stage-{stage.id}">
             {completedCount} plan{completedCount === 1 ? '' : 's'} shipped
           </div>
         {:else if items.length === 0}
           <div class="empty-lane">—</div>
         {:else}
           {#each items as item}
-            <button class="card" onclick={() => navTo(item)}
-              style="border-color:{stage.textColor}25"
+            <button class="card stage-card-{stage.id}" onclick={() => navTo(item)}
               title="{item.title}">
               <div class="card-title">{item.title}</div>
               <div class="card-meta">
@@ -98,6 +97,25 @@
   .stage-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; flex-shrink: 0; }
   .stage-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
   .stage-count { font-size: 13px; font-weight: 700; }
+
+  // Stage header colours — dark mode defaults
+  .stage-deferred  { background: $bg-3;      color: $muted;   border-color: $border; }
+  .stage-open      { background: #1a2f4a;    color: #58a6ff;  border-color: #2b5b84; }
+  .stage-approved  { background: #1a3a2a;    color: #6d6;     border-color: #2b5b2b; }
+  .stage-active    { background: #2a1a4a;    color: #a78bfa;  border-color: #4a2b84; }
+  .stage-completed { background: #1a2a1a;    color: #4a8;     border-color: #2a4a2a; }
+
+  // Light theme — readable pastels
+  :global(html[data-theme="light"]) {
+    .stage-deferred  { background: #e8e8e8; color: #666;    border-color: #ccc; }
+    .stage-open      { background: #ddeeff; color: #2a6090; border-color: #aaccee; }
+    .stage-approved  { background: #ddffdd; color: #2a6a2a; border-color: #aaddaa; }
+    .stage-active    { background: #eeddff; color: #5a2a8a; border-color: #ccaaee; }
+    .stage-completed { background: #e8f5e8; color: #2a5a2a; border-color: #aaccaa; }
+    .card { background: #fff; border-color: #ddd; }
+    .card:hover { background: #f5f5f5; }
+    .card-title { color: #1a1a1a; }
+  }
 
   .cards { display: flex; flex-direction: column; gap: 4px; flex: 1; background: $bg; border: 1px solid $border; border-radius: 0 0 6px 6px; padding: 6px; min-height: 120px; }
 

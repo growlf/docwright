@@ -340,8 +340,8 @@
     &.active {
       border-color: $blue-bdr;
       color: $blue;
-      background: #0d1f2d;
-      &:hover { background: $blue-bg; }
+      background: $blue-bg;
+      &:hover { background: mix(white, #1a3a5a, 15%); }
     }
   }
 
@@ -353,6 +353,11 @@
     border-radius: 4px;
     font-size: 11px;
     color: $amber;
+  }
+
+  :global(html[data-theme="light"]) {
+    .preset-chip.active { background: #ddeeff; border-color: $blue-bdr; color: $blue; }
+    .warn { background: #fff8cc; border-color: #e8d400; color: #7a6000; }
   }
 
   .pane-fields { padding: 8px 0; }
