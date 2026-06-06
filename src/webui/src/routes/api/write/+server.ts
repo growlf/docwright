@@ -1,11 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { rebuildRelationships } from '../../../../../dispatch/relationships';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
   return path.resolve(process.cwd(), '../..');
 })();
+
+function isLifecycleDoc(filePath: string): boolean {
+  return /^(proposals\/|plans\/)/.test(filePath);
+}
 
 export async function POST({ url, request }) {
   const filePath = url.searchParams.get('path');
@@ -21,5 +26,14 @@ export async function POST({ url, request }) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   fs.writeFileSync(resolved, content, 'utf-8');
+
+  // Trigger async relationship map rebuild for lifecycle docs
+  if (isLifecycleDoc(filePath)) {
+    setTimeout(() => {
+      try { rebuildRelationships(REPO_ROOT); }
+      catch { /* non-blocking — don't break the save response */ }
+    }, 0);
+  }
+
   return json({ ok: true, path: filePath });
 }

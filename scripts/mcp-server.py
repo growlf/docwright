@@ -125,27 +125,27 @@ def _set_frontmatter_field(text: str, field: str, value: str) -> str:
 
 
 def _has_pending_steps(text: str) -> bool:
-    """Return True if text has ⏳ in a pipe-table row inside Implementation Steps or a ✅ task subsection."""
+    """Return True if text has ⏳ in a pipe-table row inside Implementation Steps section."""
     in_sec = False
     for line in text.splitlines():
         if line.startswith("## "):
             in_sec = "Implementation Steps" in line
-        elif line.startswith("### "):
-            in_sec = "✅" in line
+        elif line.startswith("### ") and not in_sec:
+            pass
         elif in_sec and line.startswith("|") and "⏳" in line:
             return True
     return False
 
 
 def _count_steps(text: str) -> tuple[int, int]:
-    """Return (total, completed) step counts from Implementation Steps / ✅ task sections."""
+    """Return (total, completed) step counts from Implementation Steps section."""
     total = completed = 0
     in_sec = False
     for line in text.splitlines():
         if line.startswith("## "):
             in_sec = "Implementation Steps" in line
-        elif line.startswith("### "):
-            in_sec = "✅" in line
+        elif line.startswith("### ") and not in_sec:
+            pass
         elif in_sec and line.startswith("|"):
             if "✅" in line:
                 total += 1
@@ -228,8 +228,8 @@ def _replace_step_status(text: str, step_match: str, new_status: str) -> tuple[s
     for i, line in enumerate(lines):
         if line.startswith("## "):
             in_sec = "Implementation Steps" in line
-        elif line.startswith("### "):
-            in_sec = "✅" in line
+        elif line.startswith("### ") and not in_sec:
+            pass
         elif in_sec and line.startswith("|") and step_match in line:
             stripped = line.rstrip()
             if stripped.endswith("|"):

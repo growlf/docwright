@@ -1,6 +1,6 @@
 # CLAUDE.md
 # Auto-read by Claude Code on session start.
-# Keep this lean — full context is in the Drive folder and PROPOSAL.md.
+# Keep this lean — full context is in the Drive folder and PROJECT.md.
 
 ## Available skills
 
@@ -40,7 +40,7 @@ Session log and proposal docs:
 https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
 
 Read SESSION-LOG.md first when resuming. It contains the session index.
-PROPOSAL.md (v0.8) contains the full architecture spec.
+PROJECT.md (v0.8) contains the full architecture spec.
 
 ## Architecture in brief
 
@@ -197,7 +197,7 @@ See `plans/phase-vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
 ```
 docwright/
 ├── CLAUDE.md                    ← this file (auto-read by Claude Code)
-├── PROPOSAL.md                  ← full architecture spec (v0.8+)
+├── PROJECT.md                  ← full architecture spec (v0.8+)
 ├── AGENTS.md                    ← what AI agents need to know when working ON docwright
 ├── NOTICE.md                    ← attribution for borrowed components
 ├── CONTRIBUTING.md

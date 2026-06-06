@@ -471,8 +471,8 @@
 
   // ── Phase card ──────────────────────────────────────────────────────────────
   .phase-card {
-    background: linear-gradient(135deg, color-mix(in srgb, $bg 60%, $accent) 0%, $bg 100%);
-    border: 1px solid color-mix(in srgb, $bg-3 50%, $accent);
+    background: linear-gradient(135deg, #1a1f3a 0%, #111 100%);
+    border: 1px solid #2a3060;
     border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;
   }
   .phase-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -536,7 +536,7 @@
   .badge-approved { background: $blue-bg;       color: #7ab;     border-color: #2a4a6a; }
   .badge-done     { background: $green-bg;      color: $green;   border-color: $green-bdr; }
   .badge-canceled { background: $red-bg;        color: #966;     border-color: #4a2a2a; }
-  .badge-warn     { background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); color: $amber; border-color: $amber-bdr; }
+  .badge-warn     { background: #2a2000; color: $amber; border-color: $amber-bdr; }
   .badge-default  { background: $bg-2;          color: $muted;   border-color: $border; }
 
   .empty { padding: 10px 16px; font-size: 12px; color: $muted; }
@@ -567,9 +567,9 @@
 
   // ── Gates ───────────────────────────────────────────────────────────────────
   .gates-section { margin-bottom: 8px; border: 1px solid $amber-bdr; border-radius: 6px; overflow: hidden; }
-  .gates-header   { background: color-mix(in srgb, $bg-header 80%, #ffcc00 20%); }
-  .overdue-header { background: color-mix(in srgb, $bg-header 80%, #ff6600 20%); }
-  .waived-header  { background: color-mix(in srgb, $bg-header 80%, #cc4444 20%); }
+  .gates-header   { background: #1e1800; }
+  .overdue-header { background: #1e0e00; }
+  .waived-header  { background: #1a0e0e; }
   .gates-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
   .gate-item {
     padding: 8px 10px; background: $bg-2; border: 1px solid $border; border-radius: 4px; cursor: pointer;
@@ -577,7 +577,7 @@
   }
   .gate-title  { font-size: 13px; color: $fg; font-weight: 500; margin-bottom: 4px; }
   .gate-meta   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: $muted; }
-  .gate-badge  { background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); color: $amber; border: 1px solid $amber-bdr; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
+  .gate-badge  { background: #2a2000; color: $amber; border: 1px solid $amber-bdr; border-radius: 4px; padding: 0 5px; font-family: monospace; font-size: 10px; }
   .gate-reason { flex: 1; min-width: 120px; }
   .gate-reviewer { color: $fg-dim; font-size: 10px; }
   .gate-ai-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer; margin-left: auto; &:hover { background: $blue-bg; } }
@@ -595,7 +595,7 @@
   .audit-toolbar  { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: $bg; border-bottom: 1px solid $border; }
   .audit-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; &:hover { background: $blue-bg; } &:disabled { opacity: 0.5; cursor: default; } }
   .audit-findings { border-bottom: 1px solid $border; }
-  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: $amber; font-weight: 600; background: color-mix(in srgb, $bg-header 70%, #ffcc00 30%); }
+  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: $amber; font-weight: 600; background: #1e1800; }
   .audit-finding { padding: 8px 16px; cursor: pointer; border-bottom: 1px solid $border; &:hover { background: $bg-hover; } }
   .finding-title { font-size: 12px; color: $fg; font-weight: 500; margin-bottom: 2px; }
   .finding-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: $muted; }
@@ -606,19 +606,30 @@
   // Pattern: :global(html[data-theme="light"]) .scoped-class compiles to
   //   html[data-theme="light"] .scoped-class.s-hash — beats the base rule.
   :global(html[data-theme="light"]) {
+    .phase-card { background: linear-gradient(135deg, #e8eeff 0%, #f5f5f5 100%); border-color: #c0c8f0; }
+    .phase-label { color: #4a6cf7; }
+    .phase-version { background: #fff; border-color: #d0d0d0; }
     .section { border-color: #d0d0d0; }
     .section-header { background: #e8e8e8; color: #1a1a1a; &:hover { background: #ddd; } }
     .badge { background: #e0e0e0; color: #555; border-color: #ccc; }
-    .item-row { border-bottom-color: #e8e8e8; &:hover { background: #f0f0f0; } td { color: #444; } }
+    .badge-warn { background: #fff8cc; color: #7a6000; border-color: #e8d400; }
+    .item-row { border-bottom-color: #ebebeb; &:hover { background: #f5f5f5; } td { color: #444; } }
     .item-title { color: #1a1a1a; }
     .view-toggle { background: #e8e8e8; border-color: #ccc; }
-    .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d0d0d0; color: #1a1a1a; } }
+    .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d8d8d8; color: #1a1a1a; } }
     .audit-controls, .audit-toolbar { background: #f0f0f0; border-bottom-color: #d0d0d0; }
     .audit-input, .audit-select { background: #fff; border-color: #ccc; color: #333; }
-    .audit-finding { border-bottom-color: #e8e8e8; &:hover { background: #f0f0f0; } }
-    .audit-findings-header { background: #f5f0d0; color: #7a6000; }
+    .audit-finding { border-bottom-color: #ebebeb; &:hover { background: #f5f5f5; } }
+    .audit-findings-header { background: #fff8cc; color: #7a6000; }
+    .gates-section { border-color: #e8c84a; }
+    .gates-header   { background: #fff8cc; }
+    .overdue-header { background: #fff0e0; }
+    .waived-header  { background: #ffe8e8; }
     .gate-item { background: #fff; border-color: #d0d0d0; &:hover { background: #f5f5f5; border-color: #bbb; } }
     .gate-title { color: #1a1a1a; }
     .gate-meta { color: #666; }
+    .gate-badge { background: #fff8cc; color: #7a6000; border-color: #e8c84a; }
+    .deferred-item { color: #888; &:hover { color: #555; } }
+    .empty, .muted { color: #888; }
   }
 </style>

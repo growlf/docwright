@@ -20,7 +20,7 @@ Inbox (ideas, issues, observations)
 
 ## Status
 
-Pre-alpha. Phase 0 (spike) in progress. See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
+Pre-alpha. Phase 0 (spike) in progress. See [PROJECT.md](./PROJECT.md) for the full architecture specification.
 
 ## Quick start (coming in Phase 1)
 

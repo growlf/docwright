@@ -165,7 +165,7 @@ are controlled by `EXCLUDE_ROOT` in `FileTree.svelte`. This list is
 intentionally hardcoded for now; it will move to `profile.json` in Phase 3.
 
 Current hidden root files: `AGENTS.md`, `CHANGELOG.md`, `CLAUDE.md`,
-`CONTRIBUTING.md`, `LICENSE`, `NOTICE.md`, `PROPOSAL.md`, `SESSION-LOG.md`,
+`CONTRIBUTING.md`, `LICENSE`, `NOTICE.md`, `SESSION-LOG.md`,
 `SECURITY.md`.
 
 ---

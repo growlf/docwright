@@ -1,6 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+export interface RelationshipEngineProfileConfig {
+  auto_detect_on_create: boolean;
+  auto_detect_on_update: boolean;
+  auto_detect_on_approval: boolean;
+  similarity_threshold: number;
+  show_plan_button: boolean;
+}
+
 export interface ProfileConfig {
   docwrightProfileVersion: string;
   name: string;
@@ -17,6 +25,7 @@ export interface ProfileConfig {
   requiredFrontmatter: string[];
   optionalFrontmatter: string[];
   features: Record<string, boolean>;
+  relationshipEngine?: RelationshipEngineProfileConfig;
 }
 
 const DEFAULT_PROFILE: ProfileConfig = {
@@ -26,7 +35,7 @@ const DEFAULT_PROFILE: ProfileConfig = {
   description: 'Organizational operating system. Policy as the foundation of all work.',
   principles: ['Security first', 'Policy driven', 'Test verified at every stage'],
   proposalCategories: ['UI', 'UX', 'ENGINE', 'DATA'],
-  sidebarExcludePatterns: ['AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'NOTICE.md', 'SECURITY.md', 'PROPOSAL.md'],
+  sidebarExcludePatterns: ['AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'NOTICE.md', 'SECURITY.md'],
   hiddenDirectories: ['proposals/approved', 'plans/completed'],
   version: '0.1.0',
   documentTypes: ['inbox', 'issue', 'proposal', 'plan', 'policy', 'decision', 'work-item'],

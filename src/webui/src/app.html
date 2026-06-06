@@ -7,19 +7,86 @@
     <!-- Favicon uses the brand logo — updates automatically with brand/logo.svg -->
     <link rel="icon" type="image/svg+xml" href="/api/brand/logo" />
     <style>
+      /*
+       * ── DocWright design tokens ───────────────────────────────────────────────
+       * Defined here in the static HTML shell so they are available before any
+       * Svelte component style is parsed. Components use var(--token) directly;
+       * applyTheme() in the layout sets data-theme on <html> to switch themes.
+       *
+       * Three themes: dark (default), light, system (follows OS).
+       */
+
+      /* ── Dark theme (default) ─────────────────────────────────────────────── */
+      :root {
+        --bg:        #111;
+        --bg-2:      #161616;
+        --bg-3:      #2a2a2a;
+        --bg-hover:  #1e1e1e;
+        --bg-header: #1a1a1a;
+        --fg:        #ddd;
+        --fg-dim:    #aaa;
+        --muted:     #666;
+        --border:    #2a2a2a;
+        --accent:    #7c9ef7;
+        --tag:       #7ab;
+        --tag-bg:    #1e2a3a;
+        --tag-bdr:   #2b3a4a;
+      }
+
+      /* ── Light theme ──────────────────────────────────────────────────────── */
+      html[data-theme="light"] {
+        --bg:        #f5f5f5;
+        --bg-2:      #ffffff;
+        --bg-3:      #e4e4e4;
+        --bg-hover:  #eaeaea;
+        --bg-header: #e8e8e8;
+        --fg:        #1a1a1a;
+        --fg-dim:    #444;
+        --muted:     #777;
+        --border:    #d0d0d0;
+        --accent:    #4a6cf7;
+        --tag:       #2a6090;
+        --tag-bg:    #ddeeff;
+        --tag-bdr:   #aaccee;
+        color-scheme: light;
+      }
+
+      /* ── System theme (follows OS preference) ─────────────────────────────── */
+      @media (prefers-color-scheme: light) {
+        html[data-theme="system"] {
+          --bg:        #f5f5f5;
+          --bg-2:      #ffffff;
+          --bg-3:      #e4e4e4;
+          --bg-hover:  #eaeaea;
+          --bg-header: #e8e8e8;
+          --fg:        #1a1a1a;
+          --fg-dim:    #444;
+          --muted:     #777;
+          --border:    #d0d0d0;
+          --accent:    #4a6cf7;
+          --tag:       #2a6090;
+          --tag-bg:    #ddeeff;
+          --tag-bdr:   #aaccee;
+          color-scheme: light;
+        }
+      }
+
+      /* ── Base reset ───────────────────────────────────────────────────────── */
       *, *::before, *::after { box-sizing: border-box; }
       html { height: 100%; }
-      body { margin: 0; padding: 0; background: var(--bg, #111); color: var(--fg, #ddd); height: 100%; display: flex; flex-direction: column; }
+      body {
+        margin: 0; padding: 0;
+        background: var(--bg); color: var(--fg);
+        height: 100%; display: flex; flex-direction: column;
+      }
 
-      /* Scrollbars — use CSS variables so they theme with light/dark */
+      /* ── Scrollbars ───────────────────────────────────────────────────────── */
       ::-webkit-scrollbar              { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track        { background: var(--bg,    #111); }
-      ::-webkit-scrollbar-thumb        { background: var(--bg-3,  #2a2a2a); border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover  { background: var(--muted, #666); }
-      ::-webkit-scrollbar-corner       { background: var(--bg,    #111); }
-
-      /* Firefox */
-      * { scrollbar-width: thin; scrollbar-color: var(--bg-3, #2a2a2a) var(--bg, #111); }
+      ::-webkit-scrollbar-track        { background: var(--bg); }
+      ::-webkit-scrollbar-thumb        { background: var(--bg-3); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover  { background: var(--muted); }
+      ::-webkit-scrollbar-corner       { background: var(--bg); }
+      *                                { scrollbar-width: thin; scrollbar-color: var(--bg-3) var(--bg); }
     </style>
     %sveltekit.head%
     <!-- Theme override — place brand/theme.css in vault root to customise -->

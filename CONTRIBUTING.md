@@ -16,7 +16,7 @@ Start with these files, in this order:
 1. `docs/collaboration.md` — how the project works, who is involved, and the
    philosophy behind the multi-perspective review practice
 2. `CLAUDE.md` — architecture, core invariants, what not to break
-3. `PROPOSAL.md` — the full specification (v0.8+)
+3. `PROJECT.md` — the full specification (v0.8+)
 
 For significant changes, open a proposal in the vault (or a GitHub issue)
 before writing code. DocWright uses its own governance workflow on itself —

@@ -18,7 +18,7 @@ Without it, the AI triage layer has no foundation to work from.
 
 ## Questions?
 
-See `PROPOSAL.md` in the repo root for the full architecture specification,
+See `PROJECT.md` in the repo root for the full architecture specification,
 or join the discussion at https://github.com/growlf/docwright
 
 ## Reference implementation

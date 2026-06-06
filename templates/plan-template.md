@@ -18,6 +18,14 @@ reviewed_date:
 canceled_date:  # Populated when plan is canceled
 cancellation_reason:  # Populated when plan is canceled
 template_version: "1.0"
+tests_defined: false  # Set to true after confirming test coverage is adequate — required before plan can be completed
+# Gate fields — populated when a lifecycle gate applies to this document
+gate_reviewer:  # Who must review (set automatically by gate rules)
+gate_status:    # pending | approved | waived
+gate_date:      # Stamped when gate_status is set
+gate_note:      # Optional reviewer note
+gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
+gate_quorum: 1    # Phase 1a — minimum approvals needed
 ---
 
 # {{VALUE:title}}

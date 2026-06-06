@@ -13,7 +13,7 @@ tags:
   - model-routing
   - privacy
   - deployment
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/split-agent-governance.md

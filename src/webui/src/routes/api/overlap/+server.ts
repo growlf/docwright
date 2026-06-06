@@ -1,14 +1,17 @@
 /**
  * /api/overlap — find semantically similar proposals/plans.
  *
- * Delegates to src/dispatch/ai.ts — KeywordEngine (Jaccard) by default,
- * OpenCodeEngine (real LLM) when OPENCODE_URL env is set.
- * The response shape is identical regardless of engine; UI changes nothing.
+ * Uses multi-signal relationship engine (Jaccard + tag + phase + author + wikilink)
+ * from src/dispatch/relationships.ts.
+ *
+ * Returns both `matches` (SimilarityResult[] for backward compat) and
+ * `relationships` (RelationshipResult[] with type classification).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
-import { getAIEngine } from '../../../../../dispatch/ai';
+import { scanProposal } from '../../../../../dispatch/relationships';
+import { getActiveProfile } from '../../../../../dispatch/profile';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 
@@ -41,8 +44,17 @@ export async function GET({ url }) {
   if (!fs.existsSync(resolved)) return json({ error: 'not found' }, { status: 404 });
 
   const candidates = collectCandidates(filePath);
-  const engine = getAIEngine(REPO_ROOT);
-  const matches = await engine.findSimilar(filePath, candidates, REPO_ROOT);
+  const profile = getActiveProfile(REPO_ROOT);
+  const threshold = profile?.relationshipEngine?.similarity_threshold ?? 0.3;
+  const relationships = scanProposal(filePath, candidates, REPO_ROOT, threshold);
 
-  return json({ matches });
+  // Backward-compat matches format for existing CollationPanel
+  const matches = relationships.map(r => ({
+    path: r.target,
+    title: r.targetTitle,
+    score: r.confidence,
+    sections: [] as Array<{ heading: string; content: string }>,
+  }));
+
+  return json({ matches, relationships });
 }

@@ -1,5 +1,5 @@
 ---
-title: "Better Linking in Docs — Wiki-Link Standardisation and Auto-Update"
+title: Better Linking in Docs — Wiki-Link Standardisation and Auto-Update
 author: NetYeti
 created: 2026-06-05
 tags:
@@ -9,9 +9,10 @@ tags:
   - dispatch
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
+_path: proposals/better-linking-in-docs.md
 ---
 
 ## Problem

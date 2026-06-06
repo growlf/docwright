@@ -14,7 +14,10 @@ export interface DocContext {
   onSave?: (fm: Record<string, any>) => void;
   onApprove?: (fm: Record<string, any>) => void;
   onFindRelated?: () => void;
+  onPlan?: () => void;
   onAddRelated?: (path: string) => void;
+  onAddDepends?: (path: string) => void;
+  onAddBlocks?: (path: string) => void;
   onSubsume?: (path: string) => void;
 }
 

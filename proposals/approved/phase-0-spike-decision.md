@@ -58,7 +58,7 @@ functionality.
 
 ### 4. Simplified architecture
 
-`opencode serve` serves its own SPA. The architecture from PROPOSAL.md §7
+`opencode serve` serves its own SPA. The architecture from PROJECT.md §7
 (which included an in-process HTTP server to serve SPA files and proxy API
 calls) is **eliminated**:
 
@@ -82,4 +82,4 @@ own CSP and VS Code's CSP both allow this path. Verified in live VSCodium test.
 
 1. Build `src/opencode/ServerManager.ts` — spawns opencode serve, manages lifecycle
 2. Integrate into `src/extension/extension.ts` — wire up to WebView panel
-3. Begin Phase 1 deliverables per PROPOSAL.md §14
+3. Begin Phase 1 deliverables per PROJECT.md §14

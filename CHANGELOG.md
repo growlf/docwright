@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial repository structure
-- PROPOSAL.md v0.8 — full architecture specification
+- PROJECT.md v0.8 — full architecture specification
 - CLAUDE.md — AI agent context for Claude Code sessions
 - Bundled profile stubs: org-operations, doc-lifecycle, infra-topology, knowledge-base
 - Example vault with Cascade STEAM seed documents

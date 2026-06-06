@@ -1126,7 +1126,7 @@ jobs:
 ### Governance
 
 BDFL model. NetYeti (growlfd@gmail.com) makes final decisions. All decisions documented
-in `PROPOSAL.md` and `CHANGELOG.md`. Co-maintainers may be granted merge rights after
+in `PROJECT.md` and `CHANGELOG.md`. Co-maintainers may be granted merge rights after
 Phase 4. Second maintainer is a Phase 4 gate.
 
 ### NOTICE.md (draft)

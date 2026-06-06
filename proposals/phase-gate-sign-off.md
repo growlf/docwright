@@ -14,6 +14,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/phase-gate-sign-off.md
+consumed_by: plans/plan-lifecycle-gates-checkpoint-sign-off-before-transition.md
 ---
 
 ## Problem

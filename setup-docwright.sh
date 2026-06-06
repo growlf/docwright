@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial repository structure
-- PROPOSAL.md v0.8 — full architecture specification
+- PROJECT.md v0.8 — full architecture specification
 - CLAUDE.md — AI agent context for Claude Code sessions
 - Bundled profile stubs: org-operations, doc-lifecycle, infra-topology, knowledge-base
 - Example vault with Cascade STEAM seed documents
@@ -165,7 +165,7 @@ welcomes contributions from the community.
 
 ## Before You Start
 
-Read `CLAUDE.md` for architectural context and `PROPOSAL.md` for the full spec.
+Read `CLAUDE.md` for architectural context and `PROJECT.md` for the full spec.
 For significant changes, open an issue first so we can discuss the direction.
 
 ## Development Setup
@@ -195,7 +195,7 @@ This is intentional and must never be bypassed.
 
 All profile templates (`src/profiles/*/templates/*.md`) **must** include
 the `author-role:` frontmatter field. Default value: `contributor`.
-This is a hard requirement — see PROPOSAL.md §6 for rationale.
+This is a hard requirement — see PROJECT.md §6 for rationale.
 
 ## Pull Request Process
 
@@ -220,7 +220,7 @@ projects, add them to `NOTICE.md`. See the existing entries for format.
 ## Governance
 
 docwright uses a BDFL model. NetYeti (growlf) makes final decisions.
-All significant decisions are documented in `PROPOSAL.md` and `CHANGELOG.md`.
+All significant decisions are documented in `PROJECT.md` and `CHANGELOG.md`.
 EOF
   echo "   ✓ CONTRIBUTING.md written"
 else
@@ -726,7 +726,7 @@ Without it, the AI triage layer has no foundation to work from.
 
 ## Questions?
 
-See `PROPOSAL.md` in the repo root for the full architecture specification,
+See `PROJECT.md` in the repo root for the full architecture specification,
 or join the discussion at https://github.com/growlf/docwright
 
 ## Reference implementation
@@ -1079,7 +1079,7 @@ Inbox (ideas, issues, observations)
 ## Status
 
 Pre-alpha. Phase 0 (spike) in progress.
-See [PROPOSAL.md](./PROPOSAL.md) for the full architecture specification.
+See [PROJECT.md](./PROJECT.md) for the full architecture specification.
 
 ## Quick start (coming in Phase 1)
 
