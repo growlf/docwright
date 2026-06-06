@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { KeywordEngine, parseSections, stripFrontmatter, getFrontmatterTitle } from '../../src/dispatch/ai';
+import type { GatePreReviewResult } from '../../src/dispatch/ai';
 
 function makeVault(docs: Record<string, string>): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dw-ai-'));
@@ -65,5 +66,59 @@ describe('AI engine — KeywordEngine', () => {
     const results = await engine.findSimilar('proposals/a.md', ['proposals/a.md', 'proposals/b.md'], root);
     assert.ok(!results.some(r => r.path === 'proposals/a.md'), 'should not include target');
     fs.rmSync(root, { recursive: true });
+  });
+});
+
+describe('KeywordEngine — gatePreReview', () => {
+  const engine = new KeywordEngine();
+
+  it('returns ready when no pending steps', async () => {
+    const body = '## Steps\n| 1 | Do thing | ✅ |\n| 2 | Do other | ✅ |';
+    const result = await engine.gatePreReview('gate-1', 'Plan completion gate', 'Test Plan', body, []);
+    assert.equal(result.readiness, 'ready');
+    assert.equal(result.concerns.length, 0);
+    assert.ok(result.summary.length > 0, 'summary should not be empty');
+  });
+
+  it('returns needs-work when pending steps exist', async () => {
+    const body = '## Steps\n| 1 | Done | ✅ |\n| 2 | Pending | ⏳ |\n| 3 | Pending | ⏳ |';
+    const result = await engine.gatePreReview('gate-1', 'Plan completion gate', 'Test Plan', body, []);
+    assert.equal(result.readiness, 'needs-work');
+    assert.ok(result.concerns.some(c => c.includes('2')), 'should report count of pending steps');
+    assert.ok(result.incomplete_items.length > 0, 'should list incomplete items');
+  });
+
+  it('summary includes step counts', async () => {
+    const body = '## Steps\n| 1 | Done | ✅ |\n| 2 | Also done | ✅ |\n| 3 | Pending | ⏳ |';
+    const result = await engine.gatePreReview('gate-1', 'Gate', 'Doc', body, []);
+    assert.ok(result.summary.includes('2'), 'summary should mention completed count');
+    assert.ok(result.summary.includes('1'), 'summary should mention pending count');
+  });
+
+  it('ignores optional aiPrompt parameter gracefully', async () => {
+    const body = '## Steps\n| 1 | Done | ✅ |';
+    const result = await engine.gatePreReview(
+      'gate-1', 'Gate', 'Doc', body, [],
+      'Custom AI prompt that keyword engine ignores'
+    );
+    assert.equal(result.readiness, 'ready');
+  });
+
+  it('scopeDocs parameter does not cause errors', async () => {
+    const body = '## Steps\n| 1 | Done | ✅ |';
+    const scope = [
+      { path: 'proposals/related.md', title: 'Related', excerpt: 'Some related content' },
+    ];
+    const result = await engine.gatePreReview('gate-1', 'Gate', 'Doc', body, scope);
+    assert.ok(result, 'should return a result with scope docs present');
+  });
+
+  it('result conforms to GatePreReviewResult interface', async () => {
+    const body = '## Steps\n| 1 | Done | ✅ |';
+    const result: GatePreReviewResult = await engine.gatePreReview('gate-1', 'Gate', 'Doc', body, []);
+    assert.ok(typeof result.summary === 'string');
+    assert.ok(Array.isArray(result.concerns));
+    assert.ok(Array.isArray(result.incomplete_items));
+    assert.ok(['ready', 'needs-work', 'blocked'].includes(result.readiness));
   });
 });
