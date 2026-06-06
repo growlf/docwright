@@ -89,111 +89,41 @@
   {/each}
 </div>
 
-<style>
-  .funnel {
-    display: flex;
-    align-items: flex-start;
-    gap: 0;
-    padding: 16px;
-    overflow-x: auto;
-    min-height: 300px;
-  }
+<style lang="scss">
+  @use 'tokens' as *;
 
-  /* ── Stage ── */
-  .stage {
-    flex: 1;
-    min-width: 160px;
-    max-width: 220px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+  .funnel { display: flex; align-items: flex-start; gap: 0; padding: 16px; overflow-x: auto; min-height: 300px; }
 
-  .stage-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 7px 10px;
-    border-radius: 6px 6px 0 0;
-    border: 1px solid transparent;
-    border-bottom: none;
-    flex-shrink: 0;
-  }
+  .stage { flex: 1; min-width: 160px; max-width: 220px; display: flex; flex-direction: column; gap: 6px; }
+  .stage-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; flex-shrink: 0; }
   .stage-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
   .stage-count { font-size: 13px; font-weight: 700; }
 
-  /* ── Cards ── */
-  .cards {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    background: #0d0d0d;
-    border: 1px solid #1a1a1a;
-    border-radius: 0 0 6px 6px;
-    padding: 6px;
-    min-height: 120px;
-  }
+  .cards { display: flex; flex-direction: column; gap: 4px; flex: 1; background: $bg; border: 1px solid $border; border-radius: 0 0 6px 6px; padding: 6px; min-height: 120px; }
 
   .card {
-    background: #161616;
-    border: 1px solid #222;
-    border-radius: 4px;
-    padding: 6px 8px;
-    text-align: left;
-    cursor: pointer;
-    font: inherit;
-    width: 100%;
+    background: $bg-2; border: 1px solid $border; border-radius: 4px;
+    padding: 6px 8px; text-align: left; cursor: pointer; font: inherit; width: 100%;
     transition: background 0.1s, border-color 0.1s;
+    &:hover { background: $bg-hover; }
   }
-  .card:hover { background: #1e1e1e; }
 
-  .card-title {
-    font-size: 11px;
-    color: #ccc;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 4px;
-  }
-  .card-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .card-title { font-size: 11px; color: $fg; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+  .card-meta  { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .complexity { font-size: 9px; }
-  .priority { font-size: 9px; color: #555; }
-  .pri-high { color: #e87; }
-  .pri-med  { color: #cc6; }
-  .assignee { font-size: 9px; color: #444; }
+  .priority   { font-size: 9px; color: $muted; }
+  .pri-high   { color: #e87; }
+  .pri-med    { color: $amber; }
+  .assignee   { font-size: 9px; color: $muted; }
 
-  .empty-lane { font-size: 11px; color: #333; text-align: center; padding: 12px 0; }
+  .empty-lane { font-size: 11px; color: $border; text-align: center; padding: 12px 0; }
 
-  .completed-pill {
-    border: 1px solid;
-    border-radius: 6px;
-    padding: 10px 8px;
-    font-size: 12px;
-    text-align: center;
-    font-weight: 600;
-    margin-top: 4px;
-  }
+  .completed-pill { border: 1px solid; border-radius: 6px; padding: 10px 8px; font-size: 12px; text-align: center; font-weight: 600; margin-top: 4px; }
 
-  /* ── Arrow ── */
-  .arrow {
-    font-size: 20px;
-    color: #2a2a2a;
-    padding: 0 2px;
-    margin-top: 32px;
-    flex-shrink: 0;
-    align-self: flex-start;
-    user-select: none;
-  }
+  .arrow { font-size: 20px; color: $border; padding: 0 2px; margin-top: 32px; flex-shrink: 0; align-self: flex-start; user-select: none; }
 
-  /* ── Responsive: vertical stack on mobile ── */
   @media (max-width: 768px) {
-    .funnel {
-      flex-direction: column;
-      overflow-x: visible;
-    }
+    .funnel { flex-direction: column; overflow-x: visible; }
     .stage { min-width: unset; max-width: unset; width: 100%; }
     .arrow { transform: rotate(90deg); align-self: center; margin: 0; }
   }

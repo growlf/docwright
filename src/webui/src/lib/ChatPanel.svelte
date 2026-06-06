@@ -661,122 +661,70 @@
   {/if}
 </div>
 
-<style>
-  .chat-panel {
-    /* Fills #chat-bottom in the layout — no longer a fixed overlay */
-    width: 100%; height: 100%;
-    background: #111;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
+<style lang="scss">
+  @use 'tokens' as *;
 
-  /* ── Header ── */
-  .chat-header {
-    display: flex; align-items: center; gap: 6px;
-    padding: 9px 12px; border-bottom: 1px solid #222; flex-shrink: 0;
-  }
-  .chat-title { font-size: 12px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
-  .mode-badge {
-    font-size: 9px; padding: 1px 6px; border-radius: 8px;
-    background: #1a2f4a; color: #58a6ff; border: 1px solid #2b5b84;
-    text-transform: uppercase; letter-spacing: 0.3px;
-  }
-  .mode-badge.proxy { background: #2a1a4a; color: #a78bfa; border-color: #4a2b84; }
+  .chat-panel { width: 100%; height: 100%; background: $bg; display: flex; flex-direction: column; overflow: hidden; }
+
+  // Header
+  .chat-header { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid $border; flex-shrink: 0; }
+  .chat-title  { @include section-header; padding: 0; flex: 1; }
+  .mode-badge  { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: $blue-bg; color: $blue; border: 1px solid $blue-bdr; text-transform: uppercase; letter-spacing: 0.3px; &.proxy { background: $purple-bg; color: $purple; border-color: $purple-bdr; } }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .dot.green    { background: #6d6; box-shadow: 0 0 4px #6d6; }
-  .dot.grey     { background: #444; }
-  .dot.sse-ok   { background: #58a6ff; box-shadow: 0 0 3px #58a6ff; }
-  .dot.sse-warn { background: #cc6; animation: pulse 1.5s ease-in-out infinite; }
+  .dot.green    { background: $green; box-shadow: 0 0 4px $green; }
+  .dot.grey     { background: $border; }
+  .dot.sse-ok   { background: $blue; box-shadow: 0 0 3px $blue; }
+  .dot.sse-warn { background: $amber; animation: pulse 1.5s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  .no-session-warn { padding: 4px 12px; font-size: 10px; color: #cc6; background: #1a1a00; border-bottom: 1px solid #333300; }
-  .icon-btn  { background: none; border: none; color: #555; cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 3px; }
-  .icon-btn:hover { color: #aaa; background: #1a1a1a; }
-  .icon-btn.close:hover { color: #e44; }
+  .no-session-warn { padding: 4px 12px; font-size: 10px; color: $amber; background: #1a1a00; border-bottom: 1px solid #333300; }
+  .icon-btn { @include flat-btn; font-size: 12px; padding: 2px 5px; border-radius: 3px; &:hover { background: $bg-hover; } &.close:hover { color: $red; } }
 
-  /* ── Settings panel ── */
-  .settings-panel {
-    padding: 10px 14px; border-bottom: 1px solid #1a1a1a;
-    background: #0f0f0f; flex-shrink: 0;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .setting-row { display: flex; align-items: center; gap: 8px; }
-  .setting-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.3px; width: 60px; flex-shrink: 0; }
-  .setting-select, .setting-input {
-    flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
-    color: #aaa; font-size: 11px; padding: 3px 7px;
-  }
-  .setting-hint { font-size: 10px; color: #444; line-height: 1.5; }
-  .setting-cmd  { display: block; margin-top: 3px; background: #1a1a1a; border: 1px solid #333; border-radius: 3px; padding: 4px 8px; color: #58a6ff; font-family: monospace; font-size: 10px; word-break: break-all; }
-  .setting-retry { align-self: flex-start; padding: 4px 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #888; font-size: 11px; cursor: pointer; }
-  .setting-retry:hover { border-color: #555; color: #ccc; }
-  .mcp-ok       { font-size: 11px; color: #6d6; }
-  .mcp-warn     { font-size: 11px; color: #cc6; }
-  .mcp-hint     { font-size: 10px; color: #555; font-family: monospace; }
-  .setting-warn { font-size: 10px; color: #e87; background: #2a1500; border: 1px solid #553300; border-radius: 3px; padding: 4px 8px; }
-  .setting-warn code { color: #58a6ff; font-family: monospace; }
+  // Settings
+  .settings-panel { padding: 10px 14px; border-bottom: 1px solid $border; background: $bg; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  .setting-row   { display: flex; align-items: center; gap: 8px; }
+  .setting-label { font-size: 10px; color: $muted; text-transform: uppercase; letter-spacing: 0.3px; width: 60px; flex-shrink: 0; }
+  .setting-select, .setting-input { flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 4px; color: $fg-dim; font-size: 11px; padding: 3px 7px; }
+  .setting-hint  { font-size: 10px; color: $muted; line-height: 1.5; }
+  .setting-cmd   { display: block; margin-top: 3px; background: $bg-2; border: 1px solid $border; border-radius: 3px; padding: 4px 8px; color: $blue; font-family: monospace; font-size: 10px; word-break: break-all; }
+  .setting-retry { @include act-base; align-self: flex-start; padding: 4px 12px; font-size: 11px; }
+  .mcp-ok   { font-size: 11px; color: $green; }
+  .mcp-warn { font-size: 11px; color: $amber; }
+  .mcp-hint { font-size: 10px; color: $muted; font-family: monospace; }
+  .setting-warn { font-size: 10px; color: #e87; background: #2a1500; border: 1px solid #553300; border-radius: 3px; padding: 4px 8px; code { color: $blue; font-family: monospace; } }
 
-  /* ── Disconnected state ── */
-  .state-msg { padding: 24px; font-size: 13px; text-align: center; }
-  .state-msg.muted { color: #444; }
-
-  .dc-state {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 8px; padding: 24px 20px; text-align: center;
-  }
-  .dc-icon  { font-size: 28px; color: #333; }
-  .dc-title { font-size: 14px; font-weight: 600; color: #666; }
-  .dc-sub   { font-size: 11px; color: #444; }
-  .dc-sub code { color: #58a6ff; font-family: monospace; font-size: 10px; }
-  .dc-instructions { width: 100%; background: #0d0d0d; border: 1px solid #222; border-radius: 6px; padding: 10px 12px; text-align: left; font-size: 11px; color: #555; }
-  .dc-instructions p { margin: 0 0 6px; }
-  .dc-instructions strong { color: #888; }
-  .dc-cmd { display: block; background: #1a1a1a; border: 1px solid #2b5b84; border-radius: 4px; padding: 6px 10px; color: #58a6ff; font-family: monospace; font-size: 11px; word-break: break-all; margin: 4px 0; }
-  .dc-hint  { font-size: 10px; color: #444; }
-  .dc-hint.err { color: #e87; }
-  .dc-hint.muted { color: #333; }
-  .dc-btn {
-    padding: 6px 20px; border-radius: 4px; font-size: 12px; cursor: pointer;
-    background: #1a1a1a; border: 1px solid #333; color: #888; min-width: 180px;
-  }
-  .dc-btn:hover { border-color: #555; color: #ccc; }
-  .dc-btn.primary { background: #0d1f2d; border-color: #2b5b84; color: #58a6ff; }
-  .dc-btn.primary:hover { background: #1a3a5a; }
-  .dc-btn.secondary { background: #1a1a1a; border-color: #333; color: #555; font-size: 11px; }
-  .dc-btn.secondary:hover { color: #888; border-color: #444; }
-  .dc-or { font-size: 10px; color: #333; }
-  .dc-separator { width: 100%; border-top: 1px solid #1a1a1a; margin: 4px 0; }
+  // Disconnected state
+  .state-msg { padding: 24px; font-size: 13px; text-align: center; &.muted { color: $muted; } }
+  .dc-state  { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px 20px; text-align: center; }
+  .dc-icon   { font-size: 28px; color: $border; }
+  .dc-title  { font-size: 14px; font-weight: 600; color: $muted; }
+  .dc-sub    { font-size: 11px; color: $muted; code { color: $blue; font-family: monospace; font-size: 10px; } }
+  .dc-instructions { width: 100%; background: $bg; border: 1px solid $border; border-radius: 6px; padding: 10px 12px; text-align: left; font-size: 11px; color: $muted; p { margin: 0 0 6px; } strong { color: $fg-dim; } }
+  .dc-cmd  { display: block; background: $bg-2; border: 1px solid $blue-bdr; border-radius: 4px; padding: 6px 10px; color: $blue; font-family: monospace; font-size: 11px; word-break: break-all; margin: 4px 0; }
+  .dc-hint { font-size: 10px; color: $muted; &.err { color: #e87; } &.muted { color: $border; } }
+  .dc-btn  { @include act-base; padding: 6px 20px; font-size: 12px; min-width: 180px; &.primary { @include act-variant($blue, $blue-bg, $blue-bdr); } &.secondary { color: $muted; font-size: 11px; } }
+  .dc-or        { font-size: 10px; color: $border; }
+  .dc-separator { width: 100%; border-top: 1px solid $border; margin: 4px 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .dc-spinner { width: 18px; height: 18px; border: 2px solid #2b5b84; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .dc-spinner { width: 18px; height: 18px; border: 2px solid $blue-bdr; border-top-color: $blue; border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-  /* ── Session bar ── */
-  .session-bar {
-    display: flex; gap: 6px; padding: 7px 10px;
-    border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
-  }
-  .session-select { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #aaa; font-size: 11px; padding: 3px 6px; }
+  // Session bar
+  .session-bar    { display: flex; gap: 6px; padding: 7px 10px; border-bottom: 1px solid $border; flex-shrink: 0; }
+  .session-select { flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 4px; color: $fg-dim; font-size: 11px; padding: 3px 6px; }
 
-  /* ── Messages ── */
+  // Messages
   .messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
-  .msg { max-width: 93%; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: #ccc; background: #1a1a1a; align-self: flex-start; }
-  .msg.user      { align-self: flex-end; background: #1a2f4a; color: #c8dfff; border-bottom-right-radius: 2px; }
+  .msg { max-width: 93%; padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: $fg; background: $bg-2; align-self: flex-start; }
+  .msg.user      { align-self: flex-end; background: $blue-bg; color: #c8dfff; border-bottom-right-radius: 2px; }
   .msg.assistant,
-  .msg.model     { align-self: flex-start; background: #1a1a1a; color: #ccc; border-bottom-left-radius: 2px; }
+  .msg.model     { align-self: flex-start; background: $bg-2; color: $fg; border-bottom-left-radius: 2px; }
   .msg-text { display: block; color: inherit; }
-  .status-row { font-size: 11px; color: #555; padding: 1px 4px; font-style: italic; align-self: flex-start; display: flex; align-items: center; gap: 8px; }
-  .event-count { font-size: 10px; color: #333; font-style: normal; }
-  .cancel-btn  { background: none; border: none; color: #555; cursor: pointer; font-size: 11px; padding: 0 3px; border-radius: 2px; }
-  .cancel-btn:hover { color: #e44; }
+  .status-row  { font-size: 11px; color: $muted; padding: 1px 4px; font-style: italic; align-self: flex-start; display: flex; align-items: center; gap: 8px; }
+  .event-count { font-size: 10px; color: $border; font-style: normal; }
+  .cancel-btn  { @include flat-btn; font-size: 11px; padding: 0 3px; border-radius: 2px; &:hover { color: $red; } }
 
-  /* ── Input ── */
-  .input-area { display: flex; gap: 6px; padding: 9px 10px; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
-  .chat-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; color: #ccc; font-size: 12px; font-family: inherit; padding: 7px 9px; resize: none; line-height: 1.4; }
-  .chat-input:focus { outline: none; border-color: #2b5b84; }
-  .chat-input:disabled { opacity: 0.5; }
-  .send-btn { width: 32px; height: 32px; align-self: flex-end; background: #1a3a5a; border: 1px solid #2b5b84; border-radius: 6px; color: #58a6ff; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .send-btn:hover:not(:disabled) { background: #1e4a70; }
-  .send-btn:disabled { opacity: 0.4; cursor: default; }
-
-  /* Chat fills its container — layout handles sizing */
+  // Input
+  .input-area { display: flex; gap: 6px; padding: 9px 10px; border-top: 1px solid $border; flex-shrink: 0; }
+  .chat-input { flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 6px; color: $fg; font-size: 12px; font-family: inherit; padding: 7px 9px; resize: none; line-height: 1.4; &:focus { outline: none; border-color: $blue-bdr; } &:disabled { opacity: 0.5; } }
+  .send-btn   { width: 32px; height: 32px; align-self: flex-end; background: $blue-bg; border: 1px solid $blue-bdr; border-radius: 6px; color: $blue; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; &:hover:not(:disabled) { background: #1e4a70; } &:disabled { opacity: 0.4; cursor: default; } }
 </style>

@@ -250,81 +250,73 @@
   {/if}
 </div>
 
-<style>
-  .git-panel { border-top: 1px solid #1a1a1a; flex-shrink: 0; }
+<style lang="scss">
+  @use 'tokens' as *;
+
+  .git-panel { border-top: 1px solid $border; flex-shrink: 0; }
 
   .git-header {
-    display: flex; align-items: center; gap: 6px;
-    width: 100%; padding: 8px 12px;
-    background: none; border: none; color: #666; cursor: pointer;
-    font-size: 11px; text-align: left;
+    display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 12px;
+    background: none; border: none; color: $muted; cursor: pointer; font-size: 11px; text-align: left;
+    &:hover { background: $bg-hover; color: $fg-dim; }
   }
-  .git-header:hover { background: #141414; color: #aaa; }
-  .git-branch { flex: 1; font-size: 11px; }
-  .ahead-behind { display: flex; gap: 3px; font-size: 10px; }
-  .ahead  { color: #58a6ff; }
+  .git-branch    { flex: 1; font-size: 11px; }
+  .ahead-behind  { display: flex; gap: 3px; font-size: 10px; }
+  .ahead  { color: $blue; }
   .behind { color: #e87; }
-  .chevron { color: #333; font-size: 10px; }
+  .chevron { color: $border; font-size: 10px; }
 
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .dot-clean   { background: #2d7d46; }
-  .dot-staged  { background: #58a6ff; }
+  .dot-staged  { background: $blue; }
   .dot-dirty   { background: #cc8800; }
-  .dot-unknown { background: #444; }
+  .dot-unknown { background: $border; }
 
   .git-body { padding: 6px 0 8px; }
 
   .counts { display: flex; gap: 2px; padding: 0 8px 6px; }
   .count-btn {
-    flex: 1; background: none; border: 1px solid #222; border-radius: 3px;
-    color: #555; font-size: 10px; padding: 2px 4px; cursor: pointer; text-align: center;
+    flex: 1; background: none; border: 1px solid $border; border-radius: 3px;
+    color: $muted; font-size: 10px; padding: 2px 4px; cursor: pointer; text-align: center;
+    &:hover { border-color: $muted; color: $fg-dim; }
   }
-  .count-btn:hover { border-color: #333; color: #888; }
-  .badge { display: inline-block; background: #1a1a1a; border-radius: 8px; padding: 0 4px; margin-left: 2px; }
+  .badge { display: inline-block; background: $bg-2; border-radius: 8px; padding: 0 4px; margin-left: 2px; }
 
   .file-list { list-style: none; margin: 0 0 4px; padding: 0 8px; max-height: 80px; overflow-y: auto; }
-  .file-btn { background: none; border: none; color: #666; font-size: 10px; cursor: pointer; padding: 1px 0; text-align: left; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .file-btn:hover { color: #aaa; }
-  .file-list.untracked li { color: #555; font-size: 10px; padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-btn { @include flat-btn; font-size: 10px; padding: 1px 0; text-align: left; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; &:hover { color: $fg-dim; } }
+  .file-list.untracked li { color: $muted; font-size: 10px; padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .actions { display: flex; gap: 3px; padding: 0 8px 4px; }
   .act-btn {
-    flex: 1; background: #141414; border: 1px solid #252525; border-radius: 3px;
-    color: #666; font-size: 10px; padding: 3px 4px; cursor: pointer;
+    flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 3px;
+    color: $muted; font-size: 10px; padding: 3px 4px; cursor: pointer;
+    &:hover { border-color: $muted; color: $fg-dim; }
+    &.push { color: $blue; border-color: $blue-bdr; &:disabled { color: $border; border-color: $bg-2; cursor: default; } }
+    &.tag  { color: $teal; border-color: $teal-bdr; }
+    &.refresh { flex: 0; padding: 3px 6px; }
   }
-  .act-btn:hover { border-color: #333; color: #aaa; }
-  .act-btn.push { color: #58a6ff; border-color: #1e3a5a; }
-  .act-btn.push:disabled { color: #2a2a2a; border-color: #1a1a1a; cursor: default; }
-  .act-btn.tag { color: #8b8; border-color: #1e3a1e; }
-  .act-btn.refresh { flex: 0; padding: 3px 6px; }
 
   .commit-form, .tag-form { padding: 0 8px 4px; display: flex; flex-direction: column; gap: 4px; }
-  .commit-input {
-    width: 100%; background: #0a0a0a; border: 1px solid #2b5b84;
-    border-radius: 3px; color: #e0e0e0; padding: 4px 6px;
-    font-size: 11px; font-family: monospace; outline: none; box-sizing: border-box;
-  }
-  .commit-input.error { border-color: #842b2b; }
-  .commit-error { font-size: 10px; color: #e44; }
+  .commit-input { @include inline-input; font-size: 11px; padding: 4px 6px; &.error { border-color: $red-bdr; } }
+  .commit-error { font-size: 10px; color: $red; }
   .commit-actions { display: flex; gap: 4px; }
   .go-btn {
-    flex: 1; background: #1a3a5a; border: 1px solid #2b5b84; border-radius: 3px;
-    color: #58a6ff; font-size: 10px; padding: 3px; cursor: pointer;
+    flex: 1; background: $blue-bg; border: 1px solid $blue-bdr; border-radius: 3px;
+    color: $blue; font-size: 10px; padding: 3px; cursor: pointer;
+    &:disabled { opacity: 0.4; cursor: default; }
   }
-  .go-btn:disabled { opacity: 0.4; cursor: default; }
-  .cancel-btn { background: none; border: 1px solid #222; border-radius: 3px; color: #444; font-size: 10px; padding: 3px 6px; cursor: pointer; }
+  .cancel-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 10px; padding: 3px 6px; cursor: pointer; }
 
   .bump-row { display: flex; gap: 3px; }
-  .bump-btn { flex: 1; background: #141414; border: 1px solid #222; border-radius: 3px; color: #555; font-size: 10px; padding: 3px; cursor: pointer; text-transform: capitalize; }
-  .bump-btn.active { border-color: #2b5b2b; color: #8b8; background: #0a1a0a; }
+  .bump-btn {
+    flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 3px;
+    color: $muted; font-size: 10px; padding: 3px; cursor: pointer; text-transform: capitalize;
+    &.active { @include act-variant($teal, $teal-bg, $teal-bdr); }
+  }
 
-  .git-log { margin: 4px 8px 0; padding: 6px 8px; background: #0a0a0a; border-radius: 3px; font-size: 10px; color: #8b8; font-family: monospace; word-break: break-all; }
+  .git-log { margin: 4px 8px 0; padding: 6px 8px; background: $bg; border-radius: 3px; font-size: 10px; color: $teal; font-family: monospace; word-break: break-all; }
 
   @media (max-width: 768px) {
-    .git-header { min-height: 44px; }
-    .act-btn    { min-height: 44px; font-size: 12px; }
-    .go-btn     { min-height: 44px; font-size: 12px; }
-    .cancel-btn { min-height: 44px; font-size: 12px; }
-    .count-btn  { min-height: 44px; font-size: 12px; }
+    .git-header, .act-btn, .go-btn, .cancel-btn, .count-btn { min-height: 44px; font-size: 12px; }
   }
 </style>

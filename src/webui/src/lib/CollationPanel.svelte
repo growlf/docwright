@@ -1,12 +1,22 @@
 <script lang="ts">
   let {
     matches,
+    relationships = [] as Array<{
+      target: string;
+      type: string;
+      confidence: number;
+      targetTitle: string;
+    }>,
     alreadyRelated = [] as string[],
     loading = false,
+    planMode = false,
     onaddrelated,
+    onadddepends,
+    onaddblocks,
     onsubsume,
     onclose,
     onrecheck,
+    oncreateplan,
   }: {
     matches: Array<{
       path: string;
@@ -14,17 +24,28 @@
       score: number;
       sections: Array<{ heading: string; content: string }>;
     }>;
+    relationships?: Array<{
+      target: string;
+      type: string;
+      confidence: number;
+      targetTitle: string;
+    }>;
     alreadyRelated?: string[];
     loading?: boolean;
+    planMode?: boolean;
     onaddrelated?: (path: string) => void;
+    onadddepends?: (path: string) => void;
+    onaddblocks?: (path: string) => void;
     onsubsume?: (path: string) => void;
     onclose?: () => void;
     onrecheck?: () => void;
+    oncreateplan?: () => void;
   } = $props();
 
   let expanded  = $state<Set<string>>(new Set());
   let subsumed  = $state<Set<string>>(new Set());
   let justAdded = $state<Set<string>>(new Set());
+  let dismissed = $state<Set<string>>(new Set());
 
   function toggleExpand(p: string) {
     const next = new Set(expanded);
@@ -38,10 +59,30 @@
     return 'low';
   }
 
+  function getRel(path: string) {
+    return relationships.find(r => r.target === path);
+  }
+
+  function relLabel(type: string): string {
+    const labels: Record<string, string> = {
+      depends_on: 'Depends on',
+      blocks: 'Blocks',
+      merge_candidate: 'Merge candidate',
+      supersedes: 'Supersedes',
+      related_to: 'Related',
+      parallel: 'Parallel',
+    };
+    return labels[type] || type;
+  }
+
   function isRelated(path: string): boolean {
     const norm = path.replace(/\.md$/, '');
     return justAdded.has(path) ||
       alreadyRelated.some(r => r === path || r === norm || r.replace(/\.md$/, '') === norm);
+  }
+
+  function isDismissed(path: string): boolean {
+    return dismissed.has(path);
   }
 
   function handleAddRelated(path: string) {
@@ -51,11 +92,31 @@
     justAdded = next;
   }
 
-  function handleSubsume(match: { path: string }) {
+  function handleAddDepends(path: string) {
+    onadddepends?.(path);
+    const next = new Set(justAdded);
+    next.add(path);
+    justAdded = next;
+  }
+
+  function handleAddBlocks(path: string) {
+    onaddblocks?.(path);
+    const next = new Set(justAdded);
+    next.add(path);
+    justAdded = next;
+  }
+
+  function handleDismiss(path: string) {
+    const next = new Set(dismissed);
+    next.add(path);
+    dismissed = next;
+  }
+
+  function handleSubsume(matchPath: string) {
     const next = new Set(subsumed);
-    next.add(match.path);
+    next.add(matchPath);
     subsumed = next;
-    onsubsume?.(match.path);
+    onsubsume?.(matchPath);
   }
 </script>
 
@@ -73,27 +134,66 @@
   {#if loading}
     <div class="loading">Scanning for related proposals…</div>
   {:else if matches.length === 0}
-    <div class="empty">No related proposals found.<br><small>Open a proposal and click ↺ to scan.</small></div>
+    {#if planMode}
+      <div class="empty">No related proposals found — create a plan with just this proposal.</div>
+      <button class="create-plan-btn" onclick={() => oncreateplan?.()}
+        title="Scaffold a plan containing just this proposal">
+        + Create Plan
+      </button>
+    {:else}
+      <div class="empty">No related proposals found.</div>
+    {/if}
   {:else}
     <div class="hint">
-      <strong>Add as related</strong> writes to <code>related_to:</code> frontmatter — the correct way to link documents in the governance system.
+      Accept detected relationships to write them to frontmatter.
     </div>
+    {#if planMode}
+      <button class="create-plan-btn" onclick={() => oncreateplan?.()}
+        title="Scaffold a plan bundling this proposal with all accepted relationships">
+        + Create Plan
+      </button>
+    {/if}
     {#each matches as match}
-      <div class="match" class:subsumed={subsumed.has(match.path)}>
+      {@const rel = getRel(match.path)}
+      <div class="match" class:subsumed={subsumed.has(match.path)} class:dismissed={isDismissed(match.path)}>
         <button class="match-header" onclick={() => toggleExpand(match.path)} title="Click to expand sections">
           <span class="match-title">{match.title || match.path}</span>
+          {#if rel}
+            <span class="rel-type {rel.type}">{relLabel(rel.type)}</span>
+          {/if}
           <span class="score {scoreLabel(match.score)}">{Math.round(match.score * 100)}%</span>
           <span class="expand-icon">{expanded.has(match.path) ? '▾' : '▸'}</span>
         </button>
 
         <div class="match-actions">
           {#if isRelated(match.path)}
-            <span class="related-badge" title="Already in related_to: frontmatter">✓ Related</span>
+            <span class="accepted-badge" title="Added to frontmatter">✓ Accepted</span>
+          {:else if isDismissed(match.path)}
+            <span class="dismissed-badge">✕ Dismissed</span>
           {:else}
-            <button class="add-related-btn" onclick={() => handleAddRelated(match.path)}
-              title="Add to related_to: frontmatter — creates a structured, queryable link">
-              + Add as related
-            </button>
+            {#if rel?.type === 'depends_on'}
+              <button class="action-btn depends-btn" onclick={() => handleAddDepends(match.path)}
+                title="Sets depends_on: in this proposal">
+                + Accept as Depends on
+              </button>
+            {:else if rel?.type === 'blocks'}
+              <button class="action-btn blocks-btn" onclick={() => handleAddBlocks(match.path)}
+                title="Sets blocks: in this proposal">
+                + Accept as Blocks
+              </button>
+            {:else if rel?.type === 'merge_candidate'}
+              <button class="action-btn merge-btn" onclick={() => handleAddRelated(match.path)}
+                title="Marks as related — merge decision at Plan time">
+                + Accept as Related
+              </button>
+            {:else}
+              <button class="action-btn related-btn" onclick={() => handleAddRelated(match.path)}
+                title="Add to related_to: frontmatter">
+                + Accept as Related
+              </button>
+            {/if}
+            <button class="dismiss-btn" onclick={() => handleDismiss(match.path)}
+              title="Dismiss this suggestion">✕</button>
           {/if}
         </div>
 
@@ -112,8 +212,8 @@
 
             {#if !subsumed.has(match.path)}
               <div class="subsume-row">
-                <label class="subsume-label" title="Mark the related proposal as absorbed into this one — sets subsumed_by in its frontmatter so it no longer appears as a standalone open proposal">
-                  <input type="checkbox" onchange={() => handleSubsume(match)} />
+                <label class="subsume-label">
+                  <input type="checkbox" onchange={() => handleSubsume(match.path)} />
                   Mark as subsumed by this proposal
                 </label>
               </div>
@@ -127,127 +227,56 @@
   {/if}
 </div>
 
-<style>
-  .panel {
-    /* Fills the right sidebar tab — no longer a fixed overlay */
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    height: 100%;
-  }
+<style lang="scss">
+  @use 'tokens' as *;
 
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #222;
-    flex-shrink: 0;
-  }
-  .panel-title { font-size: 12px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-  .recheck-btn { background: none; border: 1px solid #333; color: #666; cursor: pointer; font-size: 13px; padding: 1px 6px; border-radius: 3px; }
-  .recheck-btn:hover:not(:disabled) { color: #58a6ff; border-color: #2b5b84; }
-  .recheck-btn:disabled { opacity: 0.4; cursor: default; }
-  .close-btn { background: none; border: 1px solid #333; color: #555; cursor: pointer; font-size: 10px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
-  .close-btn:hover { color: #aaa; border-color: #555; }
-
-  .loading, .empty {
-    padding: 24px 16px;
-    color: #555;
-    font-size: 13px;
-    text-align: center;
-  }
-
-  .hint {
-    padding: 8px 16px;
-    font-size: 11px;
-    color: #555;
-    border-bottom: 1px solid #1a1a1a;
-  }
-
-  .match {
-    border-bottom: 1px solid #1a1a1a;
-    overflow: hidden;
-  }
-  .match.subsumed { opacity: 0.5; }
-
-  .match-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    cursor: pointer;
-    user-select: none;
-    width: 100%;
-    background: none;
-    border: none;
-    text-align: left;
-    color: inherit;
-    font: inherit;
-  }
-  .match-header:hover { background: #1a1a1a; }
-  .match-title { flex: 1; font-size: 12px; color: #ccc; }
-  .score {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 8px;
-    border: 1px solid;
-  }
-  .score.high   { color: #e87; border-color: #e87; background: #2a1a10; }
-  .score.medium { color: #cc6; border-color: #cc6; background: #2a2a10; }
-  .score.low    { color: #78a; border-color: #78a; background: #101a2a; }
-  .expand-icon  { color: #555; font-size: 11px; }
-
-  .match-body {
-    padding: 0 16px 12px;
-    overflow-y: auto;
-    max-height: 400px;
-  }
-
-  .section { margin-top: 10px; }
-  .section-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-bottom: 4px;
-  }
-  .match-actions { padding: 4px 12px 6px; }
-  .add-related-btn {
-    background: none;
-    border: 1px solid #2b5b84;
-    color: #58a6ff;
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-  }
-  .add-related-btn:hover { background: #1a3a5a; }
-  .related-badge { font-size: 11px; color: #6d6; padding: 2px 0; display: block; }
-
-  .section-preview {
-    font-size: 11px;
-    color: #666;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    background: #0d0d0d;
-    border-radius: 3px;
-    padding: 6px 8px;
-  }
-  .section-preview.muted { font-style: italic; }
-
-  .subsume-row { margin-top: 10px; }
-  .subsume-label { font-size: 11px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-  .subsume-label input { cursor: pointer; }
-  .subsumed-note { font-size: 11px; color: #6d6; margin-top: 10px; }
-
+  .panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; height: 100%; }
   .panel > div:not(.panel-header) { overflow-y: auto; }
+
+  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid $border; flex-shrink: 0; }
+  .panel-title  { @include section-header; padding: 0; }
+  .recheck-btn  { @include flat-btn; border: 1px solid $border; border-radius: 3px; padding: 1px 6px; font-size: 13px; &:hover:not(:disabled) { color: $blue; border-color: $blue-bdr; } &:disabled { opacity: 0.4; cursor: default; } }
+  .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } }
+
+  .loading, .empty { padding: 24px 16px; color: $muted; font-size: 13px; text-align: center; }
+  .hint { padding: 8px 16px; font-size: 11px; color: $muted; border-bottom: 1px solid $border; }
+
+  .create-plan-btn { display: block; width: calc(100% - 32px); margin: 8px 16px; padding: 8px 12px; border: 1px solid $magenta-bdr; border-radius: 6px; background: $magenta-bg; color: $magenta; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; &:hover { background: #2a1a3a; border-color: #7b4ba4; } }
+
+  .match { border-bottom: 1px solid $border; overflow: hidden; &.subsumed { opacity: 0.5; } &.dismissed { opacity: 0.35; } }
+  .match-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; cursor: pointer; user-select: none; width: 100%; background: none; border: none; text-align: left; color: inherit; font: inherit; &:hover { background: $bg-hover; } }
+  .match-title  { flex: 1; font-size: 12px; color: $fg; }
+
+  .rel-type { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 6px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.3px; }
+  .rel-type.depends_on      { color: #e87; border-color: #e87; background: #2a1a10; }
+  .rel-type.blocks          { color: #e55; border-color: #e55; background: #2a1010; }
+  .rel-type.merge_candidate { color: $teal; border-color: $teal-bdr; background: $teal-bg; }
+  .rel-type.supersedes      { color: $amber; border-color: $amber-bdr; background: #2a2a10; }
+  .rel-type.related_to      { color: #6af; border-color: #6af; background: #10202a; }
+  .rel-type.parallel        { color: $muted; border-color: $border; background: $bg-2; }
+
+  .score { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 8px; border: 1px solid; }
+  .score.high   { color: #e87; border-color: #e87; background: #2a1a10; }
+  .score.medium { color: $amber; border-color: $amber-bdr; background: #2a2a10; }
+  .score.low    { color: #78a; border-color: #78a; background: #101a2a; }
+  .expand-icon  { color: $muted; font-size: 11px; }
+
+  .match-body { padding: 0 16px 12px; overflow-y: auto; max-height: 400px; }
+  .section { margin-top: 10px; }
+  .section-heading { display: flex; justify-content: space-between; align-items: center; @include section-header; padding: 0; margin-bottom: 4px; }
+  .match-actions { padding: 4px 12px 6px; display: flex; gap: 4px; align-items: center; }
+
+  .action-btn   { flex: 1; background: none; border: 1px solid $blue-bdr; color: $blue; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; text-align: left; &:hover { background: $blue-bg; } }
+  .depends-btn  { border-color: #c85; color: #e87; &:hover { background: #2a1a10; } }
+  .blocks-btn   { border-color: #c55; color: #e55; &:hover { background: #2a1010; } }
+  .merge-btn    { border-color: $teal-bdr; color: $teal; &:hover { background: $teal-bg; } }
+  .dismiss-btn  { @include flat-btn; border: 1px solid $border; font-size: 11px; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; &:hover { color: $fg-dim; border-color: $muted; } }
+
+  .accepted-badge  { font-size: 11px; color: $green; padding: 2px 0; display: block; }
+  .dismissed-badge { font-size: 11px; color: $muted; padding: 2px 0; display: block; }
+
+  .section-preview { font-size: 11px; color: $muted; line-height: 1.5; white-space: pre-wrap; background: $bg; border-radius: 3px; padding: 6px 8px; &.muted { font-style: italic; } }
+  .subsume-row   { margin-top: 10px; }
+  .subsume-label { font-size: 11px; color: $muted; cursor: pointer; display: flex; align-items: center; gap: 6px; input { cursor: pointer; } }
+  .subsumed-note { font-size: 11px; color: $green; margin-top: 10px; }
 </style>
