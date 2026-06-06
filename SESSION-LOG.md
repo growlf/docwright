@@ -224,3 +224,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] v0.2.1 tagged and pushed
 
 **Session note:** `docs/session-notes/session_note_202606062200.md`
+
+---
+
+## Session: 2026-06-06 — Cross-Tool Compat, Proposals, One-Off Policy
+
+**Focus:** Cross-tool AI compatibility, raw proposal drafting, one-off formalization meta-policy
+
+**Completed:**
+- [x] Cross-tool compatibility plan — skills sync, agent roles spec, 10 compat tests, CI-gated
+- [x] `scripts/sync-claude-skills.ts` + `npm run sync:skills` — CLAUDE.md table auto-generated
+- [x] `docs/specs/skill-format.md` + `docs/specs/agent-roles.md` — canonical specs
+- [x] `.opencode/rules/governance-writes.md` + `one-off-formalization.md` — OpenCode rules
+- [x] One-off formalization policy wired into CLAUDE.md and opencode.json
+- [x] Fix: Web UI proposal approval auto-triggers move to proposals/approved/
+- [x] Fix: transition-completed now injects completed_date into archived plan
+- [x] Batch-move 17 stale approved proposals to proposals/approved/ (git mv)
+- [x] Raw proposals drafted: new-proposal-ux-description-priority, policies-button
+- [x] Proposals captured: one-off-formalization, mcp-tool-batch-fix-stale-approvals
+
+**Session note:** `docs/session-notes/session_note_202606062330.md`
