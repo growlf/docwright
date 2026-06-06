@@ -6,11 +6,12 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast } from '$lib/toast';
-  import { showPropsPane, showChatPanel } from '$lib/pane';
+  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
+  import SearchPanel from '$lib/SearchPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
   interface ProjectEntry {
@@ -27,30 +28,88 @@
   let showNewMenu  = $state(false);
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
-  let leftView       = $state<'files' | 'settings' | 'git'>('files');
+  let leftView       = $state<'files' | 'search' | 'settings' | 'git'>('files');
+  let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related'>('properties');
-  let collationMatches = $state<any[]>([]);
-  let collationLoading = $state(false);
 
-  // On navigation: clear stale collation data; honour the active tab
+  // Subscribe to shared collation stores
+  let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
+  let cr = $state<any[]>([]); $effect(() => { const u = collationRelationships.subscribe(v => cr = v); return u; });
+  let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
+
+  // Fetch profile feature flags on mount
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/profile-config');
+      if (res.ok) {
+        const cfg = await res.json();
+        const rel = cfg.relationshipEngine ?? {};
+        featureFlags.set({
+          showPlanButton: rel.show_plan_button !== false,
+          autoDetectOnCreate: rel.auto_detect_on_create !== false,
+          autoDetectOnUpdate: rel.auto_detect_on_update !== false,
+          similarityThreshold: rel.similarity_threshold ?? 0.35,
+        });
+      }
+    } catch { /* use defaults */ }
+  });
+
+  // On nav: clear stale collation data; honour active tab
   $effect(() => {
     const fp = $currentDoc.filePath;
-    collationMatches = [];
-    collationLoading = false;
-    // If Related tab is active, auto-rescan for the new document
+    collationMatches.set([]);
+    collationRelationships.set([]);
+    collationLoading.set(false);
     if (rightTab === 'related' && fp) findRelated(fp);
+  });
+
+  // React to page's signal to switch to Related tab
+  $effect(() => {
+    const trigger = $showRelatedTab;
+    if (trigger) {
+      rightTab = 'related';
+      showRightPanel = true;
+      showRelatedTab.set(false);
+      if ($currentDoc.filePath) findRelated($currentDoc.filePath);
+    }
   });
 
   async function findRelated(filePath: string) {
     if (!filePath) return;
     rightTab = 'related';
     showRightPanel = true;
-    collationLoading = true;
-    collationMatches = [];
+    collationLoading.set(true);
+    collationMatches.set([]);
+    collationRelationships.set([]);
     const res = await fetch('/api/overlap?path=' + encodeURIComponent(filePath));
-    collationLoading = false;
-    if (res.ok) { const { matches } = await res.json(); collationMatches = matches; }
+    collationLoading.set(false);
+    if (res.ok) {
+      const data = await res.json();
+      collationMatches.set(data.matches || []);
+      collationRelationships.set(data.relationships || []);
+    }
+  }
+
+  async function handleCreatePlan() {
+    const fp = $currentDoc.filePath;
+    if (!fp) return;
+    const fm = $currentDoc.frontmatter;
+    if (!fm) return;
+    const res = await fetch('/api/create-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Plan: ' + (fm.title || fp),
+        candidates: [fp.replace(/\.md$/, '')],
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      goto('/' + data.path.replace(/\.md$/, '') + '?new=1');
+      collationMatches.set([]);
+      collationRelationships.set([]);
+    }
   }
 
   // Close sidebar on navigation (mobile only)
@@ -129,6 +188,27 @@
     es.addEventListener('filechange', (e: MessageEvent) => {
       fileChanged.set(JSON.parse(e.data));
     });
+
+    function handleGlobalKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const editing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        leftView = 'search';
+        showSidebar = true;
+        setTimeout(() => searchPanel?.focusSearch(), 50);
+      } else if (e.ctrlKey && !e.shiftKey && e.key === '\\') {
+        e.preventDefault();
+        showSidebar = !showSidebar;
+      } else if (e.ctrlKey && e.shiftKey && e.key === '\\') {
+        e.preventDefault();
+        showRightPanel = !showRightPanel;
+      } else if (e.key === 'Escape' && !editing) {
+        if (leftView === 'search') { leftView = 'files'; }
+      }
+    }
+    document.addEventListener('keydown', handleGlobalKey);
+    return () => document.removeEventListener('keydown', handleGlobalKey);
   });
 </script>
 
@@ -173,6 +253,9 @@
     <button class="act-btn" class:active={leftView === 'files'}
       onclick={() => { leftView = 'files'; showSidebar = true; }}
       title="Files">📄</button>
+    <button class="act-btn" class:active={leftView === 'search'}
+      onclick={() => { leftView = 'search'; showSidebar = true; setTimeout(() => searchPanel?.focusSearch(), 50); }}
+      title="Search (Ctrl+K)">🔍</button>
     <button class="act-btn" class:active={leftView === 'settings'}
       onclick={() => { leftView = 'settings'; showSidebar = true; }}
       title="Settings">⚙</button>
@@ -184,7 +267,7 @@
   <Panel side="left" bind:open={showSidebar}>
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'files' ? 'Files' : leftView === 'settings' ? 'Settings' : 'Git'}
+        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'settings' ? 'Settings' : 'Git'}
       </span>
       {#if leftView === 'files'}
       <div class="new-group-inner">
@@ -198,7 +281,9 @@
       </div>
       {/if}
     </div>
-    {#if leftView === 'files'}
+    {#if leftView === 'search'}
+      <SearchPanel bind:this={searchPanel} />
+    {:else if leftView === 'files'}
       <FileTree currentPath={$page.url.pathname} />
       {#if projects.length > 0}
         <div class="project-section">
@@ -281,6 +366,7 @@
             onsave={$currentDoc.onSave}
             onapprove={$currentDoc.onApprove}
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
+            onplan={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
           />
         {:else}
           <div class="right-empty">Open a document to see its properties</div>
@@ -288,13 +374,18 @@
       {/key}
     {:else}
       <CollationPanel
-        matches={collationMatches}
-        loading={collationLoading}
+        matches={cm}
+        relationships={cr}
+        loading={cl}
+        planMode={$currentDoc.docType === 'proposal' && $currentDoc.frontmatter?.approved === true}
         alreadyRelated={Array.isArray($currentDoc.frontmatter?.related_to) ? $currentDoc.frontmatter.related_to : []}
         onaddrelated={(path) => $currentDoc.onAddRelated?.(path)}
+        onadddepends={(path) => $currentDoc.onAddDepends?.(path)}
+        onaddblocks={(path) => $currentDoc.onAddBlocks?.(path)}
         onsubsume={(path) => $currentDoc.onSubsume?.(path)}
+        oncreateplan={() => handleCreatePlan()}
         onrecheck={() => { if ($currentDoc.filePath) findRelated($currentDoc.filePath); }}
-        onclose={() => { rightTab = 'properties'; collationMatches = []; }}
+        onclose={() => { rightTab = 'properties'; collationMatches.set([]); collationRelationships.set([]); }}
       />
     {/if}
   </Panel>
