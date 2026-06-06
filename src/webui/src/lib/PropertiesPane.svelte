@@ -296,18 +296,18 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: 10px 12px;
-    border-bottom: 1px solid #1e1e1e;
+    border-bottom: 1px solid var(--border, #1e1e1e);
   }
   .act {
     padding: 3px 10px;
     border-radius: 4px;
     font-size: 11px;
     cursor: pointer;
-    border: 1px solid #333;
-    background: #1a1a1a;
-    color: #aaa;
+    border: 1px solid var(--border, #333);
+    background: var(--bg-2, #1a1a1a);
+    color: var(--fg-dim, #aaa);
   }
-  .act:hover { background: #222; color: #fff; }
+  .act:hover { background: var(--bg-3, #222); color: var(--fg, #fff); }
   .act.approve  { border-color: #2b5b2b; color: #6d6; }
   .act.approve:hover  { background: #1a3a1a; }
   .act.plan  { border-color: #5b2b84; color: #b58; }
@@ -344,12 +344,12 @@
     font-size: 10px;
     padding: 1px 7px;
     border-radius: 8px;
-    border: 1px solid #333;
-    background: #181818;
-    color: #555;
+    border: 1px solid var(--border, #333);
+    background: var(--bg, #181818);
+    color: var(--muted, #555);
     cursor: pointer;
   }
-  .preset-chip:hover { border-color: #555; color: #aaa; }
+  .preset-chip:hover { border-color: var(--muted, #555); color: var(--fg-dim, #aaa); }
   .preset-chip.active { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
   .preset-chip.active:hover { background: #1a3a5a; }
 

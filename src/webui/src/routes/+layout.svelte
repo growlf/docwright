@@ -589,7 +589,7 @@
   .chat-toggle:hover  { background: #1e4a70; }
   .chat-toggle.active { background: #2b5b84; }
   .toast-container { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10000; }
-  .toast { display: flex; align-items: center; gap: 8px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.4); min-width: 260px; }
+  .toast { display: flex; align-items: center; gap: 8px; background: var(--bg-2, #222); border: 1px solid var(--border, #444); border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--fg, #e0e0e0); box-shadow: 0 4px 12px rgba(0,0,0,0.4); min-width: 260px; }
   .toast-msg { flex: 1; }
   .toast-action { background: none; border: 1px solid #2b5b84; color: #58a6ff; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .toast-action:hover { background: #1a3a5a; }

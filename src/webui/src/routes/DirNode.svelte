@@ -166,18 +166,18 @@
 <style>
   .dir-row { display: flex; align-items: center; position: relative; }
   .dir-row:hover .add-btn { opacity: 1; }
-  .dir-toggle { background: none; border: none; color: #ccc; cursor: pointer; padding: 4px 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; flex: 1; text-align: left; }
-  .dir-toggle:hover { background: #1a1a1a; }
-  .arrow { font-size: 10px; width: 12px; color: #666; flex-shrink: 0; }
-  .dir-name { color: #999; }
-  .add-btn { opacity: 0; background: none; border: 1px solid #444; color: #aaa; width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; margin-right: 4px; transition: opacity 0.1s; }
-  .add-btn:hover { background: #222; color: #fff; }
+  .dir-toggle { background: none; border: none; color: var(--fg-dim, #ccc); cursor: pointer; padding: 4px 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; flex: 1; text-align: left; }
+  .dir-toggle:hover { background: var(--bg-hover, #1a1a1a); }
+  .arrow { font-size: 10px; width: 12px; color: var(--muted, #666); flex-shrink: 0; }
+  .dir-name { color: var(--fg-dim, #999); }
+  .add-btn { opacity: 0; background: none; border: 1px solid var(--border, #444); color: var(--fg-dim, #aaa); width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; margin-right: 4px; transition: opacity 0.1s; }
+  .add-btn:hover { background: var(--bg-3, #222); color: var(--fg, #fff); }
   .children { padding-left: 16px; }
   .children.hidden { display: none; }
-  .context-menu { position: fixed; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 4px 0; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-  .menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
+  .context-menu { position: fixed; background: var(--bg-2, #1a1a1a); border: 1px solid var(--border, #333); border-radius: 6px; padding: 4px 0; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .menu-item { display: block; width: 100%; background: none; border: none; color: var(--fg, #ccc); padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
   .menu-item:hover { background: #2b5b84; color: #fff; }
   .inline-create { display: flex; align-items: center; gap: 4px; padding: 3px 8px 3px 20px; }
   .create-icon { font-size: 12px; }
-  .create-input { background: #0a0a0a; border: 1px solid #2b5b84; border-radius: 3px; color: #e0e0e0; padding: 2px 6px; font-size: 13px; font-family: monospace; width: 100%; outline: none; }
+  .create-input { background: var(--bg, #0a0a0a); border: 1px solid #2b5b84; border-radius: 3px; color: var(--fg, #e0e0e0); padding: 2px 6px; font-size: 13px; font-family: monospace; width: 100%; outline: none; }
 </style>
