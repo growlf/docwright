@@ -257,9 +257,32 @@
   async function saveFrontmatter(fm?: Record<string, any>) {
     // When called from the layout's PropertiesPane, fm contains the mutated
     // frontmatter — apply it to local state before saving
+    const prevStatus = frontmatter?.status;
     if (fm) frontmatter = { ...fm };
     if (frontmatter) raw = buildRaw(frontmatter, content);
     await save();
+
+    // When a plan transitions to completed, call the MCP transition endpoint
+    // to archive the file to plans/completed/ and generate the doc.
+    if (
+      docType === 'plan' &&
+      frontmatter?.status === 'completed' &&
+      prevStatus !== 'completed'
+    ) {
+      const planName = filePath().replace(/^plans\//, '').replace(/\.md$/, '');
+      const transRes = await fetch('/api/lifecycle/transition-completed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planName }),
+      });
+      if (transRes.ok) {
+        const { doc } = await transRes.json();
+        showToast(`Plan archived → ${doc || 'plans/completed/'}`, 4000);
+      } else {
+        const { error } = await transRes.json().catch(() => ({ error: 'Transition failed' }));
+        showToast(`⚠ ${error}`, 5000);
+      }
+    }
   }
 
   async function checkOverlap() {
