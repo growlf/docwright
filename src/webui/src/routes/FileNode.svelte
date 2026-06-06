@@ -113,32 +113,24 @@
   </div>
 {/if}
 
-<style>
-  .file-link { display: block; padding: 3px 8px 3px 20px; font-size: 13px; color: var(--fg-dim, #aaa); text-decoration: none; }
-  .file-link:hover { background: var(--bg-hover, #1a1a1a); color: var(--fg, #fff); }
-  .file-link.active { background: #2b5b84; color: #fff; }
+<style lang="scss">
+  @use '../lib/tokens' as *;
+
+  .file-link {
+    display: block; padding: 3px 8px 3px 20px; font-size: 13px;
+    color: $fg-dim; text-decoration: none;
+    &:hover { background: $bg-hover; color: $fg; }
+    &.active { background: $blue-bdr; color: #fff; }
+  }
 
   .renaming { padding: 2px 8px 2px 16px; }
-  .rename-input {
-    width: 100%; background: var(--bg, #0a0a0a); border: 1px solid #2b5b84;
-    border-radius: 3px; color: var(--fg, #e0e0e0); padding: 2px 6px;
-    font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;
-  }
+  .rename-input { @include inline-input; font-family: inherit; }
 
   .menu-backdrop { position: fixed; inset: 0; z-index: 999; }
   .context-menu {
-    position: fixed; z-index: 1000;
-    background: var(--bg-2, #1a1a1a); border: 1px solid var(--border, #333); border-radius: 6px;
-    padding: 4px 0; min-width: 120px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    @include context-menu;
+    position: fixed; z-index: 1000; min-width: 120px;
   }
-  .menu-item {
-    display: block; width: 100%; background: none; border: none;
-    color: var(--fg, #ccc); padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer;
-  }
-  .menu-item:hover:not(:disabled) { background: #2b5b84; color: #fff; }
-  .menu-item:disabled { color: var(--muted, #444); cursor: default; }
-  .menu-item.danger { color: #e44; }
-  .menu-item.danger:hover { background: #3a1a1a; color: #f66; }
 
   @media (max-width: 768px) {
     .file-link { min-height: 44px; display: flex; align-items: center; padding: 0 8px 0 20px; }

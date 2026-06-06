@@ -163,21 +163,43 @@
   </div>
 {/if}
 
-<style>
-  .dir-row { display: flex; align-items: center; position: relative; }
-  .dir-row:hover .add-btn { opacity: 1; }
-  .dir-toggle { background: none; border: none; color: var(--fg-dim, #ccc); cursor: pointer; padding: 4px 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; flex: 1; text-align: left; }
-  .dir-toggle:hover { background: var(--bg-hover, #1a1a1a); }
-  .arrow { font-size: 10px; width: 12px; color: var(--muted, #666); flex-shrink: 0; }
-  .dir-name { color: var(--fg-dim, #999); }
-  .add-btn { opacity: 0; background: none; border: 1px solid var(--border, #444); color: var(--fg-dim, #aaa); width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; margin-right: 4px; transition: opacity 0.1s; }
-  .add-btn:hover { background: var(--bg-3, #222); color: var(--fg, #fff); }
-  .children { padding-left: 16px; }
-  .children.hidden { display: none; }
-  .context-menu { position: fixed; background: var(--bg-2, #1a1a1a); border: 1px solid var(--border, #333); border-radius: 6px; padding: 4px 0; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-  .menu-item { display: block; width: 100%; background: none; border: none; color: var(--fg, #ccc); padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
-  .menu-item:hover { background: #2b5b84; color: #fff; }
+<style lang="scss">
+  @use '../lib/tokens' as *;
+
+  .dir-row {
+    display: flex; align-items: center; position: relative;
+    &:hover .add-btn { opacity: 1; }
+  }
+
+  .dir-toggle {
+    @include flat-btn;
+    color: $fg-dim;
+    padding: 4px 8px; font-size: 13px;
+    display: flex; align-items: center; gap: 4px; flex: 1; text-align: left;
+    &:hover { background: $bg-hover; }
+  }
+
+  .arrow { font-size: 10px; width: 12px; color: $muted; flex-shrink: 0; }
+  .dir-name { color: $fg-dim; }
+
+  .add-btn {
+    opacity: 0;
+    background: none; border: 1px solid $border;
+    color: $fg-dim; width: 20px; height: 20px;
+    border-radius: 3px; cursor: pointer; font-size: 14px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 4px; transition: opacity 0.1s;
+    &:hover { background: $bg-3; color: $fg; }
+  }
+
+  .children { padding-left: 16px; &.hidden { display: none; } }
+
+  .context-menu {
+    @include context-menu;
+    position: fixed; z-index: 1000; min-width: 140px;
+  }
+
   .inline-create { display: flex; align-items: center; gap: 4px; padding: 3px 8px 3px 20px; }
   .create-icon { font-size: 12px; }
-  .create-input { background: var(--bg, #0a0a0a); border: 1px solid #2b5b84; border-radius: 3px; color: var(--fg, #e0e0e0); padding: 2px 6px; font-size: 13px; font-family: monospace; width: 100%; outline: none; }
+  .create-input { @include inline-input; font-size: 13px; }
 </style>

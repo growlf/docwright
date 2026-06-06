@@ -281,7 +281,9 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
+  @use 'tokens' as *;
+
   /* Panel.svelte provides the outer container — pane-inner fills it */
   .pane-inner {
     display: flex;
@@ -296,41 +298,26 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--border, #1e1e1e);
+    border-bottom: 1px solid $border;
   }
+
   .act {
-    padding: 3px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    cursor: pointer;
-    border: 1px solid var(--border, #333);
-    background: var(--bg-2, #1a1a1a);
-    color: var(--fg-dim, #aaa);
+    @include act-base;
+    &.approve    { @include act-variant($green,   $green-bg,   $green-bdr); }
+    &.plan       { @include act-variant($magenta,  $magenta-bg, $magenta-bdr); }
+    &.unapprove  { border-color: $amber-bdr; color: $amber; }
+    &.start,
+    &.complete,
+    &.save       { @include act-variant($blue,    $blue-bg,    $blue-bdr); }
+    &.cancel-plan{ @include act-variant($red,     $red-bg,     $red-bdr); }
+    &.related    { @include act-variant($purple,  $purple-bg,  $purple-bdr); }
+    &.estimate   { @include act-variant($teal,    $teal-bg,    $teal-bdr); }
   }
-  .act:hover { background: var(--bg-3, #222); color: var(--fg, #fff); }
-  .act.approve  { border-color: #2b5b2b; color: #6d6; }
-  .act.approve:hover  { background: #1a3a1a; }
-  .act.plan  { border-color: #5b2b84; color: #b58; }
-  .act.plan:hover  { background: #2a1a3a; }
-  .act.unapprove { border-color: #5b5b2b; color: #cc6; }
-  .act.start    { border-color: #2b5b84; color: #58a6ff; }
-  .act.start:hover    { background: #1a3a5a; }
-  .act.complete { border-color: #2b5b84; color: #58a6ff; }
-  .act.complete:hover { background: #1a3a5a; }
-  .act.cancel-plan { border-color: #842b2b; color: #e44; }
-  .act.cancel-plan:hover { background: #3a1a1a; }
-  .act.save     { border-color: #2b5b84; color: #58a6ff; }
-  .act.save:hover     { background: #1a3a5a; }
-  .act.related  { border-color: #4a2b84; color: #a78bfa; }
-  .act.related:hover  { background: #2a1a5a; }
-  .act.estimate { border-color: #2a4a3a; color: #6b9; }
-  .act.estimate:hover { background: #1a3a2a; }
-  .act:disabled { opacity: 0.5; cursor: default; }
 
   .estimate-hint {
     margin: 4px 12px 0;
     font-size: 10px;
-    color: #6b9;
+    color: $teal;
     font-style: italic;
   }
 
@@ -340,18 +327,23 @@
     gap: 3px;
     margin-bottom: 5px;
   }
+
   .preset-chip {
     font-size: 10px;
     padding: 1px 7px;
     border-radius: 8px;
-    border: 1px solid var(--border, #333);
-    background: var(--bg, #181818);
-    color: var(--muted, #555);
+    border: 1px solid $border;
+    background: $bg;
+    color: $muted;
     cursor: pointer;
+    &:hover { border-color: $muted; color: $fg-dim; }
+    &.active {
+      border-color: $blue-bdr;
+      color: $blue;
+      background: #0d1f2d;
+      &:hover { background: $blue-bg; }
+    }
   }
-  .preset-chip:hover { border-color: var(--muted, #555); color: var(--fg-dim, #aaa); }
-  .preset-chip.active { border-color: #2b5b84; color: #58a6ff; background: #0d1f2d; }
-  .preset-chip.active:hover { background: #1a3a5a; }
 
   .warn {
     margin: 8px 12px;
@@ -360,40 +352,44 @@
     border: 1px solid #554400;
     border-radius: 4px;
     font-size: 11px;
-    color: #cc6;
+    color: $amber;
   }
 
   .pane-fields { padding: 8px 0; }
 
-  .field { padding: 6px 12px; }
+  .field {
+    padding: 6px 12px;
+  }
+
   .field-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    @include section-header;
+    padding: 0;
     margin-bottom: 3px;
   }
 
-  .fval { font-size: 12px; color: #aaa; word-break: break-word; }
-  .fval.muted { color: #444; }
-  .fval.bool { font-size: 12px; }
-  .fval.bool.yes { color: #6d6; }
+  .fval {
+    font-size: 12px;
+    color: $fg-dim;
+    word-break: break-word;
+    &.muted { color: $muted; }
+    &.bool { font-size: 12px; &.yes { color: $green; } }
+  }
 
   .finput {
     width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: $bg-2;
+    border: 1px solid $border;
     border-radius: 3px;
-    color: #e0e0e0;
+    color: $fg;
     font-size: 12px;
     padding: 4px 6px;
     box-sizing: border-box;
+    &:focus { outline: none; border-color: $blue-bdr; }
   }
-  .finput:focus { outline: none; border-color: #2b5b84; }
   select.finput { cursor: pointer; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+
   .chip {
     background: #1e2a3a;
     border: 1px solid #2b3a4a;
@@ -401,8 +397,9 @@
     padding: 1px 7px;
     font-size: 11px;
     color: #7ab;
+    &.rm { padding-right: 3px; }
   }
-  .chip.rm { padding-right: 3px; }
+
   .chip-x {
     background: none;
     border: none;
@@ -411,20 +408,17 @@
     font-size: 11px;
     padding: 0 2px;
     margin-left: 2px;
+    &:hover { color: $red; }
   }
-  .chip-x:hover { color: #e44; }
+
   .chips-edit { display: flex; flex-direction: column; gap: 4px; }
+
   .chip-input {
-    width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 3px;
-    color: #e0e0e0;
+    @include inline-input;
     font-size: 11px;
     padding: 3px 6px;
-    box-sizing: border-box;
+    &:focus { border-color: $blue-bdr; }
   }
-  .chip-input:focus { outline: none; border-color: #2b5b84; }
 
   /* Panel.svelte handles all responsive sizing and positioning */
 </style>
