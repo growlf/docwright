@@ -133,13 +133,13 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background: #111;
+    background: var(--bg-2, #111);
     flex-shrink: 0;
     transition: width 0.2s ease;
   }
   .panel.dragging { transition: none; user-select: none; }
-  .panel-left  { width: var(--w); border-right: 1px solid #222; }
-  .panel-right { width: var(--w); border-left:  1px solid #2a2a2a; }
+  .panel-left  { width: var(--w); border-right: 1px solid var(--border, #222); }
+  .panel-right { width: var(--w); border-left:  1px solid var(--border, #2a2a2a); }
   .panel-left:not(.open)  { width: 32px; }
   .panel-right:not(.open) { width: 32px; }
 
@@ -163,14 +163,14 @@
     height: 100%;
     background: none;
     border: none;
-    color: #444;
+    color: var(--muted, #444);
     cursor: pointer;
     font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .panel-strip:hover { background: #1a1a1a; color: #888; }
+  .panel-strip:hover { background: var(--bg-hover, #1a1a1a); color: var(--fg-dim, #888); }
 
   /* ── Content area ── */
   .panel-content {
@@ -188,9 +188,9 @@
     transform: translateY(-50%);
     width: 16px;
     height: 40px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #444;
+    background: var(--bg-2, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    color: var(--muted, #444);
     cursor: pointer;
     font-size: 11px;
     display: flex;
@@ -199,7 +199,7 @@
     z-index: 10;
     border-radius: 0;
   }
-  .panel-edge-toggle:hover { color: #aaa; background: #222; }
+  .panel-edge-toggle:hover { color: var(--fg, #aaa); background: var(--bg-hover, #222); }
   .panel-edge-left  { right: -1px; border-radius: 0 4px 4px 0; }
   .panel-edge-right { left:  -1px; border-radius: 4px 0 0 4px; }
 

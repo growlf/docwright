@@ -556,7 +556,7 @@
   .new-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; z-index: 1000; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
   .new-menu-item { display: block; width: 100%; background: none; border: none; color: #ccc; padding: 6px 16px; font-size: 13px; text-align: left; cursor: pointer; }
   .new-menu-item:hover { background: #2b5b84; color: #fff; }
-  #content { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #1a1a1a; color: #e0e0e0; overflow: hidden; }
+  #content { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg, #1a1a1a); color: var(--fg, #e0e0e0); overflow: hidden; }
   #page-slot { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
   #chat-bottom { flex-shrink: 0; height: 420px; border-top: 1px solid #2a2a2a; position: relative; }
   #chat-bottom :global(.chat-panel) { position: absolute; inset: 0; height: 100% !important; bottom: 0 !important; }
@@ -638,8 +638,8 @@
     html[data-theme="light"] {
       --bg:       #f5f5f5;
       --bg-2:     #ffffff;
-      --bg-3:     #e8e8e8;
-      --bg-hover: #ebebeb;
+      --bg-3:     #e4e4e4;
+      --bg-hover: #eaeaea;
       --fg:       #1a1a1a;
       --fg-dim:   #444;
       --muted:    #777;
@@ -647,33 +647,66 @@
       --accent:   #4a6cf7;
       color-scheme: light;
     }
-    html[data-theme="light"] body {
-      background: var(--bg);
-      color: var(--fg);
-    }
-    html[data-theme="light"] .app-toolbar {
-      background: #fff;
-      border-bottom-color: #d0d0d0;
-    }
-    html[data-theme="light"] .app-footer {
-      background: #fff;
-      border-top-color: #d0d0d0;
-      color: #666;
-    }
+    html[data-theme="light"] body, html[data-theme="light"] .app-layout { background: #f0f0f0; color: #1a1a1a; }
+
+    /* Chrome */
+    html[data-theme="light"] .app-toolbar { background: #fff; border-bottom-color: #d0d0d0; }
+    html[data-theme="light"] .app-footer  { background: #fff; border-top-color: #d0d0d0; color: #555; }
+    html[data-theme="light"] .activity-bar { background: #e8e8e8; border-right-color: #d0d0d0; }
     html[data-theme="light"] .act-btn { color: #888; }
-    html[data-theme="light"] .act-btn:hover { background: #ebebeb; color: #333; }
-    html[data-theme="light"] .act-btn.active { color: #333; background: #e0e8ff; border-left-color: #4a6cf7; }
-    html[data-theme="light"] .activity-bar { background: #f0f0f0; border-right-color: #d0d0d0; }
-    html[data-theme="light"] .app-layout { background: var(--bg); }
-    html[data-theme="light"] a { color: #4a6cf7; }
+    html[data-theme="light"] .act-btn:hover { background: #ddd; color: #333; }
+    html[data-theme="light"] .act-btn.active { color: #333; background: #dce8ff; border-left-color: #4a6cf7; }
+    html[data-theme="light"] .hamburger, html[data-theme="light"] .home-btn, html[data-theme="light"] .gear-btn { color: #666; }
+    html[data-theme="light"] .hamburger:hover, html[data-theme="light"] .home-btn:hover, html[data-theme="light"] .gear-btn:hover { color: #222; background: #e4e4e4; }
+    html[data-theme="light"] .brand-name { color: #4a6cf7; }
+    html[data-theme="light"] .footer-link { color: #555; }
+    html[data-theme="light"] .footer-link:hover { color: #222; }
+    html[data-theme="light"] .footer-sep { color: #bbb; }
+
+    /* Sidebar */
+    html[data-theme="light"] .sidebar-header { background: #fff; border-bottom-color: #d0d0d0; }
+    html[data-theme="light"] .sidebar-view-label { color: #888; }
+    html[data-theme="light"] .new-btn, html[data-theme="light"] .new-btn-sm { border-color: #bbb; color: #555; }
+    html[data-theme="light"] .new-btn:hover, html[data-theme="light"] .new-btn-sm:hover { background: #e4e4e4; color: #111; }
+    html[data-theme="light"] .new-menu { background: #fff; border-color: #d0d0d0; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    html[data-theme="light"] .new-menu-item { color: #333; }
+    html[data-theme="light"] .new-menu-item:hover { background: #e0e8ff; color: #111; }
+    html[data-theme="light"] .settings-group-label { color: #888; }
+    html[data-theme="light"] .settings-file { color: #555; }
+    html[data-theme="light"] .settings-file:hover { background: #eaeaea; color: #4a6cf7; }
+    html[data-theme="light"] .settings-hint { color: #888; border-top-color: #e4e4e4; }
+    html[data-theme="light"] .project-heading { color: #888; }
+    html[data-theme="light"] .project-link { color: #555; }
+    html[data-theme="light"] .project-link:hover { background: #eaeaea; color: #111; }
+
+    /* Right panel tabs */
+    html[data-theme="light"] .right-tab { color: #888; }
+    html[data-theme="light"] .right-tab.active { color: #333; border-bottom-color: #4a6cf7; }
+
+    /* Toasts */
+    html[data-theme="light"] .toast { background: #fff; border-color: #d0d0d0; color: #333; }
+
+    /* File tree (scoped via :global workaround) */
+    html[data-theme="light"] .file-node, html[data-theme="light"] .dir-node { color: #444; }
+    html[data-theme="light"] .file-node:hover, html[data-theme="light"] .dir-node:hover { background: #eaeaea; }
+    html[data-theme="light"] .file-node.active { background: #dce8ff; color: #2a4adf; }
+
+    /* Markdown renderer */
+    html[data-theme="light"] #page-slot { background: #fff; color: #1a1a1a; }
+    html[data-theme="light"] #page-slot pre { background: #f0f0f0; border-color: #d0d0d0; }
+    html[data-theme="light"] #page-slot code { background: #eaeaea; color: #c0392b; }
+    html[data-theme="light"] #page-slot blockquote { border-left-color: #4a6cf7; background: #f0f4ff; }
+    html[data-theme="light"] #page-slot table th { background: #eaeaea; }
+    html[data-theme="light"] #page-slot table td { border-color: #d0d0d0; }
+    html[data-theme="light"] #page-slot a { color: #4a6cf7; }
 
     /* ── System theme: follows OS preference ─────────────────────────────── */
     @media (prefers-color-scheme: light) {
       html[data-theme="system"] {
         --bg:       #f5f5f5;
         --bg-2:     #ffffff;
-        --bg-3:     #e8e8e8;
-        --bg-hover: #ebebeb;
+        --bg-3:     #e4e4e4;
+        --bg-hover: #eaeaea;
         --fg:       #1a1a1a;
         --fg-dim:   #444;
         --muted:    #777;
@@ -681,13 +714,20 @@
         --accent:   #4a6cf7;
         color-scheme: light;
       }
-      html[data-theme="system"] body { background: var(--bg); color: var(--fg); }
+      html[data-theme="system"] body, html[data-theme="system"] .app-layout { background: #f0f0f0; color: #1a1a1a; }
       html[data-theme="system"] .app-toolbar { background: #fff; border-bottom-color: #d0d0d0; }
-      html[data-theme="system"] .app-footer  { background: #fff; border-top-color: #d0d0d0; }
-      html[data-theme="system"] .activity-bar { background: #f0f0f0; border-right-color: #d0d0d0; }
+      html[data-theme="system"] .app-footer  { background: #fff; border-top-color: #d0d0d0; color: #555; }
+      html[data-theme="system"] .activity-bar { background: #e8e8e8; border-right-color: #d0d0d0; }
       html[data-theme="system"] .act-btn { color: #888; }
-      html[data-theme="system"] .act-btn:hover { background: #ebebeb; color: #333; }
-      html[data-theme="system"] .act-btn.active { color: #333; background: #e0e8ff; border-left-color: #4a6cf7; }
+      html[data-theme="system"] .act-btn:hover { background: #ddd; color: #333; }
+      html[data-theme="system"] .act-btn.active { color: #333; background: #dce8ff; border-left-color: #4a6cf7; }
+      html[data-theme="system"] .sidebar-header { background: #fff; border-bottom-color: #d0d0d0; }
+      html[data-theme="system"] .new-btn, html[data-theme="system"] .new-btn-sm { border-color: #bbb; color: #555; }
+      html[data-theme="system"] .new-menu { background: #fff; border-color: #d0d0d0; }
+      html[data-theme="system"] .new-menu-item { color: #333; }
+      html[data-theme="system"] .new-menu-item:hover { background: #e0e8ff; }
+      html[data-theme="system"] #page-slot { background: #fff; color: #1a1a1a; }
+      html[data-theme="system"] .toast { background: #fff; border-color: #d0d0d0; color: #333; }
     }
   </style>
 </svelte:head>
