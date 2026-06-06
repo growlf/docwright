@@ -52,6 +52,9 @@ jobs:
       - name: Test MCP plan mutation tools
         run: python3 test/mcp/test-plan-tools.py
 
+      - name: Test cross-tool compatibility (skills table, agent roles, spec docs)
+        run: npm run test:compat
+
   docker:
     name: Docker build + health check
     runs-on: ubuntu-latest

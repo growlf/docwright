@@ -6,6 +6,12 @@
 #   - Editing a file to flip approved: false → approved: true
 #   - Any direct Write/Edit to plans/*.md (use MCP tools instead)
 #
+# Agent role env vars (read by this hook, set by the calling tool):
+#   DOCWRIGHT_AGENT_ROLE — set by OpenCode sessions (orchestrator|code|reviewer)
+#   CLAUDE_AGENT_ROLE    — set by Claude Code sessions (orchestrator|code|reviewer)
+#   Effective role = first of DOCWRIGHT_AGENT_ROLE, CLAUDE_AGENT_ROLE, "orchestrator" (default)
+#   Phase 2: code-role agents blocked from governance dir writes mechanically here.
+#
 # Stdin: JSON { tool_name, tool_input: { file_path, content|old_string|new_string } }
 # Exit 0  → allow the write
 # Exit 1  → block (with JSON stop reason)
@@ -14,6 +20,9 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INPUT=$(cat)
+
+# Resolve effective agent role (Phase 2 will enforce code-role boundaries here)
+EFFECTIVE_AGENT_ROLE="${DOCWRIGHT_AGENT_ROLE:-${CLAUDE_AGENT_ROLE:-orchestrator}}"
 
 py() { python3 -c "$1" 2>/dev/null || echo ""; }
 

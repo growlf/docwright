@@ -257,6 +257,7 @@
   async function saveFrontmatter(fm?: Record<string, any>) {
     // When called from the layout's PropertiesPane, fm contains the mutated
     // frontmatter — apply it to local state before saving
+    const prevApproved = frontmatter?.approved;
     const prevStatus = frontmatter?.status;
     if (fm) frontmatter = { ...fm };
     // If the plan body was edited (not just frontmatter), reset tests_defined
@@ -291,6 +292,21 @@
         const { error } = await transRes.json().catch(() => ({ error: 'Transition failed' }));
         showToast(`⚠ ${error}`, 5000);
       }
+    }
+
+    // When a proposal is saved with approved: true and is still in proposals/ root
+    // (not proposals/approved/), trigger the full approval flow — move + plan creation.
+    // This catches the case where approved: true was set via frontmatter editing
+    // rather than by clicking the Approve button.
+    const fp = filePath();
+    if (
+      docType === 'proposal' &&
+      frontmatter?.approved === true &&
+      prevApproved !== true &&
+      fp.startsWith('proposals/') &&
+      !fp.startsWith('proposals/approved/')
+    ) {
+      await handleApprove();
     }
   }
 

@@ -92,6 +92,13 @@ export async function POST({ request }) {
   const title       = getFmField(text, 'title') || safe.replace('.md', '');
   const completedDate = new Date().toISOString().slice(0, 10);
 
+  // Inject completed_date into plan frontmatter if missing, so the archived
+  // file satisfies the pre-commit hook's location-invariant check.
+  if (!getFmField(text, 'completed_date')) {
+    text = text.replace(/^(status:\s*completed)$/m, `$1\ncompleted_date: ${completedDate}`);
+    fs.writeFileSync(planPath, text, 'utf-8');
+  }
+
   // Move plan → completed
   fs.mkdirSync(path.dirname(destPath), { recursive: true });
   fs.renameSync(planPath, destPath);

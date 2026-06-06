@@ -4,23 +4,30 @@
 
 ## Available skills
 
+<!-- skills-table-start -->
+
 DocWright ships workflow skills under `.opencode/skills/`. Each directory
 contains a `SKILL.md` with detection heuristics and step-by-step instructions.
-When a task matches a skill's triggers, read its `SKILL.md` and follow the process:
+When a task matches a skill's triggers, read its `SKILL.md` and follow the process.
 
-| Skill | For tasks involving |
-|-------|---------------------|
-| `docwright-raw-proposal` | detecting and drafting raw/incomplete proposals |
-| `docwright-proposal` | creating new proposals with proper frontmatter |
-| `docwright-lifecycle` | lifecycle transitions (proposal→plan→completed) |
-| `docwright-git` | git commit standards |
-| `endsession` | session shutdown and note capture |
-| `docwright-security` | credential management and system hardening |
-| `docwright-infra` | infrastructure placement and reliability |
-| `docwright-backup` | backup and recovery procedures |
-| `docwright-project` | project registry and vault switching |
-| `docwright-templates` | document format templates |
-| `docwright-tools` | security audit tool references |
+> **Auto-generated** by `scripts/sync-claude-skills.ts`. Do not edit manually.
+> Run `npm run sync:skills` after adding, removing, or renaming a skill.
+
+| Skill | Description | SKILL.md |
+|-------|-------------|----------|
+| `docwright-backup` | Backup and recovery procedures for infrastructure and configuration | [`.opencode/skills/docwright-backup/SKILL.md`](.opencode/skills/docwright-backup/SKILL.md) |
+| `docwright-git` | Git commit standards for DocWright projects | [`.opencode/skills/docwright-git/SKILL.md`](.opencode/skills/docwright-git/SKILL.md) |
+| `docwright-infra` | Infrastructure placement and reliability standards | [`.opencode/skills/docwright-infra/SKILL.md`](.opencode/skills/docwright-infra/SKILL.md) |
+| `docwright-lifecycle` | DocWright document lifecycle management - proposals, plans, completed/canceled transitions | [`.opencode/skills/docwright-lifecycle/SKILL.md`](.opencode/skills/docwright-lifecycle/SKILL.md) |
+| `docwright-project` | Project registry and vault switching for multi-project DocWright workspaces | [`.opencode/skills/docwright-project/SKILL.md`](.opencode/skills/docwright-project/SKILL.md) |
+| `docwright-proposal` | Create properly templated proposals with required frontmatter | [`.opencode/skills/docwright-proposal/SKILL.md`](.opencode/skills/docwright-proposal/SKILL.md) |
+| `docwright-raw-proposal` | Detect raw proposals and draft them into structured form | [`.opencode/skills/docwright-raw-proposal/SKILL.md`](.opencode/skills/docwright-raw-proposal/SKILL.md) |
+| `docwright-security` | Security practices for credential management, network access, and system hardening | [`.opencode/skills/docwright-security/SKILL.md`](.opencode/skills/docwright-security/SKILL.md) |
+| `docwright-templates` | Document format templates for audit plans, mitigation tracking, and assessment reports | [`.opencode/skills/docwright-templates/SKILL.md`](.opencode/skills/docwright-templates/SKILL.md) |
+| `docwright-tools` | Security audit and hardening tools reference — lynis, rkhunter, fail2ban, firewalld, OpenSCAP, auditd | [`.opencode/skills/docwright-tools/SKILL.md`](.opencode/skills/docwright-tools/SKILL.md) |
+| `endsession` | Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status | [`.opencode/skills/endsession/SKILL.md`](.opencode/skills/endsession/SKILL.md) |
+
+<!-- skills-table-end -->
 
 ## What this repo is
 
@@ -109,6 +116,13 @@ by a pre-commit hook, MCP tool, dispatch validation, UI constraint, or CI check,
 it must be. Relying on AI memory or human discipline to enforce a process is a
 known failure mode. Ask constantly: "Can I enforce this with code?" If yes, do it.
 See [[policies/core/code-over-memory.md]].
+
+**One-off scripts must trigger formalization proposals.** When you run a one-off
+bash script or multi-step command that operates on multiple files or handles a
+recurring lifecycle event, stop and ask: "Have I done this before?" If yes —
+create a `priority: 4` proposal for the formalized version (skill, MCP tool, npm
+script, dispatch endpoint, or CI check) before moving on. One-offs are memory.
+Formalized tools are code. See [[.opencode/rules/one-off-formalization.md]].
 
 **Multiple perspectives produce better outcomes.** No single AI model, and no single
 person, has complete knowledge or perfect judgment. DocWright was built by triangulating

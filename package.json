@@ -29,10 +29,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
+    "sync:skills": "tsx scripts/sync-claude-skills.ts",
     "test:dispatch": "mocha --require tsx/cjs 'test/dispatch/**/*.test.ts'",
     "test:hooks:pending": "node test/hooks/test-pending-steps.js",
     "test:hooks": "bash test/hooks/test-lifecycle-hook.sh",
-    "test": "npm run test:dispatch && npm run test:hooks:pending && npm run test:hooks",
+    "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
+    "test": "npm run test:dispatch && npm run test:hooks:pending && npm run test:hooks && npm run test:compat",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile"
   },
