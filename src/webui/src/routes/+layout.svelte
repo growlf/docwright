@@ -673,23 +673,6 @@
 
     /* Sidebar */
     html[data-theme="light"] .sidebar-header { background: #fff; border-bottom-color: #d0d0d0; }
-
-    /* Status page — scoped Svelte classes have higher specificity than CSS vars alone */
-    html[data-theme="light"] .section-header { background: #e8e8e8; color: #1a1a1a; }
-    html[data-theme="light"] .section-header:hover { background: #ddd; }
-    html[data-theme="light"] .section { border-color: #d0d0d0; }
-    html[data-theme="light"] .item-row:hover { background: #eaeaea; }
-    html[data-theme="light"] .item-row td { color: #444; }
-    html[data-theme="light"] .item-title { color: #1a1a1a; }
-    html[data-theme="light"] .badge { background: #e0e0e0; color: #555; border-color: #ccc; }
-    html[data-theme="light"] .audit-controls,
-    html[data-theme="light"] .audit-toolbar { background: #f0f0f0; border-bottom-color: #d0d0d0; }
-    html[data-theme="light"] .audit-input,
-    html[data-theme="light"] .audit-select { background: #fff; border-color: #ccc; color: #333; }
-    html[data-theme="light"] .audit-finding:hover { background: #eaeaea; }
-    html[data-theme="light"] .gate-item { background: #fff; border-color: #d0d0d0; }
-    html[data-theme="light"] .gate-item:hover { background: #eaeaea; border-color: #bbb; }
-    html[data-theme="light"] .gate-title { color: #1a1a1a; }
     html[data-theme="light"] .sidebar-view-label { color: #888; }
     html[data-theme="light"] .new-btn, html[data-theme="light"] .new-btn-sm { border-color: #bbb; color: #555; }
     html[data-theme="light"] .new-btn:hover, html[data-theme="light"] .new-btn-sm:hover { background: #e4e4e4; color: #111; }

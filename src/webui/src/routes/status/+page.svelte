@@ -601,4 +601,24 @@
   .finding-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: $muted; }
   .audit-input   { @include inline-input; font-size: 11px; padding: 4px 8px; flex: 1; min-width: 120px; border-radius: 4px; &:focus { border-color: $muted; } }
   .audit-select  { background: $bg-2; border: 1px solid $border; border-radius: 4px; color: $fg-dim; font-size: 11px; padding: 4px 6px; }
+
+  // ── Light theme — scoped via :global so Svelte appends the scope hash ────────
+  // Pattern: :global(html[data-theme="light"]) .scoped-class compiles to
+  //   html[data-theme="light"] .scoped-class.s-hash — beats the base rule.
+  :global(html[data-theme="light"]) {
+    .section { border-color: #d0d0d0; }
+    .section-header { background: #e8e8e8; color: #1a1a1a; &:hover { background: #ddd; } }
+    .badge { background: #e0e0e0; color: #555; border-color: #ccc; }
+    .item-row { border-bottom-color: #e8e8e8; &:hover { background: #f0f0f0; } td { color: #444; } }
+    .item-title { color: #1a1a1a; }
+    .view-toggle { background: #e8e8e8; border-color: #ccc; }
+    .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d0d0d0; color: #1a1a1a; } }
+    .audit-controls, .audit-toolbar { background: #f0f0f0; border-bottom-color: #d0d0d0; }
+    .audit-input, .audit-select { background: #fff; border-color: #ccc; color: #333; }
+    .audit-finding { border-bottom-color: #e8e8e8; &:hover { background: #f0f0f0; } }
+    .audit-findings-header { background: #f5f0d0; color: #7a6000; }
+    .gate-item { background: #fff; border-color: #d0d0d0; &:hover { background: #f5f5f5; border-color: #bbb; } }
+    .gate-title { color: #1a1a1a; }
+    .gate-meta { color: #666; }
+  }
 </style>
