@@ -155,3 +155,17 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Updated CLAUDE.md skills table
 
 **Session note:** `docs/session-notes/session_note_202606052330.md`
+
+---
+
+## Session: 2026-06-06 — Startup script overhaul + raw proposal scan
+
+**Focus:** Fix Vite 404, rewrite DocWright launcher, scan raw proposals
+
+**Completed:**
+- [x] Diagnosed Vite 404 — root cause: running from repo root instead of `src/webui/`
+- [x] Rewrote `~/.local/bin/DocWright` — background services, auto CORS, preflight checks, log files, session resume hints
+- [x] Raw proposal scan (docwright-raw-proposal skill) — 57 proposals scanned, 1 genuinely raw found
+- [x] Drafted `policies-should-be-a-button-on-the-leftmost-button-bar.md` for review
+
+**Session note:** `docs/session-notes/session_note_202606060030.md`
