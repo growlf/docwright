@@ -158,6 +158,19 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 ---
 
+## Session: 2026-06-05 — Raw proposal drafting
+
+**Focus:** Detect and draft raw proposals via docwright-raw-proposal skill
+
+**Completed:**
+- [x] Scanned all 61 proposals for rawness — 2 found
+- [x] Drafted `policies-should-be-a-button-on-the-leftmost-button-bar.md` with full structure
+- [x] `misc.md` confirmed as intentional inbox — left for collation feature
+
+**Session note:** `docs/session-notes/session_note_202606051928.md`
+
+---
+
 ## Session: 2026-06-06 — Startup script overhaul + raw proposal scan
 
 **Focus:** Fix Vite 404, rewrite DocWright launcher, scan raw proposals
@@ -169,3 +182,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Drafted `policies-should-be-a-button-on-the-leftmost-button-bar.md` for review
 
 **Session note:** `docs/session-notes/session_note_202606060030.md`
+
+---
+
+## Session: 2026-06-06 — Phase 1 closure, Docker, CI fix, Phase 2 planning
+
+**Focus:** Phase 1 close-out, containerization, v0.1.3, plan bundle proposals
+
+**Completed:**
+- [x] Closed phase-1-containerization — Dockerfile, compose, health endpoint, CI job, live tested
+- [x] Closed phase-1-plan-step-enforcement — all 21 steps verified, gate waived
+- [x] Fixed Node 22 CI failure — ts-node/register → tsx/cjs for dispatch tests
+- [x] Tagged v0.1.3 and pushed; CI passed, Docker image on ghcr.io
+- [x] DocWright launcher: added --docker mode, reads .env automatically
+- [x] .env.example committed; .env.* added to .gitignore pattern
+- [x] dw-mcp wired into Claude Code via .mcp.json
+- [x] Surveyed 45 unapproved proposals; identified 3 plan bundles
+- [x] Drafted and committed Phase 2 UI Polish Bundle proposal (7 deliverables)
+- [x] Proposal approved by NetYeti; plan file auto-generated (untracked)
+
+**Session note:** `docs/session-notes/session_note_202606061400.md`
