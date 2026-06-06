@@ -4,6 +4,8 @@
 credentials*
 secrets*
 .env
+.env.*
+!.env.example
 
 # Temp files
 /tmp/*
@@ -61,3 +63,4 @@ spike/
 
 # Source maps
 *.js.map
+.logs/
