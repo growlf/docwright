@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
    * Panel — unified side panel component.
-   * Provides: open/close animation, collapsed strip, mobile overlay + scrim.
-   * Children provide all inner content (header, body, tabs, etc.).
+   * Provides: open/close animation, collapsed strip, mobile overlay + scrim,
+   * and a drag handle for resizing (desktop only, persisted to localStorage).
    *
    * Desktop: inline flex item, collapses to a 32px clickable strip.
    * Mobile:  position: fixed overlay sliding from the appropriate edge.
@@ -10,35 +10,67 @@
 
   import type { Snippet } from 'svelte';
 
+  const DEFAULT_WIDTH = { left: 260, right: 280 };
+  const MIN_WIDTH     = { left: 180, right: 200 };
+  const MAX_WIDTH     = { left: 480, right: 480 };
+
   let {
     side,
-    width    = side === 'left' ? 260 : 280,
     open     = $bindable(true),
     children,
   }: {
     side:      'left' | 'right';
-    width?:    number;
     open?:     boolean;
     children?: Snippet;
   } = $props();
 
   const LS_KEY       = $derived(`panel-open-${side}`);
+  const LS_WIDTH_KEY = $derived(`panel-width-${side}`);
   const chevronClose = $derived(side === 'left' ? '‹' : '›');
   const chevronOpen  = $derived(side === 'left' ? '›' : '‹');
 
+  let panelWidth = $state(DEFAULT_WIDTH[side]);
+  let dragging   = $state(false);
+
   $effect.pre(() => {
     if (typeof localStorage === 'undefined') return;
-    const stored = localStorage.getItem(LS_KEY);
-    if (stored !== null) {
-      open = stored === 'true';
-    } else {
-      open = window.innerWidth > 768;
-    }
+    const storedOpen = localStorage.getItem(LS_KEY);
+    if (storedOpen !== null) open = storedOpen === 'true';
+    else open = window.innerWidth > 768;
+
+    const storedW = localStorage.getItem(LS_WIDTH_KEY);
+    if (storedW) panelWidth = Math.min(MAX_WIDTH[side], Math.max(MIN_WIDTH[side], parseInt(storedW, 10)));
   });
 
   function toggle() {
     open = !open;
     if (typeof localStorage !== 'undefined') localStorage.setItem(LS_KEY, String(open));
+  }
+
+  function startResize(e: MouseEvent) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragging = true;
+    const startX = e.clientX;
+    const startW = panelWidth;
+
+    function onMove(ev: MouseEvent) {
+      const delta = side === 'left' ? ev.clientX - startX : startX - ev.clientX;
+      panelWidth = Math.min(MAX_WIDTH[side], Math.max(MIN_WIDTH[side], startW + delta));
+    }
+    function onUp() {
+      dragging = false;
+      if (typeof localStorage !== 'undefined') localStorage.setItem(LS_WIDTH_KEY, String(panelWidth));
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
+  function resetWidth() {
+    panelWidth = DEFAULT_WIDTH[side];
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(LS_WIDTH_KEY);
   }
 </script>
 
@@ -47,7 +79,8 @@
 <div class="panel-scrim" class:visible={open} onclick={() => open = false}
   role="presentation" aria-hidden="true"></div>
 
-<div class="panel panel-{side}" class:open style="--w:{width}px">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="panel panel-{side}" class:open class:dragging style="--w:{panelWidth}px">
 
   <!-- Collapsed strip (desktop only — click to reopen) -->
   {#if !open}
@@ -61,6 +94,15 @@
   {#if open}
     <div class="panel-content">
       {@render children?.()}
+    </div>
+    <!-- Resize handle (desktop only) — drag to resize, double-click to reset -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="resize-handle resize-handle-{side}"
+      onmousedown={startResize}
+      ondblclick={resetWidth}
+      title="Drag to resize · Double-click to reset"
+      role="separator"
+      aria-orientation="vertical">
     </div>
     <button class="panel-edge-toggle panel-edge-{side}" onclick={toggle}
       title="Collapse panel" aria-label="Collapse panel">
@@ -95,6 +137,7 @@
     flex-shrink: 0;
     transition: width 0.2s ease;
   }
+  .panel.dragging { transition: none; user-select: none; }
   .panel-left  { width: var(--w); border-right: 1px solid #222; }
   .panel-right { width: var(--w); border-left:  1px solid #2a2a2a; }
   .panel-left:not(.open)  { width: 32px; }
@@ -163,5 +206,32 @@
   /* On mobile: hide the edge toggle — panel closes via scrim */
   @media (max-width: 768px) {
     .panel-edge-toggle { display: none; }
+  }
+
+  /* ── Resize handle (desktop only) ── */
+  .resize-handle {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 5px;
+    cursor: col-resize;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .resize-handle:hover, .panel.dragging .resize-handle { opacity: 1; }
+  .resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent, #7c6af7);
+    opacity: 0.6;
+  }
+  .resize-handle-left  { right: 0; }
+  .resize-handle-left::after  { right: 0; }
+  .resize-handle-right { left: 0; }
+  .resize-handle-right::after { left: 0; }
+  @media (max-width: 768px) {
+    .resize-handle { display: none; }
   }
 </style>
