@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showPropsPane } from './pane';
+  import { showPropsPane, featureFlags } from './pane';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -9,6 +9,7 @@
     onsave,
     onapprove,
     onfindrelated,
+    onplan,
   }: {
     frontmatter: Record<string, any>;
     body?: string;
@@ -17,6 +18,7 @@
     onsave?: (fm: Record<string, any>) => void;
     onapprove?: (fm: Record<string, any>) => void;
     onfindrelated?: () => void;
+    onplan?: () => void;
   } = $props();
 
   const SELECT_OPTIONS: Record<string, string[]> = {
@@ -34,15 +36,27 @@
 
   const PREDEFINED_CHIPS: Record<string, string[]> = {
     category: ['ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'infrastructure', 'profiles', 'security', 'testing', 'documentation'],
-    tags:     ['ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'phase-1', 'phase-2', 'phase-3', 'improvements', 'polish', 'bug'],
+    tags:     [], // populated dynamically from vault
   };
 
+  // Load vault tags for autocomplete
+  let vaultTags = $state<string[]>([]);
+  fetch('/api/tags').then(r => r.json()).then(d => {
+    vaultTags = (d.tags ?? []).map((t: { tag: string }) => t.tag);
+    PREDEFINED_CHIPS.tags = vaultTags.slice(0, 24);
+  }).catch(() => {});
+
+  function normalizeTag(raw: string): string {
+    return raw.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+
   function togglePredefinedChip(key: string, val: string) {
+    const normalized = key === 'tags' ? normalizeTag(val) : val;
     const current: string[] = Array.isArray(frontmatter[key]) ? frontmatter[key] : [];
-    if (current.includes(val)) {
-      setField(key, current.filter(v => v !== val));
+    if (current.includes(normalized)) {
+      setField(key, current.filter(v => v !== normalized));
     } else {
-      setField(key, [...current, val]);
+      setField(key, [...current, normalized]);
     }
   }
 
@@ -68,9 +82,12 @@
   function addChip(key: string, e: KeyboardEvent) {
     if (e.key !== 'Enter') return;
     const input = e.target as HTMLInputElement;
-    const val = input.value.trim();
+    const raw = input.value.trim();
+    if (!raw) return;
+    const val = key === 'tags' ? normalizeTag(raw) : raw;
     if (!val) return;
-    setField(key, [...(frontmatter[key] ?? []), val]);
+    const current: string[] = frontmatter[key] ?? [];
+    if (!current.includes(val)) setField(key, [...current, val]);
     input.value = '';
     e.preventDefault();
   }
@@ -146,6 +163,10 @@
         {:else}
           <button class="act unapprove" onclick={unapprove}
             title="Revoke approval — sets approved: false">Unapprove</button>
+        {/if}
+        {#if frontmatter.approved && $featureFlags.showPlanButton}
+          <button class="act plan" onclick={() => onplan?.()}
+            title="Scan related proposals and scaffold a plan — bundles this proposal with linked items">Plan →</button>
         {/if}
         <button class="act related" onclick={() => onfindrelated?.()}
           title="Scan vault for proposals with similar content using keyword matching">Find Related</button>
@@ -289,6 +310,8 @@
   .act:hover { background: #222; color: #fff; }
   .act.approve  { border-color: #2b5b2b; color: #6d6; }
   .act.approve:hover  { background: #1a3a1a; }
+  .act.plan  { border-color: #5b2b84; color: #b58; }
+  .act.plan:hover  { background: #2a1a3a; }
   .act.unapprove { border-color: #5b5b2b; color: #cc6; }
   .act.start    { border-color: #2b5b84; color: #58a6ff; }
   .act.start:hover    { background: #1a3a5a; }
