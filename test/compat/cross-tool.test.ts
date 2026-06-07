@@ -1,9 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { strict as assert } from 'assert';
 import { describe, it } from 'mocha';
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SKILLS_DIR = path.join(REPO_ROOT, '.opencode', 'skills');
 const CLAUDE_MD = path.join(REPO_ROOT, 'CLAUDE.md');
 const TABLE_START = '<!-- skills-table-start -->';
