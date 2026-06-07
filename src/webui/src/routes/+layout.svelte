@@ -6,7 +6,9 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
-  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, improveResult, improveLoading, showImproveTab } from '$lib/pane';
+import {
+  showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, showImproveTab, showReviewTab
+} from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
@@ -54,6 +56,9 @@
   let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
   let prf = $state('');       $effect(() => { const u = planReviewFindings.subscribe(v => prf = v); return u; });
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
+  let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
+  let pri = $state('');       $effect(() => { const u = planReviewImproved.subscribe(v => pri = v); return u; });
+  let prc = $state('');       $effect(() => { const u = planReviewChanges.subscribe(v => prc = v); return u; });
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
@@ -83,6 +88,9 @@
     collationLoading.set(false);
     planReviewFindings.set('');
     planReviewLoading.set(false);
+    planReviewStatus.set('');
+    planReviewImproved.set('');
+    planReviewChanges.set('');
     improveResult.set(null);
     improveLoading.set(false);
     // untrack: rightTab reads/writes must not become effect dependencies —
@@ -157,32 +165,59 @@
     rightTab = 'review';
     showRightPanel = true;
     planReviewFindings.set('');
+    planReviewStatus.set('');
+    planReviewImproved.set('');
+    planReviewChanges.set('');
     planReviewLoading.set(true);
-    showToast('Running AI review — this may take a moment', 5000);
     try {
       const res = await fetch('/api/plan-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
-      const data = await res.json();
-      planReviewFindings.set(data.findings || data.error || 'No findings returned.');
+      const reader = res.body?.getReader();
+      if (!reader) { planReviewFindings.set('No response stream'); return; }
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for (const part of parts) {
+          const lines = part.split('\n');
+          const eventLine = lines.find(l => l.startsWith('event: '));
+          const dataLine = lines.find(l => l.startsWith('data: '));
+          if (!dataLine) continue;
+          const event = eventLine ? eventLine.slice(7).trim() : '';
+          try {
+            const data = JSON.parse(dataLine.slice(6));
+            if (event === 'token') {
+              accumulated += data.text;
+              planReviewFindings.set(accumulated);
+            } else if (event === 'status') {
+              planReviewStatus.set(data.message);
+            } else if (event === 'done') {
+              planReviewChanges.set(data.changes || '');
+              planReviewImproved.set(data.improved_body || '');
+              planReviewFindings.set(data.findings || accumulated);
+            }
+          } catch { /* skip malformed JSON */ }
+        }
+      }
     } catch (e: any) {
       planReviewFindings.set(`Error: ${e}`);
     } finally {
       planReviewLoading.set(false);
+      planReviewStatus.set('');
     }
   }
 
-  async function handleWriteReview(findings: string) {
+  async function handleAcceptReview(improved: string) {
     const fp = $currentDoc.filePath;
-    if (!fp || !findings) return;
-    const body = $currentDoc.body ?? '';
-    // Replace existing Critical Review section or append a new one
-    const marker = '## Critical Review';
-    const updated = body.includes(marker)
-      ? body.replace(/## Critical Review[\s\S]*$/, `${marker}\n\n${findings}`)
-      : body.trimEnd() + `\n\n${marker}\n\n${findings}`;
+    if (!fp || !improved) return;
     const fm = $currentDoc.frontmatter ?? {};
     const fmLines = Object.entries(fm)
       .filter(([k]) => k !== '_path')
@@ -192,18 +227,31 @@
         if (v === null || v === undefined || v === '') return `${k}:`;
         return `${k}: ${v}`;
       }).join('\n');
-    const newRaw = `---\n${fmLines}\n---\n${updated}`;
+    const newRaw = `---\n${fmLines}\n---\n${improved}`;
     const res = await fetch('/api/write?path=' + encodeURIComponent(fp), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: newRaw }),
     });
     if (res.ok) {
-      showToast('Critical Review written to plan', 3000);
+      showToast('Plan updated with AI improvements', 3000);
       rightTab = 'properties';
       planReviewFindings.set('');
+      planReviewStatus.set('');
+      planReviewChanges.set('');
+      planReviewImproved.set('');
     }
   }
+
+  // React to signal to switch to Review tab
+  $effect(() => {
+    if ($showReviewTab) {
+      rightTab = 'review';
+      showRightPanel = true;
+      showReviewTab.set(false);
+      handleReview();
+    }
+  });
 
   // React to on-save trigger from page signalling to open Improve tab
   $effect(() => {
@@ -323,6 +371,48 @@
     });
   }
 
+  function newResearch() {
+    showNewMenu = false;
+    let title = prompt('Research title:');
+    if (!title) return;
+    let question = prompt('Research question (one sentence):');
+    if (!question) return;
+    const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') + '.md';
+    const date = new Date().toISOString().slice(0, 10);
+    const content =
+      '---\n' +
+      `title: "${title}"\n` +
+      'status: active\n' +
+      `question: "${question}"\n` +
+      'conclusion: open\n' +
+      'author: NetYeti\n' +
+      `created: ${date}\n` +
+      'author-role: contributor\n' +
+      'tags: []\n' +
+      'linked_proposals: []\n' +
+      'related_research: []\n' +
+      '---\n\n' +
+      `# ${title}\n\n` +
+      '## Questions Explored\n\n' +
+      `- ${question}\n\n` +
+      '## Approaches Compared\n\n' +
+      '| Approach | Pros | Cons |\n' +
+      '|----------|------|------|\n' +
+      '| Option A | | |\n' +
+      '| Option B | | |\n\n' +
+      '## Findings\n\n\n\n' +
+      '## Sources\n\n- \n\n' +
+      '## Conclusion\n\n' +
+      '> Update `status: concluded` and set `conclusion:` when done.\n';
+    fetch('/api/write?path=research/' + slug, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    }).then(r => {
+      if (r.ok) goto('/research/' + slug.replace(/\.md$/, '') + '?new=1');
+    });
+  }
+
   function loadProjects() {
     fetch('/api/registry')
       .then(r => r.json())
@@ -399,6 +489,7 @@
         <div class="new-menu" onclick={(e) => e.stopPropagation()}>
           <button class="new-menu-item" onclick={newFile}>New File</button>
           <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
+          <button class="new-menu-item" onclick={newResearch}>New Research</button>
         </div>
       {/if}
     </div>
@@ -479,6 +570,7 @@
           <div class="settings-group-label">Templates</div>
           <a class="settings-file" href="/templates/proposal-template">proposal-template.md</a>
           <a class="settings-file" href="/templates/plan-template">plan-template.md</a>
+          <a class="settings-file" href="/templates/research-template">research-template.md</a>
         </div>
         <div class="settings-group">
           <div class="settings-group-label">Project</div>
@@ -526,8 +618,8 @@
       </button>
       {#if $currentDoc.docType === 'plan'}
         <button class="right-tab" class:active={rightTab === 'review'}
-          onclick={handleReview}>
-          Review{prl ? ' ⏳' : prf ? ' ✓' : ''}
+          onclick={() => showReviewTab.set(true)}>
+          Review{prl ? ' ⏳' : pri ? ' ✓' : ''}
         </button>
       {/if}
       {#if $currentDoc.docType === 'proposal'}
@@ -550,7 +642,6 @@
             onapprove={$currentDoc.onApprove}
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onplan={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
-            onreview={handleReview}
             onimprove={handleImprove}
           />
         {:else}
@@ -569,9 +660,12 @@
     {:else if rightTab === 'review'}
       <PlanReviewPanel
         findings={prf}
+        status={prs}
+        changes={prc}
+        improved={pri}
         loading={prl}
-        onwritetoplan={handleWriteReview}
-        ondismiss={() => { rightTab = 'properties'; planReviewFindings.set(''); }}
+        onaccept={handleAcceptReview}
+        ondismiss={() => { rightTab = 'properties'; planReviewFindings.set(''); planReviewStatus.set(''); planReviewChanges.set(''); planReviewImproved.set(''); }}
         onrerun={handleReview}
       />
     {:else}
