@@ -117,6 +117,20 @@ tests_defined: false
   if (!fs.existsSync(path.dirname(planPath))) fs.mkdirSync(path.dirname(planPath), { recursive: true });
   fs.writeFileSync(planPath, planContent, 'utf-8');
 
+  // Write consumed_by back into the approved proposal so the UI can link to the plan
+  const approvedRaw = fs.readFileSync(dst, 'utf-8');
+  const fmMatch = approvedRaw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (fmMatch) {
+    let fmContent = fmMatch[1];
+    const body = fmMatch[2];
+    if (fmContent.includes('consumed_by:')) {
+      fmContent = fmContent.replace(/^consumed_by:.*$/m, `consumed_by: ${planRel}`);
+    } else {
+      fmContent += `\nconsumed_by: ${planRel}`;
+    }
+    fs.writeFileSync(dst, `---\n${fmContent}\n---\n${body}`);
+  }
+
   logAudit('APPROVED', `proposal/${norm} → proposals/approved/ + plan created`);
 
   return json({

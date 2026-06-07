@@ -208,7 +208,10 @@
           <button class="act unapprove" onclick={unapprove}
             title="Revoke approval — sets approved: false">Unapprove</button>
         {/if}
-        {#if frontmatter.approved && $featureFlags.showPlanButton}
+        {#if frontmatter.consumed_by}
+          <a class="act plan" href="/{String(frontmatter.consumed_by).replace(/\.md$/, '')}"
+            title="Navigate to the plan that was created from this proposal">View Plan →</a>
+        {:else if frontmatter.approved && $featureFlags.showPlanButton}
           <button class="act plan" onclick={() => onplan?.()}
             title="Scan related proposals and scaffold a plan — bundles this proposal with linked items">Plan →</button>
         {/if}
@@ -220,6 +223,10 @@
         </button>
       {/if}
       {#if docType === 'plan'}
+        {#if frontmatter.status === 'draft' || frontmatter.status === 'proposal'}
+          <button class="act approve" onclick={() => setPlanStatus('approved')}
+            title="Mark plan as approved — enables the Start button">Approve</button>
+        {/if}
         {#if frontmatter.status === 'approved'}
           <button class="act start" onclick={() => setPlanStatus('in-progress')}
             title="Set status: in-progress — marks this plan as actively being worked">Start</button>
