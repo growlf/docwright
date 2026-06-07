@@ -6,12 +6,13 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
-  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading } from '$lib/pane';
+  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, improveResult, improveLoading, showImproveTab } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
+  import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
   import PoliciesPanel from '$lib/PoliciesPanel.svelte';
   import TagsPanel from '$lib/TagsPanel.svelte';
@@ -45,7 +46,7 @@
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
-  let rightTab     = $state<'properties' | 'related' | 'review'>('properties');
+  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve'>('properties');
 
   // Subscribe to shared collation stores
   let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
@@ -53,6 +54,9 @@
   let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
   let prf = $state('');       $effect(() => { const u = planReviewFindings.subscribe(v => prf = v); return u; });
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
+  let ir  = $state<{ improved: string; critique: string } | null>(null);
+                              $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
+  let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
 
   // Fetch profile feature flags on mount
   onMount(async () => {
@@ -79,12 +83,15 @@
     collationLoading.set(false);
     planReviewFindings.set('');
     planReviewLoading.set(false);
+    improveResult.set(null);
+    improveLoading.set(false);
     // untrack: rightTab reads/writes must not become effect dependencies —
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
     untrack(() => {
       if (rightTab === 'related' && fp) findRelated(fp);
       if (rightTab === 'review') rightTab = 'properties';
+      if (rightTab === 'improve') rightTab = 'properties';
     });
   });
 
@@ -194,6 +201,69 @@
       showToast('Critical Review written to plan', 3000);
       rightTab = 'properties';
       planReviewFindings.set('');
+    }
+  }
+
+  // React to on-save trigger from page signalling to open Improve tab
+  $effect(() => {
+    if ($showImproveTab) {
+      rightTab = 'improve';
+      showRightPanel = true;
+      showImproveTab.set(false);
+    }
+  });
+
+  async function handleImprove() {
+    const fp = $currentDoc.filePath;
+    if (!fp) return;
+    rightTab = 'improve';
+    showRightPanel = true;
+    improveResult.set(null);
+    improveLoading.set(true);
+    try {
+      const res = await fetch('/api/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: fp }),
+      });
+      const data = await res.json();
+      if (data.improved !== undefined) {
+        improveResult.set({ improved: data.improved, critique: data.critique ?? '' });
+      } else {
+        showToast(data.error ?? 'Improve failed', 4000);
+        rightTab = 'properties';
+      }
+    } catch (e: any) {
+      showToast(`Improve error: ${e}`, 4000);
+      rightTab = 'properties';
+    } finally {
+      improveLoading.set(false);
+    }
+  }
+
+  async function handleAcceptImprove(improved: string) {
+    const fp = $currentDoc.filePath;
+    if (!fp || !improved) return;
+    // Rebuild file: original frontmatter + improved body
+    const fm = $currentDoc.frontmatter ?? {};
+    const fmLines = Object.entries(fm)
+      .filter(([k]) => k !== '_path')
+      .map(([k, v]) => {
+        if (Array.isArray(v)) return v.length ? `${k}:\n${v.map(i => `  - ${i}`).join('\n')}` : `${k}: []`;
+        if (typeof v === 'boolean') return `${k}: ${v}`;
+        if (v === null || v === undefined || v === '') return `${k}:`;
+        return `${k}: ${v}`;
+      }).join('\n');
+    const newRaw = `---\n${fmLines}\n---\n${improved}`;
+    const res = await fetch('/api/write?path=' + encodeURIComponent(fp), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newRaw }),
+    });
+    if (res.ok) {
+      showToast('Proposal updated with AI suggestions', 3000);
+      rightTab = 'properties';
+      improveResult.set(null);
     }
   }
 
@@ -459,6 +529,12 @@
           Review{prl ? ' ⏳' : prf ? ' ✓' : ''}
         </button>
       {/if}
+      {#if $currentDoc.docType === 'proposal'}
+        <button class="right-tab" class:active={rightTab === 'improve'}
+          onclick={handleImprove}>
+          Improve{il ? ' ⏳' : ir ? ' ✓' : ''}
+        </button>
+      {/if}
     </div>
 
     {#if rightTab === 'properties'}
@@ -474,11 +550,21 @@
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onplan={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onreview={handleReview}
+            onimprove={handleImprove}
           />
         {:else}
           <div class="right-empty">Open a document to see its properties</div>
         {/if}
       {/key}
+    {:else if rightTab === 'improve'}
+      <ImprovementPanel
+        improved={ir?.improved ?? ''}
+        critique={ir?.critique ?? ''}
+        loading={il}
+        onaccept={handleAcceptImprove}
+        ondismiss={() => { rightTab = 'properties'; improveResult.set(null); }}
+        onrerun={handleImprove}
+      />
     {:else if rightTab === 'review'}
       <PlanReviewPanel
         findings={prf}

@@ -200,6 +200,21 @@ describe('OpenCodeEngine — fillProposal and critiqueDocument', () => {
   });
 });
 
+describe('KeywordEngine — fillProposal + critiqueDocument offline behavior', () => {
+  const engine = new KeywordEngine();
+
+  it('fillProposal preserves the original body in the stub response', async () => {
+    const body = '## Problem\nThe widget is broken.';
+    const result = await engine.fillProposal({ title: 'Widget Fix' }, body);
+    assert.ok(result.includes('broken'), 'original body content should be present in stub');
+  });
+
+  it('critiqueDocument returns a non-empty stub string', async () => {
+    const result = await engine.critiqueDocument('## Problem\nSomething needs fixing.');
+    assert.ok(result.length > 0, 'stub should return non-empty string');
+  });
+});
+
 describe('KeywordEngine — gatePreReview', () => {
   const engine = new KeywordEngine();
 

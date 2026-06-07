@@ -7,7 +7,7 @@
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast } from '$lib/toast';
-  import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags } from '$lib/pane';
+  import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
   import { tables, strikethrough } from 'turndown-plugin-gfm';
@@ -250,6 +250,8 @@
       if (docType === 'proposal') {
         if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
         else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
+        // On-save trigger: fire improvement pass non-blocking on first save of a new proposal
+        if (lastBodyLen === 0) triggerImproveOnSave();
       }
     }
   }
@@ -308,6 +310,29 @@
     ) {
       await handleApprove();
     }
+  }
+
+  function triggerImproveOnSave() {
+    const fp = filePath();
+    improveResult.set(null);
+    improveLoading.set(true);
+    fetch('/api/improve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: fp }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.improved !== undefined) {
+          improveResult.set({ improved: data.improved, critique: data.critique ?? '' });
+          showToast('AI suggestions ready — Review improvements', 8000, {
+            label: 'Review',
+            onclick: () => showImproveTab.set(true),
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => improveLoading.set(false));
   }
 
   async function checkOverlap() {

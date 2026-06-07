@@ -15,6 +15,12 @@ export const collationLoading = writable(false);
 export const planReviewFindings = writable('');
 export const planReviewLoading  = writable(false);
 
+/** Proposal improvement panel state */
+export const improveResult  = writable<{ improved: string; critique: string } | null>(null);
+export const improveLoading = writable(false);
+/** Signal from page's on-save trigger to open the Improve tab */
+export const showImproveTab = writable(false);
+
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({
   showPlanButton: true,

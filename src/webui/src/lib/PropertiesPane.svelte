@@ -20,6 +20,7 @@
     onfindrelated?: () => void;
     onplan?: () => void;
     onreview?: () => void;
+    onimprove?: () => void;
   } = $props();
 
   const SELECT_OPTIONS: Record<string, string[]> = {
@@ -216,6 +217,8 @@
           <button class="act plan" onclick={() => onplan?.()}
             title="Scan related proposals and scaffold a plan — bundles this proposal with linked items">Plan →</button>
         {/if}
+        <button class="act improve" onclick={() => onimprove?.()}
+          title="Ask AI to improve this proposal — shows suggestions you can accept or dismiss">✨ Improve</button>
         <button class="act related" onclick={() => onfindrelated?.()}
           title="Scan vault for proposals with similar content using keyword matching">Find Related</button>
         <button class="act estimate" onclick={estimateComplexity} disabled={estimating}

@@ -1,32 +1,33 @@
 ---
 title: "Plan: AI Proposal Improvement — On-Save Trigger and Manual Button"
-status: draft
-author: "NetYeti"
-created: "2026-06-07"
-created_by: "NetYeti@phoenix"
+status: in-progress
+author: NetYeti
+created: 2026-06-07
+created_by: NetYeti@phoenix
 tags: [planning]
-proposal_source: "proposals/approved/ai-proposal-improve-on-save"
+proposal_source: proposals/approved/ai-proposal-improve-on-save
 priority: medium
 automated: off
-waiting_reason:
+waiting_reason: ""
 assigned_to: ["NetYeti"]
 related_to: []
 depends_on: []
 blocks: []
-reviewed_by:
-reviewed_date:
-canceled_date:
-cancellation_reason:
-template_version: "1.0"
+reviewed_by: ""
+reviewed_date: ""
+canceled_date: ""
+cancellation_reason: ""
+template_version: 1.0
 tests_defined: false
-gate_reviewer:
-gate_status:
-gate_date:
-gate_note:
+gate_reviewer: ""
+gate_status: ""
+gate_date: ""
+gate_note: ""
 gate_reviews: []
 gate_quorum: 1
 total_steps: 8
-completed_steps: 0
+completed_steps: 8
+_path: plans/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
 ---
 
 # Plan: AI Proposal Improvement — On-Save Trigger and Manual Button
@@ -54,14 +55,14 @@ The pattern follows `OpenCodeEngine.gatePreReview()` exactly — POST prompt to
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Implement `OpenCodeEngine.fillProposal()` | `src/dispatch/ai.ts`. Build a prompt with frontmatter context + body, POST to `${this.url}/api/session`, return improved markdown body. Prompt instructs AI to flesh out sparse sections, keep author intent, return ONLY the improved body with no preamble. `KeywordEngine` fallback already returns a stub string — leave as-is. | ⏳ Pending |
-| 2 | Implement `OpenCodeEngine.critiqueDocument()` | Same file. Build a critique prompt — ask AI to identify missing sections, weak reasoning, unstated assumptions, governance gaps. Return structured critique as plain markdown. Fall back to `KeywordEngine` stub on error. | ⏳ Pending |
-| 3 | Add `POST /api/improve` route | New file `src/webui/src/routes/api/improve/+server.ts`. Accepts `{ path: string }` in body. Reads file from disk, extracts frontmatter + body, calls `engine.fillProposal(fm, body)` and `engine.critiqueDocument(raw)` in parallel. Returns `{ original: string, improved: string, critique: string }`. Pattern mirrors `gate-pre-review/+server.ts`. | ⏳ Pending |
-| 4 | Create `ImprovementPanel.svelte` | New file `src/webui/src/lib/ImprovementPanel.svelte`. Shows improved text in a scrollable panel. Header: "AI Suggestions" with a loading spinner while fetching. Body: improved text rendered as markdown (reuse `MarkdownRenderer`). Footer actions: "Accept" (replaces document body and saves), "View Critique" toggle (shows critique text), "Dismiss" (closes panel). No line-level diff in Phase 1 — show improved text in full; diff is a Phase 2 enhancement. Prop interface: `{ improved, critique, loading, onaccept, ondismiss }`. | ⏳ Pending |
-| 5 | Add `onimprove` prop and "Improve" button to PropertiesPane | `src/webui/src/lib/PropertiesPane.svelte`. Add `onimprove?: () => void` to the props interface. Add `<button class="act improve" onclick={() => onimprove?.()}>✨ Improve</button>` in the `{#if docType === 'proposal'}` action block, alongside Find Related and Complexity. Add `improving = $state(false)` for loading state; button shows "Improving…" when in-flight. | ⏳ Pending |
-| 6 | Wire improve flow in `[...path]/+page.svelte` | Add `handleImprove()` async function: sets improving state, calls `POST /api/improve`, receives `{ original, improved, critique }`, stores in local state, shows `ImprovementPanel`. `onaccept` handler: replace `content` with improved body, call `save()`, close panel. Wire `onimprove: handleImprove` into `currentDoc.set(...)` call. Mount `ImprovementPanel` conditionally when `improveResult` is set. | ⏳ Pending |
-| 7 | Add on-save trigger for new proposals | In `save()` in `+page.svelte`, after existing `checkOverlap()` call: if `lastBodyLen === 0` (first save of a new proposal) AND OpenCode is reachable, also call `handleImprove()` in the background. Surface result as a toast: "AI suggestions ready — Review improvements" with an action button that opens the panel. Do not block save or show the panel automatically — keep it non-blocking. | ⏳ Pending |
-| 8 | Unit tests | `test/dispatch/ai.test.ts` (new or extend): mock `fetch` to return a controlled response, assert `OpenCodeEngine.fillProposal()` returns the LLM text and falls back to the `KeywordEngine` stub on fetch failure. Add a parallel test for `critiqueDocument()`. Integration smoke test for `/api/improve` endpoint using the existing vault fixture pattern. | ⏳ Pending |
+| 1 | Implement `OpenCodeEngine.fillProposal()` | `src/dispatch/ai.ts`. Build a prompt with frontmatter context + body, POST to `${this.url}/api/session`, return improved markdown body. Prompt instructs AI to flesh out sparse sections, keep author intent, return ONLY the improved body with no preamble. `KeywordEngine` fallback already returns a stub string — leave as-is. | ✅ Done |
+| 2 | Implement `OpenCodeEngine.critiqueDocument()` | Same file. Build a critique prompt — ask AI to identify missing sections, weak reasoning, unstated assumptions, governance gaps. Return structured critique as plain markdown. Fall back to `KeywordEngine` stub on error. | ✅ Done |
+| 3 | Add `POST /api/improve` route | New file `src/webui/src/routes/api/improve/+server.ts`. Accepts `{ path: string }` in body. Reads file from disk, extracts frontmatter + body, calls `engine.fillProposal(fm, body)` and `engine.critiqueDocument(raw)` in parallel. Returns `{ original: string, improved: string, critique: string }`. Pattern mirrors `gate-pre-review/+server.ts`. | ✅ Done |
+| 4 | Create `ImprovementPanel.svelte` | New file `src/webui/src/lib/ImprovementPanel.svelte`. Shows improved text in a scrollable panel. Header: "AI Suggestions" with a loading spinner while fetching. Body: improved text rendered as markdown (reuse `MarkdownRenderer`). Footer actions: "Accept" (replaces document body and saves), "View Critique" toggle (shows critique text), "Dismiss" (closes panel). No line-level diff in Phase 1 — show improved text in full; diff is a Phase 2 enhancement. Prop interface: `{ improved, critique, loading, onaccept, ondismiss }`. | ✅ Done |
+| 5 | Add `onimprove` prop and "Improve" button to PropertiesPane | `src/webui/src/lib/PropertiesPane.svelte`. Add `onimprove?: () => void` to the props interface. Add `<button class="act improve" onclick={() => onimprove?.()}>✨ Improve</button>` in the `{#if docType === 'proposal'}` action block, alongside Find Related and Complexity. Add `improving = $state(false)` for loading state; button shows "Improving…" when in-flight. | ✅ Done |
+| 6 | Wire improve flow in `[...path]/+page.svelte` | Add `handleImprove()` async function: sets improving state, calls `POST /api/improve`, receives `{ original, improved, critique }`, stores in local state, shows `ImprovementPanel`. `onaccept` handler: replace `content` with improved body, call `save()`, close panel. Wire `onimprove: handleImprove` into `currentDoc.set(...)` call. Mount `ImprovementPanel` conditionally when `improveResult` is set. | ✅ Done |
+| 7 | Add on-save trigger for new proposals | In `save()` in `+page.svelte`, after existing `checkOverlap()` call: if `lastBodyLen === 0` (first save of a new proposal) AND OpenCode is reachable, also call `handleImprove()` in the background. Surface result as a toast: "AI suggestions ready — Review improvements" with an action button that opens the panel. Do not block save or show the panel automatically — keep it non-blocking. | ✅ Done |
+| 8 | Unit tests | `test/dispatch/ai.test.ts` (new or extend): mock `fetch` to return a controlled response, assert `OpenCodeEngine.fillProposal()` returns the LLM text and falls back to the `KeywordEngine` stub on fetch failure. Add a parallel test for `critiqueDocument()`. Integration smoke test for `/api/improve` endpoint using the existing vault fixture pattern. | ✅ Done |
 
 ## Testing Plan
 
@@ -102,3 +103,7 @@ All changes are additive — no existing behaviour is modified.
 |------|--------|--------|
 | 2026-06-07 | Created | NetYeti |
 | 2026-06-06 | Filled in implementation steps, testing plan, rollback, and risk assessment | NetYeti |
+
+## Critical Review
+
+*Pending — run `/critique-plan` before approving.*

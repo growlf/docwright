@@ -160,8 +160,8 @@ export class OpenCodeEngine implements AIEngine {
       body: JSON.stringify({}),
     });
     if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
-    const sess = await sessRes.json();
-    const sessionId: string = sess?.id ?? sess?.sessionID;
+    const sess = await sessRes.json() as Record<string, unknown>;
+    const sessionId = (sess?.id ?? sess?.sessionID) as string | undefined;
     if (!sessionId) throw new Error('No session ID in response');
 
     const msgRes = await fetch(`${this.url}/session/${sessionId}/message?${q}`, {
@@ -170,8 +170,8 @@ export class OpenCodeEngine implements AIEngine {
       body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
     });
     if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
-    const data = await msgRes.json();
-    const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+    const data = await msgRes.json() as Record<string, unknown>;
+    const parts = (data?.parts ?? []) as Array<{ type: string; text?: string }>;
     return parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
   }
 
