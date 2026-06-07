@@ -240,6 +240,10 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: raw }),
     });
+    if (!res.ok) {
+      showToast(`Save failed (${res.status}) — check the console`, 5000);
+      return;
+    }
     if (res.ok) {
       mode = 'read';
       const parsed = splitFrontmatter(raw);

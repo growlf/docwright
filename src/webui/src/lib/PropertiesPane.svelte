@@ -156,9 +156,16 @@
   }
 
   // Plan actions
-  function setPlanStatus(status: string) {
+  let planSaving = $state(false);
+
+  async function setPlanStatus(status: string) {
     setField('status', status);
-    onsave?.(frontmatter);
+    planSaving = true;
+    try {
+      await onsave?.(frontmatter);
+    } finally {
+      planSaving = false;
+    }
   }
 
   let estimating = $state(false);
@@ -230,12 +237,12 @@
         {#if frontmatter.status === 'draft' || frontmatter.status === 'proposal'}
           <button class="act review" onclick={() => onreview?.()}
             title="Run adversarial AI critique before approving — finds gaps, failure modes, missing dependencies">⚡ Review</button>
-          <button class="act approve" onclick={() => setPlanStatus('approved')}
-            title="Mark plan as approved — enables the Start button">Approve</button>
+          <button class="act approve" onclick={() => setPlanStatus('approved')} disabled={planSaving}
+            title="Mark plan as approved — enables the Start button">{planSaving ? '…' : 'Approve'}</button>
         {/if}
         {#if frontmatter.status === 'approved'}
-          <button class="act start" onclick={() => setPlanStatus('in-progress')}
-            title="Set status: in-progress — marks this plan as actively being worked">Start</button>
+          <button class="act start" onclick={() => setPlanStatus('in-progress')} disabled={planSaving}
+            title="Set status: in-progress — marks this plan as actively being worked">{planSaving ? '…' : 'Start'}</button>
         {/if}
         {#if frontmatter.status === 'in-progress'}
           {#if !frontmatter.tests_defined}
