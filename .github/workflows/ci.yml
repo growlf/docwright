@@ -1,5 +1,13 @@
 name: CI
 
+# Trigger policy (per policies/core/versioning.md):
+#   - v0.*.* tags only — MAJOR stays 0 until a milestone proposal is approved.
+#   - workflow_dispatch — manual trigger for CI testing without a release tag.
+#
+# When a major milestone (e.g. v1.0.0 / alpha launch) is approved through the
+# governance process, update the tag pattern here as part of that release plan.
+# Do not change this trigger ad-hoc — it is policy-gated.
+
 on:
   push:
     tags:

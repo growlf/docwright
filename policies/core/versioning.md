@@ -66,6 +66,12 @@ explicitly as releases. Examples of milestone candidates:
 
 Major version proposals will be captured in `proposals/` when relevant.
 
+When a major version milestone is approved, the release plan **must** include:
+- Updating the CI trigger pattern in `.github/workflows/ci.yml` (currently `v0.*.*`)
+- Updating the tag-detection pattern in `scripts/claude-tag-push-watch.sh`
+
+These are policy-gated changes — do not update them outside of an approved release plan.
+
 ## Document History
 
 | Date | Change | Author |
