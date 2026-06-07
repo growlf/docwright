@@ -79,7 +79,7 @@
   .tab  { flex: 1; padding: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: $muted; background: none; border: none; cursor: pointer; &:hover { color: $fg; } &.active { color: $blue; border-bottom: 2px solid $blue; } }
 
   .content-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; }
-  .improved-body :global(h1,h2,h3) { margin-top: 1em; }
+  .improved-body :global(h1), .improved-body :global(h2), .improved-body :global(h3) { margin-top: 1em; }
   .critique-text { white-space: pre-wrap; font-size: 12px; line-height: 1.6; color: $fg; font-family: inherit; margin: 0; }
 
   .panel-footer { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid $border; }
