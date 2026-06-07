@@ -22,7 +22,7 @@ export function GET({ request }) {
       try {
         watcher = fs.watch(REPO_ROOT, { recursive: true }, (eventType, filename) => {
           if (!filename) return;
-          const name = typeof filename === 'string' ? filename : filename.toString();
+          const name = String(filename);
           if (!name.endsWith('.md') && eventType !== 'rename') return;
           send('filechange', { event: eventType, path: name.replace(/\\/g, '/') });
         });

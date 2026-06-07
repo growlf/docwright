@@ -25,8 +25,15 @@
 
   // Tag UI
   let tagging    = $state(false);
-  let tagBump    = $state<'patch' | 'minor' | 'release'>('patch');
+  let tagBump    = $state<'patch' | 'minor'>('patch');
   let tagName    = $state('');
+
+  // CI watch state (active after a tag push)
+  type CiState = 'idle' | 'waiting' | 'running' | 'success' | 'failure';
+  let ciState   = $state<CiState>('idle');
+  let ciMsg     = $state('');
+  let ciUrl     = $state('');
+  let ciSource: EventSource | null = null;
 
   // File list expansion
   let showModified  = $state(false);
@@ -48,13 +55,12 @@
     return fileChanged.subscribe((c) => { if (c) loadStatus(); });
   });
 
-  function bumpTag(latest: string, type: 'patch' | 'minor' | 'release'): string {
+  function bumpTag(latest: string, type: 'patch' | 'minor'): string {
     const m = latest.match(/^v?(\d+)\.(\d+)\.(\d+)/);
     if (!m) return 'v0.1.0';
     let [, maj, min, pat] = m.map(Number);
-    if (type === 'patch')   pat++;
-    else if (type === 'minor') { min++; pat = 0; }
-    else { maj++; min = 0; pat = 0; }
+    if (type === 'patch') pat++;
+    else { min++; pat = 0; }
     return `v${maj}.${min}.${pat}`;
   }
 
@@ -116,6 +122,35 @@
     if (res.ok) await loadStatus();
   }
 
+  function startCiWatch(tag: string) {
+    ciSource?.close();
+    ciState = 'waiting';
+    ciMsg   = 'Waiting for CI run to appear…';
+    ciUrl   = '';
+
+    ciSource = new EventSource(`/api/git/ci-watch?tag=${encodeURIComponent(tag)}`);
+
+    ciSource.addEventListener('waiting',    (e) => { ciMsg = JSON.parse(e.data).message; });
+    ciSource.addEventListener('found',      (e) => { ciState = 'running'; ciMsg = JSON.parse(e.data).message; ciUrl = JSON.parse(e.data).url; });
+    ciSource.addEventListener('progress',   (e) => { ciMsg = JSON.parse(e.data).message; });
+    ciSource.addEventListener('conclusion', (e) => {
+      const d = JSON.parse(e.data);
+      ciUrl   = d.url;
+      ciState = d.conclusion === 'success' ? 'success' : 'failure';
+      ciMsg   = d.conclusion === 'success' ? `✅ CI passed — release is green` : `🚨 CI FAILED — build is broken`;
+      ciSource?.close();
+    });
+    ciSource.addEventListener('error', (e) => {
+      ciState = 'failure';
+      ciMsg   = JSON.parse(e.data).message;
+      ciSource?.close();
+    });
+    ciSource.onerror = () => {
+      if (ciState === 'waiting' || ciState === 'running') ciMsg = 'CI watch connection lost';
+      ciSource?.close();
+    };
+  }
+
   async function createTag() {
     if (!tagName) return;
     setLog(`Tagging ${tagName}…`);
@@ -126,8 +161,10 @@
     });
     const data = await res.json();
     if (res.ok) {
-      setLog(`✓ Tag ${data.tag}${data.pushed ? ' pushed' : ' created locally (push failed)'}`);
+      const pushed = data.pushed as boolean;
+      setLog(`✓ Tag ${data.tag}${pushed ? ' pushed' : ' created locally (push failed)'}`);
       tagging = false;
+      if (pushed) startCiWatch(data.tag as string);
     } else {
       setLog(`✗ ${data.error}`);
     }
@@ -227,14 +264,14 @@
       {#if tagging}
         <div class="tag-form">
           <div class="bump-row">
-            {#each ['patch', 'minor', 'release'] as b}
+            {#each (['patch', 'minor'] as const) as b}
               <button
                 class="bump-btn {tagBump === b ? 'active' : ''}"
-                onclick={() => { tagBump = b as any; }}
+                onclick={() => { tagBump = b; }}
               >{b}</button>
             {/each}
           </div>
-          <input class="commit-input" bind:value={tagName} placeholder="v1.0.0" />
+          <input class="commit-input" bind:value={tagName} placeholder="v0.2.1" />
           <div class="commit-actions">
             <button class="go-btn" onclick={createTag} disabled={!tagName}>Create & Push</button>
             <button class="cancel-btn" onclick={() => tagging = false}>Cancel</button>
@@ -245,6 +282,22 @@
       <!-- Log output -->
       {#if log}
         <div class="git-log">{log}</div>
+      {/if}
+
+      <!-- CI watch panel (shown after a tag push until the run completes) -->
+      {#if ciState !== 'idle'}
+        <div class="ci-panel ci-{ciState}">
+          <span class="ci-msg">{ciMsg}</span>
+          {#if ciUrl}
+            <a class="ci-link" href={ciUrl} target="_blank" rel="noreferrer">view run ↗</a>
+          {/if}
+          {#if ciState === 'failure'}
+            <div class="ci-options">
+              <span>Options:</span>
+              <button class="ci-opt-btn" onclick={() => ciState = 'idle'}>dismiss</button>
+            </div>
+          {/if}
+        </div>
       {/if}
     </div>
   {/if}
@@ -315,6 +368,18 @@
   }
 
   .git-log { margin: 4px 8px 0; padding: 6px 8px; background: $bg; border-radius: 3px; font-size: 10px; color: $teal; font-family: monospace; word-break: break-all; }
+
+  .ci-panel {
+    margin: 6px 8px 0; padding: 6px 8px; border-radius: 3px; font-size: 10px;
+    display: flex; flex-direction: column; gap: 3px;
+    &.ci-waiting, &.ci-running { background: $bg; border: 1px solid $border; color: $muted; }
+    &.ci-success { background: rgba(45,125,70,.15); border: 1px solid #2d7d46; color: #4caf70; }
+    &.ci-failure { background: rgba(200,50,50,.12); border: 1px solid $red-bdr; color: $red; }
+  }
+  .ci-msg  { font-family: monospace; word-break: break-all; }
+  .ci-link { color: $blue; font-size: 10px; text-decoration: none; &:hover { text-decoration: underline; } }
+  .ci-options { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: $muted; }
+  .ci-opt-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 10px; padding: 2px 6px; cursor: pointer; &:hover { border-color: $muted; } }
 
   @media (max-width: 768px) {
     .git-header, .act-btn, .go-btn, .cancel-btn, .count-btn { min-height: 44px; font-size: 12px; }

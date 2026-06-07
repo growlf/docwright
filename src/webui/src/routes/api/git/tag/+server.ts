@@ -4,7 +4,9 @@ import { json } from '@sveltejs/kit';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? resolve(process.cwd(), '../..');
 
-const TAG_RE = /^v?\d+\.\d+\.\d+(-[\w.]+)?$/;
+// Only 0.x.x tags are permitted (per policies/core/versioning.md).
+// Major version changes require an approved release plan.
+const TAG_RE = /^v?0\.\d+\.\d+(-[\w.]+)?$/;
 
 export async function POST({ request }) {
   const body = await request.json().catch(() => null);
