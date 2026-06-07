@@ -48,3 +48,65 @@ describe('Frontmatter linter', () => {
     assert.strictEqual(err?.severity, 'error');
   });
 });
+
+describe('Frontmatter linter — research documents', () => {
+  const validResearch = {
+    title: 'Research: SSE vs WebSocket for live updates',
+    status: 'active',
+    question: 'Which protocol better suits DocWright live-reload needs?',
+    author: 'NetYeti',
+    created: '2026-06-07',
+    'author-role': 'contributor',
+  };
+
+  it('passes a valid active research document', () => {
+    const results = lintDocument('research/sse-vs-websocket.md', validResearch, profile);
+    const errors = results.filter(r => r.severity === 'error');
+    assert.strictEqual(errors.length, 0, `unexpected errors: ${JSON.stringify(errors)}`);
+  });
+
+  it('flags missing required field: question', () => {
+    const fm = { ...validResearch };
+    delete (fm as any).question;
+    const results = lintDocument('research/test.md', fm, profile);
+    assert.ok(results.some(r => r.field === 'question' && r.severity === 'error'));
+  });
+
+  it('flags missing required field: author-role', () => {
+    const fm = { ...validResearch };
+    delete (fm as any)['author-role'];
+    const results = lintDocument('research/test.md', fm, profile);
+    assert.ok(results.some(r => r.field === 'author-role' && r.severity === 'error'));
+  });
+
+  it('flags invalid status value', () => {
+    const fm = { ...validResearch, status: 'in-progress' };
+    const results = lintDocument('research/test.md', fm, profile);
+    assert.ok(results.some(r => r.field === 'status' && r.severity === 'error'));
+  });
+
+  it('flags status: concluded without conclusion field', () => {
+    const fm = { ...validResearch, status: 'concluded' };
+    const results = lintDocument('research/test.md', fm, profile);
+    assert.ok(results.some(r => r.field === 'conclusion' && r.severity === 'error'));
+  });
+
+  it('passes a valid concluded research document with conclusion', () => {
+    const fm = { ...validResearch, status: 'concluded', conclusion: 'recommends' };
+    const results = lintDocument('research/test.md', fm, profile);
+    const errors = results.filter(r => r.severity === 'error');
+    assert.strictEqual(errors.length, 0, `unexpected errors: ${JSON.stringify(errors)}`);
+  });
+
+  it('flags an invalid conclusion enum value', () => {
+    const fm = { ...validResearch, status: 'concluded', conclusion: 'maybe' };
+    const results = lintDocument('research/test.md', fm, profile);
+    assert.ok(results.some(r => r.field === 'conclusion' && r.severity === 'error'));
+  });
+
+  it('does not apply research rules to non-research paths', () => {
+    const fm = { ...validResearch, status: 'invalid-for-research' };
+    const results = lintDocument('proposals/test.md', fm, profile);
+    assert.ok(!results.some(r => r.message.includes('Research status')));
+  });
+});

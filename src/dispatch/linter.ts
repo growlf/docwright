@@ -11,14 +11,17 @@ const REQUIRED_BY_PREFIX: Array<[string, string[]]> = [
   ['proposals/',          ['title', 'author', 'created', 'approved', 'created_by']],
   ['plans/completed/',    ['title', 'status', 'author', 'created']],
   ['plans/',              ['title', 'status', 'author', 'created', 'assigned_to']],
+  ['research/',           ['title', 'status', 'question', 'author', 'created', 'author-role']],
   ['docs/SOPs/',          ['title', 'category', 'created', 'status']],
   ['docs/',               ['title', 'status']],
   ['policies/',           ['title', 'status', 'author', 'created']],
 ];
 
-const VALID_COMPLEXITY  = new Set(['', 'XS', 'S', 'M', 'L', 'XL']);
-const VALID_AUTOMATED   = new Set(['off', 'guided', 'full']);
-const VALID_PLAN_STATUS = new Set(['draft', 'approved', 'in-progress', 'completed', 'canceled']);
+const VALID_COMPLEXITY        = new Set(['', 'XS', 'S', 'M', 'L', 'XL']);
+const VALID_AUTOMATED         = new Set(['off', 'guided', 'full']);
+const VALID_PLAN_STATUS       = new Set(['draft', 'approved', 'in-progress', 'completed', 'canceled']);
+const VALID_RESEARCH_STATUS   = new Set(['active', 'concluded', 'archived']);
+const VALID_RESEARCH_CONCLUSION = new Set(['open', 'recommends', 'inconclusive', 'superseded']);
 
 export function lintDocument(
   filePath: string,
@@ -59,6 +62,24 @@ export function lintDocument(
   // Approved proposal should have assigned_to
   if (fm.approved === true && (fm.assigned_to === undefined || fm.assigned_to === '')) {
     results.push({ field: 'assigned_to', severity: 'warn', message: 'Approved but assigned_to is empty' });
+  }
+
+  // Research document rules
+  if (filePath.startsWith('research/')) {
+    if (fm.status !== undefined && !VALID_RESEARCH_STATUS.has(String(fm.status))) {
+      results.push({ field: 'status', severity: 'error', message: `Research status must be active | concluded | archived, got '${fm.status}'` });
+    }
+    if (fm.conclusion !== undefined && !VALID_RESEARCH_CONCLUSION.has(String(fm.conclusion))) {
+      results.push({ field: 'conclusion', severity: 'error', message: `conclusion must be open | recommends | inconclusive | superseded, got '${fm.conclusion}'` });
+    }
+    // Cross-field: concluded requires a non-empty conclusion
+    if (fm.status === 'concluded' && (!fm.conclusion || String(fm.conclusion).trim() === '')) {
+      results.push({ field: 'conclusion', severity: 'error', message: "status: concluded requires a non-empty 'conclusion' field" });
+    }
+    // Cross-field: archived without ever concluding is allowed only if conclusion=inconclusive
+    if (fm.status === 'archived' && fm.conclusion !== undefined && !VALID_RESEARCH_CONCLUSION.has(String(fm.conclusion))) {
+      results.push({ field: 'conclusion', severity: 'warn', message: 'Archived research should have a valid conclusion value' });
+    }
   }
 
   return results;

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocWright Profile Schema — knowledge-base",
+  "description": "Frontmatter validation schema for document types in this profile. Each key in documentTypes is a document type name; its value is a JSON Schema object.",
+  "documentTypes": {
+    "research": {
+      "description": "A structured investigation into a question or decision area. Captured in research/ directory.",
+      "required": ["title", "status", "question", "author", "created", "author-role"],
+      "properties": {
+        "title":            { "type": "string", "minLength": 1 },
+        "status":           { "type": "string", "enum": ["active", "concluded", "archived"] },
+        "question":         { "type": "string", "minLength": 1, "description": "One-sentence research question this document investigates" },
+        "conclusion":       { "type": "string", "enum": ["open", "recommends", "inconclusive", "superseded"], "description": "Required when status: concluded" },
+        "author":           { "type": "string", "minLength": 1 },
+        "created":          { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "author-role":      { "type": "string", "default": "contributor" },
+        "tags":             { "type": "array", "items": { "type": "string" } },
+        "linked_proposals": { "type": "array", "items": { "type": "string" }, "description": "Proposals that this research informed" },
+        "related_research": { "type": "array", "items": { "type": "string" }, "description": "Other research documents on adjacent questions" }
+      },
+      "if": {
+        "properties": { "status": { "const": "concluded" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["conclusion"]
+      }
+    }
+  }
+}
