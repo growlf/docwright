@@ -256,3 +256,27 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Assessed relevance: knowledge-base profile + collation system (Phase 3+ bookmark); not relevant to Meshy
 
 **Session note:** `docs/session-notes/session_note_202606062345.md`
+
+---
+
+## Session: 2026-06-07 — Governance cleanup, AI features, phase recalibration
+
+**Focus:** Lifecycle flow fixes, AI review/improve, status page, PROJECT.md v0.9
+
+**Completed:**
+- [x] Fixed relationship engine — block-style YAML tags were silently dropped; collation now works
+- [x] Repaired plan/proposal lifecycle flow gaps (Approve button, View Plan link, consumed_by, 409 handling)
+- [x] Implemented AI Review (⚡) — adversarial critique on draft/approved plans via OpenCode
+- [x] Implemented AI Improve (✨) — fillProposal/critiqueDocument, ImprovementPanel, on-save trigger
+- [x] Fixed OpenCode API calls — correct v1.16 session create + message send format
+- [x] Status page: priority sorting (critical→high→medium→low), dependency display, deferred table
+- [x] PROJECT.md v0.9 — phases recalibrated to actual build order; Research stage added to hierarchy
+- [x] Bulk cleanup: 36 orphaned approved proposals linked to completed plans; deferred list audited
+- [x] Approved-pending status bug fixed (path normalization + consumed_by check)
+- [x] DocWright launcher: OPENCODE_URL + DOCWRIGHT_ROOT exported before Vite
+- [x] Plan action buttons: loading state + error toasts
+- [x] New proposals: research-stage-methodology (critical), research-plan-execution-modes (high)
+- [x] plan-bugs-features-and-thoughts: restored after accidental overwrite, properly filled (7 steps)
+- [x] 126 dispatch tests passing
+
+**Session note:** `docs/session-notes/session_note_202606071347.md`
