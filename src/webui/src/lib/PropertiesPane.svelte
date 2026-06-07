@@ -241,6 +241,8 @@
             title="Mark plan as approved — enables the Start button">{planSaving ? '…' : 'Approve'}</button>
         {/if}
         {#if frontmatter.status === 'approved'}
+          <button class="act review" onclick={() => onreview?.()}
+            title="Run adversarial AI critique before starting — still available after approval">⚡ Review</button>
           <button class="act start" onclick={() => setPlanStatus('in-progress')} disabled={planSaving}
             title="Set status: in-progress — marks this plan as actively being worked">{planSaving ? '…' : 'Start'}</button>
         {/if}
