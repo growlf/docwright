@@ -244,3 +244,15 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Proposals captured: one-off-formalization, mcp-tool-batch-fix-stale-approvals
 
 **Session note:** `docs/session-notes/session_note_202606062330.md`
+
+---
+
+## Session: 2026-06-06 — MemGraphRAG paper evaluation
+
+**Focus:** Research — arxiv paper relevance to DocWright/Meshy
+
+**Completed:**
+- [x] Evaluated MemGraphRAG (arxiv 2606.00610v1) — three-layer memory, conflict detection agents, 10x faster than HippoRAG
+- [x] Assessed relevance: knowledge-base profile + collation system (Phase 3+ bookmark); not relevant to Meshy
+
+**Session note:** `docs/session-notes/session_note_202606062345.md`
