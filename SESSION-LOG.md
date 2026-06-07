@@ -301,3 +301,22 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Pre-existing TS2339 bug fixed in `watch/+server.ts`
 
 **Session note:** `docs/session-notes/session_note_202606072100.md`
+
+---
+
+## Session: 2026-06-07 — Review button SSE streaming fix
+
+**Focus:** Fix Review button tab switch and SSE streaming
+
+**Completed:**
+- [x] Root cause found: SSE parser checked `data.type` instead of `event:` field — all events silently dropped
+- [x] Fixed tab switch: added `showReviewTab` store-signal + `$effect` watcher (matches `showImproveTab` pattern)
+- [x] SSE streaming: server emits `event: status`/`event: token`/`event: done`; client parses by event name
+- [x] 80-char chunks with 15ms inter-chunk delay for visible progressive streaming
+- [x] AI prompt redesigned: produces `=== CHANGES ===` (numbered edits) and `=== IMPROVED PLAN ===` sections
+- [x] PlanReviewPanel: streaming loading state (status + monospace text + blinking cursor + auto-scroll)
+- [x] Accept rewrites plan file via `/api/write` with preserved frontmatter
+- [x] Removed unused `onreview` prop from PropertiesPane binding
+- [x] All 136 tests pass
+
+**Session note:** `docs/session-notes/session_note_202606071558.md`

@@ -61,11 +61,10 @@ export function buildPlanReviewContext(
   parts.push('\n--- FULL PLAN CONTENT ---');
   parts.push(planRaw.slice(0, 6000));
 
-  // Referenced source proposals
   const sources = asList(fm.proposal_source);
   parts.push(`\n=== REFERENCED PROPOSALS (${sources.length}) ===`);
   if (sources.length === 0)
-    parts.push('⚠️  No proposal_source field — plan has no traceable origin proposals.');
+    parts.push('No proposal_source field — plan has no traceable origin proposals.');
   for (const src of sources) {
     const rel = src.endsWith('.md') ? src : src + '.md';
     const full = path.join(vaultRoot, rel);
@@ -73,11 +72,10 @@ export function buildPlanReviewContext(
     try {
       parts.push(fs.readFileSync(full, 'utf-8').slice(0, 2000));
     } catch {
-      parts.push(`⚠️  FILE NOT FOUND: ${src}`);
+      parts.push(`FILE NOT FOUND: ${src}`);
     }
   }
 
-  // Dependencies
   const deps = asList(fm.depends_on);
   parts.push(`\n=== DEPENDENCIES (${deps.length}) ===`);
   for (const dep of deps) {
@@ -87,11 +85,10 @@ export function buildPlanReviewContext(
       const depFm = parsePlanFrontmatter(raw);
       parts.push(`✓ ${dep} — status: ${depFm.status || 'unknown'}`);
     } catch {
-      parts.push(`⚠️  NOT FOUND: ${dep}`);
+      parts.push(`NOT FOUND: ${dep}`);
     }
   }
 
-  // Core policies — first paragraph only to keep context manageable
   const policiesDir = path.join(vaultRoot, 'policies', 'core');
   parts.push('\n=== CORE POLICIES (summaries) ===');
   if (fs.existsSync(policiesDir)) {
@@ -107,41 +104,35 @@ export function buildPlanReviewContext(
   }
 
   parts.push(`
-=== YOUR TASK — ADVERSARIAL CRITIQUE ===
 
-You are the docwright-critic. Find problems. Be direct. Do not soften real issues.
+=== YOUR TASK ===
 
-For EACH IMPLEMENTATION STEP and for the plan as a whole, answer:
-1. Specific enough to know when done?
-2. Most likely failure modes?
-3. Missing dependencies that must exist first but don't?
-4. Better existing tools or approaches already in this codebase?
-5. What breaks in later phases if this step is done wrong?
-6. Is this step already done (stale)?
-7. Severely underestimated — one line hiding days of work?
+You are the docwright-editor. Your job is to find specific problems in this plan
+and produce an improved version that fixes them.
 
-Also check:
-- Are all proposal_source files present and non-trivial?
-- Are all depends_on plans in a suitable state to unblock this?
-- Does the plan have a testing / acceptance strategy?
-- Does the plan have a rollback strategy?
-- Does the plan state how to know it is DONE?
+First, analyze the plan for these issues in each Implementation Step and in the
+cross-cutting sections (Testing Plan, Rollback, Risk Assessment):
+- Steps that are vague or lack concrete deliverables
+- Missing dependencies or preconditions
+- Steps that hide significant work behind a single line
+- Plans that lack a clear definition of "done"
+- Missing or weak risk analysis
+- Missing or weak test strategy
 
-Format EACH FINDING as:
+Then produce TWO sections in your response:
 
-### [Step name or "Cross-cutting"] [severity]
-- **Finding:** [specific, concrete problem]
-- **Action:** [what to do about it]
-- **Resolution:** *(leave blank — author fills in when addressed)*
+=== CHANGES ===
+A numbered markdown list of every change you made and why:
+1. **Section - What changed**: Why this change was needed
 
-Severity:
-  📝 note  — worth considering; non-blocking
-  ⚠️ warn  — likely to cause problems; address before starting this step
-  🚫 block — must resolve before this step can begin
+=== IMPROVED PLAN ===
+The COMPLETE improved plan body in markdown. Keep the frontmatter unchanged.
+Improve the body sections (Overview, Implementation Steps, Testing Plan,
+Rollback, Risk Assessment) — make steps more concrete, add missing details,
+fix weak areas. Keep the same structure but make everything better.
 
-End with a one-paragraph overall assessment.
-
-Begin your critique now.`);
-
+Be specific and concrete. Ensure every Implementation Step has a clear
+definition of done. Add specific file paths, function names, and protocols.
+Do not remove any existing content — only add and refine.`);
   return parts.join('\n');
 }

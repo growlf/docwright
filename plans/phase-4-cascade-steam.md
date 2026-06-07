@@ -1,6 +1,6 @@
 ---
 title: Phase 4 — Cascade STEAM Reference Deployment
-status: approved
+status: draft
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -14,24 +14,21 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-3-profile-acl-ai
+_path: plans/phase-4-cascade-steam.md
+proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 4 & 5; no individual proposal
 ---
-
 # Phase 4 — Cascade STEAM Reference Deployment
 
 ## Overview
 
-Phase 4 is the reference implementation of DocWright in production at Cascade
-STEAM. The vault seed (in Drive) is activated, the Forgejo git server is
-provisioned, and the AI stack (growlf/ai-stack + growlf/meshy) is connected.
-This phase proves the full system end-to-end with a real organization.
+Phase 4 is the reference implementation of DocWright in production at Cascade STEAM. The vault seed (in Drive) is activated, the Forgejo git server is provisioned, and the AI stack (growlf/ai-stack + growlf/meshy) is connected. This phase proves the full system end-to-end with a real organization.
 
-This plan tracks all Phase 4 deliverables. Each deliverable will be broken
-out into its own plan when Phase 3 is complete and work begins.
+This plan tracks all Phase 4 deliverables. Each deliverable will be broken out into its own plan when Phase 3 is complete and work begins.
 
 ## Deliverables
 
 | # | Deliverable | Status | Notes |
-|---|-------------|--------|-------|
+| --- | --- | --- | --- |
 | 1 | Vault seed finalized — vision.md and governance.md completed by leadership | ⏳ Planned | Blocked on leadership input; seed is in Drive folder |
 | 2 | Forgejo server provisioned and configured | ⏳ Planned | Recommended self-hosted git server |
 | 3 | Forgejo team structure mirrors Cascade STEAM org | ⏳ Planned | ACL source of truth |
@@ -46,15 +43,12 @@ out into its own plan when Phase 3 is complete and work begins.
 
 ## Phase Context
 
-See [[plans/phase-3-profile-acl-ai]] for Phase 3 deliverables.
-Phase 4 begins after Phase 3 is stable and the Cascade STEAM vault seed is
-approved by leadership.
+See \[\[plans/phase-3-profile-acl-ai\]\] for Phase 3 deliverables. Phase 4 begins after Phase 3 is stable and the Cascade STEAM vault seed is approved by leadership.
 
-The vault seed and AI stack context are in the Drive folder:
-https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
+The vault seed and AI stack context are in the Drive folder: https://drive.google.com/drive/folders/1XMK0Cxil65xzpXFWdMABp5i-5BHDgaZ-
 
 ## Document History
 
 | Date | Change | Author |
-|------|--------|--------|
+| --- | --- | --- |
 | 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |

@@ -14,12 +14,19 @@ export const collationLoading = writable(false);
 /** Plan review (AI critique) panel state */
 export const planReviewFindings = writable('');
 export const planReviewLoading  = writable(false);
+export const planReviewStatus   = writable('');
+/** Plan review — improved body + changelog for accept flow */
+export const planReviewImproved = writable('');
+export const planReviewChanges  = writable('');
 
 /** Proposal improvement panel state */
 export const improveResult  = writable<{ improved: string; critique: string } | null>(null);
 export const improveLoading = writable(false);
 /** Signal from page's on-save trigger to open the Improve tab */
 export const showImproveTab = writable(false);
+
+/** Signal to switch to Review tab (set by PropertiesPane, consumed by layout) */
+export const showReviewTab = writable(false);
 
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({

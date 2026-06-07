@@ -109,7 +109,6 @@ describe('buildPlanReviewContext', () => {
     const root = makeVault({ 'plans/test.md': MINIMAL_PLAN });
     // proposal_source points to proposals/my-proposal.md — NOT created in vault
     const ctx = buildPlanReviewContext('plans/test.md', MINIMAL_PLAN, root);
-    assert.ok(ctx.includes('⚠️'), 'should flag missing proposal_source');
     assert.ok(ctx.includes('FILE NOT FOUND'), 'should say FILE NOT FOUND');
     fs.rmSync(root, { recursive: true });
   });
@@ -179,15 +178,13 @@ describe('buildPlanReviewContext', () => {
     fs.rmSync(root, { recursive: true });
   });
 
-  it('includes the adversarial critic questions', () => {
+  it('includes the editor instructions', () => {
     const root = makeVault({ 'plans/test.md': MINIMAL_PLAN });
     const ctx = buildPlanReviewContext('plans/test.md', MINIMAL_PLAN, root);
-    assert.ok(ctx.includes('ADVERSARIAL CRITIQUE'), 'should include critic section header');
-    assert.ok(ctx.includes('Most likely failure modes'), 'should include failure mode question');
-    assert.ok(ctx.includes('📝 note'), 'should include severity legend');
-    assert.ok(ctx.includes('⚠️ warn'), 'should include warn severity');
-    assert.ok(ctx.includes('🚫 block'), 'should include block severity');
-    assert.ok(ctx.includes('Resolution:'), 'should include Resolution field template');
+    assert.ok(ctx.includes('YOUR TASK'), 'should include task section header');
+    assert.ok(ctx.includes('=== CHANGES ==='), 'should instruct to produce changes section');
+    assert.ok(ctx.includes('=== IMPROVED PLAN ==='), 'should instruct to produce improved plan');
+    assert.ok(ctx.includes('docwright-editor'), 'should use the editor persona');
     fs.rmSync(root, { recursive: true });
   });
 

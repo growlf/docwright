@@ -1,0 +1,17 @@
+{"ts":"2026-06-06T08:27:29.938Z","doc_path":"proposals/test.md","transition_from":"draft","transition_to":"approved","actor":"NetYeti","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.943Z","doc_path":"plans/test.md","transition_from":"in-progress","transition_to":"completed","actor":"NetYeti","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.949Z","doc_path":"plans/a.md","transition_from":"draft","transition_to":"approved","actor":"Alice","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.953Z","doc_path":"plans/b.md","transition_from":"approved","transition_to":"in-progress","actor":"Bob","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.958Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.962Z","doc_path":"plans/a.md","transition_from":"draft","transition_to":"approved","actor":"Alice","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.966Z","doc_path":"plans/b.md","transition_from":"approved","transition_to":"in-progress","actor":"Bob","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.970Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.976Z","doc_path":"plans/a.md","transition_from":"draft","transition_to":"approved","actor":"Alice","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.979Z","doc_path":"plans/b.md","transition_from":"approved","transition_to":"in-progress","actor":"Bob","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.982Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.986Z","doc_path":"plans/a.md","transition_from":"draft","transition_to":"approved","actor":"Alice","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.991Z","doc_path":"plans/b.md","transition_from":"approved","transition_to":"in-progress","actor":"Bob","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.994Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:29.998Z","doc_path":"plans/a.md","transition_from":"draft","transition_to":"approved","actor":"Alice","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:30.001Z","doc_path":"plans/b.md","transition_from":"approved","transition_to":"in-progress","actor":"Bob","actor_type":"human","git_commit":"8e09ddf"}
+{"ts":"2026-06-06T08:27:30.004Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}

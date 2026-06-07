@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showPropsPane, featureFlags } from './pane';
+  import { showPropsPane, featureFlags, showReviewTab } from './pane';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -235,13 +235,13 @@
       {/if}
       {#if docType === 'plan'}
         {#if frontmatter.status === 'draft' || frontmatter.status === 'proposal'}
-          <button class="act review" onclick={() => onreview?.()}
+          <button class="act review" onclick={() => showReviewTab.set(true)}
             title="Run adversarial AI critique before approving — finds gaps, failure modes, missing dependencies">⚡ Review</button>
           <button class="act approve" onclick={() => setPlanStatus('approved')} disabled={planSaving}
             title="Mark plan as approved — enables the Start button">{planSaving ? '…' : 'Approve'}</button>
         {/if}
         {#if frontmatter.status === 'approved'}
-          <button class="act review" onclick={() => onreview?.()}
+          <button class="act review" onclick={() => showReviewTab.set(true)}
             title="Run adversarial AI critique before starting — still available after approval">⚡ Review</button>
           <button class="act start" onclick={() => setPlanStatus('in-progress')} disabled={planSaving}
             title="Set status: in-progress — marks this plan as actively being worked">{planSaving ? '…' : 'Start'}</button>

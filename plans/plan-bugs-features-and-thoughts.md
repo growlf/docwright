@@ -1,5 +1,5 @@
 ---
-title: "Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System"
+title: Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System
 status: draft
 author: NetYeti
 created: 2026-06-07
@@ -21,7 +21,7 @@ reviewed_by:
 reviewed_date:
 canceled_date:
 cancellation_reason:
-template_version: "1.0"
+template_version: 1.0
 tests_defined: false
 gate_reviewer:
 gate_status:
@@ -100,22 +100,6 @@ Old proposals without `category` are unaffected regardless.
 | Category list grows uncontrolled | Low | Low | Governance maintainers own the list per proposal Out of Scope |
 | New templates break existing new-proposal flow | Low | Medium | Templates are additive; old flow still works unchanged |
 
-## Critical Review Summary
+## Critical Review
 
-*AI critique ran on the original empty stub. Key findings addressed in this rewrite:*
-
-- **🚫 block:** Single empty step — resolved; 7 concrete steps with definitions of done
-- **🚫 block:** Potential overlap with completed plans — addressed via Step 1 verification gate
-- **⚠️ warn:** AI title generation underestimated — now has its own dedicated step (Step 4)
-- **⚠️ warn:** Empty testing plan — now has both unit and manual test coverage defined
-- **⚠️ warn:** Missing dependencies — `depends_on` now lists `properties-pane` and `web-ui-polish`
-- **⚠️ warn:** Related proposals not linked — `related_to` now references the two overlapping proposals
-- **📝 note:** Gate review not done — will be conducted before moving to approved
-
-## Document History
-
-| Date | Change | Author |
-|------|--------|--------|
-| 2026-06-07 | Created from approved proposal | NetYeti |
-| 2026-06-07 | Restored after accidental overwrite during API testing | NetYeti |
-| 2026-06-07 | Returned to draft; implementation steps filled in; critical review findings addressed | NetYeti |
+Critique complete — 14 findings across all steps and cross-cutting areas. Three 🚫 blocks, five ⚠️ warnings, six 📝 notes. The key blockers are: phantom `related_to` proposals on disk, missing category migration strategy, and undefined template file locations.

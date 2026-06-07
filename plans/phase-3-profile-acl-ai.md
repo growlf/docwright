@@ -1,6 +1,6 @@
 ---
 title: Phase 3 — Profile Engine, ACL & AI Integration
-status: approved
+status: draft
 author: NetYeti
 created: 2026-06-03
 tags:
@@ -14,24 +14,21 @@ automated: off
 assigned_to: NetYeti
 depends_on:
   - phase-2-foundation
+_path: plans/phase-3-profile-acl-ai.md
+proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 3; no individual proposal
 ---
-
 # Phase 3 — Profile Engine, ACL & AI Integration
 
 ## Overview
 
-Phase 3 completes the profile engine with all four bundled profiles, wires
-in ACL enforcement via Forgejo team membership, and enables full AI write
-flows through the ACL controller. By the end of this phase, DocWright
-enforces policy automatically and every AI action is auditable.
+Phase 3 completes the profile engine with all four bundled profiles, wires in ACL enforcement via Forgejo team membership, and enables full AI write flows through the ACL controller. By the end of this phase, DocWright enforces policy automatically and every AI action is auditable.
 
-This plan tracks all Phase 3 deliverables. Each deliverable will be broken
-out into its own plan when Phase 2 is complete and work begins.
+This plan tracks all Phase 3 deliverables. Each deliverable will be broken out into its own plan when Phase 2 is complete and work begins.
 
 ## Deliverables
 
 | # | Deliverable | Status | Notes |
-|---|-------------|--------|-------|
+| --- | --- | --- | --- |
 | 1 | Full profile engine — all four bundled profiles loaded and validated | ⏳ Planned | org-operations, doc-lifecycle, infra-topology, knowledge-base |
 | 2 | `profile.json` schema validation on load | ⏳ Planned | Fail loudly on malformed profiles |
 | 3 | ACL controller — Forgejo team membership as enforcement source | ⏳ Planned | `src/dispatch/acl.ts` wired to Forgejo API |
@@ -47,11 +44,10 @@ out into its own plan when Phase 2 is complete and work begins.
 
 ## Phase Context
 
-See [[plans/phase-2-foundation]] for Phase 2 deliverables.
-Phase 3 begins after Phase 2 is complete and the extension skeleton is stable.
+See \[\[plans/phase-2-foundation\]\] for Phase 2 deliverables. Phase 3 begins after Phase 2 is complete and the extension skeleton is stable.
 
 ## Document History
 
 | Date | Change | Author |
-|------|--------|--------|
+| --- | --- | --- |
 | 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |
