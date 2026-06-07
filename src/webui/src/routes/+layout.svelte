@@ -5,7 +5,7 @@
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
-  import { toasts, dismissToast } from '$lib/toast';
+  import { toasts, dismissToast, showToast } from '$lib/toast';
   import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
@@ -122,6 +122,14 @@
       goto('/' + data.path.replace(/\.md$/, '') + '?new=1');
       collationMatches.set([]);
       collationRelationships.set([]);
+    } else if (res.status === 409) {
+      const data = await res.json();
+      if (data.path) {
+        showToast('Plan already exists — opening it', 3000);
+        goto('/' + data.path.replace(/\.md$/, ''));
+        collationMatches.set([]);
+        collationRelationships.set([]);
+      }
     }
   }
 
