@@ -280,3 +280,24 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] 126 dispatch tests passing
 
 **Session note:** `docs/session-notes/session_note_202606071347.md`
+
+---
+
+## Session: 2026-06-07 — CI/CD build monitoring, tag policy, Web UI watch
+
+**Focus:** Fix CI failures, enforce v0.x.x tag policy, automate build monitoring
+
+**Completed:**
+- [x] Fixed CI build failure — `__dirname` → `fileURLToPath(import.meta.url)` in cross-tool compat test
+- [x] CI workflow narrowed to `push: tags: v0.*.*` and `workflow_dispatch` only
+- [x] `v0.*.*` policy enforced at API layer (`/api/git/tag`), CI trigger, and watch scripts
+- [x] `versioning.md` updated — CI trigger listed as required update in any major milestone release plan
+- [x] Claude Code `PostToolUse` hook: `scripts/claude-tag-push-watch.sh` auto-watches CI after tag push
+- [x] OpenCode behavioral rule: `.opencode/rules/ci-watch-on-tag-push.md`
+- [x] `npm run release:tag` / `scripts/release-tag.sh` — code-enforced cross-tool path
+- [x] Web UI: `/api/git/ci-watch` SSE endpoint streams live GitHub Actions status
+- [x] `GitPanel.svelte` shows CI watch panel after tag push (waiting → running → green/red)
+- [x] "release" bump type removed from GitPanel (would produce policy-violating v1.0.0)
+- [x] Pre-existing TS2339 bug fixed in `watch/+server.ts`
+
+**Session note:** `docs/session-notes/session_note_202606072100.md`
