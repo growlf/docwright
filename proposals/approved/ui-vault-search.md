@@ -7,13 +7,13 @@ tags:
   - ui
   - search
   - improvements
-approved: false
-deferred: true
-deferred_reason: "Requires search backend (tobi/qmd or similar). Post-launch."
+approved: true
+deferred: false
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
   - proposals/ui-settings-activity-bar.md
+consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
 ## Problem
