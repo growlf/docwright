@@ -6,11 +6,12 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
-  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags } from '$lib/pane';
+  import { showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import Panel from '$lib/Panel.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
+  import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
   import PoliciesPanel from '$lib/PoliciesPanel.svelte';
   import TagsPanel from '$lib/TagsPanel.svelte';
@@ -44,12 +45,14 @@
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
-  let rightTab     = $state<'properties' | 'related'>('properties');
+  let rightTab     = $state<'properties' | 'related' | 'review'>('properties');
 
   // Subscribe to shared collation stores
   let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
   let cr = $state<any[]>([]); $effect(() => { const u = collationRelationships.subscribe(v => cr = v); return u; });
   let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
+  let prf = $state('');       $effect(() => { const u = planReviewFindings.subscribe(v => prf = v); return u; });
+  let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
 
   // Fetch profile feature flags on mount
   onMount(async () => {
@@ -74,7 +77,10 @@
     collationMatches.set([]);
     collationRelationships.set([]);
     collationLoading.set(false);
+    planReviewFindings.set('');
+    planReviewLoading.set(false);
     if (rightTab === 'related' && fp) findRelated(fp);
+    if (rightTab === 'review') rightTab = 'properties';
   });
 
   // React to page's signal to switch to Related tab
@@ -130,6 +136,59 @@
         collationMatches.set([]);
         collationRelationships.set([]);
       }
+    }
+  }
+
+  async function handleReview() {
+    const fp = $currentDoc.filePath;
+    if (!fp) return;
+    rightTab = 'review';
+    showRightPanel = true;
+    planReviewFindings.set('');
+    planReviewLoading.set(true);
+    try {
+      const res = await fetch('/api/plan-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: fp }),
+      });
+      const data = await res.json();
+      planReviewFindings.set(data.findings || data.error || 'No findings returned.');
+    } catch (e: any) {
+      planReviewFindings.set(`Error: ${e}`);
+    } finally {
+      planReviewLoading.set(false);
+    }
+  }
+
+  async function handleWriteReview(findings: string) {
+    const fp = $currentDoc.filePath;
+    if (!fp || !findings) return;
+    const body = $currentDoc.body ?? '';
+    // Replace existing Critical Review section or append a new one
+    const marker = '## Critical Review';
+    const updated = body.includes(marker)
+      ? body.replace(/## Critical Review[\s\S]*$/, `${marker}\n\n${findings}`)
+      : body.trimEnd() + `\n\n${marker}\n\n${findings}`;
+    const fm = $currentDoc.frontmatter ?? {};
+    const fmLines = Object.entries(fm)
+      .filter(([k]) => k !== '_path')
+      .map(([k, v]) => {
+        if (Array.isArray(v)) return v.length ? `${k}:\n${v.map(i => `  - ${i}`).join('\n')}` : `${k}: []`;
+        if (typeof v === 'boolean') return `${k}: ${v}`;
+        if (v === null || v === undefined || v === '') return `${k}:`;
+        return `${k}: ${v}`;
+      }).join('\n');
+    const newRaw = `---\n${fmLines}\n---\n${updated}`;
+    const res = await fetch('/api/write?path=' + encodeURIComponent(fp), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newRaw }),
+    });
+    if (res.ok) {
+      showToast('Critical Review written to plan', 3000);
+      rightTab = 'properties';
+      planReviewFindings.set('');
     }
   }
 
@@ -389,6 +448,12 @@
         onclick={() => { rightTab = 'related'; if (!collationMatches.length && $currentDoc.filePath) findRelated($currentDoc.filePath); }}>
         Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
       </button>
+      {#if $currentDoc.docType === 'plan'}
+        <button class="right-tab" class:active={rightTab === 'review'}
+          onclick={handleReview}>
+          Review{prl ? ' ⏳' : prf ? ' ✓' : ''}
+        </button>
+      {/if}
     </div>
 
     {#if rightTab === 'properties'}
@@ -403,11 +468,20 @@
             onapprove={$currentDoc.onApprove}
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onplan={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
+            onreview={handleReview}
           />
         {:else}
           <div class="right-empty">Open a document to see its properties</div>
         {/if}
       {/key}
+    {:else if rightTab === 'review'}
+      <PlanReviewPanel
+        findings={prf}
+        loading={prl}
+        onwritetoplan={handleWriteReview}
+        ondismiss={() => { rightTab = 'properties'; planReviewFindings.set(''); }}
+        onrerun={handleReview}
+      />
     {:else}
       <CollationPanel
         matches={cm}

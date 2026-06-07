@@ -19,6 +19,7 @@
     onapprove?: (fm: Record<string, any>) => void;
     onfindrelated?: () => void;
     onplan?: () => void;
+    onreview?: () => void;
   } = $props();
 
   const SELECT_OPTIONS: Record<string, string[]> = {
@@ -224,6 +225,8 @@
       {/if}
       {#if docType === 'plan'}
         {#if frontmatter.status === 'draft' || frontmatter.status === 'proposal'}
+          <button class="act review" onclick={() => onreview?.()}
+            title="Run adversarial AI critique before approving — finds gaps, failure modes, missing dependencies">⚡ Review</button>
           <button class="act approve" onclick={() => setPlanStatus('approved')}
             title="Mark plan as approved — enables the Start button">Approve</button>
         {/if}

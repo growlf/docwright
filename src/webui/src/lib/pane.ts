@@ -11,6 +11,10 @@ export const collationMatches = writable<any[]>([]);
 export const collationRelationships = writable<any[]>([]);
 export const collationLoading = writable(false);
 
+/** Plan review (AI critique) panel state */
+export const planReviewFindings = writable('');
+export const planReviewLoading  = writable(false);
+
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({
   showPlanButton: true,
