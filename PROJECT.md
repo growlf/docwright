@@ -1,6 +1,6 @@
 # docwright — Organizational Operating System for Policy-Driven Teams
 
-> **Status:** Draft v0.9 — 2026-06-07
+> **Status:** Draft v0.10 — 2026-06-07
 > **Repository:** `github.com/growlf/docwright` (proposed)
 > **License:** MIT
 
@@ -1010,6 +1010,12 @@ client. Phase 1 built it end-to-end rather than starting with the VSCodium exten
       critique via OpenCode session API, Write to Plan)
 - [x] Phase 2 UI Polish Bundle: full-text vault search, tag browser + tag index,
       keyboard shortcuts, theme picker foundation, navigation improvements
+- [x] GitHub Actions CI: lint + typecheck + unit tests, Docker build + health check
+      (ci.yml; triggered on v0.x.x tags and workflow_dispatch per versioning policy)
+- [x] Git push + tagging UI: annotated tag creation, push, CI watch panel (SSE),
+      `npm run release:tag` script; v0.x.x policy enforced at API layer
+- [x] CI/CD build monitoring: PostToolUse hook (Claude Code), behavioral rule
+      (OpenCode), `/api/git/ci-watch` SSE endpoint streaming live run status
 
 ---
 
@@ -1037,29 +1043,37 @@ within Phase 2.
 
 #### Engineering Foundation
 - [ ] TypeScript MCP server (replace Python `mcp-server.py`)
-- [ ] GitHub Actions CI: lint + typecheck + unit tests (no .vsix yet)
-- [ ] FOSS hygiene: `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`,
-      `AGENTS.md`, `CODEOWNERS`, `.github/` templates, `dependabot.yml`
-- [ ] Dispatch module CI: explicit test that no VS Code API symbols leak
+- [x] GitHub Actions CI: lint + typecheck + unit tests (done in Phase 1; moved here
+      for clarity — ci.yml runs on v0.x.x tags + workflow_dispatch, no .vsix step)
+- [x] FOSS hygiene: `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`,
+      `AGENTS.md`, `.github/` templates (ISSUE_TEMPLATE, PR template) — all present.
+      Remaining: `CODEOWNERS`, `dependabot.yml`
+- [x] Dispatch module CI: `test/dispatch/dispatch.test.ts` explicitly verifies zero
+      VS Code API symbols; cross-tool compat test guards skills table + spec docs
 - [ ] Inbox capture: minimal localhost web form → `/inbox/` stubs
 - [ ] `DOCWRIGHT_AGENT_ROLE` env-var hook (orchestrator vs. code agent enforcement)
 - [ ] Profile engine runtime: full load/validation, `profile.json` schema migration
 
 ---
 
-### Phase 3 — Profile Engine, ACL & AI Integration
+### Phase 3 — Profile Engine, ACL & Research AI Tooling
 
 **Goal:** Full profile system runtime, Forgejo ACL integration, vault-wide wikilink
-index, and AI-native research tooling on top of the Phase 2 research infrastructure.
+index, and AI-native research tooling built on top of the Phase 2 research infrastructure.
+
+**Note on AI:** Core AI features (✨ Improve, ⚡ Plan Review, chat panel, fillProposal,
+critiqueDocument) shipped in Phase 1. Phase 3 AI work is specifically research-stage
+tooling — context injection, research-to-proposal generation, and multi-perspective review.
 
 #### Profile & ACL
 - [ ] Profile engine: full runtime load/validation, schema migration, template resolution,
       profile switching via UI
 - [ ] Forgejo team membership API → ACL enforcement (`author-role:` field as audit record;
       Forgejo membership as enforcement source)
-- [ ] `author-role:` field in ALL profile templates (all four profiles)
 - [ ] OpenCode instructions per profile (`opencode-instructions.md`) — system prompt
-      injected on session start; embeds core philosophy
+      injected on session start; embeds core philosophy.
+      (`org-operations` already has this; pending for `doc-lifecycle`, `knowledge-base`,
+      `infra-topology`)
 
 #### Vault-Wide Index
 - [ ] Vault-wide backlink index (`_backlinks.json`) — rebuilt on document changes
@@ -1407,4 +1421,5 @@ Avoid trademarked terms (VSCode, VSCodium, OpenCode, Visual Studio).
 | v0.6 | 2026-05-26 | Drive access resolved. Added: headless dispatch plane; multi-user & team collaboration; Trust & Safety tiers; AI authorship stamping; OCC two-layer model; Context Acceleration; remoteDispatch config; Phase B shared daemon + Phase C Y.js; matryca-plumber attribution | Claude (Anthropic) |
 | v0.7 | 2026-05-26 | LLM Wiki pattern adopted as first-class (Karpathy gist reference added). Added: third bundled profile `knowledge-base`; LLMWikiEngine module; Ingest/Lint/Save-to-Wiki commands; `_backlinks.json` maintainer; qmd optional search backend (auto-enabled ≥200 docs); page taxonomy from gowtham0992/link; operation taxonomy from sametbrr/llm-wiki-manager; team folder taxonomy note from eslamgenio/long-term-agent-memory; differentiation table vs full LLM Wiki ecosystem; three hard problems noted as Phase 4+ known challenges; typed wikilinks spec stub; 10 new gaps added; all attribution in §9 and NOTICE.md | Claude (Anthropic) |
 | v0.9 | 2026-06-07 | **Phase recalibration.** Phases rewritten to reflect actual build order (Web UI-first, not extension-first). Phase 0 and Phase 1 marked complete with accurate delivered feature list. Phase 2 elevated to Foundation & Methodology with Research stage as critical first deliverable. Phases 3–5 and B/C restructured around current trajectory and approved bundle proposals. Added Research stage to §2 Policy hierarchy. Updated §6 Web UI tech stack to SvelteKit. No content removed — all deliverables redistributed to correct phases. | Claude (Anthropic) |
+| v0.10 | 2026-06-07 | **Phase accuracy pass.** Phase 1 done list extended with 3 missing deliverables (CI/CD setup, Git push+tag UI, CI watch system). Phase 2 Engineering Foundation: marked CI, dispatch test, and most FOSS hygiene items as done; noted remaining gaps (CODEOWNERS, dependabot.yml). Removed duplicate `author-role:` item (already done in all 4 profiles). Phase 3 renamed from "Profile Engine, ACL & AI Integration" to "Profile Engine, ACL & Research AI Tooling" — core AI features (Improve, Plan Review, chat, fillProposal) shipped in Phase 1; Phase 3 AI scope is research-stage tooling only. Clarified opencode-instructions.md status (org-operations done; 3 profiles pending). | NetYeti |
 | v0.8 | 2026-06-01 | **Major reframe.** docwright repositioned as organizational operating system / governance layer, not a VSCodium extension. Added: §2 Policy as Foundation hierarchy; §2 zero-friction inbox capture (web form, email, CLI, chat); §2 "why not" Decision document type; §2 partner org federation model (fork/federation/shared-vault); §4 Why This Architecture (Web UI as primary client, VSCodium as power tool, Logseq as optional explorer); §7 ACL user role model (Observer/Contributor/Steward/Governance); §7 Inbox Adapter Layer diagram; §8 `org-operations` profile (fourth bundled profile — the org OS); §10 ACL Controller + Inbox Adapters + Web UI Server modules; §12 Web UI and inbox configuration settings; §14 Phase 3 expanded with Web UI v1 and org-operations full implementation; §19 three new risks (reading UX, inbox friction, ACL complexity). Updated: §1 problem statement to organizational frame; §2 proposed solution to multi-client architecture; §5 differentiation table vs organizational tools; default profile changed from `doc-lifecycle` to `org-operations`. Session context: Cascade STEAM — educational equity org; non-developer contributors are primary users. | Claude (Anthropic) |
