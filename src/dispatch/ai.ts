@@ -193,14 +193,50 @@ export class OpenCodeEngine implements AIEngine {
     }
   }
 
-  async fillProposal(_fm: Record<string, any>, body: string): Promise<string> {
-    // TODO: implement via OpenCode session API
-    return body;
+  async fillProposal(fm: Record<string, any>, body: string): Promise<string> {
+    const title = fm.title || '(untitled)';
+    const tags  = Array.isArray(fm.tags) ? fm.tags.join(', ') : String(fm.tags || '');
+    const prompt =
+      `You are a governance document assistant. Improve the following proposal body.\n` +
+      `Rules:\n` +
+      `- Flesh out sparse sections (Problem, Proposed Solution, Out of Scope)\n` +
+      `- Keep the author's intent unchanged — do not reverse decisions already made\n` +
+      `- Add missing sections only when clearly needed\n` +
+      `- Do NOT modify the YAML frontmatter\n` +
+      `- Return ONLY the improved markdown body with no preamble or commentary\n\n` +
+      `FRONTMATTER CONTEXT:\ntitle: ${title}\ntags: ${tags}\n\n` +
+      `CURRENT BODY:\n${body}`;
+    try {
+      const res = await fetch(`${this.url}/api/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch {
+      return new KeywordEngine().fillProposal(fm, body);
+    }
   }
 
   async critiqueDocument(content: string): Promise<string> {
-    // TODO: implement via OpenCode session API
-    return content;
+    const prompt =
+      `You are a governance document reviewer. Critique the following document.\n` +
+      `Identify: missing sections, weak reasoning, unstated assumptions, ` +
+      `security or governance concerns, and concrete improvement suggestions.\n` +
+      `Return a structured critique in plain markdown. Be specific and actionable.\n\n` +
+      `DOCUMENT:\n${content.slice(0, 4000)}`;
+    try {
+      const res = await fetch(`${this.url}/api/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch {
+      return new KeywordEngine().critiqueDocument(content);
+    }
   }
 
   async gatePreReview(
