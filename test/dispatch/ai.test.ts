@@ -85,6 +85,29 @@ describe('KeywordEngine — fillProposal and critiqueDocument', () => {
   });
 });
 
+// callSession makes two sequential fetches: (1) POST /session → {id}, (2) POST /session/{id}/message → {parts}
+// This helper mocks both calls in sequence.
+function mockCallSession(responseText: string, opts?: { failOn?: 'session' | 'message' | 'network' }) {
+  let callCount = 0;
+  globalThis.fetch = async (url: any, fetchOpts: any) => {
+    callCount++;
+    if (opts?.failOn === 'network') throw new Error('ECONNREFUSED');
+    if (callCount === 1) {
+      // Session create
+      if (opts?.failOn === 'session') return new Response('error', { status: 500 });
+      return new Response(JSON.stringify({ id: 'ses_test123' }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    // Message send
+    if (opts?.failOn === 'message') return new Response('error', { status: 500 });
+    return new Response(JSON.stringify({
+      parts: [{ type: 'step-start' }, { type: 'text', text: responseText }, { type: 'step-finish' }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  return { getCallCount: () => callCount };
+}
+
 describe('OpenCodeEngine — fillProposal and critiqueDocument', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -92,77 +115,88 @@ describe('OpenCodeEngine — fillProposal and critiqueDocument', () => {
   afterEach(() => { globalThis.fetch = originalFetch; });
 
   it('fillProposal returns the LLM response text on success', async () => {
-    globalThis.fetch = async () => new Response('## Problem\nAI improved content here.', { status: 200 });
+    mockCallSession('## Problem\nAI improved content here.');
     const engine = new OpenCodeEngine('http://localhost:4096');
     const result = await engine.fillProposal({ title: 'My Proposal', tags: ['ui'] }, '## Problem\noriginal');
     assert.ok(result.includes('AI improved content'), 'should return the LLM text');
   });
 
-  it('fillProposal sends a prompt containing the plan body', async () => {
-    let capturedBody = '';
+  it('fillProposal sends a prompt containing the body in the message call', async () => {
+    let capturedMessageBody = '';
+    let callCount = 0;
     globalThis.fetch = async (_url: any, opts: any) => {
-      capturedBody = opts.body;
-      return new Response('improved text', { status: 200 });
+      callCount++;
+      if (callCount === 1) return new Response(JSON.stringify({ id: 'ses_test' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      capturedMessageBody = opts.body;
+      return new Response(JSON.stringify({ parts: [{ type: 'text', text: 'ok' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     };
     const engine = new OpenCodeEngine('http://localhost:4096');
     await engine.fillProposal({ title: 'T', tags: [] }, '## Section\noriginal body content');
-    const parsed = JSON.parse(capturedBody);
-    assert.ok(parsed.prompt.includes('original body content'), 'prompt should contain the body');
-    assert.ok(parsed.prompt.includes('governance document assistant'), 'prompt should set the AI role');
+    const parsed = JSON.parse(capturedMessageBody);
+    const promptText = parsed.parts[0].text;
+    assert.ok(promptText.includes('original body content'), 'prompt should contain the body');
+    assert.ok(promptText.includes('governance document assistant'), 'prompt should set the AI role');
   });
 
-  it('fillProposal falls back to KeywordEngine stub on HTTP error', async () => {
-    globalThis.fetch = async () => new Response('server error', { status: 500 });
+  it('fillProposal falls back to KeywordEngine stub on session create error', async () => {
+    mockCallSession('', { failOn: 'session' });
     const engine = new OpenCodeEngine('http://localhost:4096');
     const result = await engine.fillProposal({ title: 'T' }, '## Original\nbody');
     assert.ok(result.includes('unavailable'), 'should fall back to stub');
   });
 
   it('fillProposal falls back to KeywordEngine stub on network error', async () => {
-    globalThis.fetch = async () => { throw new Error('ECONNREFUSED'); };
+    mockCallSession('', { failOn: 'network' });
     const engine = new OpenCodeEngine('http://localhost:4096');
     const result = await engine.fillProposal({ title: 'T' }, '## Original\nbody');
     assert.ok(result.includes('unavailable'), 'should fall back to stub');
   });
 
   it('critiqueDocument returns the LLM critique text on success', async () => {
-    globalThis.fetch = async () => new Response('### Cross-cutting ⚠️ warn\n- **Finding:** missing rollback', { status: 200 });
+    mockCallSession('### Cross-cutting ⚠️ warn\n- **Finding:** missing rollback');
     const engine = new OpenCodeEngine('http://localhost:4096');
     const result = await engine.critiqueDocument('## Problem\nsome proposal content');
     assert.ok(result.includes('missing rollback'), 'should return the LLM critique');
   });
 
   it('critiqueDocument sends a prompt containing the document content', async () => {
-    let capturedBody = '';
+    let capturedMessageBody = '';
+    let callCount = 0;
     globalThis.fetch = async (_url: any, opts: any) => {
-      capturedBody = opts.body;
-      return new Response('critique text', { status: 200 });
+      callCount++;
+      if (callCount === 1) return new Response(JSON.stringify({ id: 'ses_test' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      capturedMessageBody = opts.body;
+      return new Response(JSON.stringify({ parts: [{ type: 'text', text: 'critique' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     };
     const engine = new OpenCodeEngine('http://localhost:4096');
     await engine.critiqueDocument('## Problem\nunique content marker xyz');
-    const parsed = JSON.parse(capturedBody);
-    assert.ok(parsed.prompt.includes('unique content marker xyz'), 'prompt should contain document content');
-    assert.ok(parsed.prompt.includes('governance document reviewer'), 'prompt should set the AI role');
+    const parsed = JSON.parse(capturedMessageBody);
+    const promptText = parsed.parts[0].text;
+    assert.ok(promptText.includes('unique content marker xyz'), 'prompt should contain document content');
+    assert.ok(promptText.includes('governance document reviewer'), 'prompt should set the AI role');
   });
 
   it('critiqueDocument falls back to KeywordEngine stub on error', async () => {
-    globalThis.fetch = async () => { throw new Error('ECONNREFUSED'); };
+    mockCallSession('', { failOn: 'network' });
     const engine = new OpenCodeEngine('http://localhost:4096');
     const result = await engine.critiqueDocument('## Problem\nsome content');
     assert.ok(result.includes('unavailable'), 'should fall back to stub');
   });
 
   it('critiqueDocument truncates very long documents to avoid huge prompts', async () => {
-    let capturedBody = '';
+    let capturedMessageBody = '';
+    let callCount = 0;
     globalThis.fetch = async (_url: any, opts: any) => {
-      capturedBody = opts.body;
-      return new Response('critique', { status: 200 });
+      callCount++;
+      if (callCount === 1) return new Response(JSON.stringify({ id: 'ses_test' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      capturedMessageBody = opts.body;
+      return new Response(JSON.stringify({ parts: [{ type: 'text', text: 'critique' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     };
     const engine = new OpenCodeEngine('http://localhost:4096');
-    const longContent = 'x'.repeat(10000);
-    await engine.critiqueDocument(longContent);
-    const parsed = JSON.parse(capturedBody);
-    assert.ok(parsed.prompt.length < 8000, 'prompt should be bounded even for large documents');
+    await engine.critiqueDocument('x'.repeat(10000));
+    const parsed = JSON.parse(capturedMessageBody);
+    const promptText = parsed.parts[0].text;
+    assert.ok(promptText.length < 8000, 'prompt should be bounded even for large documents');
   });
 });
 

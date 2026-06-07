@@ -33,15 +33,37 @@ export async function POST({ request }) {
     });
   }
 
+  const dirParam = `directory=${encodeURIComponent(REPO_ROOT)}`;
+
   try {
-    const res = await fetch(`${opencodeUrl}/api/session`, {
+    // Step 1 — create a session scoped to this vault
+    const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: context }),
+      body: JSON.stringify({}),
     });
-    if (!res.ok) throw new Error(`OpenCode returned ${res.status}`);
-    const findings = await res.text();
-    return json({ findings });
+    if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
+    const sess = await sessRes.json();
+    const sessionId: string = sess?.id ?? sess?.sessionID;
+    if (!sessionId) throw new Error('OpenCode returned no session ID');
+
+    // Step 2 — send the critique prompt as a user message
+    const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
+    });
+    if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
+    const data = await msgRes.json();
+
+    // Step 3 — extract text parts from the response
+    const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+    const findings = parts
+      .filter(p => p.type === 'text')
+      .map(p => p.text ?? '')
+      .join('');
+
+    return json({ findings: findings || '*(No text response from AI)*' });
   } catch (err: any) {
     return json({ error: String(err) }, { status: 502 });
   }

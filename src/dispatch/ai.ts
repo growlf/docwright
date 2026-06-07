@@ -148,7 +148,32 @@ export class KeywordEngine implements AIEngine {
 // ── OpenCodeEngine (real LLM) ──────────────────────────────────────────────────
 
 export class OpenCodeEngine implements AIEngine {
-  constructor(private url: string) {}
+  constructor(private url: string, private vaultRoot?: string) {}
+
+  /** Create a session and send one prompt, return extracted text. */
+  private async callSession(prompt: string): Promise<string> {
+    const dir = this.vaultRoot ?? process.env.DOCWRIGHT_ROOT ?? process.cwd();
+    const q = `directory=${encodeURIComponent(dir)}`;
+    const sessRes = await fetch(`${this.url}/session?${q}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
+    const sess = await sessRes.json();
+    const sessionId: string = sess?.id ?? sess?.sessionID;
+    if (!sessionId) throw new Error('No session ID in response');
+
+    const msgRes = await fetch(`${this.url}/session/${sessionId}/message?${q}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
+    });
+    if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
+    const data = await msgRes.json();
+    const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+    return parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+  }
 
   async findSimilar(targetPath: string, candidates: string[], vaultRoot: string): Promise<SimilarityResult[]> {
     const targetRaw = fs.readFileSync(path.join(vaultRoot, targetPath), 'utf-8');
@@ -173,13 +198,7 @@ export class OpenCodeEngine implements AIEngine {
       list.map(c => `PATH:${c.path}\nTITLE:${c.title}\n${c.excerpt}`).join('\n---\n');
 
     try {
-      const res = await fetch(`${this.url}/api/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
+      const text = await this.callSession(prompt);
       const match = text.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('No JSON array in response');
       const scored = JSON.parse(match[0]) as Array<{ path: string; score: number }>;
@@ -188,7 +207,6 @@ export class OpenCodeEngine implements AIEngine {
         return { path: s.path, title: getFrontmatterTitle(raw), score: s.score, sections: parseSections(stripFrontmatter(raw)) };
       }).sort((a, b) => b.score - a.score);
     } catch {
-      // Graceful fallback to keyword engine
       return new KeywordEngine().findSimilar(targetPath, candidates, vaultRoot);
     }
   }
@@ -207,13 +225,7 @@ export class OpenCodeEngine implements AIEngine {
       `FRONTMATTER CONTEXT:\ntitle: ${title}\ntags: ${tags}\n\n` +
       `CURRENT BODY:\n${body}`;
     try {
-      const res = await fetch(`${this.url}/api/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      return await this.callSession(prompt);
     } catch {
       return new KeywordEngine().fillProposal(fm, body);
     }
@@ -227,13 +239,7 @@ export class OpenCodeEngine implements AIEngine {
       `Return a structured critique in plain markdown. Be specific and actionable.\n\n` +
       `DOCUMENT:\n${content.slice(0, 4000)}`;
     try {
-      const res = await fetch(`${this.url}/api/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      return await this.callSession(prompt);
     } catch {
       return new KeywordEngine().critiqueDocument(content);
     }
@@ -273,13 +279,7 @@ ${scopeDocs.map(d => `[${d.path}] ${d.title}\n${d.excerpt.slice(0, 500)}`).join(
 Respond with ONLY valid JSON:`;
 
     try {
-      const res = await fetch(`${this.url}/api/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
+      const text = await this.callSession(prompt);
       const match = text.match(/\{[\s\S]*"readiness"[\s\S]*\}/);
       if (!match) throw new Error('No JSON in response');
       return JSON.parse(match[0]) as GatePreReviewResult;
@@ -298,8 +298,8 @@ Respond with ONLY valid JSON:`;
 
 // ── Factory ────────────────────────────────────────────────────────────────────
 
-export function getAIEngine(_vaultRoot: string): AIEngine {
+export function getAIEngine(vaultRoot: string): AIEngine {
   const url = process.env.OPENCODE_URL;
-  if (url) return new OpenCodeEngine(url);
+  if (url) return new OpenCodeEngine(url, vaultRoot);
   return new KeywordEngine();
 }
