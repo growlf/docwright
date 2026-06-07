@@ -19,6 +19,7 @@ related_to:
   - docs/deployment.md
   - plans/phase-2-foundation.md
 _path: proposals/containerization.md
+consumed_by: plans/completed/phase-1-containerization.md
 ---
 
 ## Problem

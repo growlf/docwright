@@ -16,6 +16,7 @@ approved: false
 created_by: NetYeti@phoenix
 assigned_to: ""
 _path: proposals/cross-tool-ai-compatibility-opencode-claude-code.md
+consumed_by: plans/completed/cross-tool-ai-compatibility-opencode-claude-code.md
 ---
 
 ## Problem

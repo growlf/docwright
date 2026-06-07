@@ -16,6 +16,7 @@ depends_on: []
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
+consumed_by: plans/completed/mobile-friendly.md
 ---
 ## Problem
 

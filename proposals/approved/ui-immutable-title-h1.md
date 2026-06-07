@@ -11,6 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
 _path: proposals/ui-immutable-title-h1.md
+consumed_by: plans/completed/web-ui-polish.md
 ---
 
 ## Problem

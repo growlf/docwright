@@ -11,6 +11,7 @@ approved: true
 priority: high
 created_by: NetYeti@phoenix
 assigned_to: "NetYeti"
+consumed_by: plans/completed/isolate-docwright-mcp-instances.md
 ---
 
 ## Problem

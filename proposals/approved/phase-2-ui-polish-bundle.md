@@ -25,7 +25,7 @@ related_to:
   - proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md
   - proposals/policies-should-be-a-button-on-the-leftmost-button-bar.md
 _path: proposals/phase-2-ui-polish-bundle.md
-consumed_by: plans/plan-phase-2-ui-polish-bundle-navigation-search-tags-theming-shortcuts.md
+consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
 ## Problem

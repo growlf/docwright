@@ -20,6 +20,7 @@ _path: proposals/split-agent-governance.md
 related_to:
   - plans/phase-1-plan-step-enforcement.md
   - proposals/skill-plan-critique.md
+consumed_by: plans/completed/cross-tool-ai-compatibility-opencode-claude-code.md
 ---
 
 ## Problem

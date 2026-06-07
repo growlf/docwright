@@ -11,6 +11,7 @@ approved: true
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 subsumed_by: properties-pane
+consumed_by: plans/completed/properties-pane.md
 ---
 ## Problem
 

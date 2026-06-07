@@ -15,6 +15,7 @@ estimated_effort: S
 approved: false
 created_by: NetYeti@phoenix
 assigned_to: ""
+consumed_by: plans/completed/cross-tool-ai-compatibility-opencode-claude-code.md
 ---
 
 ## Problem

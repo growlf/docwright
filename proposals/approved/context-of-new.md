@@ -16,6 +16,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 subsumed_by: sidebar-polish
+consumed_by: plans/completed/sidebar-polish.md
 ---
 ## Problem
 

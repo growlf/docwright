@@ -15,6 +15,7 @@ depends_on:
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
+consumed_by: plans/completed/status-page.md
 ---
 ## Problem
 

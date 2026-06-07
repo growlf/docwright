@@ -17,6 +17,7 @@ related_to:
   - policies/core/capture-deferred-ideas.md
   - proposals/phase-gate-sign-off.md
 _path: proposals/built-in-deferred-idea-capture.md
+consumed_by: plans/completed/enforce-lifecycle-compliance.md
 ---
 
 ## Problem

@@ -17,6 +17,7 @@ related_to:
   - policies/core/multi-perspective-review.md
   - proposals/web-ui-ai-chat-panel.md
   - proposals/phase-gate-sign-off.md
+consumed_by: plans/phase-1-ui-polish.md
 ---
 
 ## Problem

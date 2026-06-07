@@ -20,6 +20,7 @@ related_to:
   - policies/core/ai-governance-boundaries.md
   - proposals/skill-plan-critique.md
 _path: proposals/plan-test-certification-checkboxes.md
+consumed_by: plans/completed/phase-1-plan-step-enforcement.md
 ---
 
 ## The Honest Problem Statement

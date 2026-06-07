@@ -13,6 +13,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/ui-settings-activity-bar.md
+consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
 ## Problem

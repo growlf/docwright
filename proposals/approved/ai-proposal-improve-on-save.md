@@ -16,6 +16,7 @@ related_to:
   - proposals/multi-perspective-review-feature.md
   - proposals/approved/ux-new-proposal.md
 _path: proposals/ai-proposal-improve-on-save.md
+consumed_by: plans/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
 ---
 
 ## Problem

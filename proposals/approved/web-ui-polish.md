@@ -11,6 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 priority: high
 assigned_to: "NetYeti"
+consumed_by: plans/completed/web-ui-polish.md
 ---
 
 ## Problem

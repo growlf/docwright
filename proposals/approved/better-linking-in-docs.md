@@ -13,6 +13,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
 _path: proposals/better-linking-in-docs.md
+consumed_by: plans/completed/web-ui-polish.md
 ---
 
 ## Problem

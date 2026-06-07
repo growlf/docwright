@@ -16,6 +16,7 @@ related_to:
   - proposals/ui-white-label-brand-settings.md
   - docs/customization.md
 _path: proposals/ui-theming-system.md
+consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
 ## Problem

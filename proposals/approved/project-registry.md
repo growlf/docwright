@@ -11,6 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 priority: highest
 assigned_to: "NetYeti"
+consumed_by: plans/completed/project-registry.md
 ---
 
 ## Problem

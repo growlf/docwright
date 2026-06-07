@@ -13,6 +13,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/ui-sidebar-consistency.md
+consumed_by: plans/completed/sidebar-polish.md
 ---
 
 ## Problem

@@ -11,6 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: ""
 _path: proposals/approval-need-assigned-to-picklist.md
+consumed_by: plans/completed/properties-pane.md
 ---
 ## Problem
 
