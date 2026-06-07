@@ -96,12 +96,16 @@ export function GET() {
   // 2-second cache to smooth rapid SSE-triggered refreshes
   if (cache && Date.now() - cache.at < 2000) return json(cache.data);
 
-  // Approved proposal paths referenced by existing plans
+  // Approved proposal paths referenced by existing plans.
+  // Normalize to always include .md so the set check matches actual file paths.
   const referencedByPlan = new Set<string>();
   for (const { fm } of [...readDir(path.join(REPO_ROOT, 'plans')), ...readDir(path.join(REPO_ROOT, 'plans', 'completed'))]) {
     const ps = fm.proposal_source;
     const sources: string[] = Array.isArray(ps) ? ps : ps ? [String(ps)] : [];
-    for (const s of sources) referencedByPlan.add(s);
+    for (const s of sources) {
+      const norm = s.trim();
+      referencedByPlan.add(norm.endsWith('.md') ? norm : norm + '.md');
+    }
   }
 
   // Open proposals (proposals/ — not approved, not deferred)
@@ -129,6 +133,7 @@ export function GET() {
       ),
   ].filter(({ path: p, fm }) =>
     !referencedByPlan.has(p) &&
+    !fm.consumed_by &&           // proposal already has a plan via consumed_by field
     fm.deferred !== true &&
     fm.approved === true &&
     !p.includes('phase-0-spike-decision')
