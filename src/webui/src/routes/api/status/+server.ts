@@ -74,6 +74,19 @@ function readDir(dir: string): Array<{ path: string; fm: Record<string, any> }> 
   return results;
 }
 
+const PRIORITY_RANK: Record<string, number> = {
+  critical: 0, high: 1, medium: 2, low: 3,
+};
+function byPriority(a: { priority: string }, b: { priority: string }): number {
+  return (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99);
+}
+
+function asList(val: unknown): string[] {
+  if (Array.isArray(val)) return val.map(String);
+  if (typeof val === 'string' && val) return [val];
+  return [];
+}
+
 function entry(p: string, fm: Record<string, any>) {
   return {
     path: p,
@@ -87,6 +100,8 @@ function entry(p: string, fm: Record<string, any>) {
     status: String(fm.status ?? ''),
     priority: String(fm.priority ?? ''),
     assigned_to: String(fm.assigned_to ?? ''),
+    depends_on: asList(fm.depends_on),
+    proposal_source: asList(fm.proposal_source),
   };
 }
 
@@ -108,21 +123,23 @@ export function GET() {
     }
   }
 
-  // Open proposals (proposals/ — not approved, not deferred)
+  // Open proposals (proposals/ — not approved, not deferred) — sorted by priority
   const open = readDir(path.join(REPO_ROOT, 'proposals'))
     .filter(({ path: p, fm }) =>
       !p.includes('misc.md') &&
       fm.approved !== true &&
       fm.deferred !== true
     )
-    .map(({ path: p, fm }) => entry(p, fm));
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort(byPriority);
 
-  // Deferred proposals
+  // Deferred proposals — sorted by priority
   const deferred = readDir(path.join(REPO_ROOT, 'proposals'))
     .filter(({ fm }) => fm.deferred === true)
-    .map(({ path: p, fm }) => entry(p, fm));
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort(byPriority);
 
-  // Approved proposals not yet promoted to a plan
+  // Approved proposals not yet promoted to a plan — sorted by priority
   // Check both proposals/approved/ AND proposals/ (files with approved: true not yet moved)
   const approvedPending = [
     ...readDir(path.join(REPO_ROOT, 'proposals', 'approved'))
@@ -137,12 +154,19 @@ export function GET() {
     fm.deferred !== true &&
     fm.approved === true &&
     !p.includes('phase-0-spike-decision')
-  ).map(({ path: p, fm }) => entry(p, fm));
+  ).map(({ path: p, fm }) => entry(p, fm))
+   .sort(byPriority);
 
-  // Active plans
+  // Active plans — in-progress first, then approved, both sorted by priority within group
   const active = readDir(path.join(REPO_ROOT, 'plans'))
     .filter(({ fm }) => ['approved', 'in-progress'].includes(String(fm.status ?? '')))
-    .map(({ path: p, fm }) => entry(p, fm));
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort((a, b) => {
+      // in-progress before approved
+      const statusOrder = (s: string) => s === 'in-progress' ? 0 : 1;
+      const sd = statusOrder(a.status) - statusOrder(b.status);
+      return sd !== 0 ? sd : byPriority(a, b);
+    });
 
   const completedCount = readDir(path.join(REPO_ROOT, 'plans', 'completed')).length;
 

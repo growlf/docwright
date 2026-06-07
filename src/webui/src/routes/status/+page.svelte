@@ -140,8 +140,9 @@
   }
 
   function priorityClass(p: string): string {
-    if (p === 'high' || p === 'critical') return 'pri-high';
-    if (p === 'medium') return 'pri-med';
+    if (p === 'critical') return 'pri-critical';
+    if (p === 'high')     return 'pri-high';
+    if (p === 'medium')   return 'pri-med';
     return 'pri-low';
   }
 </script>
@@ -268,26 +269,31 @@
     </section>
     {/if}
 
-    <!-- Open proposals -->
+    <!-- Active plans -->
     <section class="section">
-      <button class="section-header" onclick={() => toggleSection('open-proposals')}>
-        <span class="section-title">Open Proposals</span>
-        <span class="badge">{data.proposals.open.length}</span>
-        <span class="chevron">{collapsed['open-proposals'] ? '▸' : '▾'}</span>
+      <button class="section-header" onclick={() => toggleSection('active-plans')}>
+        <span class="section-title">Active Plans</span>
+        <span class="badge">{data.plans.active.length}</span>
+        <span class="chevron">{collapsed['active-plans'] ? '▸' : '▾'}</span>
       </button>
-      {#if !collapsed['open-proposals']}
-        {#if data.proposals.open.length === 0}
-          <div class="empty">No open proposals</div>
+      {#if !collapsed['active-plans']}
+        {#if data.plans.active.length === 0}
+          <div class="empty">No active plans</div>
         {:else}
           <table class="items-table">
-            <thead><tr><th>Title</th><th>Category</th><th>Complexity</th><th>Created</th></tr></thead>
+            <thead><tr><th>Pri</th><th>Title</th><th>Status</th><th>Assigned</th></tr></thead>
             <tbody>
-              {#each data.proposals.open as p}
+              {#each data.plans.active as p}
                 <tr class="item-row" onclick={() => navTo(p)}>
-                  <td class="item-title">{p.title}</td>
-                  <td>{#each p.category as c}<span class="tag">{c}</span>{/each}</td>
-                  <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
-                  <td class="item-date">{p.created}</td>
+                  <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
+                  <td class="item-title-cell">
+                    <span class="item-title">{p.title}</span>
+                    {#if p.depends_on && p.depends_on.length > 0}
+                      <span class="item-deps">↳ needs: {p.depends_on.map((d: string) => d.replace(/^plans\/(completed\/)?/, '').replace(/\.md$/, '')).join(', ')}</span>
+                    {/if}
+                  </td>
+                  <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
+                  <td class="item-date">{p.assigned_to || '—'}</td>
                 </tr>
               {/each}
             </tbody>
@@ -308,12 +314,12 @@
           <div class="empty">All approved proposals have plans ✓</div>
         {:else}
           <table class="items-table">
-            <thead><tr><th>Title</th><th>Category</th><th>Effort</th></tr></thead>
+            <thead><tr><th>Pri</th><th>Title</th><th>Complexity</th></tr></thead>
             <tbody>
               {#each data.proposals.approved_pending as p}
                 <tr class="item-row" onclick={() => navTo(p)}>
+                  <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
                   <td class="item-title">{p.title}</td>
-                  <td>{#each p.category as c}<span class="tag">{c}</span>{/each}</td>
                   <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
                 </tr>
               {/each}
@@ -323,26 +329,26 @@
       {/if}
     </section>
 
-    <!-- Active plans -->
+    <!-- Open proposals -->
     <section class="section">
-      <button class="section-header" onclick={() => toggleSection('active-plans')}>
-        <span class="section-title">Active Plans</span>
-        <span class="badge">{data.plans.active.length}</span>
-        <span class="chevron">{collapsed['active-plans'] ? '▸' : '▾'}</span>
+      <button class="section-header" onclick={() => toggleSection('open-proposals')}>
+        <span class="section-title">Open Proposals</span>
+        <span class="badge">{data.proposals.open.length}</span>
+        <span class="chevron">{collapsed['open-proposals'] ? '▸' : '▾'}</span>
       </button>
-      {#if !collapsed['active-plans']}
-        {#if data.plans.active.length === 0}
-          <div class="empty">No active plans</div>
+      {#if !collapsed['open-proposals']}
+        {#if data.proposals.open.length === 0}
+          <div class="empty">No open proposals</div>
         {:else}
           <table class="items-table">
-            <thead><tr><th>Title</th><th>Status</th><th>Priority</th><th>Assigned</th></tr></thead>
+            <thead><tr><th>Pri</th><th>Title</th><th>Complexity</th><th>Tags</th></tr></thead>
             <tbody>
-              {#each data.plans.active as p}
+              {#each data.proposals.open as p}
                 <tr class="item-row" onclick={() => navTo(p)}>
-                  <td class="item-title">{p.title}</td>
-                  <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
                   <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
-                  <td class="item-date">{p.assigned_to || '—'}</td>
+                  <td class="item-title">{p.title}</td>
+                  <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
+                  <td>{#each p.category.slice(0, 3) as c}<span class="tag">{c}</span>{/each}</td>
                 </tr>
               {/each}
             </tbody>
@@ -350,6 +356,31 @@
         {/if}
       {/if}
     </section>
+
+    <!-- Deferred -->
+    {#if data.proposals.deferred.length > 0}
+      <section class="section">
+        <button class="section-header" onclick={() => toggleSection('deferred')}>
+          <span class="section-title">Deferred</span>
+          <span class="badge badge-default">{data.proposals.deferred.length}</span>
+          <span class="chevron">{collapsed['deferred'] ? '▸' : '▾'}</span>
+        </button>
+        {#if !collapsed['deferred']}
+          <table class="items-table">
+            <thead><tr><th>Pri</th><th>Title</th><th>Complexity</th></tr></thead>
+            <tbody>
+              {#each data.proposals.deferred as p}
+                <tr class="item-row" onclick={() => navTo(p)}>
+                  <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
+                  <td class="item-title">{p.title}</td>
+                  <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {/if}
+      </section>
+    {/if}
 
     <!-- Completed plans -->
     <section class="section">
@@ -364,24 +395,6 @@
         </div>
       {/if}
     </section>
-
-    <!-- Deferred -->
-    {#if data.proposals.deferred.length > 0}
-      <section class="section">
-        <button class="section-header" onclick={() => toggleSection('deferred')}>
-          <span class="section-title">Deferred</span>
-          <span class="badge badge-default">{data.proposals.deferred.length}</span>
-          <span class="chevron">{collapsed['deferred'] ? '▸' : '▾'}</span>
-        </button>
-        {#if !collapsed['deferred']}
-          <div class="deferred-list">
-            {#each data.proposals.deferred as p}
-              <button class="deferred-item" onclick={() => navTo(p)}>{p.title}</button>
-            {/each}
-          </div>
-        {/if}
-      </section>
-    {/if}
 
     <!-- Audit Log -->
     <section class="section">
@@ -556,10 +569,14 @@
   .tag        { display: inline-block; background: $tag-bg; border: 1px solid $tag-bdr; border-radius: 8px; padding: 0 6px; font-size: 10px; color: $tag; margin-right: 3px; }
   .complexity { display: inline-block; background: $bg-3; border: 1px solid $border; border-radius: 4px; padding: 0 5px; font-size: 10px; color: $muted; }
 
-  .pri { font-size: 11px; }
-  .pri-high { color: #e87; }
-  .pri-med  { color: $amber; }
-  .pri-low  { color: $muted; }
+  .pri { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .pri-critical { color: #e55; }
+  .pri-high     { color: #e87; }
+  .pri-med      { color: $amber; }
+  .pri-low      { color: $muted; }
+
+  .item-title-cell { display: flex; flex-direction: column; gap: 2px; }
+  .item-deps { font-size: 10px; color: $muted; font-style: italic; }
 
   // ── Deferred ────────────────────────────────────────────────────────────────
   .deferred-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 4px; }
