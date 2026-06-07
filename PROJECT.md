@@ -1,6 +1,6 @@
 # docwright — Organizational Operating System for Policy-Driven Teams
 
-> **Status:** Draft v0.8 — 2026-06-01
+> **Status:** Draft v0.9 — 2026-06-07
 > **Repository:** `github.com/growlf/docwright` (proposed)
 > **License:** MIT
 
@@ -114,7 +114,9 @@ Policy (living document — the org's current position)
   ↑ spawned by
 Plan (how we achieved or will achieve this policy state)
   ↑ spawned by
-Proposal (structured evaluation of an idea or issue)
+Proposal (structured evaluation — informed by research; commits to a direction)
+  ↑ spawned by
+Research (optional investigation — explores feasibility, alternatives, prior art)
   ↑ spawned by
 Issue (triaged observation — something worth examining)
   ↑ captured from
@@ -125,6 +127,12 @@ Decision (rejection record — "we considered this and here's why we didn't")
 Work Items (tasks, services, applications, documentation, code)
   └── Code work items → OpenCode (developer environment)
 ```
+
+Research is an optional stage — simple or obvious ideas skip directly from Issue to
+Proposal. For complex ideas (architectural decisions, new domains, competitive analysis,
+feasibility questions) the Research stage is where investigation happens before any
+commitment to a solution direction. Research findings persist in the vault; they inform
+proposals and prevent re-investigation of already-settled questions.
 
 The AI can always answer: *"what policy grounds this work?"* by walking the tree
 upward. New contributors can ask *"have we tried this before?"* and get a grounded
@@ -350,7 +358,7 @@ accumulation tool**. docwright is fundamentally different:
 | **Primary client** | Purpose-built Web UI (thin) | Non-developer contributors are the majority user |
 | **Developer client** | VSCodium + docwright extension | Git-native, enforcement-capable, OpenCode-integrated |
 | **Dashboard tech stack** | Vanilla HTML + CSS | Smallest bundle, no build step for WebView |
-| **Web UI tech stack** | Lightweight (TBD: SvelteKit or vanilla; no heavy framework) | Fast, FOSS, deployable on any static host or local server |
+| **Web UI tech stack** | SvelteKit (SSR + SPA; Vite dev server) | Fast, FOSS, SSE live reload, deployable locally or on any Node host |
 | **Graph library** | D3.js force-directed | MIT, no framework dependency |
 | **Workspace index format** | JSON (`index.json`) | Human-readable, git-diff-friendly, rebuildable |
 | **Wikilink disambiguation** | First-match + inline warning | Consistent with Foam |
@@ -937,102 +945,217 @@ Docker deployment guide in Phase 3 documentation.
 
 ## 14. Phased Delivery
 
-### Phase 0 — Spike
-**Goal:** Validate `opencode serve` before Phase 1
-**Effort:** 2–3 days
+> **Note on phase numbering.** The original plan was extension-first; reality went
+> Web UI-first. The phases below reflect the actual build order and the forward
+> trajectory from where we are today. No content has been removed — all deliverables
+> have been redistributed to the phase where they belong.
 
-- [ ] Confirm `opencode serve` HTTP API is stable and documented
-- [ ] Confirm JS SDK covers required endpoints
-- [ ] Build minimal SPA embed proof-of-concept
-- [ ] **Go:** proceed to Phase 1 / **No-go:** SDK-only chat UI, no schedule impact
+---
 
-### Phase 1 — Foundation
-**Goal:** Working extension; profile engine; zero-config; basic scaffolding; inbox capture
-**Effort:** 2–3 weeks
+### Phase 0 — Spike ✅ Complete
 
-- [ ] Skeleton extension activates; lazy loads heavy modules (< 500ms)
-- [ ] Profile Engine: loads `profile.json`; falls back to `org-operations`; zero-config
-- [ ] **Dispatch module skeleton** — no VS Code API dependencies
-- [ ] OpenCode chat panel (SPA embed or SDK-only per Phase 0)
-- [ ] `opencode serve` child process management; crash recovery; offline mode
-- [ ] "New Document" scaffolding; auto-stage
-- [ ] **Inbox capture** — VSCodium command + minimal web form (localhost)
-- [ ] Status bar progress indicator
-- [ ] GitHub Actions CI: lint + typecheck + unit tests + `.vsix` package
-- [ ] All FOSS hygiene files committed (including AGENTS.md, NOTICE.md)
-- [ ] README quickstart
+**Goal:** Validate `opencode serve` HTTP API feasibility before committing to the
+Web UI path.
 
-### Phase 2 — Lifecycle & Wikilinks
-**Goal:** Lifecycle-aware document management with cross-document linking
-**Effort:** 4–5 weeks
+- [x] Confirm `opencode serve` HTTP API is stable and documented
+- [x] Confirm JS SDK covers required endpoints
+- [x] Build minimal SPA embed proof-of-concept
+- [x] **Decision:** go with Web UI as primary client; VSCodium extension deliberately
+      deferred until after alpha validation by real users
 
-- [ ] Documentation Dashboard (vanilla HTML WebView)
-- [ ] Frontmatter linter (debounced 300ms; profile schema)
-- [ ] Lifecycle state machine + file tree decorations
-- [ ] Workspace Index (incremental JSON; save-triggered)
-- [ ] **_backlinks.json maintainer** — updated on every wikilink change
-- [ ] Wikilink Engine — `[[autocomplete]]`, go-to, hover, diagnostics
-- [ ] Link Updater — inbound links updated on rename/move
-- [ ] Broken link / placeholder detection
-- [ ] Lookup Palette
-- [ ] Naming convention support
-- [ ] **org-operations document types** — Issue, Decision, Policy scaffolding
-- [ ] `Rebuild Index` and `Rebuild Backlinks` commands
+---
 
-### Phase 3 — Intelligence, Promote, LLM Wiki & Web UI
-**Goal:** OpenCode understands the workspace; Promote closes the loop;
-knowledge-base and org-operations profiles live; Web UI v1 deployed
-**Effort:** 5–6 weeks
+### Phase 1 — Web UI Prototype ✅ Complete (v0.2.x)
 
-- [ ] Promote command (minimal diffs; idempotent; failure recovery)
-- [ ] Backlinks Panel
-- [ ] Profile `opencodeInstructions` injected on activation
-- [ ] OpenCode reads lifecycle state; suggests transitions
-- [ ] **AI Trust Controller** — Safe/Augmented/Surgeon gating
-- [ ] **AI authorship stamping** — `ai-last-action:` on all AI writes
-- [ ] **Context Acceleration** — hierarchical workspace summaries
-- [ ] **remoteDispatch client** — route to Meshy/Ollama/team node
-- [ ] **LLMWikiEngine** — Ingest, Lint, Save-to-Wiki operations
-- [ ] **knowledge-base profile** — full implementation with all page types, templates, OpenCode instructions
-- [ ] **org-operations profile** — full implementation with all page types,
-      templates, OpenCode instructions, ACL controller
-- [ ] **ACL Controller** — user role enforcement; action gating
-- [ ] **Inbox Adapters** — email-to-inbox; chat webhook
-- [ ] **Web UI v1** — render page, wikilink navigation, AI chat panel,
-      ACL-gated action buttons, inbox form, "Open in VSCodium" button
-- [ ] **Triage Inbox command** — AI-assisted triage with prior-decision search
-- [ ] **qmd integration** — auto-detect; threshold-based backend switch; MCP + CLI modes
-- [ ] Graph View — infra-topology + knowledge-base + org-operations profiles
-- [ ] Profile switching via command palette
-- [ ] Multi-root workspace support
-- [ ] "Set AI Trust Level" and "Commit This Doc" commands
+**Goal:** Functional SvelteKit Web UI with full lifecycle management, AI integration,
+governance enforcement, and containerized deployment. The VSCodium extension was
+deliberately deferred here in favour of validating the Web UI first.
 
-### Phase 4 — Polish & Distribution
-**Goal:** General release; all four profiles production-quality; community-ready
-**Effort:** 4–5 weeks + ongoing
+**Key pivot from original plan:** Phase 0 confirmed the Web UI should be the primary
+client. Phase 1 built it end-to-end rather than starting with the VSCodium extension.
 
+- [x] SvelteKit scaffold — dark theme layout, collapsible file tree sidebar
+- [x] Markdown rendering (markdown-it) with TOC anchors, wikilinks
+      (`[[path]]`, `[[path#section]]`, `[[path|alias]]`)
+- [x] 3-mode editor: preview / WYSIWYG / source (turndown + contenteditable)
+- [x] CRUD + rename + delete with toast notifications and git undo
+- [x] SSE live reload (`/api/watch`) — auto-refresh tree + page on file change
+- [x] Proposal templating system (sidebar + UI button)
+- [x] Document properties pane (frontmatter form, action buttons, mode-aware)
+- [x] Sidebar polish: docs/all-files toggle, hidden archived dirs, context-aware +
+- [x] Vault status page (`/status`) with SSE refresh — default home page
+- [x] Smart 404: moved-document redirect + not-found inline state
+- [x] Collation: multi-signal relationship engine (Jaccard + tag + phase + author +
+      wikilink co-occurrence), related-proposals panel, relationship types
+- [x] Lifecycle compliance: pre-commit gate, MCP server, Claude Code hook
+- [x] Project registry + vault switching (multi-vault support)
+- [x] Git controls panel (stage, commit, undo)
+- [x] Containerization (Docker compose; DOCWRIGHT_ROOT env var)
+- [x] OpenCode chat panel (direct + proxy modes; SSE streaming)
+- [x] Dispatch module (surface-agnostic TypeScript; no VS Code API)
+- [x] Plan critique skill (`scripts/critique-plan.js` + `.claude/skills/critique-plan.md`)
+- [x] Plan step enforcement (⏳/✅ tracking, tests_defined gate, ▶ Run Tests button)
+- [x] Lifecycle gates (phase sign-off, AI pre-review, multi-reviewer quorum, time-based;
+      gate_reviewer, gate_status, gate_note frontmatter)
+- [x] Proposal relationship engine and Plan → button (collation-to-plan flow)
+- [x] Rename document (inline rename in file tree)
+- [x] Session shutdown automation (endsession skill)
+- [x] Cross-tool compatibility (Claude Code + OpenCode skills, governance parity,
+      sync-claude-skills.ts, agent role contract)
+- [x] Isolate MCP instances per project (DOCWRIGHT_ROOT scoping)
+- [x] Mobile-friendly and responsive layout
+- [x] AI proposal improvement (fillProposal, critiqueDocument, ✨ Improve button,
+      ImprovementPanel, on-save trigger for new proposals)
+- [x] AI plan review (⚡ Review button on draft plans, PlanReviewPanel, adversarial
+      critique via OpenCode session API, Write to Plan)
+- [x] Phase 2 UI Polish Bundle: full-text vault search, tag browser + tag index,
+      keyboard shortcuts, theme picker foundation, navigation improvements
+
+---
+
+### Phase 2 — Foundation & Methodology (Current)
+
+**Goal:** Establish the research-stage methodology, engineering foundation (TypeScript
+MCP, CI, FOSS hygiene), profile engine runtime, and inbox capture. The research stage
+is marked critical — it shapes how all subsequent features are designed.
+
+**Why methodology first:** the research stage (inbox → research → proposal → plan)
+changes the project flow itself. Building profile engine, chat panel, and collation
+without research baked in means retrofitting later. The MVP is small enough to land
+within Phase 2.
+
+#### Research Stage MVP (critical — lands first in Phase 2)
+- [ ] `research/` directory as first-class lifecycle stage
+- [ ] Research document type: frontmatter schema (`status`, `question`, `conclusion`,
+      `linked_proposals`, `related_research`, `author-role`), lifecycle states
+      (active → concluded → archived), `## Conclusion` enforcement
+- [ ] All bundled profiles updated: research document type + template (including `author-role:`)
+- [ ] Collation engine: add `research/` to scan directories; `informed-by` relationship type
+- [ ] Status page: Research section (active questions, recent conclusions)
+- [ ] Sidebar: `research/` recognised as special directory; `+ New Research` option
+- [ ] Pre-commit: `status: concluded` requires non-empty `conclusion` field
+
+#### Engineering Foundation
+- [ ] TypeScript MCP server (replace Python `mcp-server.py`)
+- [ ] GitHub Actions CI: lint + typecheck + unit tests (no .vsix yet)
+- [ ] FOSS hygiene: `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`,
+      `AGENTS.md`, `CODEOWNERS`, `.github/` templates, `dependabot.yml`
+- [ ] Dispatch module CI: explicit test that no VS Code API symbols leak
+- [ ] Inbox capture: minimal localhost web form → `/inbox/` stubs
+- [ ] `DOCWRIGHT_AGENT_ROLE` env-var hook (orchestrator vs. code agent enforcement)
+- [ ] Profile engine runtime: full load/validation, `profile.json` schema migration
+
+---
+
+### Phase 3 — Profile Engine, ACL & AI Integration
+
+**Goal:** Full profile system runtime, Forgejo ACL integration, vault-wide wikilink
+index, and AI-native research tooling on top of the Phase 2 research infrastructure.
+
+#### Profile & ACL
+- [ ] Profile engine: full runtime load/validation, schema migration, template resolution,
+      profile switching via UI
+- [ ] Forgejo team membership API → ACL enforcement (`author-role:` field as audit record;
+      Forgejo membership as enforcement source)
+- [ ] `author-role:` field in ALL profile templates (all four profiles)
+- [ ] OpenCode instructions per profile (`opencode-instructions.md`) — system prompt
+      injected on session start; embeds core philosophy
+
+#### Vault-Wide Index
+- [ ] Vault-wide backlink index (`_backlinks.json`) — rebuilt on document changes
+- [ ] Wikilink back-reference updating on rename (atomic git commit)
+- [ ] Contributor name autocomplete in properties pane (Forgejo team membership source)
+- [ ] Related docs UX improvements: score threshold, explicit `related_to` shown first,
+      acknowledgement state, "Why related?" keyword explanation, suppress on
+      frontmatter-only saves
+
+#### Research Stage Phase 3 Tooling
+- [ ] AI-assisted research sessions: opening research doc injects `question` + findings
+      as chat context; "Save findings" action writes back to document body
+- [ ] Research → proposal generation: "Create Proposal" from concluded research doc,
+      pre-fills from `question`, findings, `conclusion`; sets `related_to`
+- [ ] Multi-perspective research: parallel model review applied to research questions
+- [ ] ✨ Improve button for research documents (synthesis of scattered notes)
+
+#### Additional
+- [ ] Graph view: lifecycle graph (proposals → plans → completed) + tag-filter mode
+- [ ] `qmd` integration: auto-detect, threshold-based backend switch (≥200 docs),
+      MCP + CLI modes
+- [ ] Triage Inbox: AI-assisted prior-decision search, policy area suggestion
+
+---
+
+### Phase 4 — Advanced Features & Feature Bundles
+
+**Goal:** Deliver the major feature bundles approved during Phases 1–2 and deferred
+for Phase 3+ foundations.
+
+- [ ] **Lifecycle Gates Phase 2** — AI-assisted gate preparation, multi-reviewer
+      quorum, retroactive audit, time-based/scheduled triggers, governance audit log
+      (`audit/lifecycle.jsonl`). See [[proposals/bundle-lifecycle-gates-phase-2.md]]
+- [ ] **Chat & Session Panel Phase 2** — full session management, @-mention context
+      injection, model/provider picker, vault-scoped session history, diff/review
+      panel. See [[proposals/bundle-chat-session-panel.md]]
+- [ ] **AI Capabilities Bundle** — AI-powered complexity estimation, parallel
+      multi-model review, automated test lifecycle, perspective synthesis (with
+      human-preserving design). See [[proposals/bundle-ai-capabilities.md]]
+- [ ] **Phase 3 UI Polish Bundle** — keyboard shortcuts, resizable panels, in-app
+      theme picker, policies navigation button, wikilink backref updating (builds on
+      Phase 3 vault-wide index), drag-and-drop reorganization, contributor autocomplete.
+      See [[proposals/bundle-phase-3-ui-polish.md]]
+- [ ] `org-operations` profile: full implementation — Issue, Decision, Policy
+      scaffolding; Inbox Adapters (web form, email-to-inbox, chat webhook); full
+      OpenCode instructions embedding core philosophy
+- [ ] `knowledge-base` profile: full implementation — Ingest, Lint, Save-to-Wiki
+      operations; all page types; LLM Wiki engine
+- [ ] Typed wikilinks — `[[link|type:contains]]` syntax (knowledge-base profile first)
+- [ ] Entity deduplication in Lint
+
+---
+
+### Phase 5 — Enterprise, Distribution & Cascade STEAM
+
+**Goal:** Enterprise tier for Cascade STEAM reference deployment; public distribution;
+VSCodium extension (after alpha validated by real users).
+
+#### Enterprise Tier
+- [ ] **Enterprise Tier Bundle** — server-side AI (system service, shared API key/
+      local LLM), CI/CD webhook integration (Forgejo), email intake to inbox (IMAP/SMTP),
+      scheduled compliance scans + gate reminders.
+      See [[proposals/bundle-enterprise-tier.md]]
+- [ ] Kubernetes / Helm deployment
+- [ ] Remote registry sync (multi-vault coordination)
+- [ ] Federation model — cross-vault Issue/Proposal submission
+
+#### Cascade STEAM Reference Deployment
+- [ ] Vault seed finalised: `vision.md` + `governance.md` completed by leadership
+- [ ] Forgejo as git server (self-hosted; recommended for STEAM)
+- [ ] AI stack integration: growlf/ai-stack (i9 Ultra + Xe iGPU) + growlf/meshy
+- [ ] Full governance loop: human contributors + server AI + Forgejo enforcement +
+      scheduled compliance
+
+#### Distribution
+- [ ] VSCodium extension skeleton (after Web UI alpha validated by real users)
 - [ ] Publish to Open VSX marketplace
 - [ ] User documentation site
 - [ ] Demo GIFs in README (one per bundled profile)
-- [ ] Content Embedding — `![[note#section]]`
-- [ ] **Typed wikilinks** — `[[link|type:contains]]` syntax (knowledge-base profile first)
-- [ ] **Entity deduplication in Lint** — detect and flag duplicate concept/entity pages
-- [ ] **Web UI v2** — mobile-responsive; progressive enhancement
-- [ ] **Partner org fork templates** — seed a new org's vault from Cascade STEAM policies
+- [ ] Partner org fork templates (seed a new org's vault from Cascade STEAM policies)
 - [ ] Windows + macOS CI validation matrix
 - [ ] Accessibility audit
 - [ ] Profile authoring guide
-- [ ] Second maintainer onboarded — required gate before release
+- [ ] Second maintainer onboarded — required gate before public release
 
-### Phase B — Shared Team Daemon (post-Phase 4)
+---
+
+### Phase B — Shared Team Daemon (post-Phase 5)
 
 - [ ] Standalone Node process wrapping the dispatch module
 - [ ] Git integration: clone/pull, watch, commit AI results under daemon identity
 - [ ] `docwright/ai-suggestions` branch → PR workflow
 - [ ] REST/MCP endpoint exposing the dispatch contract
 - [ ] OCC two-layer implementation for all background AI writes
-- [ ] qmd MCP server integration for the daemon's search
-- [ ] **Federation model** — cross-vault Issue/Proposal submission
+- [ ] qmd MCP server integration for daemon search
+- [ ] Federation model (cross-vault Issue/Proposal submission)
 
 ### Phase C — Live Co-Editing (aspirational)
 
@@ -1283,4 +1406,5 @@ Avoid trademarked terms (VSCode, VSCodium, OpenCode, Visual Studio).
 | v0.5 | 2026-05-21 | §3 Quick Start; §6 Key Design Decisions; §11 Command Registry; template and OpenCode instructions examples; Promote step sequence and failure handling; dashboard event trigger table; multi-root workspace; BDFL governance; Phase 2 parallelisation note | Claude (Anthropic) |
 | v0.6 | 2026-05-26 | Drive access resolved. Added: headless dispatch plane; multi-user & team collaboration; Trust & Safety tiers; AI authorship stamping; OCC two-layer model; Context Acceleration; remoteDispatch config; Phase B shared daemon + Phase C Y.js; matryca-plumber attribution | Claude (Anthropic) |
 | v0.7 | 2026-05-26 | LLM Wiki pattern adopted as first-class (Karpathy gist reference added). Added: third bundled profile `knowledge-base`; LLMWikiEngine module; Ingest/Lint/Save-to-Wiki commands; `_backlinks.json` maintainer; qmd optional search backend (auto-enabled ≥200 docs); page taxonomy from gowtham0992/link; operation taxonomy from sametbrr/llm-wiki-manager; team folder taxonomy note from eslamgenio/long-term-agent-memory; differentiation table vs full LLM Wiki ecosystem; three hard problems noted as Phase 4+ known challenges; typed wikilinks spec stub; 10 new gaps added; all attribution in §9 and NOTICE.md | Claude (Anthropic) |
+| v0.9 | 2026-06-07 | **Phase recalibration.** Phases rewritten to reflect actual build order (Web UI-first, not extension-first). Phase 0 and Phase 1 marked complete with accurate delivered feature list. Phase 2 elevated to Foundation & Methodology with Research stage as critical first deliverable. Phases 3–5 and B/C restructured around current trajectory and approved bundle proposals. Added Research stage to §2 Policy hierarchy. Updated §6 Web UI tech stack to SvelteKit. No content removed — all deliverables redistributed to correct phases. | Claude (Anthropic) |
 | v0.8 | 2026-06-01 | **Major reframe.** docwright repositioned as organizational operating system / governance layer, not a VSCodium extension. Added: §2 Policy as Foundation hierarchy; §2 zero-friction inbox capture (web form, email, CLI, chat); §2 "why not" Decision document type; §2 partner org federation model (fork/federation/shared-vault); §4 Why This Architecture (Web UI as primary client, VSCodium as power tool, Logseq as optional explorer); §7 ACL user role model (Observer/Contributor/Steward/Governance); §7 Inbox Adapter Layer diagram; §8 `org-operations` profile (fourth bundled profile — the org OS); §10 ACL Controller + Inbox Adapters + Web UI Server modules; §12 Web UI and inbox configuration settings; §14 Phase 3 expanded with Web UI v1 and org-operations full implementation; §19 three new risks (reading UX, inbox friction, ACL complexity). Updated: §1 problem statement to organizational frame; §2 proposed solution to multi-client architecture; §5 differentiation table vs organizational tools; default profile changed from `doc-lifecycle` to `org-operations`. Session context: Cascade STEAM — educational equity org; non-developer contributors are primary users. | Claude (Anthropic) |
