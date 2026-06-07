@@ -158,6 +158,7 @@
     showRightPanel = true;
     planReviewFindings.set('');
     planReviewLoading.set(true);
+    showToast('Running AI review — this may take a moment', 5000);
     try {
       const res = await fetch('/api/plan-review', {
         method: 'POST',
