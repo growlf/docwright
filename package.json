@@ -35,6 +35,7 @@
     "test:hooks": "bash test/hooks/test-lifecycle-hook.sh",
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
     "test": "npm run test:dispatch && npm run test:hooks:pending && npm run test:hooks && npm run test:compat",
+    "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile"
   },
