@@ -17,7 +17,6 @@ related_to:
   - proposals/gantt-view-dependencies.md
   - plans/phase-3-profile-acl-ai.md
   - plans/completed/collation.md
-_path: proposals/ui-lifecycle-graph-view.md
 ---
 
 ## Problem
@@ -120,3 +119,6 @@ See [[plans/phase-3-profile-acl-ai.md]].
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-03 | Created — captured from end-of-session user request | NetYeti |
+
+
+*(AI fill-in unavailable — OpenCode not configured)*

@@ -57,7 +57,7 @@ Both are client-side only — no API changes required.
 Add to `org-operations/profile.json`:
 ```json
 "sidebarExcludePatterns": ["AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md",
-                            "LICENSE", "NOTICE.md", "SECURITY.md", "PROPOSAL.md"],
+                            "LICENSE", "NOTICE.md", "SECURITY.md"],
 "hiddenDirectories": ["proposals/approved", "plans/completed"]
 ```
 
