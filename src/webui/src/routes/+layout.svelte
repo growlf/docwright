@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { goto } from '$app/navigation';
   import FileTree from './FileTree.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
@@ -79,8 +79,13 @@
     collationLoading.set(false);
     planReviewFindings.set('');
     planReviewLoading.set(false);
-    if (rightTab === 'related' && fp) findRelated(fp);
-    if (rightTab === 'review') rightTab = 'properties';
+    // untrack: rightTab reads/writes must not become effect dependencies —
+    // otherwise setting rightTab='review' in handleReview() would re-trigger
+    // this effect and immediately reset it back to 'properties'.
+    untrack(() => {
+      if (rightTab === 'related' && fp) findRelated(fp);
+      if (rightTab === 'review') rightTab = 'properties';
+    });
   });
 
   // React to page's signal to switch to Related tab
