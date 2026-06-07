@@ -24,7 +24,7 @@ CMD=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('
 if ! printf '%s' "$CMD" | grep -qE 'git push'; then
     exit 0
 fi
-if ! printf '%s' "$CMD" | grep -qEi '(--tags|--follow-tags|refs/tags/| v[0-9]+\.[0-9]+)'; then
+if ! printf '%s' "$CMD" | grep -qEi '(--tags|--follow-tags|refs/tags/| v0\.[0-9]+\.[0-9]+)'; then
     exit 0
 fi
 
@@ -56,8 +56,9 @@ for r in runs:
     branch = r.get('headBranch', '')
     event = r.get('event', '')
     status = r.get('status', '')
-    # tag push: event=push, headBranch looks like a version tag
-    if event == 'push' and branch.startswith('v') and status != 'completed':
+    # tag push: event=push, headBranch is a 0.x.x version tag
+    import re
+    if event == 'push' and re.match(r'^v0\.\d+\.\d+$', branch) and status != 'completed':
         print(r['databaseId'])
         break
 " || true)
