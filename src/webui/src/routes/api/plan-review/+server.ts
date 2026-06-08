@@ -12,7 +12,7 @@ function sse(event: string, data: unknown) {
 }
 
 export async function POST({ request }) {
-  const { path: planPath } = await request.json();
+  const { path: planPath, backend = 'opencode' } = await request.json();
   if (!planPath) return new Response('missing path', { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, planPath);
@@ -20,6 +20,8 @@ export async function POST({ request }) {
   if (!fs.existsSync(resolved)) return new Response('not found', { status: 404 });
 
   const planRaw = fs.readFileSync(resolved, 'utf-8');
+  const ollamaUrl = process.env.OLLAMA_URL;
+  const ollamaModel = process.env.OLLAMA_MODEL || 'qwen2.5:32b-instruct-q3_K_M';
   const opencodeUrl = process.env.OPENCODE_URL;
 
   const stream = new ReadableStream({
@@ -28,9 +30,9 @@ export async function POST({ request }) {
         controller.enqueue(new TextEncoder().encode(sse(event, data)));
       }
 
-      if (!opencodeUrl) {
+      if (!ollamaUrl && !opencodeUrl) {
         send('status', { message: 'AI not configured' });
-        send('done', { findings: 'AI review unavailable — OPENCODE_URL not configured.', changes: '', improved_body: '' });
+        send('done', { findings: 'AI review unavailable — no AI backend configured.', changes: '', improved_body: '' });
         controller.close();
         return;
       }
@@ -41,40 +43,49 @@ export async function POST({ request }) {
         send('status', { message: 'Building context...' });
         const context = buildPlanReviewContext(planPath, planRaw, REPO_ROOT);
 
-        send('status', { message: 'Creating session...' });
-        const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
-        const sess = await sessRes.json();
-        const sessionId: string = sess?.id ?? sess?.sessionID;
-        if (!sessionId) throw new Error('OpenCode returned no session ID');
+        let fullText: string;
+        const useOllama = backend === 'ollama' && !!ollamaUrl;
 
-        send('status', { message: 'Sending to AI...' });
+        if (useOllama) {
+          send('status', { message: 'Sending to Ollama...' });
+          const res = await fetch(`${ollamaUrl}/v1/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: ollamaModel, messages: [{ role: 'user', content: context }], stream: false }),
+          });
+          if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
+          const data = await res.json();
+          fullText = data?.choices?.[0]?.message?.content ?? '';
+        } else {
+          send('status', { message: 'Creating session...' });
+          const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          });
+          if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
+          const sess = await sessRes.json();
+          const sessionId: string = sess?.id ?? sess?.sessionID;
+          if (!sessionId) throw new Error('OpenCode returned no session ID');
 
-        const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
-        });
-        if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
-
-        send('status', { message: 'AI is thinking…' });
-
-        // OpenCode returns JSON — parse it, extract text, stream back chunk by chunk
-        const data = await msgRes.json();
-        const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
-        const text = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
-        const fullText = text;
+          send('status', { message: 'Sending to AI...' });
+          const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
+          });
+          if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
+          const data = await msgRes.json();
+          const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+          fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+        }
 
         send('status', { message: 'Processing response…' });
 
         // Progressively stream the text so the user sees it appear in real time
         const chunkSize = 80;
-        for (let i = 0; i < text.length; i += chunkSize) {
-          send('token', { text: text.slice(i, i + chunkSize) });
+        for (let i = 0; i < fullText.length; i += chunkSize) {
+          send('token', { text: fullText.slice(i, i + chunkSize) });
           await new Promise(r => setTimeout(r, 15));
         }
 

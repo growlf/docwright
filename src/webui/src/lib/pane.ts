@@ -36,6 +36,9 @@ export const showReviewTab = writable(false);
 /** Toggle to Multi-Review panel instead of ChatPanel */
 export const showMultiReview = writable(false);
 
+/** Selected AI backend for improve/review — 'opencode' | 'ollama' */
+export const aiBackend = writable<'opencode' | 'ollama'>('opencode');
+
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({
   showPlanButton: true,

@@ -77,6 +77,42 @@ function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+async function streamText(
+  fullText: string,
+  phase: string,
+  streamingStage: string,
+  send: (event: string, data: unknown) => void,
+) {
+  send('stage', { phase: streamingStage });
+  send('status', { message: phase === 'improve' ? 'Improved text arriving...' : 'Critique text arriving...' });
+  const chunkSize = 80;
+  for (let i = 0; i < fullText.length; i += chunkSize) {
+    send('token', { phase, text: fullText.slice(i, i + chunkSize) });
+    await new Promise(r => setTimeout(r, 15));
+  }
+}
+
+async function callOllama(
+  ollamaUrl: string,
+  model: string,
+  prompt: string,
+  phase: string,
+  streamingStage: string,
+  send: (event: string, data: unknown) => void,
+): Promise<string> {
+  send('status', { message: phase === 'improve' ? 'Improving via Ollama...' : 'Critiquing via Ollama...' });
+  const res = await fetch(`${ollamaUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], stream: false }),
+  });
+  if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
+  const data = await res.json();
+  const fullText: string = data?.choices?.[0]?.message?.content ?? '';
+  await streamText(fullText, phase, streamingStage, send);
+  return fullText;
+}
+
 async function callAndSendSession(
   opencodeUrl: string,
   dirParam: string,
@@ -106,24 +142,14 @@ async function callAndSendSession(
   if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
   const data = await msgRes.json();
   const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
-  let fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+  const fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
 
-  // Signal that streaming is about to begin for this phase
-  send('stage', { phase: streamingStage });
-  send('status', { message: phase === 'improve' ? 'Improved text arriving...' : 'Critique text arriving...' });
-
-  // Stream tokens progressively so the UI shows AI "thinking" in real time
-  const chunkSize = 80;
-  for (let i = 0; i < fullText.length; i += chunkSize) {
-    send('token', { phase, text: fullText.slice(i, i + chunkSize) });
-    await new Promise(r => setTimeout(r, 15));
-  }
-
+  await streamText(fullText, phase, streamingStage, send);
   return fullText;
 }
 
 export async function POST({ request }) {
-  const { path: filePath } = await request.json();
+  const { path: filePath, backend = 'opencode' } = await request.json();
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, filePath);
@@ -140,18 +166,26 @@ export async function POST({ request }) {
       const fm = parseFrontmatter(original);
       const body = stripFrontmatter(original);
 
+      const ollamaUrl = process.env.OLLAMA_URL;
+      const ollamaModel = process.env.OLLAMA_MODEL || 'qwen2.5:32b-instruct-q3_K_M';
       const opencodeUrl = process.env.OPENCODE_URL;
-      if (!opencodeUrl) {
+
+      if (!ollamaUrl && !opencodeUrl) {
         send('done', {
           original: body,
-          improved: body + '\n\n*(AI fill-in unavailable — OpenCode not configured)*',
-          critique: '*(Critique unavailable — OpenCode not configured)*',
+          improved: body + '\n\n*(AI fill-in unavailable — no AI backend configured)*',
+          critique: '*(Critique unavailable — no AI backend configured)*',
         });
         controller.close();
         return;
       }
 
       const dirParam = `directory=${encodeURIComponent(REPO_ROOT)}`;
+      const useOllama = backend === 'ollama' && !!ollamaUrl;
+      const callAI = (prompt: string, phase: string, stage: string) =>
+        useOllama
+          ? callOllama(ollamaUrl!, ollamaModel, prompt, phase, stage, send)
+          : callAndSendSession(opencodeUrl!, dirParam, prompt, phase, stage, send);
 
       try {
         const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
@@ -162,7 +196,7 @@ export async function POST({ request }) {
         let improved: string;
         try {
           improved = await withTimeout(
-            callAndSendSession(opencodeUrl, dirParam, buildPrompt(fm, body), 'improve', 'improve-streaming', send),
+            callAI(buildPrompt(fm, body), 'improve', 'improve-streaming'),
             120_000,
           );
         } catch (err: any) {
@@ -175,7 +209,7 @@ export async function POST({ request }) {
         let critique: string;
         try {
           critique = await withTimeout(
-            callAndSendSession(opencodeUrl, dirParam, buildCritique(original), 'critique', 'critique-streaming', send),
+            callAI(buildCritique(original), 'critique', 'critique-streaming'),
             120_000,
           );
         } catch (err: any) {
