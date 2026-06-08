@@ -13,7 +13,7 @@ priority: medium
 automated: guided
 assigned_to: NetYeti
 tests_defined: false
-phase: 2
+phase: 3
 related_to:
   - plans/phase-2-foundation.md
 scenario_synthesis: Dispatch module + MCP server changes; no infrastructure steps; dispatch unit-testable outside extension host
