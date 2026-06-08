@@ -281,6 +281,49 @@ validate_no_duplicate_locations() {
 }
 
 # =============================================================================
+# 13. Phase plan activation gate
+#     Warns when a phase plan is being activated (moved to in-progress) but
+#     has not been reviewed since the previous phase's gate was approved.
+#     Checks: phase_review_date must exist AND be >= the previous gated phase's
+#     completed_date. Only fires on plans named phase-N-* being set in-progress.
+# =============================================================================
+validate_phase_review_gate() {
+    local FILE=$1
+    # Only applies to phase-N-* plans being moved to in-progress
+    [[ ! "$FILE" =~ ^plans/phase-[0-9] ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "in-progress" ] && return 0
+    local OLD_STATUS=$(git show "HEAD:$FILE" 2>/dev/null | awk 'BEGIN{c=0}/^---$/{c++;next}c==1&&/^status:/{print;exit}c==2{exit}' | sed 's/^status:[[:space:]]*//' | xargs)
+    # Only check when transitioning FROM draft/approved to in-progress
+    echo "$OLD_STATUS" | grep -qE '^(draft|approved)$' || return 0
+
+    local REVIEW_DATE=$(echo "$FM" | grep "^phase_review_date:" | sed 's/^phase_review_date:[[:space:]]*//' | xargs)
+    local PHASE_NUM=$(echo "$FM" | grep "^phase:" | sed 's/^phase:[[:space:]]*//' | xargs)
+    [ -z "$PHASE_NUM" ] && return 0
+    local PREV_PHASE=$((PHASE_NUM - 1))
+
+    # Find the previous gated phase plan in plans/completed/
+    local PREV_COMPLETED=""
+    for f in plans/completed/phase-${PREV_PHASE}-*.md; do
+        [ -f "$f" ] || continue
+        local G=$(get_frontmatter "$f" | grep "^gate_status:" | sed 's/^gate_status:[[:space:]]*//' | xargs)
+        echo "$G" | grep -qE '^(approved|waived)$' && PREV_COMPLETED="$f" && break
+    done
+    [ -z "$PREV_COMPLETED" ] && return 0  # No gated previous phase — skip
+
+    local PREV_DATE=$(get_frontmatter "$PREV_COMPLETED" | grep "^completed_date:" | sed 's/^completed_date:[[:space:]]*//' | xargs)
+    [ -z "$PREV_DATE" ] && return 0
+
+    if [ -z "$REVIEW_DATE" ] || [ "$REVIEW_DATE" \< "$PREV_DATE" ]; then
+        print_error "$FILE: Phase $PHASE_NUM cannot be activated — phase_review_date is missing or predates Phase $PREV_PHASE completion ($PREV_DATE)"
+        print_error "  Open plans/phase-${PHASE_NUM}-*.md in the Web UI, review and update scope, then click 'Mark reviewed' on the /status page."
+        return 1
+    fi
+    return 0
+}
+
+# =============================================================================
 # Main validation loop
 # =============================================================================
 ERRORS=0; WARNINGS=0
@@ -297,6 +340,7 @@ for FILE in $STAGED; do
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
     validate_no_self_approval "$FILE" || ((ERRORS++))
     validate_location_invariant "$FILE" || ((ERRORS++))
+    validate_phase_review_gate "$FILE" || ((ERRORS++))
     validate_no_duplicate_locations "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^research/.+\.md$ ]] && { validate_research_document "$FILE" || ((ERRORS++)); }
 done

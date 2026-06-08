@@ -16,6 +16,7 @@ depends_on:
   - phase-2-foundation
 _path: plans/phase-3-profile-acl-ai.md
 proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 3; no individual proposal
+phase: 3
 ---
 # Phase 3 — Profile Engine, ACL & AI Integration
 

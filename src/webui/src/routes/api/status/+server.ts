@@ -321,6 +321,56 @@ export function GET() {
     title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
   }));
 
+  // ── Phase gate review detection ─────────────────────────────────────────────
+  // After a phase plan's gate is approved, all remaining phase plans should be
+  // reviewed and confirmed before the next phase becomes active.
+  //
+  // Required when: a completed phase plan has gate_status approved/waived AND
+  // any future phase plan has no phase_review_date set after that completion.
+
+  const completedPhasePlans = [
+    ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
+  ].filter(({ fm }) => /phase-\d/.test(String(fm.title ?? '')) || parseInt(String(fm.phase ?? ''), 10) > 0)
+   .filter(({ fm }) => ['approved', 'waived'].includes(String(fm.gate_status ?? '')))
+   .map(({ path: p, fm }) => ({
+     path: p,
+     phase: parseInt(String(fm.phase ?? '0'), 10),
+     completedDate: String(fm.completed_date ?? fm.created ?? ''),
+     title: String(fm.title ?? ''),
+   }))
+   .filter(p => p.phase > 0)
+   .sort((a, b) => b.phase - a.phase);
+
+  const lastGatedPhase = completedPhasePlans[0] ?? null;
+
+  const futurePhasePlans = lastGatedPhase
+    ? readDir(path.join(REPO_ROOT, 'plans'))
+        .filter(({ fm }) => {
+          const ph = parseInt(String(fm.phase ?? '0'), 10);
+          return ph > lastGatedPhase.phase;
+        })
+        .map(({ path: p, fm }) => ({
+          path: p,
+          phase: parseInt(String(fm.phase ?? '0'), 10),
+          title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+          status: String(fm.status ?? 'draft'),
+          reviewDate: String(fm.phase_review_date ?? ''),
+          needsReview: !fm.phase_review_date ||
+            String(fm.phase_review_date) < lastGatedPhase.completedDate,
+        }))
+        .sort((a, b) => a.phase - b.phase)
+    : [];
+
+  const phaseReview = lastGatedPhase && futurePhasePlans.some(p => p.needsReview)
+    ? {
+        required: true,
+        gatedPhase: lastGatedPhase.phase,
+        gatedPlanTitle: lastGatedPhase.title,
+        completedDate: lastGatedPhase.completedDate,
+        plans: futurePhasePlans,
+      }
+    : null;
+
   const vaultName = path.basename(REPO_ROOT);
 
   const data = {
@@ -332,6 +382,7 @@ export function GET() {
     plans: { active, completed_count: completedCount },
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
+    phaseReview,
   };
   cache = { data, at: Date.now() };
   return json(data);

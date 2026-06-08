@@ -27,6 +27,17 @@
     path: string; title: string; question: string; created: string;
     conclusion?: string;
   }
+  interface PhaseReviewPlan {
+    path: string; title: string; phase: number;
+    status: string; reviewDate: string; needsReview: boolean;
+  }
+  interface PhaseReview {
+    required: boolean;
+    gatedPhase: number;
+    gatedPlanTitle: string;
+    completedDate: string;
+    plans: PhaseReviewPlan[];
+  }
   interface StatusData {
     vaultName: string;
     version: string;
@@ -40,6 +51,7 @@
       recent_conclusions: ResearchEntry[];
       no_research_proposals: { path: string; title: string }[];
     };
+    phaseReview: PhaseReview | null;
   }
 
   let data = $state<StatusData | null>(null);
@@ -90,6 +102,20 @@
 
   function navTo(entry: DocEntry) {
     goto('/' + entry.path.replace(/\.md$/, ''));
+  }
+
+  // Phase gate review
+  let phaseReviewBusy = $state<Record<string, boolean>>({});
+  async function markPhaseReviewed(planPath: string) {
+    phaseReviewBusy = { ...phaseReviewBusy, [planPath]: true };
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await fetch('/api/lifecycle/phase-review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan_path: planPath, review_date: today }),
+    });
+    phaseReviewBusy = { ...phaseReviewBusy, [planPath]: false };
+    if (res.ok) load();
   }
 
   // Audit log state
@@ -179,6 +205,47 @@
         completedCount={data.plans.completed_count}
       />
     {:else}
+
+    <!-- Phase gate review banner — shown when a gated phase requires review of remaining phases -->
+    {#if data.phaseReview}
+    <div class="phase-review-banner">
+      <div class="prb-header">
+        <span class="prb-icon">🔍</span>
+        <span class="prb-title">Phase {data.phaseReview.gatedPhase} gate approved — review remaining phases</span>
+        <span class="prb-sub">Before activating Phase {data.phaseReview.gatedPhase + 1}, confirm each phase plan reflects current understanding.</span>
+      </div>
+      <table class="prb-table">
+        <thead><tr><th>Phase</th><th>Plan</th><th>Status</th><th>Review date</th><th></th></tr></thead>
+        <tbody>
+          {#each data.phaseReview.plans as p}
+            <tr class="prb-row {p.needsReview ? 'prb-needs-review' : 'prb-reviewed'}">
+              <td class="prb-phase">{p.phase}</td>
+              <td class="prb-plan-title">
+                <button class="link-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>{p.title}</button>
+              </td>
+              <td><span class="badge">{p.status}</span></td>
+              <td class="prb-date">{p.reviewDate || '—'}</td>
+              <td>
+                {#if p.needsReview}
+                  <button class="prb-confirm-btn"
+                    disabled={phaseReviewBusy[p.path]}
+                    onclick={() => markPhaseReviewed(p.path)}>
+                    {phaseReviewBusy[p.path] ? '…' : '✓ Mark reviewed'}
+                  </button>
+                {:else}
+                  <span class="prb-ok">✅ reviewed</span>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+      <div class="prb-note">
+        Open each plan, update scope if needed, then click "Mark reviewed".
+        The banner clears once all phases have a review date after Phase {data.phaseReview.gatedPhase} completion ({data.phaseReview.completedDate}).
+      </div>
+    </div>
+    {/if}
 
     <!-- Phase/roadmap card -->
     {#if data.phasePlans.length > 0}
@@ -633,6 +700,32 @@
   .research-skipped-list { list-style: none; margin: 0; padding: 0 16px 8px; display: flex; flex-wrap: wrap; gap: 4px; }
   .research-skipped-list li { }
   .link-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 11px; padding: 2px 8px; cursor: pointer; &:hover { border-color: $blue-bdr; color: $blue; } }
+
+  // ── Phase gate review banner ─────────────────────────────────────────────────
+  .phase-review-banner {
+    margin-bottom: 12px; border: 1px solid $amber-bdr; border-radius: 6px;
+    background: rgba(180,120,0,.08); padding: 12px 16px;
+  }
+  .prb-header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .prb-icon   { font-size: 16px; flex-shrink: 0; }
+  .prb-title  { font-size: 13px; font-weight: 600; color: $amber; flex-shrink: 0; }
+  .prb-sub    { font-size: 11px; color: $muted; }
+  .prb-table  { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+  .prb-table th { text-align: left; padding: 4px 8px; color: $muted; font-weight: 500; border-bottom: 1px solid $border; }
+  .prb-row td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .prb-needs-review td { background: rgba(180,120,0,.06); }
+  .prb-reviewed td { opacity: 0.6; }
+  .prb-phase  { font-family: monospace; color: $muted; width: 48px; }
+  .prb-plan-title { max-width: 280px; }
+  .prb-date   { font-size: 11px; color: $muted; white-space: nowrap; }
+  .prb-confirm-btn {
+    background: $amber-bg; border: 1px solid $amber-bdr; border-radius: 3px;
+    color: $amber; font-size: 11px; padding: 2px 10px; cursor: pointer; white-space: nowrap;
+    &:hover { filter: brightness(1.15); }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+  .prb-ok   { font-size: 11px; color: $green; }
+  .prb-note { font-size: 11px; color: $muted; line-height: 1.5; }
 
   // ── Table ───────────────────────────────────────────────────────────────────
   .items-table { width: 100%; border-collapse: collapse; font-size: 12px; }

@@ -16,6 +16,7 @@ depends_on:
   - phase-3-profile-acl-ai
 _path: plans/phase-4-cascade-steam.md
 proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 4 & 5; no individual proposal
+phase: 4
 ---
 # Phase 4 — Cascade STEAM Reference Deployment
 
