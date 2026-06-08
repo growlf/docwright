@@ -15,7 +15,7 @@ priority: medium
 automated: guided
 assigned_to: NetYeti
 tests_defined: false
-phase: 3
+phase: 5
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps

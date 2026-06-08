@@ -15,7 +15,7 @@ automated: guided
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
-phase: 3
+phase: 2
 total_steps: 5
 completed_steps: 0
 scenario_synthesis: Implement a formalized npm script + pre-commit hook that moves approved proposals to proposals/approved/ automatically; replaces the one-off bash script

@@ -830,9 +830,9 @@ profile files from untrusted sources the same as any other code you clone.
 | **Orphans View** | No-inbound-link docs; broken links | Both: on |
 | **Promote Command** | Atomic next-state transition | Both: on |
 | **Lookup Palette** | Quick-pick by lifecycle state | Both: on |
-| **Tag Filter** | Dashboard filter by `tags` field | Both: on (Phase 3) |
+| **Tag Filter** | Dashboard filter by `tags` field | Both: on (Phase 4) |
 | **Graph View** | D3.js force-directed topology | doc-lifecycle: off; infra-topology: on; knowledge-base: on; org-operations: on |
-| **Content Embedding** | `![[note#section]]` transclude | Both: off (Phase 4) |
+| **Content Embedding** | `![[note#section]]` transclude | Both: off (Phase 5) |
 | **AI Trust Controller** | Enforces trust tier; gates all AI writes | All profiles: on |
 | **LLM Wiki Engine** | Ingest / Lint / Save-to-Wiki operations | knowledge-base: on; others: off |
 | **qmd Search Client** | Routes search to qmd when ≥200 docs | knowledge-base: auto |
@@ -928,7 +928,7 @@ Commands marked **bold** are new or updated in v0.8.
 
 The Web UI server runs locally on `localhost:7432` by default. For team deployment,
 it can be served from any static host with the docwright backend accessible.
-Docker deployment guide in Phase 3 documentation.
+Docker deployment guide in Phase 4 documentation.
 
 ### Graceful Degradation
 
@@ -1056,13 +1056,25 @@ within Phase 2.
 
 ---
 
-### Phase 3 — Profile Engine, ACL & Research AI Tooling
+### Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
+
+**Goal:** Deploy DocWright against an external vault (non-profit MSP pilot), establish
+the clean tool/vault separation architecture, and create a structured feedback pipeline
+so real-world usage drives DocWright's evolution. See [[proposals/phase-vault-portability-pilot.md]].
+
+Key deliverables: vault-portable TypeScript MCP server, `--mode upstream` contribution
+pipeline, `docwright init` scaffold, version pinning model (`MIGRATION.md` + `vault:migrate`),
+profile override merge layer, MSP pilot vault live, friction log + GitHub issues pipeline.
+
+---
+
+### Phase 4 — Profile Engine, ACL & Research AI Tooling
 
 **Goal:** Full profile system runtime, Forgejo ACL integration, vault-wide wikilink
 index, and AI-native research tooling built on top of the Phase 2 research infrastructure.
 
 **Note on AI:** Core AI features (✨ Improve, ⚡ Plan Review, chat panel, fillProposal,
-critiqueDocument) shipped in Phase 1. Phase 3 AI work is specifically research-stage
+critiqueDocument) shipped in Phase 1. Phase 4 AI work is specifically research-stage
 tooling — context injection, research-to-proposal generation, and multi-perspective review.
 
 #### Profile & ACL
@@ -1083,7 +1095,7 @@ tooling — context injection, research-to-proposal generation, and multi-perspe
       acknowledgement state, "Why related?" keyword explanation, suppress on
       frontmatter-only saves
 
-#### Research Stage Phase 3 Tooling
+#### Research Stage Phase 4 Tooling
 - [ ] AI-assisted research sessions: opening research doc injects `question` + findings
       as chat context; "Save findings" action writes back to document body
 - [ ] Research → proposal generation: "Create Proposal" from concluded research doc,
@@ -1099,10 +1111,10 @@ tooling — context injection, research-to-proposal generation, and multi-perspe
 
 ---
 
-### Phase 4 — Advanced Features & Feature Bundles
+### Phase 5 — Advanced Features & Feature Bundles
 
-**Goal:** Deliver the major feature bundles approved during Phases 1–2 and deferred
-for Phase 3+ foundations.
+**Goal:** Deliver the major feature bundles approved during Phases 1–3 and deferred
+for Phase 4+ foundations.
 
 - [ ] **Lifecycle Gates Phase 2** — AI-assisted gate preparation, multi-reviewer
       quorum, retroactive audit, time-based/scheduled triggers, governance audit log
@@ -1113,9 +1125,9 @@ for Phase 3+ foundations.
 - [ ] **AI Capabilities Bundle** — AI-powered complexity estimation, parallel
       multi-model review, automated test lifecycle, perspective synthesis (with
       human-preserving design). See [[proposals/bundle-ai-capabilities.md]]
-- [ ] **Phase 3 UI Polish Bundle** — keyboard shortcuts, resizable panels, in-app
+- [ ] **Phase 4 UI Polish Bundle** — keyboard shortcuts, resizable panels, in-app
       theme picker, policies navigation button, wikilink backref updating (builds on
-      Phase 3 vault-wide index), drag-and-drop reorganization, contributor autocomplete.
+      Phase 4 vault-wide index), drag-and-drop reorganization, contributor autocomplete.
       See [[proposals/bundle-phase-3-ui-polish.md]]
 - [ ] `org-operations` profile: full implementation — Issue, Decision, Policy
       scaffolding; Inbox Adapters (web form, email-to-inbox, chat webhook); full
@@ -1127,7 +1139,7 @@ for Phase 3+ foundations.
 
 ---
 
-### Phase 5 — Enterprise, Distribution & Cascade STEAM
+### Phase 6 — Enterprise, Distribution & Cascade STEAM
 
 **Goal:** Enterprise tier for Cascade STEAM reference deployment; public distribution;
 VSCodium extension (after alpha validated by real users).
@@ -1161,7 +1173,7 @@ VSCodium extension (after alpha validated by real users).
 
 ---
 
-### Phase B — Shared Team Daemon (post-Phase 5)
+### Phase B — Shared Team Daemon (post-Phase 6)
 
 - [ ] Standalone Node process wrapping the dispatch module
 - [ ] Git integration: clone/pull, watch, commit AI results under daemon identity
@@ -1220,7 +1232,7 @@ Y.js CRDT sync server. Not on near-term roadmap. Revisit after Phase B.
 
 80% line coverage for `src/lifecycle/`, `src/linter/`, `src/wikilinks/`,
 `src/profile/`, `src/templates/`, `src/dispatch/`, `src/llmwiki/`,
-`src/acl/`, `src/inbox/` by end of Phase 3.
+`src/acl/`, `src/inbox/` by end of Phase 4.
 
 ---
 
@@ -1238,7 +1250,7 @@ jobs:
     - Package .vsix
   integration:  # Phase 2+
     - ubuntu-latest
-  matrix:  # Phase 4+
+  matrix:  # Phase 5+
     os: [ubuntu-latest, macos-latest, windows-latest]
 ```
 
@@ -1248,7 +1260,7 @@ jobs:
 2. Bump `package.json`: patch / minor / major (breaking profile schema)
 3. `git tag v0.x.x && git push --tags`
 4. CI packages `.vsix` → attached to GitHub Release
-5. `ovsx publish` to Open VSX (manual until Phase 4; automated after)
+5. `ovsx publish` to Open VSX (manual until Phase 5; automated after)
 
 ---
 
@@ -1264,7 +1276,7 @@ jobs:
 
 BDFL model. NetYeti (growlfd@gmail.com) makes final decisions. All decisions documented
 in `PROJECT.md` and `CHANGELOG.md`. Co-maintainers may be granted merge rights after
-Phase 4. Second maintainer is a Phase 4 gate.
+Phase 6. Second maintainer is a Phase 6 gate.
 
 ### NOTICE.md (draft)
 
@@ -1380,15 +1392,15 @@ VSCodium
 | Scope creep | High | Medium | Strict phase gates; all additions need phase assignment |
 | Extension activation performance | Medium | Medium | Lazy loading; target < 500ms |
 | Port conflict (multi-window) | Medium | Medium | Dynamic port assignment |
-| Single-maintainer bus factor | High | Medium | All decisions documented; second maintainer = Phase 4 gate |
+| Single-maintainer bus factor | High | Medium | All decisions documented; second maintainer = Phase 6 gate |
 | HTTP server security surface | Low | Low | Binds to `127.0.0.1` only |
-| Cross-platform breakage | Medium | Medium | CI matrix in Phase 4 |
+| Cross-platform breakage | Medium | Medium | CI matrix in Phase 6 |
 | Promote partial failure | Low | Medium | Step logging + idempotent re-run |
 | Multi-user merge conflicts | Low | Medium | Minimal diff output |
 | Remote dispatch unavailable | Medium | Low | Graceful fallback; warning |
 | AI write corrupts human edits | Low | High | OCC two-layer model |
 | Dispatch module acquires VS Code dep | Medium | High | Explicit test: dispatch unit tests run outside extension host |
-| LLM Wiki identity/level/relationship problems | Medium | Medium | Noted as Phase 4+ known challenges; Lint operation provides ongoing detection |
+| LLM Wiki identity/level/relationship problems | Medium | Medium | Noted as Phase 6+ known challenges; Lint operation provides ongoing detection |
 | qmd not installed by user | Medium | Low | Graceful fallback to index scan; dashboard suggests install |
 | knowledge-base profile too complex for users | Medium | Medium | Zero-config; `doc-lifecycle` remains available; `knowledge-base` opt-in |
 | **Reading UX drives users away from VSCodium** | High | High | Web UI is the primary client; VSCodium is the power tool — not the daily driver |

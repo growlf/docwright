@@ -1,10 +1,10 @@
 ---
-title: Phase 3 — Profile Engine, ACL & AI Integration
+title: Phase 4 — Profile Engine, ACL & AI Integration
 status: draft
 author: NetYeti
 created: 2026-06-03
 tags:
-  - phase-3
+  - phase-4
   - profile-engine
   - acl
   - ai
@@ -13,18 +13,20 @@ priority: medium
 automated: off
 assigned_to: NetYeti
 depends_on:
-  - phase-2-foundation
-_path: plans/phase-3-profile-acl-ai.md
-proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 3; no individual proposal
-phase: 3
+  - phase-3-vault-portability-pilot
+_path: plans/phase-4-profile-acl-ai.md
+proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 4; no individual proposal
+phase: 4
+total_steps: 0
+completed_steps: 0
 ---
-# Phase 3 — Profile Engine, ACL & AI Integration
+# Phase 4 — Profile Engine, ACL & AI Integration
 
 ## Overview
 
-Phase 3 completes the profile engine with all four bundled profiles, wires in ACL enforcement via Forgejo team membership, and enables full AI write flows through the ACL controller. By the end of this phase, DocWright enforces policy automatically and every AI action is auditable.
+Phase 4 completes the profile engine with all four bundled profiles, wires in ACL enforcement via Forgejo team membership, and enables full AI write flows through the ACL controller. By the end of this phase, DocWright enforces policy automatically and every AI action is auditable.
 
-This plan tracks all Phase 3 deliverables. Each deliverable will be broken out into its own plan when Phase 2 is complete and work begins.
+This plan tracks all Phase 4 deliverables. Each deliverable will be broken out into its own plan when Phase 3 is complete and work begins.
 
 ## Deliverables
 
@@ -45,10 +47,11 @@ This plan tracks all Phase 3 deliverables. Each deliverable will be broken out i
 
 ## Phase Context
 
-See \[\[plans/phase-2-foundation\]\] for Phase 2 deliverables. Phase 3 begins after Phase 2 is complete and the extension skeleton is stable.
+See [[plans/phase-3-vault-portability-pilot]] for Phase 3 deliverables. Phase 4 begins after Phase 3 is complete and vault portability is established.
 
 ## Document History
 
 | Date | Change | Author |
 | --- | --- | --- |
+| 2026-06-08 | Renumbered Phase 3 → Phase 4; depends_on updated to phase-3-vault-portability-pilot | NetYeti |
 | 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |

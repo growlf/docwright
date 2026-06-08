@@ -14,7 +14,7 @@ priority: high
 automated: guided
 assigned_to: NetYeti
 tests_defined: false
-phase: 3
+phase: 2
 scenario_synthesis: Research process — surveys, naming analysis, UI mocks, enforcement contract; no infrastructure steps
 total_steps: 5
 completed_steps: 2

@@ -19,7 +19,7 @@ template_version: "1.0"
 tests_defined: false
 total_steps: 7
 completed_steps: 0
-phase: 3
+phase: 4
 ---
 
 # Plan: UI — Lifecycle Graph View

@@ -26,7 +26,7 @@ gate_date:      # Stamped when gate_status is set
 gate_note:      # Optional reviewer note
 gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
-phase: 3
+phase: 4
 ---
 
 # Plan: UI Polish Bundle — Panels, Tags, Navigation, Wikilinks, and Deferred Polish

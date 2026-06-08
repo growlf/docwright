@@ -9,7 +9,7 @@ tags:
   - tags
   - navigation
   - wikilinks
-  - phase-3
+  - phase-4
 complexity: medium
 estimated_effort: L
 approved: true
@@ -30,13 +30,13 @@ consumed_by: plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-de
 ---
 ## Problem
 
-Nine Phase 2 deferred proposals share the same unblocking conditions: a stable unified panel layout, the Phase 3 dispatch module (vault-wide wikilink index, Forgejo ACL integration), and the activity-bar settings panel. Tracking them as nine separate proposals creates noise with no actionable distinction between them — none can ship before Phase 3 foundations land.
+Nine Phase 2 deferred proposals share the same unblocking conditions: a stable unified panel layout, the Phase 4 dispatch module (vault-wide wikilink index, Forgejo ACL integration), and the activity-bar settings panel. Tracking them as nine separate proposals creates noise with no actionable distinction between them — none can ship before Phase 4 foundations land.
 
 ## Proposed Solution
 
-Deliver as a single Phase 3 UI Polish plan. Items are grouped by dependency tier.
+Deliver as a single Phase 4 UI Polish plan. Items are grouped by dependency tier.
 
-### Tier 1 — Depends only on stable panel layout (ship early in Phase 3)
+### Tier 1 — Depends only on stable panel layout (ship early in Phase 4)
 
 **Keyboard shortcuts for panels**
 
@@ -67,7 +67,7 @@ Deliver as a single Phase 3 UI Polish plan. Items are grouped by dependency tier
 *   One-click apply (copies to `brand/theme.css`), upload custom theme, reset to default
 *   Depends on: activity-bar settings panel (approved)
 
-### Tier 3 — Depends on Phase 3 dispatch module
+### Tier 3 — Depends on Phase 4 dispatch module
 
 **Tags more useful to humans**
 
@@ -95,14 +95,14 @@ Deliver as a single Phase 3 UI Polish plan. Items are grouped by dependency tier
 *   Lifecycle guardrail: warns and requires confirmation before moving a file to an unrecognised directory that would break lifecycle rules
 *   Depends on: wikilink backref updating (above)
 
-### Tier 4 — Depends on Phase 3 ACL / Forgejo integration
+### Tier 4 — Depends on Phase 4 ACL / Forgejo integration
 
 **Contributor name autocomplete in properties pane**
 
 *   Autocomplete on `author` and `assigned_to` inputs in the properties pane
 *   Source priority: Forgejo team membership API → `contributors.json` vault config → names seen in existing frontmatter (derived, zero-config fallback)
 *   Allows free-text entry for unlisted names; convenience only, not enforcement
-*   Depends on: Phase 3 Forgejo ACL integration
+*   Depends on: Phase 4 Forgejo ACL integration
 
 ### Related docs UX improvements (any tier — dispatch module needed for quality)
 
@@ -117,9 +117,9 @@ Deliver as a single Phase 3 UI Polish plan. Items are grouped by dependency tier
 
 | Proposal / Plan | Relationship |
 | --- | --- |
-| \[\[plans/completed/phase-2-ui-polish-bundle.md\]\] | This bundle is the natural Phase 3 successor |
+| \[\[plans/completed/phase-2-ui-polish-bundle.md\]\] | This bundle is the natural Phase 4 successor |
 | \[\[plans/completed/sidebar-polish.md\]\] | Keyboard shortcuts and resize depend on the stable unified layout delivered here |
-| \[\[plans/phase-3-profile-acl-ai.md\]\] | Wikilink backref, contributor autocomplete, and related-docs improvements depend on Phase 3 dispatch |
+| \[\[plans/phase-4-profile-acl-ai.md\]\] | Wikilink backref, contributor autocomplete, and related-docs improvements depend on Phase 4 dispatch |
 | \[\[proposals/approved/ui-theming-system.md\]\] | Theme picker is the in-app UI for the theming system already in place |
 | \[\[proposals/approved/ui-settings-activity-bar.md\]\] | Theme picker depends on this settings panel |
 
@@ -127,10 +127,10 @@ Deliver as a single Phase 3 UI Polish plan. Items are grouped by dependency tier
 
 | Idea | Why deferred |
 | --- | --- |
-| Auto-tagging by AI | Requires AI backend (Phase 3+); manual tagging with autocomplete comes first |
+| Auto-tagging by AI | Requires AI backend (Phase 4+); manual tagging with autocomplete comes first |
 | Tag hierarchy / parent-child relations | Flat tags suffice; hierarchy adds complexity |
-| Tag-based access control | Phase 4+ enterprise concern |
-| Multi-file drag-and-drop | Single file at a time is sufficient for Phase 3 |
+| Tag-based access control | Phase 5+ enterprise concern |
+| Multi-file drag-and-drop | Single file at a time is sufficient for Phase 4 |
 | Keybindings configuration UI | A future keybindings system; shortcuts assigned for now |
 
 ## Document History
