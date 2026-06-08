@@ -15,7 +15,7 @@ import { getActiveProfile } from '../../../../../dispatch/profile';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 
-const SCAN_DIRS = ['proposals', 'proposals/approved', 'plans'];
+const SCAN_DIRS = ['proposals', 'proposals/approved', 'plans', 'research'];
 
 function collectCandidates(exclude: string): string[] {
   const results: string[] = [];
@@ -28,7 +28,11 @@ function collectCandidates(exclude: string): string[] {
       if (rel === exclude) continue;
       const raw = fs.readFileSync(path.join(REPO_ROOT, rel), 'utf-8');
       if (/^subsumed_by:\s*.+/m.test(raw)) continue;
-      if (/^status:\s*(completed|canceled)/m.test(raw)) continue;
+      const isResearch = rel.startsWith('research/');
+      // Research: skip archived only (concluded research still informs proposals)
+      // Proposals/plans: skip completed and canceled
+      if (isResearch && /^status:\s*archived/m.test(raw)) continue;
+      if (!isResearch && /^status:\s*(completed|canceled)/m.test(raw)) continue;
       results.push(rel);
     }
   }

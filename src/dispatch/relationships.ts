@@ -10,6 +10,7 @@ export type RelationshipType =
   | 'merge_candidate'
   | 'supersedes'
   | 'related_to'
+  | 'informed-by'
   | 'parallel';
 
 export interface SignalScores {
@@ -130,7 +131,11 @@ export function classifyRelationship(
   confidence: number,
   signals: SignalScores,
   targetFrontmatter: Record<string, any>,
+  candidatePath?: string,
 ): RelationshipType {
+  // Research documents inform proposals/plans — always classify as informed-by
+  if (candidatePath?.startsWith('research/')) return 'informed-by';
+
   if (signals.explicit_related >= 0.9) return 'related_to';
 
   if (confidence >= 0.7) {
@@ -245,7 +250,7 @@ export function scanProposal(
       if (confidence < threshold) continue;
 
       const candidateFm = parseFrontmatter(candidateRaw);
-      const type = classifyRelationship(confidence, signals, candidateFm);
+      const type = classifyRelationship(confidence, signals, candidateFm, c);
 
       results.push({
         source: targetPath,

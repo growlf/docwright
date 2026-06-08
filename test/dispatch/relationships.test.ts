@@ -135,6 +135,21 @@ describe('Relationship engine', () => {
       const s = { jaccard: 0.05, tag_overlap: 0, phase_match: 0, same_author: 0, same_assigned: 0, explicit_related: 0, wikilink_cooccurrence: 0 };
       assert.strictEqual(classifyRelationship(0.15, s, {}), 'parallel');
     });
+
+    it('classifies research/ candidate as informed-by regardless of confidence', () => {
+      const s = { jaccard: 0.8, tag_overlap: 0.9, phase_match: 1, same_author: 0, same_assigned: 0, explicit_related: 1, wikilink_cooccurrence: 0 };
+      assert.strictEqual(classifyRelationship(0.95, s, {}, 'research/sse-vs-websocket.md'), 'informed-by');
+    });
+
+    it('classifies research/ candidate as informed-by even at low confidence', () => {
+      const s = { jaccard: 0.1, tag_overlap: 0, phase_match: 0, same_author: 0, same_assigned: 0, explicit_related: 0, wikilink_cooccurrence: 0 };
+      assert.strictEqual(classifyRelationship(0.31, s, {}, 'research/some-doc.md'), 'informed-by');
+    });
+
+    it('does not classify non-research candidate as informed-by', () => {
+      const s = { jaccard: 0.3, tag_overlap: 0, phase_match: 0, same_author: 0, same_assigned: 0, explicit_related: 0, wikilink_cooccurrence: 0 };
+      assert.notStrictEqual(classifyRelationship(0.4, s, {}, 'proposals/some-proposal.md'), 'informed-by');
+    });
   });
 
   describe('scanProposal', () => {
