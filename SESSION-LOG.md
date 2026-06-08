@@ -372,3 +372,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Improved sub-plan-parent-tracking: data model section, 8-point regex algorithm, PropertiesPane "Part of" link, named test functions
 
 **Session note:** `docs/session-notes/session_note_202606082310.md`
+
+---
+
+## Session: 2026-06-08 — Phase assignment, AI model picker, research steps 1-2
+
+**Focus:** Plan phase assignment, AI model picker, Ollama cleanup, research stage
+
+**Completed:**
+- [x] Removed custom Ollama picker — OpenCode model selector covers this natively
+- [x] AI model picker in toolbar: reads OpenCode /api/model (112 models), writes opencode.json
+- [x] Fixed auto-improve: triggerImprovePending store pattern replaces broken SSE-as-JSON fetch
+- [x] handleCreatePlan now navigates with ?from=proposal for auto-improve on new plans
+- [x] CollationPanel scan UX: spinner, subtitle, clearer Create Plan CTA with bundle count
+- [x] Plan phase assignment: dropdown, auto-assign on creation, linter warn, status page grouping
+- [x] Backfilled phase: on all 8 unassigned plans
+- [x] Research steps 1+2 (tool survey + naming): recommends mode: mentor | guided | autonomous
+- [x] AbortSignal on all AI fetch calls — no more stuck review/improve UI
+- [x] Version bumped to 0.2.4, tagged v0.2.4 pushed
+
+**Session note:** `docs/session-notes/session_note_202606082345.md`
