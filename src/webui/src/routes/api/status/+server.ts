@@ -171,20 +171,43 @@ export function GET() {
   const completedCount = readDir(path.join(REPO_ROOT, 'plans', 'completed')).length;
 
   // Phase/roadmap data
-  // Current phase: highest `phase:` value among active or completed plans
-  const allPlans = [
+  //
+  // currentPhase = phase number of the in-progress or approved phase overview plan.
+  // Falls back to the highest completed phase number, then 1.
+  // Uses basename match (^phase-\d) so plans like bundle-lifecycle-gates-phase-2
+  // don't pollute the phase number.
+  const allPlansForPhase = [
     ...readDir(path.join(REPO_ROOT, 'plans')),
     ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
   ];
-  let currentPhase = 1;
-  for (const { fm } of allPlans) {
-    const p = parseInt(String(fm.phase ?? '0'), 10);
-    if (!isNaN(p) && p > currentPhase) currentPhase = p;
-  }
-  // Phase plans: phase-level planning docs (phase-N-* names), excluding completed/canceled stubs
+
+  // Active phase: in-progress or approved phase overview plan
+  const activePhasePlan = allPlansForPhase
+    .filter(({ path: p, fm }) =>
+      /^phase-\d/.test(path.basename(p)) &&
+      ['in-progress', 'approved'].includes(String(fm.status ?? ''))
+    )
+    .map(({ fm }) => parseInt(String(fm.phase ?? '0'), 10))
+    .filter(n => n > 0)
+    .sort((a, b) => a - b)[0];
+
+  // Fallback: highest completed phase number
+  const maxCompletedPhase = allPlansForPhase
+    .filter(({ path: p, fm }) =>
+      /^phase-\d/.test(path.basename(p)) &&
+      String(fm.status ?? '') === 'completed'
+    )
+    .map(({ fm }) => parseInt(String(fm.phase ?? '0'), 10))
+    .filter(n => n > 0)
+    .reduce((max, n) => Math.max(max, n), 0);
+
+  const currentPhase = activePhasePlan ?? (maxCompletedPhase > 0 ? maxCompletedPhase : 1);
+
+  // Phase plans: ONLY phase overview docs (basename starts with phase-N),
+  // excluding completed/canceled — these populate the roadmap card.
   const phasePlans = readDir(path.join(REPO_ROOT, 'plans'))
     .filter(({ path: p, fm }) =>
-      /phase-\d/.test(p) &&
+      /^phase-\d/.test(path.basename(p)) &&
       !['completed', 'canceled', 'proposal'].includes(String(fm.status ?? ''))
     )
     .map(({ path: p, fm }) => ({

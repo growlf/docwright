@@ -235,8 +235,13 @@
         <div class="prb-step" class:prb-step-done={allReviewed}>
           <span class="prb-step-num">3</span>
           <div class="prb-step-body">
-            <strong>Activate Phase {data.phaseReview.gatedPhase + 1}</strong>
-            <span class="prb-step-hint">Open the Phase {data.phaseReview.gatedPhase + 1} plan → click <em>Start</em> in the Properties panel on the right side of the screen.</span>
+            {#if nextPhase && nextPhase.status === 'in-progress'}
+              <strong>Phase {data.phaseReview.gatedPhase + 1} is already active ✓</strong>
+              <span class="prb-step-hint">Click <em>Done reviewing</em> for each plan in the table below to dismiss this banner.</span>
+            {:else}
+              <strong>Activate Phase {data.phaseReview.gatedPhase + 1}</strong>
+              <span class="prb-step-hint">Open the Phase {data.phaseReview.gatedPhase + 1} plan → click <em>Start</em> in the Properties panel on the right side of the screen.</span>
+            {/if}
           </div>
         </div>
       </div>
@@ -269,13 +274,22 @@
       </table>
 
       {#if allReviewed && nextPhase}
-        <div class="prb-activate-cta">
-          <span class="prb-activate-msg">✅ All phases reviewed — ready to activate Phase {data.phaseReview.gatedPhase + 1}</span>
-          <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
-            Open Phase {data.phaseReview.gatedPhase + 1} plan to activate →
-          </button>
-          <span class="prb-activate-hint">Once the plan is open, click <strong>Start</strong> in the Properties panel on the right.</span>
-        </div>
+        {#if nextPhase.status === 'in-progress'}
+          <div class="prb-activate-cta">
+            <span class="prb-activate-msg">✅ All phases reviewed — Phase {data.phaseReview.gatedPhase + 1} is already active</span>
+            <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
+              Open Phase {data.phaseReview.gatedPhase + 1} plan →
+            </button>
+          </div>
+        {:else}
+          <div class="prb-activate-cta">
+            <span class="prb-activate-msg">✅ All phases reviewed — ready to activate Phase {data.phaseReview.gatedPhase + 1}</span>
+            <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
+              Open Phase {data.phaseReview.gatedPhase + 1} plan to activate →
+            </button>
+            <span class="prb-activate-hint">Once the plan is open, click <strong>Start</strong> in the Properties panel on the right.</span>
+          </div>
+        {/if}
       {:else if !allReviewed}
         <div class="prb-progress">
           {data.phaseReview.plans.filter(p => !p.needsReview).length} of {data.phaseReview.plans.length} plans reviewed
