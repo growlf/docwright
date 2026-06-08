@@ -20,10 +20,10 @@ canceled_date: ""
 cancellation_reason: ""
 template_version: 1.0
 tests_defined: true
-gate_reviewer: ""
-gate_status: ""
-gate_date: ""
-gate_note: ""
+gate_reviewer: "NetYeti"
+gate_status: waived
+gate_date: "2026-06-07"
+gate_note: "Waived retroactively — plan completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 gate_reviews: []
 gate_quorum: 1
 total_steps: 8

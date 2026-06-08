@@ -13,7 +13,8 @@ automated: guided
 scenario_synthesis: Skill definition and session note automation; no infrastructure changes; output is a markdown skill file and SESSION-LOG update
 assigned_to: NetYeti@phoenix
 tests_defined: true
-gate_status: pending
+gate_status: waived
+gate_note: "Waived retroactively — plan completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 total_steps: 4
 completed_steps: 4
 _path: plans/session-shutdown-automation.md

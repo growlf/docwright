@@ -14,8 +14,9 @@ priority: medium
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-gate_status: pending
+gate_status: waived
 gate_reviewer: NetYeti
+gate_note: "Waived retroactively — plan completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 total_steps: 7
 completed_steps: 7
 _path: plans/phase-2-ui-polish-bundle.md

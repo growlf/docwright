@@ -17,7 +17,8 @@ automated: guided
 assigned_to: NetYeti
 total_steps: 12
 completed_steps: 12
-gate_status: none
+gate_status: waived
+gate_note: "Waived retroactively — plan completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 tests_defined: true
 ---
 
