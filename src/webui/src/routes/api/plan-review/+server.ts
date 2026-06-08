@@ -67,6 +67,7 @@ export async function POST({ request }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({}),
+            signal: abortCtrl.signal,
           });
           if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
           const sess = await sessRes.json();
@@ -78,6 +79,7 @@ export async function POST({ request }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
+            signal: abortCtrl.signal,
           });
           if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
           const data = await msgRes.json();

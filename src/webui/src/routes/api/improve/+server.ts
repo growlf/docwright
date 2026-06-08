@@ -99,12 +99,14 @@ async function callOllama(
   phase: string,
   streamingStage: string,
   send: (event: string, data: unknown) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   send('status', { message: phase === 'improve' ? 'Improving via Ollama...' : 'Critiquing via Ollama...' });
   const res = await fetch(`${ollamaUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], stream: false }),
+    signal,
   });
   if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
   const data = await res.json();
@@ -120,12 +122,14 @@ async function callAndSendSession(
   phase: string,
   streamingStage: string,
   send: (event: string, data: unknown) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   send('status', { message: 'Creating session...' });
   const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
+    signal,
   });
   if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
   const sess = await sessRes.json();
@@ -138,6 +142,7 @@ async function callAndSendSession(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
+    signal,
   });
   if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
   const data = await msgRes.json();
@@ -182,23 +187,25 @@ export async function POST({ request }) {
 
       const dirParam = `directory=${encodeURIComponent(REPO_ROOT)}`;
       const useOllama = backend === 'ollama' && !!ollamaUrl;
-      const callAI = (prompt: string, phase: string, stage: string) =>
+      // 300s: Ollama may need to cold-load a model from disk before inference starts
+      const AI_TIMEOUT = 300_000;
+      const abortCtrl = new AbortController();
+      const abortTimer = setTimeout(() => abortCtrl.abort(), AI_TIMEOUT * 2); // outer guard
+      const callAI = (prompt: string, phase: string, stage: string, signal: AbortSignal) =>
         useOllama
-          ? callOllama(ollamaUrl!, ollamaModel, prompt, phase, stage, send)
-          : callAndSendSession(opencodeUrl!, dirParam, prompt, phase, stage, send);
+          ? callOllama(ollamaUrl!, ollamaModel, prompt, phase, stage, send, signal)
+          : callAndSendSession(opencodeUrl!, dirParam, prompt, phase, stage, send, signal);
 
       try {
         const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
         const withTimeout = <T>(p: Promise<T>, ms: number) => Promise.race([p, timeout(ms)]);
-        // 300s: Ollama may need to cold-load a model from disk before inference starts
-        const AI_TIMEOUT = 300_000;
 
         // Phase 1: Improve proposal
         send('stage', { phase: 'improve-thinking' });
         let improved: string;
         try {
           improved = await withTimeout(
-            callAI(buildPrompt(fm, body), 'improve', 'improve-streaming'),
+            callAI(buildPrompt(fm, body), 'improve', 'improve-streaming', abortCtrl.signal),
             AI_TIMEOUT,
           );
         } catch (err: any) {
@@ -206,22 +213,28 @@ export async function POST({ request }) {
           send('token', { phase: 'improve', text: improved });
         }
 
-        // Phase 2: Critique document
+        // Phase 2: Critique document — fresh abort controller so phase 1 timeout doesn't bleed over
+        const abortCtrl2 = new AbortController();
+        const abortTimer2 = setTimeout(() => abortCtrl2.abort(), AI_TIMEOUT);
         send('stage', { phase: 'critique-thinking' });
         let critique: string;
         try {
           critique = await withTimeout(
-            callAI(buildCritique(original), 'critique', 'critique-streaming'),
+            callAI(buildCritique(original), 'critique', 'critique-streaming', abortCtrl2.signal),
             AI_TIMEOUT,
           );
         } catch (err: any) {
           critique = `*(AI critique ${err.message})*`;
           send('token', { phase: 'critique', text: critique });
+        } finally {
+          clearTimeout(abortTimer2);
         }
 
         send('done', { original: body, improved, critique });
       } catch (err: any) {
         send('done', { original: body, improved: body + '\n\n*(Error processing improve)*', critique: '' });
+      } finally {
+        clearTimeout(abortTimer);
       }
 
       controller.close();
