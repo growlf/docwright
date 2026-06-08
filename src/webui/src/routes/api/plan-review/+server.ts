@@ -12,7 +12,7 @@ function sse(event: string, data: unknown) {
 }
 
 export async function POST({ request }) {
-  const { path: planPath, backend = 'opencode' } = await request.json();
+  const { path: planPath } = await request.json();
   if (!planPath) return new Response('missing path', { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, planPath);
@@ -20,8 +20,6 @@ export async function POST({ request }) {
   if (!fs.existsSync(resolved)) return new Response('not found', { status: 404 });
 
   const planRaw = fs.readFileSync(resolved, 'utf-8');
-  const ollamaUrl = process.env.OLLAMA_URL;
-  const ollamaModel = process.env.OLLAMA_MODEL || 'qwen2.5:32b-instruct-q3_K_M';
   const opencodeUrl = process.env.OPENCODE_URL;
 
   const stream = new ReadableStream({
@@ -30,9 +28,9 @@ export async function POST({ request }) {
         controller.enqueue(new TextEncoder().encode(sse(event, data)));
       }
 
-      if (!ollamaUrl && !opencodeUrl) {
+      if (!opencodeUrl) {
         send('status', { message: 'AI not configured' });
-        send('done', { findings: 'AI review unavailable — no AI backend configured.', changes: '', improved_body: '' });
+        send('done', { findings: 'AI review unavailable — OPENCODE_URL not configured.', changes: '', improved_body: '' });
         controller.close();
         return;
       }
@@ -43,49 +41,34 @@ export async function POST({ request }) {
         send('status', { message: 'Building context...' });
         const context = buildPlanReviewContext(planPath, planRaw, REPO_ROOT);
 
-        let fullText: string;
-        const useOllama = backend === 'ollama' && !!ollamaUrl;
-        // 300s: Ollama may cold-load a model from disk before inference starts
+        // 300s: model cold-load or slow inference can take a long time
         const AI_TIMEOUT = 300_000;
         const abortCtrl = new AbortController();
         const abortTimer = setTimeout(() => abortCtrl.abort(), AI_TIMEOUT);
 
-        if (useOllama) {
-          send('status', { message: 'Sending to Ollama...' });
-          const res = await fetch(`${ollamaUrl}/v1/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: ollamaModel, messages: [{ role: 'user', content: context }], stream: false }),
-            signal: abortCtrl.signal,
-          });
-          if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
-          const data = await res.json();
-          fullText = data?.choices?.[0]?.message?.content ?? '';
-        } else {
-          send('status', { message: 'Creating session...' });
-          const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({}),
-            signal: abortCtrl.signal,
-          });
-          if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
-          const sess = await sessRes.json();
-          const sessionId: string = sess?.id ?? sess?.sessionID;
-          if (!sessionId) throw new Error('OpenCode returned no session ID');
+        send('status', { message: 'Creating session...' });
+        const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+          signal: abortCtrl.signal,
+        });
+        if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
+        const sess = await sessRes.json();
+        const sessionId: string = sess?.id ?? sess?.sessionID;
+        if (!sessionId) throw new Error('OpenCode returned no session ID');
 
-          send('status', { message: 'Sending to AI...' });
-          const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
-            signal: abortCtrl.signal,
-          });
-          if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
-          const data = await msgRes.json();
-          const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
-          fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
-        }
+        send('status', { message: 'Sending to AI...' });
+        const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),
+          signal: abortCtrl.signal,
+        });
+        if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
+        const data = await msgRes.json();
+        const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+        const fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
 
         clearTimeout(abortTimer);
         send('status', { message: 'Processing response…' });

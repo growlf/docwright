@@ -8,7 +8,7 @@
   import { toasts, dismissToast, showToast } from '$lib/toast';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, aiBackend, triggerImprovePending
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import MultiReviewPanel from '$lib/MultiReviewPanel.svelte';
@@ -67,9 +67,6 @@ import {
   let ip  = $state<ImprovePhase>('improve-thinking');
                               $effect(() => { const u = improvePhase.subscribe(v => ip = v); return u; });
   let ist = $state('');       $effect(() => { const u = improveStatus.subscribe(v => ist = v); return u; });
-  let aib = $state<'opencode' | 'ollama'>('opencode');
-                              $effect(() => { const u = aiBackend.subscribe(v => aib = v); return u; });
-
   // Auto-improve signal from page (e.g. ?from=proposal on new plan load)
   $effect(() => {
     const u = triggerImprovePending.subscribe(v => {
@@ -190,7 +187,7 @@ import {
       const res = await fetch('/api/plan-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: fp, backend: aib }),
+        body: JSON.stringify({ path: fp }),
       });
       const reader = res.body?.getReader();
       if (!reader) { planReviewFindings.set('No response stream'); return; }
@@ -293,7 +290,7 @@ import {
       const res = await fetch('/api/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: fp, backend: aib }),
+        body: JSON.stringify({ path: fp }),
       });
       const reader = res.body?.getReader();
       if (!reader) { showToast('No response stream', 4000); return; }

@@ -38,19 +38,6 @@ export const showReviewTab = writable(false);
 /** Toggle to Multi-Review panel instead of ChatPanel */
 export const showMultiReview = writable(false);
 
-/** Selected AI backend for improve/review — persisted to localStorage as 'dw:ai-backend' */
-function loadAiBackend(): 'opencode' | 'ollama' {
-  if (typeof localStorage !== 'undefined') {
-    const v = localStorage.getItem('dw:ai-backend');
-    if (v === 'opencode' || v === 'ollama') return v;
-  }
-  return 'opencode';
-}
-export const aiBackend = writable<'opencode' | 'ollama'>(loadAiBackend());
-aiBackend.subscribe(v => {
-  if (typeof localStorage !== 'undefined') localStorage.setItem('dw:ai-backend', v);
-});
-
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({
   showPlanButton: true,

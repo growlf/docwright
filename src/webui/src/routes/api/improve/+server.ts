@@ -92,28 +92,6 @@ async function streamText(
   }
 }
 
-async function callOllama(
-  ollamaUrl: string,
-  model: string,
-  prompt: string,
-  phase: string,
-  streamingStage: string,
-  send: (event: string, data: unknown) => void,
-  signal?: AbortSignal,
-): Promise<string> {
-  send('status', { message: phase === 'improve' ? 'Improving via Ollama...' : 'Critiquing via Ollama...' });
-  const res = await fetch(`${ollamaUrl}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], stream: false }),
-    signal,
-  });
-  if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
-  const data = await res.json();
-  const fullText: string = data?.choices?.[0]?.message?.content ?? '';
-  await streamText(fullText, phase, streamingStage, send);
-  return fullText;
-}
 
 async function callAndSendSession(
   opencodeUrl: string,
@@ -154,7 +132,7 @@ async function callAndSendSession(
 }
 
 export async function POST({ request }) {
-  const { path: filePath, backend = 'opencode' } = await request.json();
+  const { path: filePath } = await request.json();
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, filePath);
@@ -171,30 +149,25 @@ export async function POST({ request }) {
       const fm = parseFrontmatter(original);
       const body = stripFrontmatter(original);
 
-      const ollamaUrl = process.env.OLLAMA_URL;
-      const ollamaModel = process.env.OLLAMA_MODEL || 'qwen2.5:32b-instruct-q3_K_M';
       const opencodeUrl = process.env.OPENCODE_URL;
 
-      if (!ollamaUrl && !opencodeUrl) {
+      if (!opencodeUrl) {
         send('done', {
           original: body,
-          improved: body + '\n\n*(AI fill-in unavailable — no AI backend configured)*',
-          critique: '*(Critique unavailable — no AI backend configured)*',
+          improved: body + '\n\n*(AI fill-in unavailable — OPENCODE_URL not configured)*',
+          critique: '*(Critique unavailable — OPENCODE_URL not configured)*',
         });
         controller.close();
         return;
       }
 
       const dirParam = `directory=${encodeURIComponent(REPO_ROOT)}`;
-      const useOllama = backend === 'ollama' && !!ollamaUrl;
-      // 300s: Ollama may need to cold-load a model from disk before inference starts
+      // 300s: model cold-load or slow inference can take a long time
       const AI_TIMEOUT = 300_000;
       const abortCtrl = new AbortController();
       const abortTimer = setTimeout(() => abortCtrl.abort(), AI_TIMEOUT * 2); // outer guard
       const callAI = (prompt: string, phase: string, stage: string, signal: AbortSignal) =>
-        useOllama
-          ? callOllama(ollamaUrl!, ollamaModel, prompt, phase, stage, send, signal)
-          : callAndSendSession(opencodeUrl!, dirParam, prompt, phase, stage, send, signal);
+        callAndSendSession(opencodeUrl, dirParam, prompt, phase, stage, send, signal);
 
       try {
         const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));

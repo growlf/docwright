@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showPropsPane, featureFlags, showReviewTab, aiBackend } from './pane';
+  import { showPropsPane, featureFlags, showReviewTab } from './pane';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -49,22 +49,6 @@
     PREDEFINED_CHIPS.tags = vaultTags.slice(0, 24);
   }).catch(() => {});
 
-  // Load available AI backends; auto-select Ollama if no saved preference and it's available
-  let availableBackends = $state<{ id: string; label: string }[]>([]);
-  fetch('/api/ai-backends').then(r => r.json()).then(d => {
-    availableBackends = d.backends ?? [];
-    const hasSaved = typeof localStorage !== 'undefined' && localStorage.getItem('dw:ai-backend');
-    if (!hasSaved && availableBackends.some(b => b.id === 'ollama')) {
-      setBackend('ollama');
-    }
-  }).catch(() => {});
-
-  let selectedBackend = $state<'opencode' | 'ollama'>('opencode');
-  $effect(() => { const u = aiBackend.subscribe(v => selectedBackend = v); return u; });
-  function setBackend(id: 'opencode' | 'ollama') {
-    selectedBackend = id;
-    aiBackend.set(id);
-  }
 
   function normalizeTag(raw: string): string {
     return raw.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -233,18 +217,6 @@
   {#if true}
     <!-- Action buttons -->
     <div class="pane-actions">
-      {#if availableBackends.length > 1}
-        <div class="backend-picker">
-          <span class="backend-label">AI:</span>
-          {#each availableBackends as b}
-            <button class="backend-btn" class:active={selectedBackend === b.id}
-              onclick={() => setBackend(b.id as 'opencode' | 'ollama')}
-              title="Use {b.label} for AI operations">
-              {b.label}
-            </button>
-          {/each}
-        </div>
-      {/if}
       {#if docType === 'proposal'}
         {#if !frontmatter.approved}
           <button class="act approve" onclick={approve}
@@ -436,36 +408,6 @@
     gap: 4px;
     padding: 10px 12px;
     border-bottom: 1px solid $border;
-  }
-
-  .backend-picker {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    width: 100%;
-    padding-bottom: 6px;
-    border-bottom: 1px solid $border;
-    margin-bottom: 2px;
-  }
-  .backend-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: $muted;
-    margin-right: 2px;
-  }
-  .backend-btn {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid $border;
-    background: none;
-    color: $muted;
-    cursor: pointer;
-    white-space: nowrap;
-    &:hover { color: $fg-dim; border-color: $muted; }
-    &.active { border-color: $blue-bdr; color: $blue; background: $blue-bg; }
   }
 
   .act {
