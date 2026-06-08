@@ -33,6 +33,23 @@ import {
 
   let projects     = $state<ProjectEntry[]>([]);
   let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+
+  // AI model picker
+  let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
+  let aiModel     = $state('');
+  let aiModelSaving = $state(false);
+  async function loadAiModels() {
+    if (aiModels.length) return;
+    const res = await fetch('/api/opencode-model');
+    if (res.ok) { const d = await res.json(); aiModels = d.models ?? []; aiModel = d.current ?? ''; }
+  }
+  async function setAiModel(m: string) {
+    aiModel = m;
+    aiModelSaving = true;
+    await fetch('/api/opencode-model', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: m }) });
+    aiModelSaving = false;
+    showToast(`Model set to ${m} — takes effect on next AI call`, 4000);
+  }
   let showNewMenu  = $state(false);
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
@@ -574,6 +591,25 @@ import {
         </div>
       {/if}
     </div>
+    <!-- AI model picker -->
+    <div class="model-picker-wrap" onclick={loadAiModels}>
+      {#if aiModels.length === 0}
+        <button class="model-btn" title="Select AI model" onclick={loadAiModels}>⚙ AI</button>
+      {:else}
+        <select class="model-select" title="Active AI model — changes apply to next Review/Improve call"
+          onchange={(e) => setAiModel((e.target as HTMLSelectElement).value)}
+          disabled={aiModelSaving}>
+          {#if !aiModel}
+            <option value="">— default —</option>
+          {/if}
+          {#each aiModels as m}
+            <option value="{m.providerID}/{m.id}" selected={aiModel === `${m.providerID}/${m.id}`}>
+              {m.name}
+            </option>
+          {/each}
+        </select>
+      {/if}
+    </div>
     <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
   </div>
 </div>
@@ -840,6 +876,11 @@ import {
   .home-btn:hover { color: #aaa; background: #1a1a1a; }
   .gear-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 3px; }
   .gear-btn:hover { color: #aaa; background: #1a1a1a; }
+  .model-picker-wrap { flex-shrink: 0; }
+  .model-btn { background: none; border: 1px solid #444; color: #888; padding: 2px 7px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+  .model-btn:hover { color: #aaa; border-color: #666; }
+  .model-select { background: #1a1a1a; border: 1px solid #444; color: #aaa; padding: 2px 4px; border-radius: 4px; font-size: 11px; cursor: pointer; max-width: 180px; }
+  .model-select:focus { outline: none; border-color: #5588cc; }
 
   /* ── Activity bar ────────────────────────────────────────────────────────── */
   .activity-bar {
