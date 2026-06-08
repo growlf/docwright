@@ -46,6 +46,18 @@ export async function POST({ request }) {
       });
     }
   }
+  if (fs.existsSync(path.join(REPO, 'test', 'compat'))) {
+    const files = fs.readdirSync(path.join(REPO, 'test', 'compat'));
+    if (files.some(f => f.endsWith('.test.ts'))) {
+      suites.push({ label: 'compat', cmd: ['npm', 'run', 'test:compat'], cwd: REPO });
+    }
+  }
+  if (fs.existsSync(path.join(REPO, 'test', 'integration'))) {
+    const files = fs.readdirSync(path.join(REPO, 'test', 'integration'));
+    if (files.some(f => f.endsWith('.test.ts'))) {
+      suites.push({ label: 'integration', cmd: ['npm', 'run', 'test:integration'], cwd: REPO });
+    }
+  }
 
   if (suites.length === 0) {
     return json({
