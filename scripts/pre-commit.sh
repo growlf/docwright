@@ -133,6 +133,68 @@ validate_agent_instructions() {
 }
 
 # =============================================================================
+# 12. Research document validation
+#     Enforces schema rules from src/profiles/*/schema.json (research type):
+#     - required fields: title, status, question, author, created, author-role
+#     - status enum: active | concluded | archived
+#     - concluded requires non-empty conclusion (not 'open') + ## Conclusion section
+#     - archived requires any valid conclusion value (use 'inconclusive' if none reached)
+#     - conclusion enum: open | recommends | inconclusive | superseded
+# =============================================================================
+validate_research_document() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^research/.+\.md$ ]] && return 0
+    local FM CONTENT STATUS CONCLUSION E=0
+    FM=$(get_frontmatter "$FILE" 2>/dev/null)
+    CONTENT=$(cat "$FILE" 2>/dev/null)
+    [ -z "$FM" ] && print_error "$FILE: research document missing frontmatter" && return 1
+
+    # Required fields
+    for FIELD in title status question author created author-role; do
+        echo "$FM" | grep -qE "^${FIELD}:[[:space:]]*.+" || {
+            print_error "$FILE: research document missing required field '${FIELD}'"
+            ((E++))
+        }
+    done
+
+    STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | tr -d '"' | xargs)
+    CONCLUSION=$(echo "$FM" | grep "^conclusion:" | sed 's/^conclusion:[[:space:]]*//' | tr -d '"' | xargs)
+
+    # Status enum
+    if [ -n "$STATUS" ] && ! echo "$STATUS" | grep -qE '^(active|concluded|archived)$'; then
+        print_error "$FILE: research status must be active|concluded|archived (got: '$STATUS')"
+        ((E++))
+    fi
+
+    # concluded: requires real conclusion + body section
+    if [ "$STATUS" = "concluded" ]; then
+        if [ -z "$CONCLUSION" ] || [ "$CONCLUSION" = "open" ]; then
+            print_error "$FILE: status:concluded requires conclusion of recommends|inconclusive|superseded (not empty or 'open')"
+            ((E++))
+        fi
+        echo "$CONTENT" | grep -q "^## Conclusion" || {
+            print_error "$FILE: status:concluded requires a '## Conclusion' section in the document body"
+            ((E++))
+        }
+    fi
+
+    # archived: must have a conclusion (use inconclusive if nothing found)
+    if [ "$STATUS" = "archived" ] && [ -z "$CONCLUSION" ]; then
+        print_error "$FILE: status:archived requires a conclusion field — use conclusion:inconclusive if no finding was reached"
+        ((E++))
+    fi
+
+    # Conclusion enum (if set)
+    if [ -n "$CONCLUSION" ] && ! echo "$CONCLUSION" | grep -qE '^(open|recommends|inconclusive|superseded)$'; then
+        print_error "$FILE: conclusion must be open|recommends|inconclusive|superseded (got: '$CONCLUSION')"
+        ((E++))
+    fi
+
+    [ $E -gt 0 ] && return 1
+    return 0
+}
+
+# =============================================================================
 # 9. Required frontmatter fields validation
 #    (root cause fix: rules/frontmatter-validate.md requires these but hook
 #     never checked for their presence — 31 proposals were missing approved:)
@@ -236,6 +298,7 @@ for FILE in $STAGED; do
     validate_no_self_approval "$FILE" || ((ERRORS++))
     validate_location_invariant "$FILE" || ((ERRORS++))
     validate_no_duplicate_locations "$FILE" || ((ERRORS++))
+    [[ "$FILE" =~ ^research/.+\.md$ ]] && { validate_research_document "$FILE" || ((ERRORS++)); }
 done
 
 [ $ERRORS -gt 0 ] && print_error "Pre-commit validation failed with $ERRORS error(s)" && exit 1
