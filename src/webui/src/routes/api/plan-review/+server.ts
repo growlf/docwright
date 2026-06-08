@@ -54,7 +54,7 @@ export async function POST({ request }) {
 
         send('status', { message: 'Sending to AI...' });
 
-        const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/prompt?${dirParam}`, {
+        const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ parts: [{ type: 'text', text: context }] }),

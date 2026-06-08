@@ -55,7 +55,13 @@
       {/if}
     </div>
   {:else if !improved}
-    <div class="empty">No review yet.</div>
+    {#if findings && findings.startsWith('Error:')}
+      <div class="empty error">{findings}</div>
+    {:else if findings && findings !== '*(No text response from AI)*'}
+      <div class="empty findings-only"><pre>{findings}</pre></div>
+    {:else}
+      <div class="empty">No review yet.</div>
+    {/if}
   {:else}
     <div class="tabs">
       <button class="tab" class:active={true} onclick={() => {}}>
@@ -98,6 +104,8 @@
   .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } }
 
   .empty { padding: 24px 16px; color: $muted; font-size: 13px; text-align: center; line-height: 1.6; }
+  .empty.error { color: #e05a5a; text-align: left; word-break: break-word; }
+  .empty.findings-only { text-align: left; pre { white-space: pre-wrap; font-size: 12px; } }
 
   .content-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; }
 
