@@ -208,42 +208,79 @@
 
     <!-- Phase gate review banner — shown when a gated phase requires review of remaining phases -->
     {#if data.phaseReview}
+    {@const allReviewed = data.phaseReview.plans.every(p => !p.needsReview)}
+    {@const nextPhase = data.phaseReview.plans.find(p => p.phase === data.phaseReview!.gatedPhase + 1)}
     <div class="phase-review-banner">
-      <div class="prb-header">
+
+      <div class="prb-title-row">
         <span class="prb-icon">🔍</span>
-        <span class="prb-title">Phase {data.phaseReview.gatedPhase} gate approved — review remaining phases</span>
-        <span class="prb-sub">Before activating Phase {data.phaseReview.gatedPhase + 1}, confirm each phase plan reflects current understanding.</span>
+        <span class="prb-title">Phase {data.phaseReview.gatedPhase} complete — review required before Phase {data.phaseReview.gatedPhase + 1} begins</span>
       </div>
+
+      <div class="prb-steps">
+        <div class="prb-step" class:prb-step-done={allReviewed}>
+          <span class="prb-step-num">1</span>
+          <div class="prb-step-body">
+            <strong>Open and review each upcoming phase plan</strong>
+            <span class="prb-step-hint">Read it — does the scope still reflect what we know? Update any deliverables that changed. Then come back here and click <em>Done reviewing</em>.</span>
+          </div>
+        </div>
+        <div class="prb-step" class:prb-step-done={allReviewed}>
+          <span class="prb-step-num">2</span>
+          <div class="prb-step-body">
+            <strong>Mark each plan reviewed below</strong>
+            <span class="prb-step-hint">This records today's date as the review date. You can re-review at any time.</span>
+          </div>
+        </div>
+        <div class="prb-step" class:prb-step-done={allReviewed}>
+          <span class="prb-step-num">3</span>
+          <div class="prb-step-body">
+            <strong>Activate Phase {data.phaseReview.gatedPhase + 1}</strong>
+            <span class="prb-step-hint">Open the Phase {data.phaseReview.gatedPhase + 1} plan → click <em>Start</em> in the Properties panel on the right side of the screen.</span>
+          </div>
+        </div>
+      </div>
+
       <table class="prb-table">
-        <thead><tr><th>Phase</th><th>Plan</th><th>Status</th><th>Review date</th><th></th></tr></thead>
+        <thead><tr><th>Phase</th><th>Plan</th><th>Last reviewed</th><th></th></tr></thead>
         <tbody>
           {#each data.phaseReview.plans as p}
             <tr class="prb-row {p.needsReview ? 'prb-needs-review' : 'prb-reviewed'}">
-              <td class="prb-phase">{p.phase}</td>
-              <td class="prb-plan-title">
-                <button class="link-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>{p.title}</button>
-              </td>
-              <td><span class="badge">{p.status}</span></td>
-              <td class="prb-date">{p.reviewDate || '—'}</td>
-              <td>
+              <td class="prb-phase">Phase {p.phase}</td>
+              <td class="prb-plan-title">{p.title}</td>
+              <td class="prb-date">{p.reviewDate || 'Not yet reviewed'}</td>
+              <td class="prb-actions">
+                <button class="prb-open-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>
+                  Open plan →
+                </button>
                 {#if p.needsReview}
                   <button class="prb-confirm-btn"
                     disabled={phaseReviewBusy[p.path]}
                     onclick={() => markPhaseReviewed(p.path)}>
-                    {phaseReviewBusy[p.path] ? '…' : '✓ Mark reviewed'}
+                    {phaseReviewBusy[p.path] ? 'Saving…' : '✓ Done reviewing'}
                   </button>
                 {:else}
-                  <span class="prb-ok">✅ reviewed</span>
+                  <span class="prb-ok">✅ Reviewed</span>
                 {/if}
               </td>
             </tr>
           {/each}
         </tbody>
       </table>
-      <div class="prb-note">
-        Open each plan, update scope if needed, then click "Mark reviewed".
-        The banner clears once all phases have a review date after Phase {data.phaseReview.gatedPhase} completion ({data.phaseReview.completedDate}).
-      </div>
+
+      {#if allReviewed && nextPhase}
+        <div class="prb-activate-cta">
+          <span class="prb-activate-msg">✅ All phases reviewed — ready to activate Phase {data.phaseReview.gatedPhase + 1}</span>
+          <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
+            Open Phase {data.phaseReview.gatedPhase + 1} plan to activate →
+          </button>
+          <span class="prb-activate-hint">Once the plan is open, click <strong>Start</strong> in the Properties panel on the right.</span>
+        </div>
+      {:else if !allReviewed}
+        <div class="prb-progress">
+          {data.phaseReview.plans.filter(p => !p.needsReview).length} of {data.phaseReview.plans.length} plans reviewed
+        </div>
+      {/if}
     </div>
     {/if}
 
@@ -704,28 +741,65 @@
   // ── Phase gate review banner ─────────────────────────────────────────────────
   .phase-review-banner {
     margin-bottom: 12px; border: 1px solid $amber-bdr; border-radius: 6px;
-    background: rgba(180,120,0,.08); padding: 12px 16px;
+    background: rgba(180,120,0,.07); padding: 14px 16px;
   }
-  .prb-header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .prb-icon   { font-size: 16px; flex-shrink: 0; }
-  .prb-title  { font-size: 13px; font-weight: 600; color: $amber; flex-shrink: 0; }
-  .prb-sub    { font-size: 11px; color: $muted; }
-  .prb-table  { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
-  .prb-table th { text-align: left; padding: 4px 8px; color: $muted; font-weight: 500; border-bottom: 1px solid $border; }
-  .prb-row td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
-  .prb-needs-review td { background: rgba(180,120,0,.06); }
-  .prb-reviewed td { opacity: 0.6; }
-  .prb-phase  { font-family: monospace; color: $muted; width: 48px; }
-  .prb-plan-title { max-width: 280px; }
-  .prb-date   { font-size: 11px; color: $muted; white-space: nowrap; }
+  .prb-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .prb-icon      { font-size: 18px; flex-shrink: 0; }
+  .prb-title     { font-size: 13px; font-weight: 700; color: $amber; }
+
+  .prb-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .prb-step {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 10px; border-radius: 4px; background: rgba(0,0,0,.15);
+    &.prb-step-done { opacity: 0.5; }
+  }
+  .prb-step-num {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+    background: $amber-bg; border: 1px solid $amber-bdr; color: $amber;
+    font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .prb-step-body { display: flex; flex-direction: column; gap: 2px;
+    strong { font-size: 12px; color: $fg-dim; }
+  }
+  .prb-step-hint { font-size: 11px; color: $muted; line-height: 1.4; }
+
+  .prb-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+  .prb-table th { text-align: left; padding: 4px 8px; color: $muted; font-weight: 500; border-bottom: 1px solid $border; font-size: 11px; }
+  .prb-row td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+  .prb-needs-review td { background: rgba(180,120,0,.05); }
+  .prb-reviewed td { opacity: 0.55; }
+  .prb-phase      { font-size: 11px; color: $muted; white-space: nowrap; width: 70px; }
+  .prb-plan-title { font-size: 12px; color: $fg-dim; }
+  .prb-date       { font-size: 11px; color: $muted; white-space: nowrap; width: 130px; }
+  .prb-actions    { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+  .prb-open-btn {
+    background: $bg-2; border: 1px solid $border; border-radius: 3px;
+    color: $fg-dim; font-size: 11px; padding: 3px 10px; cursor: pointer;
+    &:hover { border-color: $blue-bdr; color: $blue; }
+  }
   .prb-confirm-btn {
     background: $amber-bg; border: 1px solid $amber-bdr; border-radius: 3px;
-    color: $amber; font-size: 11px; padding: 2px 10px; cursor: pointer; white-space: nowrap;
+    color: $amber; font-size: 11px; padding: 3px 10px; cursor: pointer;
     &:hover { filter: brightness(1.15); }
     &:disabled { opacity: 0.5; cursor: default; }
   }
-  .prb-ok   { font-size: 11px; color: $green; }
-  .prb-note { font-size: 11px; color: $muted; line-height: 1.5; }
+  .prb-ok { font-size: 11px; color: $green; }
+
+  .prb-activate-cta {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 12px; border-radius: 4px;
+    background: rgba(45,125,70,.12); border: 1px solid $green-bdr;
+  }
+  .prb-activate-msg  { font-size: 12px; color: $green; font-weight: 600; flex: 1; }
+  .prb-activate-btn  {
+    background: $green-bg; border: 1px solid $green-bdr; border-radius: 4px;
+    color: $green; font-size: 12px; font-weight: 600; padding: 5px 14px; cursor: pointer;
+    white-space: nowrap;
+    &:hover { filter: brightness(1.15); }
+  }
+  .prb-activate-hint { font-size: 11px; color: $muted; width: 100%; }
+  .prb-progress { font-size: 11px; color: $muted; text-align: right; margin-top: 2px; }
 
   // ── Table ───────────────────────────────────────────────────────────────────
   .items-table { width: 100%; border-collapse: collapse; font-size: 12px; }
