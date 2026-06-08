@@ -10,7 +10,7 @@ depends_on: []
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
-_path: proposals/bugs-features-and-thoughts.md
+_path: proposals/approved/bugs-features-and-thoughts.md
 consumed_by: plans/plan-bugs-features-and-thoughts.md
 ---
 * * *

@@ -36,6 +36,8 @@
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
     "test:integration": "mocha --require tsx/cjs 'test/integration/**/*.test.ts'",
     "test": "npm run test:dispatch && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration",
+    "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
+    "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile"

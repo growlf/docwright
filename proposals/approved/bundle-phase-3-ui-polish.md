@@ -14,7 +14,7 @@ complexity: medium
 estimated_effort: L
 approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: NetYeti
 absorbs:
   - proposals/ui-keyboard-panel-shortcuts.md
   - proposals/ui-resizable-panels.md
@@ -25,7 +25,7 @@ absorbs:
   - proposals/wikilink-backref-update-on-rename.md
   - proposals/policies-should-be-a-button-on-the-leftmost-button-bar.md
   - proposals/related-docs-ux-improvements.md
-_path: proposals/bundle-phase-3-ui-polish.md
+_path: proposals/approved/bundle-phase-3-ui-polish.md
 consumed_by: plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
 ---
 ## Problem

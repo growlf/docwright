@@ -680,10 +680,16 @@ async def transition_to_completed(plan_name: str) -> str:
     if _has_pending_steps(text):
         return f"ERROR: Plan '{plan_name}' has ⏳ pending steps. Mark all step rows ✅ Done before completing."
 
+    completed_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Inject completed_date into the plan frontmatter before archiving
+    if "completed_date:" not in text:
+        text = text.replace("status: completed", f"status: completed\ncompleted_date: {completed_date}", 1)
+        _write_file(f"plans/{safe}", text)
+
     _move_file(f"plans/{safe}", f"plans/completed/{safe}")
 
     doc_slug = safe
-    completed_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     doc_content = f"""---
 title: {title}
 status: completed
