@@ -17,7 +17,7 @@ tests_defined: false
 phase: 3
 scenario_synthesis: Research process — surveys, naming analysis, UI mocks, enforcement contract; no infrastructure steps
 total_steps: 5
-completed_steps: 0
+completed_steps: 2
 _path: plans/research-plan-execution-modes.md
 ---
 
@@ -46,8 +46,8 @@ for the full problem statement and research questions.
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Survey comparable tools | GitHub Copilot Workspace, OpenCode, Linear Asks, Cursor — how do they model "how much does the AI do"? Comparison table: mode models, defaults, enforcement patterns. | ⏳ Pending |
-| 2 | Draft naming options | 2–3 candidate name sets for field + values. Evaluate against: clarity, default-readiness, avoidance of false implications. Deliverable: naming recommendation with rationale. (Parallel with step 1.) | ⏳ Pending |
+| 1 | Survey comparable tools | GitHub Copilot Workspace, OpenCode, Linear Asks, Cursor — how do they model "how much does the AI do"? Comparison table: mode models, defaults, enforcement patterns. | ✅ Done |
+| 2 | Draft naming options | 2–3 candidate name sets for field + values. Evaluate against: clarity, default-readiness, avoidance of false implications. Deliverable: naming recommendation with rationale. (Parallel with step 1.) | ✅ Done |
 | 3 | Sketch Web UI mocks per mode | For each mode: which buttons appear, what is locked/greyed, what `## Mode` section shows (if kept), how human perceives mode at a glance. Include mid-mode indicators. | ⏳ Pending |
 | 4 | Define enforcement contract | Exactly which behaviors branch on mode: MCP tool behavior, Web UI button visibility, AI instruction preamble injection, linter validation. Single source of truth for Web UI and AI tools. | ⏳ Pending |
 | 5 | Synthesize implementation proposal | Naming recommendation + UI mocks + enforcement contract → single proposal. Include migration path for existing plans (backward-compatible reading, deprecation warning for old values). | ⏳ Pending |
@@ -82,3 +82,4 @@ against the research questions before proceeding to the next step. The final pro
 |------|--------|--------|
 | 2026-06-08 | Created from approved proposal | NetYeti |
 | 2026-06-08 | Filled from proposal spec — 5-step research path, quoted title to fix YAML parse | NetYeti |
+| 2026-06-08 | Completed steps 1 & 2 (parallel): tool survey + naming recommendation. Deliverables: research/plan-execution-mode-tool-survey.md, research/plan-execution-mode-naming.md. Recommendation: mode: mentor | guided | autonomous | NetYeti |
