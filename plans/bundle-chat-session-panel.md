@@ -1,6 +1,6 @@
 ---
 title: Chat & Session Panel Phase 2 — Session Management, @-Mention, Model Picker, History, Diff Review, and Terminal
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-08
 tags:
@@ -21,6 +21,7 @@ depends_on:
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps
 total_steps: 17
 completed_steps: 0
+_path: plans/bundle-chat-session-panel.md
 ---
 
 # Chat & Session Panel Phase 2 — Session Management, @-Mention, Model Picker, History, Diff Review, and Terminal

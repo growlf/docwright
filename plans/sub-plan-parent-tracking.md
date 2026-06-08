@@ -1,6 +1,6 @@
 ---
 title: Sub-plan parent tracking — formal parent-plan mechanism
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-08
 tags:
@@ -19,6 +19,7 @@ related_to:
 scenario_synthesis: Dispatch module + MCP server changes; no infrastructure steps; dispatch unit-testable outside extension host
 total_steps: 9
 completed_steps: 3
+_path: plans/sub-plan-parent-tracking.md
 ---
 
 # Sub-plan parent tracking — formal parent-plan mechanism

@@ -1,6 +1,6 @@
 ---
 title: "Research: Plan Execution Mode — Naming, Enforcement, and Default"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-08
 tags:
@@ -18,6 +18,7 @@ phase: 3
 scenario_synthesis: Research process — surveys, naming analysis, UI mocks, enforcement contract; no infrastructure steps
 total_steps: 5
 completed_steps: 0
+_path: plans/research-plan-execution-modes.md
 ---
 
 # Research: Plan Execution Mode — Naming, Enforcement, and Default

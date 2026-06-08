@@ -337,3 +337,38 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Research Stage MVP: full 8-step implementation (linter, hook tests, integration tests, profiles, dispatch, UI, status page)
 
 **Session note:** `docs/session-notes/session_note_202606072205.md`
+
+---
+
+## Session: 2026-06-08 — Improve SSE streaming, progress bar, FOSS files
+
+**Focus:** Fix Improve button streaming, 4-stage progress meter, document history, FOSS hygiene
+
+**Completed:**
+- [x] Fixed `onimprove` undefined ReferenceError (missing `$props()` destructuring)
+- [x] Fixed parallel OpenCode session hang — sequential improve/critique with 120s timeout
+- [x] Rewrote Improve endpoint to SSE streaming with progressive 80-char token reveal
+- [x] Built 4-stage progress meter (Improve → Stream → Critique → Complete) with checkmarks and pulsing dots
+- [x] Added `appendDocHistory()` to write Document History entry on Accept
+- [x] Created `/api/git/config` endpoint for user identity resolution
+- [x] Added missing `$amber-bg` SCSS token (pre-existing build break)
+- [x] Created `.github/CODEOWNERS` and `.github/dependabot.yml` (FOSS hygiene D6)
+- [x] Updated phase-2-foundation.md: D6 done, gate checked, critical review resolved
+
+**Session note:** `docs/session-notes/session_note_202606080403.md`
+
+---
+
+## Session: 2026-06-08 — Plan filling, review fix, approval UX
+
+**Focus:** Fill bare template plans, fix Review button, improve approval→plan flow
+
+**Completed:**
+- [x] Fixed ⚡ Review button silent failure — wrong OpenCode endpoint `/prompt` → `/message`
+- [x] PlanReviewPanel: show `Error:` text instead of "No review yet." on failure
+- [x] Approval→plan UX: `?from=proposal` signal triggers auto-improve after plan loads
+- [x] Filled bare template plans: bundle-chat-session-panel (17 steps), sub-plan-parent-tracking (9 steps), research-plan-execution-modes (5 steps)
+- [x] Improved bundle-chat-session-panel: dispatch/opencode.ts adapter step, API shapes, Connection type, localStorage key, debounce values
+- [x] Improved sub-plan-parent-tracking: data model section, 8-point regex algorithm, PropertiesPane "Part of" link, named test functions
+
+**Session note:** `docs/session-notes/session_note_202606082310.md`
