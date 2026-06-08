@@ -117,8 +117,17 @@ export async function POST({ request }) {
       .replace(/\{\{VALUE:overview\}\}/g, validCandidates.length > 1 ? `Bundles: ${validCandidates.map(c => c.split('/').pop()?.replace('.md', '')).join(', ')}` : '')
       .replace(/\{\{VALUE:testing\}\}/g, '')
       .replace(/\{\{VALUE:rollback\}\}/g, '');
+    // Strip any unprocessed template syntax (Handlebars blocks, leftover tokens)
+    const cleaned = filled
+      .replace(/\{\{#if[^}]*\}\}/g, '')
+      .replace(/\{\{else if[^}]*\}\}/g, '')
+      .replace(/\{\{else\}\}/g, '')
+      .replace(/\{\{\/if\}\}/g, '')
+      .replace(/\{\{[#\/][^}]*\}\}/g, '');
+    // Ensure plan status is draft (not proposal) — created plans begin as drafts
+    const final = cleaned.replace(/^status:\s*proposal$/m, 'status: draft');
     fs.mkdirSync(path.dirname(resolved), { recursive: true });
-    fs.writeFileSync(resolved, filled, 'utf-8');
+    fs.writeFileSync(resolved, final, 'utf-8');
   } else {
     const depsList = validCandidates.length > 1
       ? `\nrelated_to:\n${validCandidates.map(c => `  - ${c}`).join('\n')}`
@@ -134,7 +143,8 @@ proposal_source: ${sourceProposal}
 priority: medium
 automated: guided
 assigned_to: NetYeti
-tests_defined: false${depsList}
+tests_defined: false
+tests_human_reviewed: false${depsList}
 ---
 
 # ${title}

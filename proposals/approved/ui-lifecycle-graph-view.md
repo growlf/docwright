@@ -17,6 +17,7 @@ related_to:
   - proposals/gantt-view-dependencies.md
   - plans/phase-3-profile-acl-ai.md
   - plans/completed/collation.md
+consumed_by: plans/plan-ui-lifecycle-graph-view.md
 ---
 
 ## Problem

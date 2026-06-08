@@ -67,19 +67,15 @@ export async function POST({ request }) {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
 
-  // Move to proposals/approved/
-  const dstDir = path.join(REPO_ROOT, 'proposals', 'approved');
-  if (!fs.existsSync(dstDir)) fs.mkdirSync(dstDir, { recursive: true });
-  const dst = path.join(dstDir, norm);
-  fs.renameSync(src, dst);
-
-  const approvedRel = `proposals/approved/${norm}`;
   const title = fm.title || norm.replace('.md', '');
   const author = fm.author || 'NetYeti';
   const tags = Array.isArray(fm.tags) ? fm.tags.join(', ') : (fm.tags || '');
   const now = new Date().toISOString().slice(0, 10);
   const planSlug = norm;
+  const planRel = `plans/${planSlug}`;
+  const approvedRel = `proposals/approved/${norm}`;
 
+  // Write plan file FIRST — if this fails, proposal stays untouched
   const planContent = `---
 title: ${title}
 status: approved
@@ -91,19 +87,37 @@ priority: medium
 automated: guided
 assigned_to: ${assigned}
 tests_defined: false
+tests_human_reviewed: false
 ---
 
 # ${title}
 
-## Summary
+## Overview
 
 *Plan generated from approved proposal: ${title}*
 
 ## Implementation Steps
 
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
 | 1 | | | ⏳ Pending |
+
+## Testing Plan
+
+
+
+## Rollback Procedures
+
+
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
 
 ## Document History
 
@@ -111,11 +125,15 @@ tests_defined: false
 |------|--------|--------|
 | ${now} | Created from approved proposal | ${author} |
 `;
-
-  const planRel = `plans/${planSlug}`;
   const planPath = path.join(REPO_ROOT, planRel);
   if (!fs.existsSync(path.dirname(planPath))) fs.mkdirSync(path.dirname(planPath), { recursive: true });
   fs.writeFileSync(planPath, planContent, 'utf-8');
+
+  // Move proposal to proposals/approved/ (only after plan is safely on disk)
+  const dstDir = path.join(REPO_ROOT, 'proposals', 'approved');
+  if (!fs.existsSync(dstDir)) fs.mkdirSync(dstDir, { recursive: true });
+  const dst = path.join(dstDir, norm);
+  fs.renameSync(src, dst);
 
   // Write consumed_by back into the approved proposal so the UI can link to the plan
   const approvedRaw = fs.readFileSync(dst, 'utf-8');

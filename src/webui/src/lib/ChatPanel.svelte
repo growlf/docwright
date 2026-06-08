@@ -11,7 +11,7 @@
    */
 
   import { onMount, onDestroy } from 'svelte';
-  import { showChatPanel } from './pane';
+  import { showChatPanel, showMultiReview } from './pane';
 
   // ── Types ────────────────────────────────────────────────────────────────
 
@@ -502,6 +502,7 @@
     {:else}
       <span class="dot grey" title="Not connected"></span>
     {/if}
+    <button class="icon-btn" onclick={() => showMultiReview.set(true)} title="Switch to Multi-Review mode">⊞ Multi</button>
     <button class="icon-btn" onclick={() => showSettings = !showSettings} title="Connection settings">⚙</button>
     <!-- Close via ⚡ Chat toggle button in layout -->
   </div>

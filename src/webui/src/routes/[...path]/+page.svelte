@@ -6,7 +6,7 @@
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
-  import { showToast } from '$lib/toast';
+  import { showToast, dismissToast } from '$lib/toast';
   import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
@@ -49,6 +49,8 @@
 
   // Collation panel state — body-length tracking avoids re-scan on frontmatter-only saves
   let lastBodyLen = $state(0);
+  // Set in onMount when ?from=proposal is detected; cleared after loadFile triggers improve
+  let pendingAutoImprove = false;
 
   let docType = $derived(
     filePath().startsWith('proposals/') ? 'proposal'
@@ -135,6 +137,12 @@
       showProps = true;
       goto($page.url.pathname, { replaceState: true, noScroll: true });
     }
+    // Plan just created from an approved proposal — auto-trigger AI improve
+    if ($page.url.searchParams.get('from') === 'proposal') {
+      pendingAutoImprove = true;
+      showImproveTab.set(true);
+      goto($page.url.pathname, { replaceState: true, noScroll: true });
+    }
     return fileChanged.subscribe((change) => {
       if (!change || mode !== 'read') return;
       if (change.path === filePath() || change.path.endsWith('/' + filePath())) loadFile();
@@ -166,6 +174,12 @@
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
     html = md.render(content);
+    // Auto-improve when navigating from proposal approval
+    if (pendingAutoImprove) {
+      pendingAutoImprove = false;
+      const stickyId = showToast('AI is analyzing the new plan…', 0);
+      triggerImproveOnSave(stickyId);
+    }
     // Push to layout's right sidebar
     currentDoc.set({
       frontmatter,
@@ -316,7 +330,7 @@
     }
   }
 
-  function triggerImproveOnSave() {
+  function triggerImproveOnSave(stickyToastId?: number) {
     const fp = filePath();
     improveResult.set(null);
     improveLoading.set(true);
@@ -327,6 +341,7 @@
     })
       .then(r => r.json())
       .then(data => {
+        if (stickyToastId !== undefined) dismissToast(stickyToastId);
         if (data.improved !== undefined) {
           improveResult.set({ improved: data.improved, critique: data.critique ?? '' });
           showToast('AI suggestions ready — Review improvements', 8000, {
@@ -335,7 +350,7 @@
           });
         }
       })
-      .catch(() => {})
+      .catch(() => { if (stickyToastId !== undefined) dismissToast(stickyToastId); })
       .finally(() => improveLoading.set(false));
   }
 
@@ -448,8 +463,8 @@
       showToast('Approve failed: ' + (data.error || res.statusText), 4000);
       return;
     }
-    showToast('Approved! Plan created at ' + data.planPath, 3000);
-    goto('/' + data.planPath.replace(/\.md$/, ''));
+    showToast('✓ Proposal approved — navigating to new plan…', 2000);
+    goto('/' + data.planPath.replace(/\.md$/, '') + '?from=proposal');
   }
 
   function cancel() { mode = 'read'; loadFile(); }

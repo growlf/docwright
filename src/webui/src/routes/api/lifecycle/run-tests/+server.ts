@@ -86,13 +86,18 @@ export async function POST({ request }) {
   const allPassed = results.every(r => r.passed);
   const output = results.map(r => `[${r.label}] ${r.passed ? '✅ PASS' : '❌ FAIL'}\n${r.output}`).join('\n\n');
 
-  // Update tests_defined in the plan if all passed
+  // Update tests_defined in the plan if all passed.
+  // Auto-certify only if human has previously reviewed (tests_human_reviewed: true).
+  // First-time certification requires a human click of "Certify Tests" button.
   if (allPassed) {
     const planFile = path.join(REPO, 'plans', plan + '.md');
     if (fs.existsSync(planFile)) {
       const text = fs.readFileSync(planFile, 'utf-8');
-      const updated = text.replace(/^tests_defined:\s*false/m, 'tests_defined: true');
-      if (updated !== text) fs.writeFileSync(planFile, updated);
+      const humanReviewed = /^tests_human_reviewed:\s*true/m.test(text);
+      if (humanReviewed) {
+        const updated = text.replace(/^tests_defined:\s*false/m, 'tests_defined: true');
+        if (updated !== text) fs.writeFileSync(planFile, updated);
+      }
     }
   }
 

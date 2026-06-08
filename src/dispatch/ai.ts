@@ -20,6 +20,12 @@ export interface GatePreReviewResult {
   readiness: 'ready' | 'needs-work' | 'blocked';
 }
 
+export interface ComplexityResult {
+  complexity: string;
+  confidence: number;
+  reasoning: string;
+}
+
 export interface AIEngine {
   findSimilar(targetPath: string, candidates: string[], vaultRoot: string): Promise<SimilarityResult[]>;
   fillProposal(fm: Record<string, any>, body: string): Promise<string>;
@@ -33,6 +39,8 @@ export interface AIEngine {
     scopeDocs: Array<{ path: string; title: string; excerpt: string }>,
     aiPrompt?: string,
   ): Promise<GatePreReviewResult>;
+  /** Phase 3 — AI-powered complexity estimation */
+  estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult>;
 }
 
 // ── Shared helpers ──────────────────────────────────────────────────────────────
@@ -142,6 +150,70 @@ export class KeywordEngine implements AIEngine {
       incomplete_items: pendingSteps > 0 ? ['Pending implementation steps'] : [],
       readiness: pendingSteps === 0 ? 'ready' : 'needs-work',
     };
+  }
+
+  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+    const bodyLower = body.toLowerCase();
+    const highKeywords = [
+      'refactor', 'rewrite', 'unified', 'architecture', 'migration',
+      'dispatch module', 'all profiles', 'all templates', 'all bundled',
+      'new module', 'phase gate', 'acl', 'multi-vault', 'infrastructure',
+      'overhaul', 'rebuild', 'replace entire', 'full system',
+    ];
+    const lowKeywords = [
+      'tooltip', 'add field', 'hide ', 'filter ', 'quick fix', 'one-line',
+      'single line', 'small ', 'minor ', 'typo', 'label', 'placeholder',
+      'rename ', 'css ', 'colour', 'color ', 'icon ',
+    ];
+
+    const words = body.split(/\s+/).filter(Boolean).length;
+    const tableRows = (body.match(/^\|/gm) ?? []).length;
+    const headings = (body.match(/^#{1,3} /gm) ?? []).length;
+    const deps = frontmatter.depends_on ? (Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on.length : 1) : 0;
+
+    const highHits = highKeywords.filter(k => bodyLower.includes(k));
+    const lowHits = lowKeywords.filter(k => bodyLower.includes(k));
+
+    const isDeferred = frontmatter.status === 'deferred' || bodyLower.includes('deferred: true');
+
+    let score = 0;
+    if (tableRows >= 10) score += 2;
+    else if (tableRows >= 5) score += 1;
+    else if (tableRows <= 2) score -= 1;
+    if (deps >= 3) score += 2;
+    else if (deps >= 1) score += 1;
+    if (words >= 600) score += 1;
+    if (words <= 150) score -= 1;
+    if (headings >= 8) score += 1;
+    score += highHits.length * 2;
+    score -= lowHits.length;
+    if (isDeferred) score -= 1;
+
+    let complexity: string;
+    let reasoning: string;
+
+    if (score >= 3) {
+      complexity = 'high';
+      const factors: string[] = [];
+      if (tableRows >= 5) factors.push(`${tableRows} implementation steps`);
+      if (deps >= 1) factors.push(`${deps} dependenc${deps === 1 ? 'y' : 'ies'}`);
+      if (highHits.length) factors.push(`keywords: ${highHits.slice(0, 2).join(', ')}`);
+      if (words >= 600) factors.push(`${words} words`);
+      reasoning = 'High: ' + (factors.join('; ') || 'broad scope');
+    } else if (score <= 0) {
+      complexity = 'low';
+      const factors: string[] = [];
+      if (tableRows <= 2) factors.push('few implementation steps');
+      if (deps === 0) factors.push('no dependencies');
+      if (lowHits.length) factors.push(`keywords: ${lowHits.slice(0, 2).join(', ')}`);
+      if (words <= 150) factors.push('short proposal');
+      reasoning = 'Low: ' + (factors.join('; ') || 'narrow scope');
+    } else {
+      complexity = 'medium';
+      reasoning = `Medium: score ${score} (${tableRows} steps, ${deps} deps, ${words} words)`;
+    }
+
+    return { complexity, confidence: 0.6, reasoning };
   }
 }
 
@@ -292,6 +364,41 @@ Respond with ONLY valid JSON:`;
         incomplete_items: pendingSteps > 0 ? ['Implementation steps not completed'] : [],
         readiness: pendingSteps === 0 ? 'ready' : 'needs-work',
       };
+    }
+  }
+
+  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+    const title = frontmatter.title || '(untitled)';
+    const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : String(frontmatter.tags || '');
+    const deps = Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on.join(', ') : '';
+    const bodyExcerpt = body.slice(0, 3000);
+
+    const prompt =
+      `You are a complexity estimation engine for a governance document system.\n\n` +
+      `Given a proposal's frontmatter and body, evaluate:\n` +
+      `1. Scope — how many distinct work items or modules are affected\n` +
+      `2. Risk — how risky changes are (reversibility, dependency cascades)\n` +
+      `3. Dependencies — how many external systems or other proposals are involved\n` +
+      `4. Implementation scale — rough lines/screens/steps estimate\n\n` +
+      `Return ONLY valid JSON:\n` +
+      `{"complexity":"low|medium|high","confidence":0.0-1.0,"reasoning":"2-3 sentence explanation"}\n\n` +
+      `Valid complexity values: low, medium, high.\n` +
+      `Low = narrow scope, few dependencies, low risk, quick to implement.\n` +
+      `Medium = moderate scope with some dependencies or risk.\n` +
+      `High = broad scope, many dependencies, high risk, significant implementation effort.\n\n` +
+      `--- FRONTMATTER ---\n` +
+      `title: ${title}\ntags: ${tags}\ndepends_on: ${deps}\n\n` +
+      `--- BODY ---\n` +
+      `${bodyExcerpt}\n\n` +
+      `Respond with ONLY valid JSON:`;
+
+    try {
+      const text = await this.callSession(prompt);
+      const match = text.match(/\{[\s\S]*"complexity"[\s\S]*\}/);
+      if (!match) throw new Error('No JSON in response');
+      return JSON.parse(match[0]) as ComplexityResult;
+    } catch {
+      return new KeywordEngine().estimateComplexity(body, frontmatter);
     }
   }
 }

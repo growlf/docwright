@@ -6,10 +6,12 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
+import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, showImproveTab, showReviewTab
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
+  import MultiReviewPanel from '$lib/MultiReviewPanel.svelte';
   import Panel from '$lib/Panel.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
@@ -62,6 +64,9 @@ import {
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
+  let ip  = $state<ImprovePhase>('improve-thinking');
+                              $effect(() => { const u = improvePhase.subscribe(v => ip = v); return u; });
+  let ist = $state('');       $effect(() => { const u = improveStatus.subscribe(v => ist = v); return u; });
 
   // Fetch profile feature flags on mount
   onMount(async () => {
@@ -93,6 +98,8 @@ import {
     planReviewChanges.set('');
     improveResult.set(null);
     improveLoading.set(false);
+    improvePhase.set('improve-thinking');
+    improveStatus.set('');
     // untrack: rightTab reads/writes must not become effect dependencies —
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
@@ -269,18 +276,56 @@ import {
     showRightPanel = true;
     improveResult.set(null);
     improveLoading.set(true);
+    improvePhase.set('improve-thinking');
+    improveStatus.set('');
+    showToast('Improving proposal — AI may take up to a minute…', 8000);
     try {
       const res = await fetch('/api/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
-      const data = await res.json();
-      if (data.improved !== undefined) {
-        improveResult.set({ improved: data.improved, critique: data.critique ?? '' });
-      } else {
-        showToast(data.error ?? 'Improve failed', 4000);
-        rightTab = 'properties';
+      const reader = res.body?.getReader();
+      if (!reader) { showToast('No response stream', 4000); return; }
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let improvedAccum = '';
+      let critiqueAccum = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for (const part of parts) {
+          const lines = part.split('\n');
+          const eventLine = lines.find(l => l.startsWith('event: '));
+          const dataLine = lines.find(l => l.startsWith('data: '));
+          if (!dataLine) continue;
+          const event = eventLine ? eventLine.slice(7).trim() : '';
+          try {
+            const data = JSON.parse(dataLine.slice(6));
+            if (event === 'token') {
+              if (data.phase === 'critique') {
+                critiqueAccum += data.text;
+              } else {
+                improvedAccum += data.text;
+              }
+              improveResult.set({ improved: improvedAccum, critique: critiqueAccum });
+            } else if (event === 'stage') {
+              improvePhase.set(data.phase);
+              improveStatus.set('');
+            } else if (event === 'status') {
+              improveStatus.set(data.message);
+            } else if (event === 'done') {
+              improveResult.set({
+                improved: data.improved || improvedAccum,
+                critique: data.critique || critiqueAccum,
+              });
+              improvePhase.set('done');
+            }
+          } catch { /* skip malformed JSON */ }
+        }
       }
     } catch (e: any) {
       showToast(`Improve error: ${e}`, 4000);
@@ -290,10 +335,39 @@ import {
     }
   }
 
+  /** Append a "## Document History" entry to a markdown body. */
+  function appendDocHistory(body: string, change: string, author: string): string {
+    const now = new Date().toISOString().slice(0, 10);
+    const row = `| ${now} | ${change} | ${author} |\n`;
+    const histMatch = body.match(/^## Document History\s*$/m);
+    if (histMatch) {
+      // Table exists — find the separator line and insert after it
+      const before = body.slice(0, histMatch.index!);
+      const after = body.slice(histMatch.index!);
+      const sepMatch = after.match(/^\|[-| ]+\|\n/m);
+      if (sepMatch) {
+        const insertAt = histMatch.index! + sepMatch.index! + sepMatch[0].length;
+        return body.slice(0, insertAt) + row + body.slice(insertAt);
+      }
+      // No separator found — append table after heading
+      return body + `\n| Date | Change | Author |\n|------|--------|--------|\n${row}`;
+    }
+    // No Document History at all — append section
+    return `${body}\n\n## Document History\n\n| Date | Change | Author |\n|------|--------|--------|\n${row}`;
+  }
+
   async function handleAcceptImprove(improved: string) {
     const fp = $currentDoc.filePath;
     if (!fp || !improved) return;
-    // Rebuild file: original frontmatter + improved body
+    // Resolve author for Document History
+    let author = 'DocWright Improve';
+    try {
+      const idRes = await fetch('/api/git/config?key=user.name');
+      if (idRes.ok) { const v = await idRes.json(); if (v.value) author = v.value; }
+    } catch {}
+    // Append Document History entry
+    const bodyWithHistory = appendDocHistory(improved, 'AI-improved via Improve', author);
+    // Rebuild file: original frontmatter + improved body (with history)
     const fm = $currentDoc.frontmatter ?? {};
     const fmLines = Object.entries(fm)
       .filter(([k]) => k !== '_path')
@@ -303,7 +377,7 @@ import {
         if (v === null || v === undefined || v === '') return `${k}:`;
         return `${k}: ${v}`;
       }).join('\n');
-    const newRaw = `---\n${fmLines}\n---\n${improved}`;
+    const newRaw = `---\n${fmLines}\n---\n${bodyWithHistory}`;
     const res = await fetch('/api/write?path=' + encodeURIComponent(fp), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -602,7 +676,11 @@ import {
     <!-- AI chat — springs up from bottom of main pane -->
     {#if $showChatPanel}
       <div id="chat-bottom" class:expanded={$showChatPanel}>
-        <ChatPanel />
+        {#if $showMultiReview}
+          <MultiReviewPanel />
+        {:else}
+          <ChatPanel />
+        {/if}
       </div>
     {/if}
   </main>
@@ -653,6 +731,8 @@ import {
         improved={ir?.improved ?? ''}
         critique={ir?.critique ?? ''}
         loading={il}
+        phase={ip}
+        status={ist}
         onaccept={handleAcceptImprove}
         ondismiss={() => { rightTab = 'properties'; improveResult.set(null); }}
         onrerun={handleImprove}

@@ -10,6 +10,7 @@
     onapprove,
     onfindrelated,
     onplan,
+    onimprove,
   }: {
     frontmatter: Record<string, any>;
     body?: string;
@@ -114,6 +115,7 @@
   // Plan: certify test suite (human commitment — saves immediately like Approve)
   function certifyTests() {
     setField('tests_defined', true);
+    setField('tests_human_reviewed', true);
     onsave?.(frontmatter);
   }
   function uncertifyTests() {
@@ -170,19 +172,24 @@
 
   let estimating = $state(false);
   let estimateHint = $state('');
+  let estimateConfidence = $state<number | null>(null);
+  let estimateIsAi = $state(false);
 
   async function estimateComplexity() {
     const path = frontmatter._path ?? '';
     if (!path) return;
     estimating = true;
     estimateHint = '';
+    estimateConfidence = null;
+    estimateIsAi = false;
     try {
       const res = await fetch('/api/estimate-complexity?path=' + encodeURIComponent(path));
       if (res.ok) {
-        const { complexity, reason } = await res.json();
-        setField('complexity', complexity);
-        estimateHint = reason;
-        setTimeout(() => estimateHint = '', 6000);
+        const data = await res.json();
+        setField('complexity', data.complexity);
+        estimateHint = data.reason;
+        estimateConfidence = data.confidence ?? null;
+        estimateIsAi = data.ai === true;
       }
     } finally {
       estimating = false;
@@ -248,14 +255,22 @@
         {/if}
         {#if frontmatter.status === 'in-progress'}
           {#if !frontmatter.tests_defined}
-            <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
-            <button class="act estimate" onclick={runTests}
-              disabled={testRunning || pendingSteps > 0}
-              title={pendingSteps > 0
-                ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps first`
-                : 'Run the test suite — Complete button appears when all tests pass'}>
-              {testRunning ? '⏳ Running…' : '▶ Run Tests'}
-            </button>
+            {#if testPassed === true && !frontmatter.tests_human_reviewed}
+              <!-- Tests passed but human review needed before auto-certify -->
+              <button class="act approve" onclick={certifyTests}
+                title="Human certifies AI-generated tests — enables auto-certify on future runs">
+                Certify Tests
+              </button>
+            {:else}
+              <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
+              <button class="act estimate" onclick={runTests}
+                disabled={testRunning || pendingSteps > 0}
+                title={pendingSteps > 0
+                  ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps first`
+                  : 'Run the test suite — Complete button appears when all tests pass'}>
+                {testRunning ? '⏳ Running…' : '▶ Run Tests'}
+              </button>
+            {/if}
           {:else}
             <!-- Tests passing — show Complete -->
             <button class="act complete" onclick={() => setPlanStatus('completed')}
@@ -291,7 +306,13 @@
       </div>
     {/if}
     {#if estimateHint}
-      <div class="estimate-hint">{estimateHint}</div>
+      <div class="estimate-hint">
+        {#if estimateIsAi}<span class="estimate-badge ai">AI</span>{:else}<span class="estimate-badge heuristic">H</span>{/if}
+        {estimateHint}
+        {#if estimateConfidence !== null}
+          <span class="estimate-confidence">{Math.round(estimateConfidence * 100)}% confidence</span>
+        {/if}
+      </div>
     {/if}
 
     <!-- Fields -->

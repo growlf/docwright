@@ -22,11 +22,19 @@ export const planReviewChanges  = writable('');
 /** Proposal improvement panel state */
 export const improveResult  = writable<{ improved: string; critique: string } | null>(null);
 export const improveLoading = writable(false);
+/** Tracks the current streaming phase */
+export type ImprovePhase = 'improve-thinking' | 'improve-streaming' | 'critique-thinking' | 'critique-streaming' | 'done';
+export const improvePhase  = writable<ImprovePhase>('improve-thinking');
+/** Status message from SSE (e.g. "Creating session…", "Generating critique…") */
+export const improveStatus = writable('');
 /** Signal from page's on-save trigger to open the Improve tab */
 export const showImproveTab = writable(false);
 
 /** Signal to switch to Review tab (set by PropertiesPane, consumed by layout) */
 export const showReviewTab = writable(false);
+
+/** Toggle to Multi-Review panel instead of ChatPanel */
+export const showMultiReview = writable(false);
 
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({

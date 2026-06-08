@@ -48,7 +48,7 @@ This plan is the **parent/overview** for all Phase 2 deliverables. Each delivera
 | 3 | Inbox capture — minimal localhost web form | *(deferred)* | 🔜 Deferred to Phase 3 | Submitter persona and data format undefined; ACL dependency confirmed |
 | 4 | `author-role:` in ALL profile templates | [[plans/research-stage-methodology.md]] | ✅ Done | All 4 bundled profiles — requiredFrontmatter + templates/research.md |
 | 5 | GitHub Actions CI — lint + typecheck + unit tests | *(Phase 1 carry-over)* | ✅ Done | ci.yml, Node 22, v0.x.x tag-only trigger, 203 tests across 5 suites |
-| 6 | FOSS hygiene files | *(inline)* | ⚠️ Partial | CHANGELOG, SECURITY, CONTRIBUTING, NOTICE, AGENTS, .github/ — done. Missing: CODEOWNERS, dependabot.yml |
+| 6 | FOSS hygiene files | *(inline)* | ✅ Done | CHANGELOG, SECURITY, CONTRIBUTING, NOTICE, AGENTS, .github/ — done. CODEOWNERS + dependabot.yml created. |
 | 7 | MCP server — TypeScript rewrite | *(planned sub-plan)* | ⏳ Planned | Replace mcp-server.py; sub-deliverables defined in critique #7 below |
 | 8 | MCP server tools — expand governance tool coverage | *(merged into #7)* | ⏳ Planned | Merged into Deliverable 7 sub-deliverables |
 | 9 | Research Stage MVP | [[plans/research-stage-methodology.md]] | ✅ Done | 8-step plan complete; 203 tests passing; `research/` live in Web UI |
@@ -107,7 +107,7 @@ Full profile engine with all bundled profiles, ACL enforcement via Forgejo, AI w
 ### #6 — FOSS hygiene ⚠️ warn
 
 - **Finding:** CONTRIBUTING, NOTICE, SECURITY, CHANGELOG, AGENTS all exist. Only CODEOWNERS and dependabot.yml missing.
-- **Resolution:** ⚠️ Partially resolved. CODEOWNERS and dependabot.yml still outstanding — tracked in Deliverable 6. All other files confirmed present.
+- **Resolution:** ✅ Resolved. CODEOWNERS + dependabot.yml created. All FOSS hygiene files present.
 
 ### #7 — TypeScript MCP server 🚫 block
 
@@ -137,13 +137,18 @@ Full profile engine with all bundled profiles, ACL enforcement via Forgejo, AI w
 - [x] `author-role:` in all bundled profile templates (Deliverable 4)
 - [ ] Profile engine runtime (Deliverable 1) — in progress
 - [ ] TypeScript MCP server (Deliverable 7) — planned
-- [ ] CODEOWNERS + dependabot.yml (Deliverable 6 remainder)
+- [x] CODEOWNERS + dependabot.yml (Deliverable 6)
 - [ ] Phase 2 gate review by NetYeti
 
 ## Document History
 
 | Date | Change | Author |
 | --- | --- | --- |
-| 2026-06-03 | Created — Phase 1 complete, Phase 2 begins | NetYeti |
-| 2026-06-04 | VSCodium items extracted to phase-vscodium-extension plan; containerization and TypeScript MCP server added | NetYeti |
+| 2026-06-07 | CODEOWNERS + dependabot.yml created — FOSS hygiene complete (Deliverable 6) | NetYeti |
 | 2026-06-07 | Deliverables updated to reflect actual state; Research Stage added as Deliverable 9; Critical Review resolutions filled; Phase Gate added; sub-plan column added | NetYeti |
+| 2026-06-04 | VSCodium items extracted to phase-vscodium-extension plan; containerization and TypeScript MCP server added | NetYeti |
+| 2026-06-03 | Created — Phase 1 complete, Phase 2 begins | NetYeti |
+
+
+---
+⚠ **Governance:** mutate this plan via MCP only — update_step · update_plan_status · append_history · set_plan_field · write_plan. Direct writes to `plans/*.md` are blocked by the PreToolUse hook. Bash/Python writes bypass the hook and are equally prohibited (AGENTS.md §Invariant 6). If MCP is unavailable: halt and report, do not fall back to direct writes.

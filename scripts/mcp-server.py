@@ -852,6 +852,8 @@ async def write_plan(plan_name: str, content: str) -> str:
         )
 
     content = _update_step_counts(content)
+    # Reset tests_defined on structural rewrite — mutations invalidate coverage
+    content = _set_frontmatter_field(content, "tests_defined", "false")
     _write_file(f"plans/{safe}", content)
     _log_transition("PLAN_REWRITE", f"plan/{safe}: structural rewrite")
     return f"✅ Plan '{safe}' rewritten. Step counts updated in frontmatter."

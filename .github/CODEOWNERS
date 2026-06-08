@@ -1,0 +1,38 @@
+# DocWright CODEOWNERS
+# Each line is a file pattern followed by one or more owners.
+# See https://docs.github.com/repositories/managing-your-repositorys-settings-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @growlf
+
+# CI/CD and GitHub configuration
+.github/ @growlf
+
+# Docker configuration
+Dockerfile @growlf
+.dockerignore @growlf
+
+# Core source — dispatch module (zero VS Code API deps enforced in CI)
+src/dispatch/ @growlf
+
+# Web UI
+src/webui/ @growlf
+
+# Profiles
+src/profiles/ @growlf
+
+# Governance documents
+proposals/ @growlf
+plans/ @growlf
+docs/ @growlf
+policies/ @growlf
+
+# Test suites
+test/ @growlf
+
+# Root config files
+package.json @growlf
+package-lock.json @growlf
+tsconfig.json @growlf
+eslint.config.* @growlf
+.prettierrc* @growlf

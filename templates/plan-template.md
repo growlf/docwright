@@ -1,6 +1,6 @@
 ---
 title: "{{VALUE:title}}"
-status: proposal
+status: draft
 author: "{{VALUE:author}}"
 created: "{{DATE:YYYY-MM-DD}}"
 created_by: "{{VALUE:created_by}}"
@@ -34,21 +34,11 @@ gate_quorum: 1    # Phase 1a — minimum approvals needed
 
 Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
 
-**{{#if (eq automated "full")}}FULL AUTOMATION{{else if (eq automated "guided")}}GUIDED MODE — Agent drafts, human approves{{else}}MENTORSHIP MODE — Human leads, LLM advises{{/if}}**
+**MENTORSHIP MODE — Human leads, LLM advises**
 
-{{#if (eq automated "full")}}
-- LLM executes tasks autonomously
-- Pauses at decision points (status: waiting-for-user)
-- Resumes when human updates status
-{{else if (eq automated "guided")}}
-- LLM drafts, edits, and stages lifecycle files
-- Human reviews and approves all decisions
-- LLM cannot set `approved: true` on proposals or plans
-{{else}}
 - Human carries out tasks their own way
 - LLM provides SOP compliance checks and safety warnings
 - LLM offers suggestions when human asks for help
-{{/if}}
 
 ## Overview
 
