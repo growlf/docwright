@@ -528,10 +528,17 @@ import {
   onMount(() => {
     loadBrand();
     loadProjects();
-    const es = new EventSource('/api/watch');
-    es.addEventListener('filechange', (e: MessageEvent) => {
-      fileChanged.set(JSON.parse(e.data));
-    });
+    let es = new EventSource('/api/watch');
+    const attachWatch = (source: EventSource) => {
+      source.addEventListener('filechange', (e: MessageEvent) => {
+        fileChanged.set(JSON.parse(e.data));
+      });
+      source.addEventListener('error', () => {
+        source.close();
+        setTimeout(() => { es = new EventSource('/api/watch'); attachWatch(es); }, 2000);
+      });
+    };
+    attachWatch(es);
 
     function handleGlobalKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;

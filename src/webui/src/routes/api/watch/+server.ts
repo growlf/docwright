@@ -8,15 +8,26 @@ const REPO_ROOT = (() => {
 
 export function GET({ request }) {
   let watcher: fs.FSWatcher | null = null;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
   let closed = false;
 
   const stream = new ReadableStream({
     start(controller) {
+      const enc = new TextEncoder();
+
       const send = (event: string, data: object) => {
         if (closed) return;
         try {
-          controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
         } catch { /* ignore closed stream */ }
+      };
+
+      const keepalive = () => {
+        if (closed) return;
+        try {
+          // SSE comment line — ignored by browser, flushes the stream buffer
+          controller.enqueue(enc.encode(': keepalive\n\n'));
+        } catch { /* ignore */ }
       };
 
       try {
@@ -32,14 +43,21 @@ export function GET({ request }) {
 
       send('open', { root: REPO_ROOT });
 
-      request.signal.addEventListener('abort', () => {
+      // Heartbeat every 15s — keeps connection alive and flushes any buffered events
+      heartbeat = setInterval(keepalive, 15_000);
+
+      const cleanup = () => {
         closed = true;
-        if (watcher) watcher.close();
-      });
+        if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
+        if (watcher) { watcher.close(); watcher = null; }
+      };
+
+      request.signal.addEventListener('abort', cleanup);
     },
     cancel() {
       closed = true;
-      if (watcher) watcher.close();
+      if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
+      if (watcher) { watcher.close(); watcher = null; }
     },
   });
 
@@ -48,6 +66,7 @@ export function GET({ request }) {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
     },
   });
 }
