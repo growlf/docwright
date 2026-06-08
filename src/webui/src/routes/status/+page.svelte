@@ -30,6 +30,7 @@
   interface PhaseReviewPlan {
     path: string; title: string; phase: number;
     status: string; reviewDate: string; needsReview: boolean;
+    activeWorkCount: number; canReview: boolean;
   }
   interface PhaseReview {
     required: boolean;
@@ -259,11 +260,17 @@
                   Open plan →
                 </button>
                 {#if p.needsReview}
-                  <button class="prb-confirm-btn"
-                    disabled={phaseReviewBusy[p.path]}
-                    onclick={() => markPhaseReviewed(p.path)}>
-                    {phaseReviewBusy[p.path] ? 'Saving…' : '✓ Done reviewing'}
-                  </button>
+                  {#if !p.canReview}
+                    <span class="prb-blocked" title="{p.activeWorkCount} plan{p.activeWorkCount === 1 ? '' : 's'} still open in this phase">
+                      ⏳ {p.activeWorkCount} open plan{p.activeWorkCount === 1 ? '' : 's'}
+                    </span>
+                  {:else}
+                    <button class="prb-confirm-btn"
+                      disabled={phaseReviewBusy[p.path]}
+                      onclick={() => markPhaseReviewed(p.path)}>
+                      {phaseReviewBusy[p.path] ? 'Saving…' : '✓ Done reviewing'}
+                    </button>
+                  {/if}
                 {:else}
                   <span class="prb-ok">✅ Reviewed</span>
                 {/if}
@@ -798,7 +805,8 @@
     &:hover { filter: brightness(1.15); }
     &:disabled { opacity: 0.5; cursor: default; }
   }
-  .prb-ok { font-size: 11px; color: $green; }
+  .prb-ok      { font-size: 11px; color: $green; }
+  .prb-blocked { font-size: 11px; color: $muted; font-style: italic; cursor: help; }
 
   .prb-activate-cta {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

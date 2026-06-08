@@ -372,15 +372,28 @@ export function GET() {
           const ph = parseInt(String(fm.phase ?? '0'), 10);
           return ph > lastGatedPhase.phase;
         })
-        .map(({ path: p, fm }) => ({
-          path: p,
-          phase: parseInt(String(fm.phase ?? '0'), 10),
-          title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
-          status: String(fm.status ?? 'draft'),
-          reviewDate: String(fm.phase_review_date ?? ''),
-          needsReview: !fm.phase_review_date ||
-            String(fm.phase_review_date) < lastGatedPhase.completedDate,
-        }))
+        .map(({ path: p, fm }) => {
+          const phaseNum = parseInt(String(fm.phase ?? '0'), 10);
+          // Count all non-completed plans that belong to this phase
+          const activeWorkItems = allPlansForPhase
+            .filter(({ path: ap, fm: afm }) => {
+              const apPhase = parseInt(String(afm.phase ?? '0'), 10);
+              if (apPhase !== phaseNum) return false;
+              const st = String(afm.status ?? '');
+              return !['completed', 'canceled'].includes(st);
+            });
+          return {
+            path: p,
+            phase: phaseNum,
+            title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+            status: String(fm.status ?? 'draft'),
+            reviewDate: String(fm.phase_review_date ?? ''),
+            needsReview: !fm.phase_review_date ||
+              String(fm.phase_review_date) < lastGatedPhase.completedDate,
+            activeWorkCount: activeWorkItems.length,
+            canReview: activeWorkItems.length === 0,
+          };
+        })
         .sort((a, b) => a.phase - b.phase)
     : [];
 
