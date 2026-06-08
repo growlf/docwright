@@ -49,10 +49,14 @@
     PREDEFINED_CHIPS.tags = vaultTags.slice(0, 24);
   }).catch(() => {});
 
-  // Load available AI backends
+  // Load available AI backends; auto-select Ollama if no saved preference and it's available
   let availableBackends = $state<{ id: string; label: string }[]>([]);
   fetch('/api/ai-backends').then(r => r.json()).then(d => {
     availableBackends = d.backends ?? [];
+    const hasSaved = typeof localStorage !== 'undefined' && localStorage.getItem('dw:ai-backend');
+    if (!hasSaved && availableBackends.some(b => b.id === 'ollama')) {
+      setBackend('ollama');
+    }
   }).catch(() => {});
 
   let selectedBackend = $state<'opencode' | 'ollama'>('opencode');
