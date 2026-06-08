@@ -1,5 +1,5 @@
 ---
-title: "Need a Way to Quickly Discern Raw Proposals"
+title: Need a Way to Quickly Discern Raw Proposals
 author: NetYeti
 created: 2026-06-05
 tags:
@@ -9,9 +9,11 @@ tags:
   - governance
 complexity: low
 estimated_effort: S
-approved: false
+approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: NetYeti
+_path: proposals/need-a-way-to-quickly-discern-raw-proposals.md
+consumed_by: plans/need-a-way-to-quickly-discern-raw-proposals.md
 ---
 
 ## Problem

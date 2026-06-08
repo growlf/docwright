@@ -1,5 +1,5 @@
 ---
-title: "Assign Plans to Phases on Creation and Allow Editing"
+title: Assign Plans to Phases on Creation and Allow Editing
 author: NetYeti
 created: 2026-06-08
 tags:
@@ -10,10 +10,11 @@ tags:
 complexity: low
 estimated_effort: S
 priority: medium
-approved: false
+approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
-consumed_by: plans/phase-2-foundation.md
+consumed_by: plans/assign-plans-to-phases.md
+_path: proposals/assign-plans-to-phases.md
 ---
 
 ## Problem
