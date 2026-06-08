@@ -47,6 +47,25 @@ function readTemplate(): string {
   return '';
 }
 
+function detectCurrentPhase(repoRoot: string): string {
+  // Find the lowest-numbered in-progress or approved phase overview plan
+  const plansDir = path.join(repoRoot, 'plans');
+  if (!fs.existsSync(plansDir)) return '';
+  try {
+    const files = fs.readdirSync(plansDir).filter(f => /^phase-\d.*\.md$/.test(f));
+    let best: number | null = null;
+    for (const f of files) {
+      const fm = readFrontmatter(path.join(plansDir, f));
+      if (!fm) continue;
+      const status = String(fm.status ?? '');
+      if (!['approved', 'in-progress'].includes(status)) continue;
+      const n = parseInt(String(fm.phase ?? '0'), 10);
+      if (n > 0 && (best === null || n < best)) best = n;
+    }
+    return best !== null ? String(best) : '';
+  } catch { return ''; }
+}
+
 function walkDeps(candidates: string[], repoRoot: string): string[] {
   const seen = new Set<string>();
   const queue = [...candidates];
@@ -101,6 +120,7 @@ export async function POST({ request }) {
 
   const now = new Date().toISOString().slice(0, 10);
   const template = readTemplate();
+  const currentPhase = detectCurrentPhase(REPO_ROOT);
 
   const sourceProposal = candidates[0] || validCandidates[0] || '';
 
@@ -113,6 +133,7 @@ export async function POST({ request }) {
       .replace(/\{\{VALUE:tags\}\}/g, 'planning')
       .replace(/\{\{VALUE:proposal_source\}\}/g, sourceProposal)
       .replace(/\{\{VALUE:priority\}\}/g, 'medium')
+      .replace(/\{\{VALUE:phase\}\}/g, currentPhase)
       .replace(/\{\{VALUE:assigned_to\}\}/g, 'NetYeti')
       .replace(/\{\{VALUE:overview\}\}/g, validCandidates.length > 1 ? `Bundles: ${validCandidates.map(c => c.split('/').pop()?.replace('.md', '')).join(', ')}` : '')
       .replace(/\{\{VALUE:testing\}\}/g, '')
@@ -141,6 +162,7 @@ tags:
   - planning
 proposal_source: ${sourceProposal}
 priority: medium
+phase: ${currentPhase}
 automated: guided
 assigned_to: NetYeti
 tests_defined: false

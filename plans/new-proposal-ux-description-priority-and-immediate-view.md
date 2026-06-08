@@ -18,6 +18,7 @@ blocks: []
 tests_defined: false
 total_steps: 6
 completed_steps: 0
+phase: 3
 ---
 
 # New Proposal UX: Ask for Description + Priority, Then Navigate Immediately

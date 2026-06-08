@@ -31,6 +31,7 @@ gate_reviews: []
 gate_quorum: 1
 total_steps: 7
 completed_steps: 0
+phase: 2
 ---
 
 # Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System

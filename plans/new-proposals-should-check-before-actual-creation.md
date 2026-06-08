@@ -18,6 +18,7 @@ blocks:
 tests_defined: false
 total_steps: 5
 completed_steps: 0
+phase: 3
 ---
 
 # New Proposals Should Check Relevance Before Creating the File

@@ -17,6 +17,7 @@ tests_defined: false
 total_steps: 12
 completed_steps: 7
 _path: plans/bundle-ai-capabilities.md
+phase: 3
 ---
 
 # AI Capabilities Bundle — Complexity Estimation, Perspective Synthesis, Parallel Review, Model Voting, and Automated Testing

@@ -64,6 +64,17 @@ export function lintDocument(
     results.push({ field: 'assigned_to', severity: 'warn', message: 'Approved but assigned_to is empty' });
   }
 
+  // Active plans should be assigned to a phase (skip phase overview plans themselves)
+  const basename = filePath.replace(/^.*\//, '');
+  if (
+    filePath.startsWith('plans/') &&
+    ['approved', 'in-progress'].includes(String(fm.status ?? '')) &&
+    !/^phase-/.test(basename) &&
+    (fm.phase === undefined || fm.phase === null || String(fm.phase).trim() === '')
+  ) {
+    results.push({ field: 'phase', severity: 'warn', message: 'Active plan has no phase assignment — set phase: in frontmatter' });
+  }
+
   // Research document rules
   if (filePath.startsWith('research/')) {
     if (fm.status !== undefined && !VALID_RESEARCH_STATUS.has(String(fm.status))) {

@@ -8,6 +8,7 @@
     path: string; title: string; created: string;
     tags: string[]; category: string[]; complexity: string;
     status: string; priority: string; assigned_to: string;
+    depends_on?: string[]; phase?: string | null;
   }
   interface PhasePlan {
     path: string; title: string; status: string; phase: number | null;
@@ -181,6 +182,28 @@
     if (p === 'medium')   return 'pri-med';
     return 'pri-low';
   }
+
+  // Group active plans by phase for display
+  let activePlansByPhase = $derived.by(() => {
+    const plans = data?.plans.active ?? [];
+    const groups = new Map<string, DocEntry[]>();
+    for (const p of plans) {
+      const key = p.phase ? String(p.phase) : '__unassigned__';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    // Sort phase keys: numeric phases first (ascending), then 'post-alpha', then unassigned
+    const keys = [...groups.keys()].sort((a, b) => {
+      if (a === '__unassigned__') return 1;
+      if (b === '__unassigned__') return -1;
+      const na = parseInt(a, 10), nb = parseInt(b, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1;
+      if (!isNaN(nb)) return 1;
+      return a.localeCompare(b);
+    });
+    return keys.map(k => ({ phase: k, plans: groups.get(k)! }));
+  });
 </script>
 
 <div class="status-page">
@@ -414,24 +437,30 @@
         {#if data.plans.active.length === 0}
           <div class="empty">No active plans</div>
         {:else}
-          <table class="items-table">
-            <thead><tr><th>Pri</th><th>Title</th><th>Status</th><th>Assigned</th></tr></thead>
-            <tbody>
-              {#each data.plans.active as p}
-                <tr class="item-row" onclick={() => navTo(p)}>
-                  <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
-                  <td class="item-title-cell">
-                    <span class="item-title">{p.title}</span>
-                    {#if p.depends_on && p.depends_on.length > 0}
-                      <span class="item-deps">↳ needs: {p.depends_on.map((d: string) => d.replace(/^plans\/(completed\/)?/, '').replace(/\.md$/, '')).join(', ')}</span>
-                    {/if}
-                  </td>
-                  <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
-                  <td class="item-date">{p.assigned_to || '—'}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+          {#each activePlansByPhase as group}
+            <div class="phase-group-header">
+              {group.phase === '__unassigned__' ? 'Unassigned' : `Phase ${group.phase}`}
+              <span class="phase-group-count">{group.plans.length}</span>
+            </div>
+            <table class="items-table">
+              <thead><tr><th>Pri</th><th>Title</th><th>Status</th><th>Assigned</th></tr></thead>
+              <tbody>
+                {#each group.plans as p}
+                  <tr class="item-row" onclick={() => navTo(p)}>
+                    <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
+                    <td class="item-title-cell">
+                      <span class="item-title">{p.title}</span>
+                      {#if p.depends_on && p.depends_on.length > 0}
+                        <span class="item-deps">↳ needs: {p.depends_on.map((d: string) => d.replace(/^plans\/(completed\/)?/, '').replace(/\.md$/, '')).join(', ')}</span>
+                      {/if}
+                    </td>
+                    <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
+                    <td class="item-date">{p.assigned_to || '—'}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/each}
         {/if}
       {/if}
     </section>
@@ -824,6 +853,29 @@
   .prb-progress { font-size: 11px; color: $muted; text-align: right; margin-top: 2px; }
 
   // ── Table ───────────────────────────────────────────────────────────────────
+  .phase-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: $blue;
+    border-top: 1px solid $border;
+    margin-top: 4px;
+    &:first-child { border-top: none; margin-top: 0; }
+  }
+  .phase-group-count {
+    background: $blue-bg;
+    color: $blue;
+    border: 1px solid $blue-bdr;
+    border-radius: 8px;
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 600;
+  }
   .items-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .items-table thead tr { border-bottom: 1px solid $border; }
   .items-table th { padding: 6px 16px; text-align: left; color: $muted; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }

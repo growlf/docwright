@@ -29,6 +29,7 @@
     estimated_effort:  ['', 'XS', 'S', 'M', 'L', 'XL'],
     automated:         ['off', 'guided', 'full'],
     priority:          ['', 'low', 'medium', 'high', 'critical'],
+    phase:             ['', '1', '2', '3', '4', 'post-alpha'],
     status: {
       proposal: ['pending', 'triaged', 'evaluated', 'accepted', 'rejected'],
       plan:     ['draft', 'approved', 'in-progress', 'completed', 'canceled'],

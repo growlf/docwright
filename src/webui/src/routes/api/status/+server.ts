@@ -102,6 +102,7 @@ function entry(p: string, fm: Record<string, any>) {
     assigned_to: String(fm.assigned_to ?? ''),
     depends_on: asList(fm.depends_on),
     proposal_source: asList(fm.proposal_source),
+    phase: fm.phase !== undefined && fm.phase !== '' ? String(fm.phase) : null,
   };
 }
 
