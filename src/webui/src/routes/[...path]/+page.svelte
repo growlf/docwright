@@ -7,7 +7,7 @@
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast, dismissToast } from '$lib/toast';
-  import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab } from '$lib/pane';
+  import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab, triggerImprovePending } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
   import TurndownService from 'turndown';
   import { tables, strikethrough } from 'turndown-plugin-gfm';
@@ -331,27 +331,10 @@
   }
 
   function triggerImproveOnSave(stickyToastId?: number) {
-    const fp = filePath();
-    improveResult.set(null);
-    improveLoading.set(true);
-    fetch('/api/improve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: fp }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (stickyToastId !== undefined) dismissToast(stickyToastId);
-        if (data.improved !== undefined) {
-          improveResult.set({ improved: data.improved, critique: data.critique ?? '' });
-          showToast('AI suggestions ready — Review improvements', 8000, {
-            label: 'Review',
-            onclick: () => showImproveTab.set(true),
-          });
-        }
-      })
-      .catch(() => { if (stickyToastId !== undefined) dismissToast(stickyToastId); })
-      .finally(() => improveLoading.set(false));
+    // Dismiss the sticky toast immediately — handleImprove in layout will show its own toast
+    if (stickyToastId !== undefined) dismissToast(stickyToastId);
+    // Signal layout to run handleImprove() — avoids duplicating SSE logic here
+    triggerImprovePending.set(true);
   }
 
   async function checkOverlap() {

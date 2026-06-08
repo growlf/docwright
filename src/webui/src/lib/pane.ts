@@ -29,6 +29,8 @@ export const improvePhase  = writable<ImprovePhase>('improve-thinking');
 export const improveStatus = writable('');
 /** Signal from page's on-save trigger to open the Improve tab */
 export const showImproveTab = writable(false);
+/** Signal from page to layout: fire handleImprove() now (used by auto-improve on new plan load) */
+export const triggerImprovePending = writable(false);
 
 /** Signal to switch to Review tab (set by PropertiesPane, consumed by layout) */
 export const showReviewTab = writable(false);

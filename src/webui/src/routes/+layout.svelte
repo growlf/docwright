@@ -8,7 +8,7 @@
   import { toasts, dismissToast, showToast } from '$lib/toast';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, aiBackend
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, aiBackend, triggerImprovePending
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import MultiReviewPanel from '$lib/MultiReviewPanel.svelte';
@@ -69,6 +69,14 @@ import {
   let ist = $state('');       $effect(() => { const u = improveStatus.subscribe(v => ist = v); return u; });
   let aib = $state<'opencode' | 'ollama'>('opencode');
                               $effect(() => { const u = aiBackend.subscribe(v => aib = v); return u; });
+
+  // Auto-improve signal from page (e.g. ?from=proposal on new plan load)
+  $effect(() => {
+    const u = triggerImprovePending.subscribe(v => {
+      if (v) { triggerImprovePending.set(false); handleImprove(); }
+    });
+    return u;
+  });
 
   // Fetch profile feature flags on mount
   onMount(async () => {
@@ -154,7 +162,7 @@ import {
     });
     if (res.ok) {
       const data = await res.json();
-      goto('/' + data.path.replace(/\.md$/, '') + '?new=1');
+      goto('/' + data.path.replace(/\.md$/, '') + '?from=proposal');
       collationMatches.set([]);
       collationRelationships.set([]);
     } else if (res.status === 409) {
