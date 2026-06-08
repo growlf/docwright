@@ -23,6 +23,10 @@
     path: string; title: string; gate_id: string;
     next_review: string; document_type: string;
   }
+  interface ResearchEntry {
+    path: string; title: string; question: string; created: string;
+    conclusion?: string;
+  }
   interface StatusData {
     vaultName: string;
     version: string;
@@ -31,6 +35,11 @@
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
     plans: { active: DocEntry[]; completed_count: number };
     gates: { pending: PendingGate[]; waived: WaivedGate[]; overdue: OverdueGate[] };
+    research: {
+      active: ResearchEntry[];
+      recent_conclusions: ResearchEntry[];
+      no_research_proposals: { path: string; title: string }[];
+    };
   }
 
   let data = $state<StatusData | null>(null);
@@ -48,7 +57,7 @@
   }
 
   // Collapsed state per section, persisted in sessionStorage
-  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'completed', 'deferred', 'audit'];
+  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'research', 'completed', 'deferred', 'audit'];
   function isCollapsed(key: string): boolean {
     if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
     const val = sessionStorage.getItem('status-collapsed-' + key);
@@ -301,6 +310,62 @@
         {/if}
       {/if}
     </section>
+
+    <!-- Research -->
+    {#if data.research}
+    <section class="section">
+      <button class="section-header" onclick={() => toggleSection('research')}>
+        <span class="section-title">Research</span>
+        <span class="badge">{data.research.active.length + data.research.recent_conclusions.length}</span>
+        <span class="chevron">{collapsed['research'] ? '▸' : '▾'}</span>
+      </button>
+      {#if !collapsed['research']}
+        {#if data.research.active.length === 0 && data.research.recent_conclusions.length === 0}
+          <div class="empty">No active research</div>
+        {:else}
+          {#if data.research.active.length > 0}
+            <div class="research-sub-head">Active investigations</div>
+            <table class="items-table">
+              <thead><tr><th>Title</th><th>Question</th><th>Created</th></tr></thead>
+              <tbody>
+                {#each data.research.active as r}
+                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
+                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
+                    <td class="research-question">{r.question}</td>
+                    <td class="item-date">{r.created}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+          {#if data.research.recent_conclusions.length > 0}
+            <div class="research-sub-head">Concluded (last 30 days)</div>
+            <table class="items-table">
+              <thead><tr><th>Title</th><th>Conclusion</th><th>Concluded</th></tr></thead>
+              <tbody>
+                {#each data.research.recent_conclusions as r}
+                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
+                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
+                    <td><span class="badge research-conclusion-{r.conclusion}">{r.conclusion}</span></td>
+                    <td class="item-date">{r.created}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+          {#if data.research.no_research_proposals.length > 0}
+            <div class="research-sub-head research-flag">⚠ Investigation skipped ({data.research.no_research_proposals.length})</div>
+            <div class="research-skipped-note">Approved proposals with no linked research doc — visible only, not enforced.</div>
+            <ul class="research-skipped-list">
+              {#each data.research.no_research_proposals as p}
+                <li><button class="link-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>{p.title}</button></li>
+              {/each}
+            </ul>
+          {/if}
+        {/if}
+      {/if}
+    </section>
+    {/if}
 
     <!-- Approved, pending plan -->
     <section class="section">
@@ -555,6 +620,19 @@
   .empty { padding: 10px 16px; font-size: 12px; color: $muted; }
   .muted { color: $muted; }
   .link  { color: $blue; text-decoration: none; &:hover { text-decoration: underline; } }
+
+  // ── Research section ────────────────────────────────────────────────────────
+  .research-sub-head { padding: 6px 16px 3px; font-size: 11px; font-weight: 600; color: $teal; text-transform: uppercase; letter-spacing: 0.04em; }
+  .research-sub-head.research-flag { color: $amber; }
+  .research-question { color: $muted; font-size: 11px; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .research-conclusion-recommends  { background: $green-bg;  color: $green;  border-color: $green-bdr; }
+  .research-conclusion-inconclusive { background: $bg-2;     color: $muted;  border-color: $border; }
+  .research-conclusion-superseded  { background: $bg-2;      color: $muted;  border-color: $border; }
+  .research-conclusion-open        { background: $blue-bg;   color: $blue;   border-color: $blue-bdr; }
+  .research-skipped-note { padding: 0 16px 4px; font-size: 11px; color: $muted; }
+  .research-skipped-list { list-style: none; margin: 0; padding: 0 16px 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .research-skipped-list li { }
+  .link-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 11px; padding: 2px 8px; cursor: pointer; &:hover { border-color: $blue-bdr; color: $blue; } }
 
   // ── Table ───────────────────────────────────────────────────────────────────
   .items-table { width: 100%; border-collapse: collapse; font-size: 12px; }

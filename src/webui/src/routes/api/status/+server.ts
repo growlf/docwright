@@ -267,6 +267,60 @@ export function GET() {
     }
   }
 
+  // ── Research section ────────────────────────────────────────────────────────
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const researchDocs = readDir(path.join(REPO_ROOT, 'research'))
+    .filter(({ fm }) => fm.title); // skip .gitkeep and empty files
+
+  // All proposal paths referenced by any research doc's linked_proposals
+  const researchLinked = new Set<string>();
+  for (const { fm } of researchDocs) {
+    for (const l of asList(fm.linked_proposals)) {
+      const norm = l.trim();
+      researchLinked.add(norm);
+      researchLinked.add(norm.endsWith('.md') ? norm : norm + '.md');
+    }
+  }
+
+  const activeResearch = researchDocs
+    .filter(({ fm }) => String(fm.status ?? '') === 'active')
+    .map(({ path: p, fm }) => ({
+      path: p,
+      title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+      question: String(fm.question ?? ''),
+      created: String(fm.created ?? ''),
+    }))
+    .sort((a, b) => b.created.localeCompare(a.created));
+
+  const recentConclusions = researchDocs
+    .filter(({ fm }) => {
+      if (String(fm.status ?? '') !== 'concluded') return false;
+      const d = new Date(String(fm.created ?? ''));
+      return !isNaN(d.getTime()) && d >= thirtyDaysAgo;
+    })
+    .map(({ path: p, fm }) => ({
+      path: p,
+      title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+      question: String(fm.question ?? ''),
+      conclusion: String(fm.conclusion ?? ''),
+      created: String(fm.created ?? ''),
+    }))
+    .sort((a, b) => b.created.localeCompare(a.created));
+
+  // Approved proposals that no research doc has linked to — visible, not enforced
+  const noResearchProposals = [
+    ...readDir(path.join(REPO_ROOT, 'proposals', 'approved'))
+      .filter(({ fm }) => fm.approved === true && !fm.consumed_by && fm.deferred !== true),
+  ].filter(({ path: p }) =>
+    !researchLinked.has(p) &&
+    !researchLinked.has(p.replace(/\.md$/, '')) &&
+    !researchLinked.has(p.replace(/^proposals\/approved\//, ''))
+  ).map(({ path: p, fm }) => ({
+    path: p,
+    title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
+  }));
+
   const vaultName = path.basename(REPO_ROOT);
 
   const data = {
@@ -277,6 +331,7 @@ export function GET() {
     proposals: { open, approved_pending: approvedPending, deferred },
     plans: { active, completed_count: completedCount },
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
+    research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
   };
   cache = { data, at: Date.now() };
   return json(data);
