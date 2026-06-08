@@ -104,6 +104,36 @@
       });
       if (res.ok) goto('/' + path.replace(/\.md$/, '') + '?new=1');
 
+    } else if (dir === 'research' || dir.startsWith('research/')) {
+      const title = prompt('Research title:');
+      if (!title) return;
+      const question = prompt('Research question (one sentence):');
+      if (!question) return;
+      const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') + '.md';
+      const content =
+        '---\ntitle: "' + title + '"\n' +
+        'status: active\n' +
+        'question: "' + question + '"\n' +
+        'conclusion: open\n' +
+        'author: NetYeti\n' +
+        'created: ' + date + '\n' +
+        'author-role: contributor\n' +
+        'tags: []\n' +
+        'linked_proposals: []\n' +
+        'related_research: []\n' +
+        '---\n\n' +
+        '## Questions Explored\n\n- ' + question + '\n\n' +
+        '## Approaches Compared\n\n| Approach | Pros | Cons |\n|----------|------|------|\n| Option A | | |\n| Option B | | |\n\n' +
+        '## Findings\n\n\n\n' +
+        '## Sources\n\n- \n\n' +
+        '## Conclusion\n\n> Update `status: concluded` and set `conclusion:` when done.\n';
+      const p = 'research/' + slug;
+      const res = await fetch('/api/write?path=' + encodeURIComponent(p), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) goto('/' + p.replace(/\.md$/, '') + '?new=1');
+
     } else {
       startCreate('file');
     }
@@ -126,7 +156,7 @@
     <div class="dir-row" oncontextmenu={handleContext}>
       <button class="dir-toggle" onclick={toggle}>
         <span class="arrow">{collapsed ? '▸' : '▾'}</span>
-        <span class="dir-name">{item.name}</span>
+        <span class="dir-name">{item.path === 'research' ? '🔬 ' : ''}{item.name}</span>
       </button>
       <button class="add-btn" onclick={contextNew} title="New item">+</button>
     </div>
