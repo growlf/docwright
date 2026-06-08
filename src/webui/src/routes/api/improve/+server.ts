@@ -190,6 +190,8 @@ export async function POST({ request }) {
       try {
         const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
         const withTimeout = <T>(p: Promise<T>, ms: number) => Promise.race([p, timeout(ms)]);
+        // 300s: Ollama may need to cold-load a model from disk before inference starts
+        const AI_TIMEOUT = 300_000;
 
         // Phase 1: Improve proposal
         send('stage', { phase: 'improve-thinking' });
@@ -197,7 +199,7 @@ export async function POST({ request }) {
         try {
           improved = await withTimeout(
             callAI(buildPrompt(fm, body), 'improve', 'improve-streaming'),
-            120_000,
+            AI_TIMEOUT,
           );
         } catch (err: any) {
           improved = body + `\n\n*(AI improvement ${err.message} — showing original body)*`;
@@ -210,7 +212,7 @@ export async function POST({ request }) {
         try {
           critique = await withTimeout(
             callAI(buildCritique(original), 'critique', 'critique-streaming'),
-            120_000,
+            AI_TIMEOUT,
           );
         } catch (err: any) {
           critique = `*(AI critique ${err.message})*`;

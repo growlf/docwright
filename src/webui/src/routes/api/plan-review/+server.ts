@@ -45,6 +45,10 @@ export async function POST({ request }) {
 
         let fullText: string;
         const useOllama = backend === 'ollama' && !!ollamaUrl;
+        // 300s: Ollama may cold-load a model from disk before inference starts
+        const AI_TIMEOUT = 300_000;
+        const abortCtrl = new AbortController();
+        const abortTimer = setTimeout(() => abortCtrl.abort(), AI_TIMEOUT);
 
         if (useOllama) {
           send('status', { message: 'Sending to Ollama...' });
@@ -52,6 +56,7 @@ export async function POST({ request }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ model: ollamaModel, messages: [{ role: 'user', content: context }], stream: false }),
+            signal: abortCtrl.signal,
           });
           if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
           const data = await res.json();
@@ -80,6 +85,7 @@ export async function POST({ request }) {
           fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
         }
 
+        clearTimeout(abortTimer);
         send('status', { message: 'Processing response…' });
 
         // Progressively stream the text so the user sees it appear in real time
