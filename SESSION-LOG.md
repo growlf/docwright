@@ -320,3 +320,20 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] All 136 tests pass
 
 **Session note:** `docs/session-notes/session_note_202606071558.md`
+
+---
+
+## Session: 2026-06-07 — Phase Gate Review System
+
+**Focus:** Phase gate review UX, phase card display fixes, review button gating
+
+**Completed:**
+- [x] Phase gate review system: amber banner on status page when phase gated + plans unreviewed
+- [x] 3-step review guide: open plan → mark reviewed → activate (or "already active ✓")
+- [x] `/api/lifecycle/phase-review` POST endpoint — sets `phase_review_date` frontmatter
+- [x] Fix: `currentPhase` now uses in-progress/approved phase overview plan (not max across all plans)
+- [x] Fix: `phasePlans` filter uses `path.basename()` — excludes non-overview plans like `bundle-lifecycle-gates-phase-2.md`
+- [x] "Done reviewing" button gated on `activeWorkCount === 0` (all open work in that phase must complete first)
+- [x] Research Stage MVP: full 8-step implementation (linter, hook tests, integration tests, profiles, dispatch, UI, status page)
+
+**Session note:** `docs/session-notes/session_note_202606072205.md`
