@@ -729,7 +729,7 @@ import {
             onsave={$currentDoc.onSave}
             onapprove={$currentDoc.onApprove}
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
-            onplan={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
+            onplan={() => { showToast('Scanning for related proposals…', 3000); rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onimprove={handleImprove}
           />
         {:else}

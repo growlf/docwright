@@ -132,27 +132,30 @@
   </div>
 
   {#if loading}
-    <div class="loading">Scanning for related proposals…</div>
+    <div class="loading">
+      <span class="spinner">⟳</span> Scanning for related proposals…
+      <div class="loading-sub">Matching by keywords, tags, and wikilinks</div>
+    </div>
   {:else if matches.length === 0}
     {#if planMode}
-      <div class="empty">No related proposals found — create a plan with just this proposal.</div>
+      <div class="empty">No related proposals found.</div>
       <button class="create-plan-btn" onclick={() => oncreateplan?.()}
-        title="Scaffold a plan containing just this proposal">
-        + Create Plan
+        title="Scaffold a plan from this proposal">
+        + Create Plan from This Proposal
       </button>
     {:else}
       <div class="empty">No related proposals found.</div>
     {/if}
   {:else}
-    <div class="hint">
-      Accept detected relationships to write them to frontmatter.
-    </div>
     {#if planMode}
       <button class="create-plan-btn" onclick={() => oncreateplan?.()}
-        title="Scaffold a plan bundling this proposal with all accepted relationships">
-        + Create Plan
+        title="Scaffold a plan bundling this proposal with the related proposals below">
+        + Create Plan — Bundle {matches.length + 1} Proposal{matches.length > 0 ? 's' : ''}
       </button>
     {/if}
+    <div class="hint">
+      {planMode ? 'Related proposals that will be bundled. ' : ''}Accept relationships to write them to frontmatter.
+    </div>
     {#each matches as match}
       {@const rel = getRel(match.path)}
       <div class="match" class:subsumed={subsumed.has(match.path)} class:dismissed={isDismissed(match.path)}>
@@ -239,6 +242,9 @@
   .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } }
 
   .loading, .empty { padding: 24px 16px; color: $muted; font-size: 13px; text-align: center; }
+  .loading-sub { font-size: 11px; color: $muted; margin-top: 6px; opacity: 0.7; }
+  .spinner { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .hint { padding: 8px 16px; font-size: 11px; color: $muted; border-bottom: 1px solid $border; }
 
   .create-plan-btn { display: block; width: calc(100% - 32px); margin: 8px 16px; padding: 8px 12px; border: 1px solid $magenta-bdr; border-radius: 6px; background: $magenta-bg; color: $magenta; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; &:hover { background: #2a1a3a; border-color: #7b4ba4; } }
