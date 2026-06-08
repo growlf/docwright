@@ -5,7 +5,7 @@
   "description": "Karpathy LLM Wiki pattern with docwright governance. Ingest → Lint → Save-to-Wiki.",
   "principles": ["Security first", "Policy driven", "Test verified at every stage"],
   "version": "0.1.0",
-  "documentTypes": ["source", "concept", "entity", "comparison", "exploration"],
+  "documentTypes": ["source", "concept", "entity", "comparison", "exploration", "research"],
   "states": {
     "source": ["inbox", "compiled", "verified", "archived"]
   },

@@ -5,7 +5,7 @@
   "description": "Proposal → Plan → Completed/Canceled. Developer-focused document workflow.",
   "principles": ["Security first", "Policy driven", "Test verified at every stage"],
   "version": "0.1.0",
-  "documentTypes": ["proposal", "plan", "sop"],
+  "documentTypes": ["proposal", "plan", "sop", "research"],
   "states": {
     "proposal": ["proposal", "plan", "completed", "canceled"]
   },

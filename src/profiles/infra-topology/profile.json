@@ -5,7 +5,7 @@
   "description": "Network/device/service lifecycle: Planned → Active → Decommissioned.",
   "principles": ["Security first", "Policy driven", "Test verified at every stage"],
   "version": "0.1.0",
-  "documentTypes": ["device", "service", "network-segment"],
+  "documentTypes": ["device", "service", "network-segment", "research"],
   "states": {
     "default": ["planned", "active", "decommissioned"]
   },
