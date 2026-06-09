@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "auto-sync-from-ollama",
+  "model": "opencode/big-pickle",
   "instructions": [
     "AGENTS.md",
     ".opencode/rules/commit-format.md",
@@ -18,7 +18,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "*",
+        "matcher": "Bash|Write|Edit",
         "hooks": [
           {
             "type": "command",
