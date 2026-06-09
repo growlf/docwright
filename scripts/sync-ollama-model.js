@@ -17,7 +17,7 @@ async function syncModel() {
       return;
     }
 
-    const loadedModel = ps.models[0].name; // e.g. "qwen2.5-coder:14b-64k"
+    const loadedModel = `ollama/${ps.models[0].name}`; // e.g. "ollama/qwen2.5-coder:14b-64k"
     
     // 2. Read existing opencode.json
     let cfg = {};
