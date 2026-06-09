@@ -26,9 +26,17 @@ RUN python3 -m venv .venv \
 COPY src/webui/package*.json ./src/webui/
 RUN cd src/webui && npm ci
 
+# ── Node deps for MCP server (root dependencies) ──────────────────────────────
+COPY package*.json ./
+RUN npm ci
+
 # ── Application source ────────────────────────────────────────────────────────
 COPY scripts/ ./scripts/
 COPY src/    ./src/
+COPY tsconfig.json ./
+
+# ── Build TypeScript components ───────────────────────────────────────────────
+RUN npm run compile:mcp
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
 COPY docker-entrypoint.sh /usr/local/bin/docwright-entrypoint
