@@ -2,6 +2,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { loadConfig } from './config';
+import { setRepoRoot } from './lib/paths';
+import { allTools } from './tools/index';
 import * as http from 'node:http';
 import * as path from 'node:path';
 
@@ -56,6 +58,8 @@ async function main() {
     repoRoot = config.vaultRoot;
   }
 
+  setRepoRoot(repoRoot);
+
   // Create MCP Server
   const server = new Server({
     name: 'docwright-mcp',
@@ -66,8 +70,7 @@ async function main() {
     }
   });
 
-  // Exported stub to setup tools (to be implemented in Step 6 / tools index)
-  setupTools(server, repoRoot, config);
+  setupTools(server);
 
   if (transportType === 'stdio') {
     const transport = new StdioServerTransport();
@@ -75,20 +78,16 @@ async function main() {
     console.error(`DocWright MCP server running in ${mode} mode via stdio`);
   } else {
     // SSE
-    const transport = new SSEServerTransport('/message', new Response()); // placeholder for express/http
+    let sseTransport: SSEServerTransport | null = null;
     
     // Create an HTTP server to handle the SSE connections
     const httpServer = http.createServer((req, res) => {
       if (req.url === '/sse') {
-        const t = new SSEServerTransport('/message', res);
-        server.connect(t).catch(console.error);
-        
-        // We only really support one connection right now easily but let's keep it simple
-        globalThis.currentTransport = t; 
+        sseTransport = new SSEServerTransport('/message', res);
+        server.connect(sseTransport).catch(console.error);
       } else if (req.url === '/message' && req.method === 'POST') {
-        const t = (globalThis as any).currentTransport;
-        if (t) {
-          t.handlePostMessage(req, res).catch(console.error);
+        if (sseTransport) {
+          sseTransport.handlePostMessage(req, res).catch(console.error);
         } else {
           res.statusCode = 404;
           res.end();
@@ -106,9 +105,15 @@ async function main() {
   }
 }
 
-// Stub for tool setup
-export function setupTools(server: Server, repoRoot: string, config: any) {
-  // tools will be registered here later
+export function setupTools(server: Server) {
+  for (const tool of allTools) {
+    server.tool(
+      tool.name,
+      tool.description,
+      tool.inputSchema.properties,
+      tool.handler as any
+    );
+  }
 }
 
 // Start

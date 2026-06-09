@@ -31,6 +31,29 @@ export function writeFile(relPath: string, content: string): void {
   fs.writeFileSync(fullPath, content, 'utf8');
 }
 
+export function fileExists(relPath: string): boolean {
+  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
+  const fullPath = path.resolve(REPO_ROOT, relPath);
+  return fs.existsSync(fullPath);
+}
+
+export function getMtime(relPath: string): number {
+  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
+  const fullPath = path.resolve(REPO_ROOT, relPath);
+  return fs.statSync(fullPath).mtimeMs / 1000;
+}
+
+export function globFiles(relDir: string, pattern: string = '*.md'): string[] {
+  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
+  const fullDir = path.resolve(REPO_ROOT, relDir);
+  if (!fs.existsSync(fullDir)) return [];
+  
+  const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+  return fs.readdirSync(fullDir)
+    .filter(f => regex.test(f))
+    .map(f => path.join(relDir, f));
+}
+
 export function moveFile(relSrc: string, relDest: string): void {
   if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
   const srcFull = path.resolve(REPO_ROOT, relSrc);
