@@ -25,10 +25,9 @@ export async function getFacts(): Promise<string> {
 
   try {
     const sops = globFiles('docs/SOPs', '*.md');
-    if (sops.length > 0) {
-      const sopList = sops.map(p => `- ${p}`).sort().join('\n');
-      parts.push(`## Available SOPs\n\n${sopList}`);
-    }
+    // Python always appends the header if the directory is reachable, even if empty
+    const sopList = sops.sort().map(p => `- ${p}`).join('\n');
+    parts.push(`## Available SOPs\n\n${sopList}`);
   } catch {
     // ignore
   }
@@ -46,11 +45,16 @@ export async function collate(threshold: number = 0.12): Promise<string> {
       for (const f of files) {
         try {
           const text = readFile(f);
-          const fm = parseFrontmatter(text);
-          const title = String(fm['title'] || path.basename(f, '.md'));
-          // Only tokenize the body (roughly)
-          const body = text.replace(/^---\n[\s\S]*?\n---\n/, '');
-          docs.push({ path: f, tokens: tokenize(body), title });
+          const fm_end = text.indexOf('---', 3);
+          const fm = fm_end > 0 ? text.slice(3, fm_end) : '';
+          const body = fm_end > 0 ? text.slice(fm_end + 3) : text;
+          const title = extractFrontmatterField(text, 'title') || path.basename(f, '.md');
+          
+          docs.push({ 
+            path: f, 
+            tokens: tokenize(fm + '\n' + body), 
+            title 
+          });
         } catch {}
       }
     }
@@ -70,21 +74,19 @@ export async function collate(threshold: number = 0.12): Promise<string> {
     pairs.sort((a, b) => b.score - a.score);
     
     if (pairs.length === 0) {
-      return `No document overlaps found above threshold ${threshold}.`;
+      return `No overlaps found above threshold ${threshold} across ${n} documents.`;
     }
     
-    const lines = [
-      `# Document Collation (threshold: ${threshold})`,
-      `Found ${pairs.length} potential overlaps:\n`,
-      '| Score | Document A | Document B |',
-      '|-------|------------|------------|'
-    ];
+    const lines = [`Overlap analysis (${pairs.length} pairs above threshold ${threshold}):`, ''];
     
     pairs.forEach(p => {
-      lines.push(`| ${(p.score * 100).toFixed(0)}% | ${p.a.title} (${p.a.path}) | ${p.b.title} (${p.b.path}) |`);
+      const pct = p.score >= 0.1 ? `${Math.round(p.score * 100)}%` : `${(p.score * 100).toFixed(1)}%`;
+      lines.push(`  ${pct.padStart(3)}  ${p.a.path}`);
+      lines.push(`       ${p.b.path}`);
+      lines.push('');
     });
     
-    return lines.join('\n');
+    return lines.join('\n').trimEnd();
   } catch (e: any) {
     return `Collation error: ${e.message}`;
   }
@@ -105,7 +107,7 @@ export async function runDryRun(): Promise<string> {
         lines.push(`\n[READY TO APPROVE]  ${path.basename(p, '.md')}`);
         lines.push(`  Title: ${title}`);
         lines.push(`  Assigned to: ${fm['assigned_to']}`);
-        lines.push(`  Run: transition_to_approved(proposal_name='${path.basename(p, '.md')}')`);
+        lines.push(`  Run: transition_to_approved(name='${path.basename(p, '.md')}')`);
       }
     } catch {}
   }
@@ -119,16 +121,12 @@ export async function runDryRun(): Promise<string> {
         const title = fm['title'] || path.basename(p, '.md');
         lines.push(`\n[READY TO COMPLETE]  ${path.basename(p, '.md')}`);
         lines.push(`  Title: ${title}`);
-        lines.push(`  Run: transition_to_completed(plan_name='${path.basename(p, '.md')}')`);
+        lines.push(`  Run: transition_to_completed(name='${path.basename(p, '.md')}')`);
       }
     } catch {}
   }
 
-  if (lines.length === 2) {
-    return 'No pending lifecycle transitions.';
-  }
-
-  return lines.join('\n');
+  return lines.join('\n').trimEnd();
 }
 
 export async function auditLog(limit: number = 50): Promise<string> {

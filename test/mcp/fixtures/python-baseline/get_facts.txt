@@ -1,0 +1,21 @@
+## Invariants
+
+1. Agents NEVER set approved: true on proposals — only humans
+2. No active work before plan approval (status: approved or in-progress)
+3. Lifecycle transitions MUST use `transition_to_*` MCP tools, not direct file edits
+4. Frontmatter is audit record, not enforcement
+5. Git is the canonical store — index.json is derived cache, rebuild don't restore
+6. No telemetry, ever
+7. author-role field required in all templates
+
+## MCP State Machine Rules
+
+- transition_to_approved: requires approved: true + non-empty assigned_to (human sets these)
+- transition_to_completed: requires all tasks completed, plan not already done
+- transition_to_canceled: requires non-empty cancellation_reason
+- All transitions are logged to .docwright/audit.jsonl (append-only NDJSON)
+
+---
+
+## Available SOPs
+

@@ -1,0 +1,2 @@
+PENDING LIFECYCLE TRANSITIONS (dry run)
+==================================================

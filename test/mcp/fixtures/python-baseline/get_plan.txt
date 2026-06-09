@@ -1,0 +1,15 @@
+---
+title: "Sample Plan"
+status: in-progress
+total_steps: 1
+completed_steps: 0
+---
+# Sample Plan
+## Implementation Steps
+| Step | Action | Status |
+| --- | --- | --- |
+| 1 | Test step | ⏳ Pending |
+
+
+---
+⚠ **Governance:** mutate this plan via MCP only — update_step · update_plan_status · append_history · set_plan_field · write_plan. Direct writes to `plans/*.md` are blocked by the PreToolUse hook. Bash/Python writes bypass the hook and are equally prohibited (AGENTS.md §Invariant 6). If MCP is unavailable: halt and report, do not fall back to direct writes.
