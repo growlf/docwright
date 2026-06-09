@@ -1,27 +1,105 @@
 import { readFile, writeFile } from './paths';
-import { parseFrontmatter } from './frontmatter';
+import { parseFrontmatter, setFrontmatterField, extractFrontmatterField } from './frontmatter';
 
-export function hasPendingSteps(text: string): boolean {
+export function countSteps(text: string): { total: number; completed: number } {
   const lines = text.split('\n');
   let inSection = false;
+  let total = 0;
+  let completed = 0;
 
   for (const line of lines) {
     if (/^##\s/.test(line)) {
       inSection = /^##\s+Implementation Steps\b/i.test(line);
       continue;
     }
-    if (/^###\s/.test(line)) {
-      inSection = /✅/.test(line);
-      continue;
-    }
-    if (!inSection) continue;
+    if (!inSection || !line.startsWith('|') || line.startsWith('|---') || line.startsWith('| ---')) continue;
     
-    // table row
-    if (line.startsWith('|') && line.includes('⏳')) {
-      return true;
+    total++;
+    const parts = line.split('|');
+    const lastCell = parts[parts.length - 2] || '';
+    if (lastCell.includes('✅')) {
+      completed++;
     }
   }
-  return false;
+  return { total, completed };
+}
+
+export function updateStepCounts(text: string): string {
+  const { total, completed } = countSteps(text);
+  text = setFrontmatterField(text, 'total_steps', total);
+  text = setFrontmatterField(text, 'completed_steps', completed);
+  return text;
+}
+
+export function hasPendingSteps(text: string): boolean {
+  const { total, completed } = countSteps(text);
+  return total > completed;
+}
+
+export function replaceStepStatus(text: string, stepMatch: string, newStatus: string): { text: string; found: boolean } {
+  const lines = text.split('\n');
+  let inSection = false;
+  let found = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^##\s/.test(line)) {
+      inSection = /^##\s+Implementation Steps\b/i.test(line);
+    } else if (inSection && line.startsWith('|') && line.includes(stepMatch)) {
+      const stripped = line.trimEnd();
+      if (stripped.endsWith('|')) {
+        const inner = stripped.slice(0, -1).trimEnd();
+        const lastPipe = inner.lastIndexOf('|');
+        if (lastPipe >= 0) {
+          lines[i] = inner.slice(0, lastPipe + 1) + ' ' + newStatus + ' |';
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  return { text: lines.join('\n'), found };
+}
+
+export function checkCompletionGate(text: string, planName: string): string | null {
+  const testsDefined = extractFrontmatterField(text, 'tests_defined');
+  if (String(testsDefined) !== 'true') {
+    return `ERROR: Plan '${planName}' has tests_defined=${testsDefined}. A human reviewer must set tests_defined: true after confirming test coverage is adequate before the plan can be completed.`;
+  }
+
+  const lines = text.split('\n');
+  let inGate = false;
+  let gateFound = false;
+  let unchecked = 0;
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (inGate) break;
+      inGate = line.includes('Phase Gate');
+      if (inGate) gateFound = true;
+    } else if (inGate && line.includes('- [ ]')) {
+      unchecked++;
+    }
+  }
+
+  if (!gateFound) {
+    return `ERROR: Plan '${planName}' has no ## Phase Gate section. All plans must have a Phase Gate section that is fully signed off before completion.`;
+  }
+
+  if (unchecked > 0) {
+    return `ERROR: Plan '${planName}' has ${unchecked} unchecked Phase Gate item${unchecked === 1 ? '' : 's'}. All Phase Gate items must be checked [x] before the plan can be completed.`;
+  }
+
+  return null;
+}
+
+export function hasTestingPlan(content: string): boolean {
+  const match = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=\n##\s|\n*$)/m);
+  if (!match) return false;
+  const section = match[1].trim();
+  return section !== '' && 
+         section !== '_Add test plan during implementation._' && 
+         section !== '{{VALUE:testing}}';
 }
 
 export function updateParentDeliverable(text: string, safeName: string): string {
