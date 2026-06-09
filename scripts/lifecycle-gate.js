@@ -151,6 +151,29 @@ function hasPendingStepsInSection(content) {
 }
 
 /**
+ * Count the number of completed step rows in the Implementation Steps section.
+ */
+function countCompletedStepsInSection(content) {
+  const lines = content.split('\n');
+  let inSection = false;
+  let count = 0;
+
+  for (const line of lines) {
+    if (/^##\s/.test(line)) {
+      inSection = /^##\s+Implementation Steps\b/i.test(line);
+      continue;
+    }
+    if (!inSection) continue;
+    
+    // Only count data rows that contain ✅ (ignore header/separator)
+    if (line.startsWith('|') && !line.startsWith('|---') && !line.startsWith('| ---') && line.includes('✅')) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
  * Block a plan from being committed with status:completed while any pending
  * steps remain. In-progress plans with mixed done/pending rows are normal
  * and are not flagged.
@@ -169,6 +192,30 @@ function checkPendingSteps(file, fm) {
 }
 
 /**
+ * Ensure the completed_steps frontmatter field matches the actual count of completed rows.
+ */
+function checkStepCounterConsistency(file, fm) {
+  if (!file.startsWith('plans/')) return { ok: true };
+  if (fm.completed_steps === undefined) return { ok: true };
+
+  let raw;
+  try { raw = fs.readFileSync(path.join(ROOT, file), 'utf8'); }
+  catch { return { ok: true }; }
+
+  // Only run if an Implementation Steps section exists
+  if (!/^##\s+Implementation Steps\b/im.test(raw)) return { ok: true };
+
+  const actualCount = countCompletedStepsInSection(raw);
+  const declaredCount = Number(fm.completed_steps);
+
+  if (actualCount !== declaredCount) {
+    return { ok: false, error: `${file}: completed_steps frontmatter (${declaredCount}) does not match the actual number of ✅ rows in the Implementation Steps table (${actualCount}).` };
+  }
+
+  return { ok: true };
+}
+
+/**
  * Validate a lifecycle file before commit.
  * Returns array of { ok, error } objects.
  */
@@ -179,8 +226,12 @@ function validateFile(file, oldFm, newFm) {
     results.push(checkPlanHasSource(file, newFm));
     results.push(checkPendingSteps(file, newFm));
   }
+  if (file.startsWith('plans/')) {
+    results.push(checkStepCounterConsistency(file, newFm));
+  }
   return results;
 }
+
 
 // ---------------------------------------------------------------------------
 // Status summary (mirrors vault-status.js but focused on gate-relevant info)

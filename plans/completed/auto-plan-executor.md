@@ -1,6 +1,7 @@
 ---
 title: Auto plan executor — per-step autonomous execution engine
-status: in-progress
+status: completed
+completed_date: 2026-06-09
 author: NetYeti
 created: 2026-06-09
 tags: ""
@@ -8,7 +9,7 @@ proposal_source: proposals/approved/auto-plan-executor.md
 priority: medium
 automated: full
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: Implement core execution engine, parser, and web UI integration; no production data mutation beyond plan files and src/executor directory.
 _path: plans/auto-plan-executor.md
