@@ -35,6 +35,7 @@ Usage:
 import asyncio
 import os
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -1128,6 +1129,13 @@ async def _run_tests():
 
 
 if __name__ == "__main__":
+    # Sync Ollama model to opencode.json at startup
+    try:
+        subprocess.run(["node", str(REPO_ROOT / "scripts/sync-ollama-model.js")], 
+                      capture_output=True, text=True)
+    except Exception as e:
+        print(f"[dw-mcp] Ollama sync failed: {e}", file=sys.stderr)
+
     if "--test" in sys.argv:
         asyncio.run(_run_tests())
     elif "--serve" in sys.argv:

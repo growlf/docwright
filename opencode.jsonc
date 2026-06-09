@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama/auto-sync",
+  "model": "ollama/llama3.1:latest",
   "instructions": [
     "AGENTS.md",
     ".opencode/rules/commit-format.md",
@@ -14,21 +14,6 @@
     "edit": "ask",
     "write": "ask",
     "bash": "ask"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node scripts/sync-ollama-model.js",
-            "timeout": 5,
-            "statusMessage": "Syncing Ollama model..."
-          }
-        ]
-      }
-    ]
   },
   "server": {
     "hostname": "127.0.0.1"
