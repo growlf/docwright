@@ -1,6 +1,8 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { readPlanSteps, markStepStatus } from './plan-parser';
 import type { PlanStep, StepStatus } from './plan-parser';
+import { acquireLock, releaseLock, writeCheckpoint, removeCheckpoint } from './state';
 
 export type StepResult = { success: true; sessionId?: string } | { success: false; error: string };
 
@@ -20,10 +22,10 @@ export type VerifyStepFn = (
   step: PlanStep,
 ) => Promise<VerifyResult>;
 
-const IN_FLIGHT = new Map<string, true>();
-
 export function isExecuting(planName: string): boolean {
-  return IN_FLIGHT.has(planName);
+  const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
+  const lockPath = path.join('.docwright', 'executor-locks', `${safeName}.lock`);
+  return fs.existsSync(lockPath);
 }
 
 export async function executePlan(
@@ -35,38 +37,44 @@ export async function executePlan(
 ): Promise<void> {
   const planName = planFilePath.replace(/\.md$/, '').split('/').pop() || planFilePath;
 
-  if (IN_FLIGHT.has(planName)) {
-    send('error', { message: `Plan "${planName}" is already being executed.` });
+  if (!acquireLock(planName)) {
+    send('error', { message: `Plan "${planName}" is already being executed (lock held).` });
     return;
   }
-
-  let content: string;
-  try {
-    content = fs.readFileSync(planFilePath, 'utf-8');
-  } catch (err: any) {
-    send('error', { message: `Cannot read plan: ${err.message}` });
-    return;
-  }
-
-  const steps = readPlanSteps(planFilePath);
-  if (steps.length === 0) {
-    send('done', { message: 'No Implementation Steps found in plan.' });
-    return;
-  }
-
-  const pending = steps.filter(s => s.status === 'pending' || s.status === 'failed' || s.status === 'unknown');
-  if (pending.length === 0) {
-    send('done', { message: 'All steps already complete.' });
-    return;
-  }
-
-  IN_FLIGHT.set(planName, true);
-  send('status', { message: `Starting — ${pending.length}/${steps.length} step(s) pending` });
 
   try {
+    let content: string;
+    try {
+      content = fs.readFileSync(planFilePath, 'utf-8');
+    } catch (err: any) {
+      send('error', { message: `Cannot read plan: ${err.message}` });
+      return;
+    }
+
+    const steps = readPlanSteps(planFilePath);
+    if (steps.length === 0) {
+      send('done', { message: 'No Implementation Steps found in plan.' });
+      return;
+    }
+
+    const pending = steps.filter(s => s.status === 'pending' || s.status === 'failed' || s.status === 'unknown');
+    if (pending.length === 0) {
+      send('done', { message: 'All steps already complete.' });
+      return;
+    }
+
+    send('status', { message: `Starting — ${pending.length}/${steps.length} step(s) pending` });
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (step.status === 'done') continue;
+
+      // Write checkpoint before starting the step
+      writeCheckpoint(planName, {
+        current_step: step.stepNumber,
+        session_id: '', // To be filled by executeStep if possible
+        started_at: new Date().toISOString(),
+      });
 
       send('status', { message: `Executing step ${step.stepNumber}/${steps.length}: ${step.action}` });
 
@@ -123,8 +131,9 @@ export async function executePlan(
       }
     }
 
+    removeCheckpoint(planName);
     send('done', { message: 'All steps complete.' });
   } finally {
-    IN_FLIGHT.delete(planName);
+    releaseLock(planName);
   }
 }

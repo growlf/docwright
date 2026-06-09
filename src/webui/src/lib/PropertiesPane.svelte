@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showPropsPane, featureFlags, showReviewTab } from './pane';
+  import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName } from './pane';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -172,6 +172,19 @@
     }
   }
 
+  async function startExecution() {
+    const planPath = frontmatter._path ?? '';
+    const planName = planPath.replace(/^plans\//, '').replace(/\.md$/, '');
+    if (!planName) return;
+
+    // 1. Set status: in-progress (DocWright SOP)
+    await setPlanStatus('in-progress');
+
+    // 2. Open execution panel
+    executingPlanName.set(planName);
+    showExecutionPanel.set(true);
+  }
+
   let estimating = $state(false);
   let estimateHint = $state('');
   let estimateConfidence = $state<number | null>(null);
@@ -260,8 +273,13 @@
         {#if frontmatter.status === 'approved'}
           <button class="act review" onclick={() => showReviewTab.set(true)}
             title="Run adversarial AI critique before starting — still available after approval">⚡ Review</button>
-          <button class="act start" onclick={() => setPlanStatus('in-progress')} disabled={planSaving}
-            title="Set status: in-progress — marks this plan as actively being worked">{planSaving ? '…' : 'Start'}</button>
+          {#if frontmatter.automated === 'full'}
+            <button class="act start" onclick={startExecution} disabled={planSaving}
+              title="Start autonomous execution — LLM will implement steps one by one">{planSaving ? '…' : 'Start (Auto)'}</button>
+          {:else}
+            <button class="act start" onclick={() => setPlanStatus('in-progress')} disabled={planSaving}
+              title="Set status: in-progress — marks this plan as actively being worked">{planSaving ? '…' : 'Start'}</button>
+          {/if}
         {/if}
         {#if frontmatter.status === 'in-progress'}
           {#if !frontmatter.tests_defined}
@@ -326,6 +344,17 @@
     {/if}
 
     <!-- Parent plan indicator -->
+    {#if docType === 'plan'}
+      {@const mode = frontmatter.automated || 'off'}
+      <div class="field">
+        <div class="field-label">Execution Mode</div>
+        <div class="mode-badges">
+          <span class="m-badge" class:active={mode === 'off'} title="Mentorship: human executes, LLM advises">Mentor</span>
+          <span class="m-badge guided" class:active={mode === 'guided'} title="Guided: LLM drafts/stages, human approves">Guided</span>
+          <span class="m-badge auto" class:active={mode === 'full'} title="Autonomous: LLM executes steps independently">Auto</span>
+        </div>
+      </div>
+    {/if}
     {#if docType === 'plan' && frontmatter.parent_plan}
       <div class="field">
         <div class="field-label">Part of</div>
@@ -445,6 +474,29 @@
     &.cancel-plan{ @include act-variant($red,     $red-bg,     $red-bdr); }
     &.related    { @include act-variant($purple,  $purple-bg,  $purple-bdr); }
     &.estimate   { @include act-variant($teal,    $teal-bg,    $teal-bdr); }
+  }
+
+  .mode-badges {
+    display: flex;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .m-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: $bg-2;
+    border: 1px solid $border;
+    color: $muted;
+    opacity: 0.6;
+    &.active {
+      opacity: 1;
+      color: $fg;
+      border-color: $fg-dim;
+      &.guided { color: $blue; border-color: $blue-bdr; background: $blue-bg; }
+      &.auto   { color: $amber; border-color: $amber-bdr; background: #2a2000; }
+    }
   }
 
   .test-output {

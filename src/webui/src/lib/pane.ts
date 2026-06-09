@@ -35,6 +35,10 @@ export const triggerImprovePending = writable(false);
 /** Signal to switch to Review tab (set by PropertiesPane, consumed by layout) */
 export const showReviewTab = writable(false);
 
+/** Plan execution panel state */
+export const showExecutionPanel = writable(false);
+export const executingPlanName = writable('');
+
 /** Toggle to Multi-Review panel instead of ChatPanel */
 export const showMultiReview = writable(false);
 

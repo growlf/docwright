@@ -8,7 +8,8 @@
   import { toasts, dismissToast, showToast } from '$lib/toast';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
+  showExecutionPanel, executingPlanName
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import MultiReviewPanel from '$lib/MultiReviewPanel.svelte';
@@ -16,6 +17,7 @@ import {
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
+  import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
   import PoliciesPanel from '$lib/PoliciesPanel.svelte';
@@ -67,7 +69,7 @@ import {
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
-  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve'>('properties');
+  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
 
   // Subscribe to shared collation stores
   let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
@@ -281,6 +283,15 @@ import {
       showRightPanel = true;
       showReviewTab.set(false);
       handleReview();
+    }
+  });
+
+  // React to signal to switch to Execute tab
+  $effect(() => {
+    if ($showExecutionPanel) {
+      rightTab = 'execute';
+      showRightPanel = true;
+      showExecutionPanel.set(false);
     }
   });
 
@@ -749,6 +760,9 @@ import {
           onclick={() => showReviewTab.set(true)}>
           Review{prl ? ' ⏳' : pri ? ' ✓' : ''}
         </button>
+        {#if rightTab === 'execute'}
+          <button class="right-tab" class:active={true}>Execute ⚡</button>
+        {/if}
       {/if}
       {#if $currentDoc.docType === 'proposal'}
         <button class="right-tab" class:active={rightTab === 'improve'}
@@ -798,6 +812,8 @@ import {
         ondismiss={() => { rightTab = 'properties'; planReviewFindings.set(''); planReviewStatus.set(''); planReviewChanges.set(''); planReviewImproved.set(''); }}
         onrerun={handleReview}
       />
+    {:else if rightTab === 'execute'}
+      <PlanExecutePanel />
     {:else}
       <CollationPanel
         matches={cm}

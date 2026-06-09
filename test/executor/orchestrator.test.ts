@@ -30,22 +30,23 @@ function makeTempPlan(content: string): string {
 }
 
 describe('orchestrator', () => {
-  afterEach(() => {
-    // Cleanup any leaked IN_FLIGHT entries from hanging promise tests
-    // (hack: directly manipulate import — cleaner to expose a reset in prod)
-    const IN_FLIGHT = new Map<string, true>();
-    // Re-register via module-level API — can't access private map, so this is
-    // a no-op. Instead, just ensure the follow-up test uses a unique plan name.
+  const LOCK_DIR = path.join('.docwright', 'executor-locks');
+  const CP_DIR = path.join('.docwright', 'executor-checkpoints');
+
+  beforeEach(() => {
+    if (fs.existsSync(LOCK_DIR)) fs.rmSync(LOCK_DIR, { recursive: true, force: true });
+    if (fs.existsSync(CP_DIR)) fs.rmSync(CP_DIR, { recursive: true, force: true });
+  });
+
+  after(() => {
+    if (fs.existsSync(LOCK_DIR)) fs.rmSync(LOCK_DIR, { recursive: true, force: true });
+    if (fs.existsSync(CP_DIR)) fs.rmSync(CP_DIR, { recursive: true, force: true });
   });
 
   describe('isExecuting', () => {
     it('returns false for unknown plan', () => {
       assert.strictEqual(isExecuting('nonexistent'), false);
     });
-  });
-
-  afterEach(() => {
-    // no-op: each test uses unique temp paths so plan names don't collide
   });
 
   describe('executePlan', () => {
@@ -62,7 +63,7 @@ describe('orchestrator', () => {
       await executePlan(fp, async () => ({ success: true }), send);
 
       const doneEvents = events.filter(e => e.event === 'done');
-      assert.strictEqual(doneEvents.length, 1);
+      assert.strictEqual(doneEvents.length, 1, 'Expected one done event');
       assert.ok(doneEvents[0].data.message.includes('complete'));
     });
 
