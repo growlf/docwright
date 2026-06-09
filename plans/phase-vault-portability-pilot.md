@@ -1,6 +1,6 @@
 ---
 title: Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-08
 phase: 3
@@ -44,6 +44,22 @@ architecture diagrams, and alternatives considered.
 
 **Prerequisite:** Phase 2 gate review by NetYeti must complete before this plan begins.
 
+## Deliverables
+
+| # | Deliverable | Sub-Plan Proposal | Status |
+|---|-------------|-------------------|--------|
+| 1 | TypeScript MCP Server with `--mode` flag | [[proposals/sub-plan-ts-mcp-server.md]] | ⏳ Planned |
+| 2 | Vault Portability Foundation (path resolution + .mcp.json) | [[proposals/sub-plan-vault-portability-foundation.md]] | ⏳ Planned |
+| 3 | `docwright init` scaffold | [[proposals/sub-plan-docwright-init-scaffold.md]] | ⏳ Planned |
+| 4 | Profile override merge engine | [[proposals/sub-plan-profile-override-merge.md]] | ⏳ Planned |
+| 5 | Vault migration system (`MIGRATION.md` + `vault:migrate`) | [[proposals/sub-plan-vault-migration-system.md]] | ⏳ Planned |
+| 6 | Contribution pipeline & friction log | [[proposals/sub-plan-contribution-pipeline.md]] | ⏳ Planned |
+| 7 | MSP pilot vault (non-profit managed services) | [[proposals/sub-plan-msp-pilot-vault.md]] | ⏳ Planned |
+| 8 | Cascade STEAM early-access vault | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⏳ Planned |
+| 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ⏳ Planned |
+
+Deliverables 1–3 are foundational and should complete first. Deliverables 4–6 can run in parallel with 1–3. Deliverables 7–8 depend on 1–3. Deliverable 9 wraps everything.
+
 ## Implementation Steps
 
 | Step | Action | Details | Status |
@@ -73,12 +89,12 @@ architecture diagrams, and alternatives considered.
 ## Phase Gate
 
 - [ ] Phase 2 gate review complete (prerequisite)
-- [ ] TypeScript MCP server replaces Python — all tools passing (Step 1)
-- [ ] Contribution pipeline live with consent enforcement (Step 2)
-- [ ] `docwright init` produces a working vault end-to-end (Step 5)
-- [ ] MSP pilot vault: one complete proposal→plan→completed cycle (Step 8)
-- [ ] Cascade STEAM early-access vault provisioned and accessible to leadership (Step 9)
-- [ ] `docs/vault-portability.md` written and accurate (Step 11)
+- [ ] Sub-plan #1: TypeScript MCP server replaces Python — all tools passing
+- [ ] Sub-plan #6: Contribution pipeline live with consent enforcement
+- [ ] Sub-plan #3: `docwright init` produces a working vault end-to-end
+- [ ] Sub-plan #7: MSP pilot vault — one complete proposal→plan→completed cycle
+- [ ] Sub-plan #8: Cascade STEAM early-access vault provisioned and accessible to leadership
+- [ ] Sub-plan #9: `docs/vault-portability.md` written and accurate
 - [ ] Phase 3 gate review by NetYeti
 
 ## Document History
@@ -88,6 +104,5 @@ architecture diagrams, and alternatives considered.
 | 2026-06-08 | Added Step 9 (Cascade STEAM early-access vault) — pulls Phase 5 "first governance cycle" proof into Phase 3; Phase 5 now focuses on production infrastructure only | NetYeti |
 | 2026-06-08 | Filled implementation steps, testing plan, risk assessment, phase gate from approved proposal | NetYeti |
 | 2026-06-08 | Created from approved proposal | NetYeti |
-
----
-⚠ **Governance:** mutate this plan via MCP only — update_step · update_plan_status · append_history · set_plan_field · write_plan. Direct writes to `plans/*.md` are blocked by the PreToolUse hook.
+| 2026-06-09 | Decomposed into 9 standalone sub-plans with proposals and Deliverables table — TS MCP server, vault foundation, init scaffold, profile merge, migration system, contribution pipeline, MSP pilot, Cascade STEAM, architecture doc | NetYeti |
+| 2026-06-09 | Decomposed into 9 standalone sub-plans with proposals and Deliverables table | NetYeti |

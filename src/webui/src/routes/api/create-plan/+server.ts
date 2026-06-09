@@ -11,6 +11,13 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') || 'plan';
 }
 
+function hasTestingPlan(content: string): boolean {
+  const m = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=^##\s|\n*$)/m);
+  if (!m) return false;
+  const section = m[1].trim();
+  return section !== '' && section !== '_Add test plan during implementation._';
+}
+
 function readFrontmatter(filePath: string): Record<string, any> | null {
   if (!fs.existsSync(filePath)) return null;
   const raw = fs.readFileSync(filePath, 'utf-8');
@@ -189,6 +196,19 @@ ${validCandidates.length > 1 ? `This plan bundles: ${validCandidates.map(c => `[
 `;
     fs.mkdirSync(path.dirname(resolved), { recursive: true });
     fs.writeFileSync(resolved, content, 'utf-8');
+  }
+
+  // Check candidate proposals for testing plan sections → auto-set tests_defined
+  const hasAnyTesting = validCandidates.some(cand => {
+    const candPath = path.join(REPO_ROOT, resolvePath(cand));
+    if (!fs.existsSync(candPath)) return false;
+    const raw = fs.readFileSync(candPath, 'utf-8');
+    return hasTestingPlan(raw);
+  });
+  if (hasAnyTesting) {
+    const planRaw = fs.readFileSync(resolved, 'utf-8');
+    const updated = planRaw.replace(/^(tests_defined:\s*).+$/m, `$1true`);
+    if (updated !== planRaw) fs.writeFileSync(resolved, updated);
   }
 
   // Set consumed_by on each valid candidate (skip already-planned)

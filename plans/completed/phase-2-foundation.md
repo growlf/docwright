@@ -6,7 +6,7 @@ author: NetYeti
 created: 2026-06-03
 phase: 2
 gate_reviewer: NetYeti
-gate_status: pending
+gate_status: approved
 tags:
   - phase-2
   - profile-engine
@@ -14,7 +14,7 @@ tags:
   - ci
   - foss
 priority: high
-automated: off
+automated: full
 assigned_to: NetYeti
 tests_defined: true
 proposal_source:
@@ -28,7 +28,7 @@ depends_on:
 scenario_synthesis: Web UI and dispatch module work; no VSCodium extension or IDE-specific steps
 total_steps: 0
 completed_steps: 0
-_path: plans/phase-2-foundation.md
+_path: plans/completed/phase-2-foundation.md
 ---
 # Phase 2 — Foundation (Web-First)
 
@@ -68,18 +68,18 @@ Phase 1 delivered a complete, polished Web UI. Phase 2 built the foundation: pro
 
 ## Phase Gate
 
-*    Phase 1 gate fully cleared
-*    Dispatch CI: zero VS Code API leakage confirmed (Deliverable 2)
-*    FOSS hygiene complete — all files present (Deliverable 6)
-*    Research Stage MVP delivered (Deliverable 9)
-*    Plan execution mode research complete, proposal submitted (Deliverable 10)
-*    Fix stale approvals: script + hook + tests (Deliverable 11)
-*    Assign plans to phases: end-to-end working (Deliverable 12)
-*    Deliverable 1 (profile engine runtime) → deferred to Phase 4 (documented)
-*    Deliverable 7/8 (TypeScript MCP) → moved to Phase 3 as first deliverable (documented)
-*    Deliverable 3 (inbox capture) → deferred to Phase 4 (documented)
-*    `tests_defined: true`
-*    Phase 2 gate review by NetYeti
+*   Phase 1 gate fully cleared
+*   Dispatch CI: zero VS Code API leakage confirmed (Deliverable 2)
+*   FOSS hygiene complete — all files present (Deliverable 6)
+*   Research Stage MVP delivered (Deliverable 9)
+*   Plan execution mode research complete, proposal submitted (Deliverable 10)
+*   Fix stale approvals: script + hook + tests (Deliverable 11)
+*   Assign plans to phases: end-to-end working (Deliverable 12)
+*   Deliverable 1 (profile engine runtime) → deferred to Phase 4 (documented)
+*   Deliverable 7/8 (TypeScript MCP) → moved to Phase 3 as first deliverable (documented)
+*   Deliverable 3 (inbox capture) → deferred to Phase 4 (documented)
+*   `tests_defined: true`
+*   Phase 2 gate review by NetYeti
 
 ## Document History
 

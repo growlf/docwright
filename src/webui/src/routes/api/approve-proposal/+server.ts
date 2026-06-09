@@ -8,6 +8,13 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
 
 const AUDIT_LOG = path.join(REPO_ROOT, '.docwright', 'audit.jsonl');
 
+function hasTestingPlan(content: string): boolean {
+  const m = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=^##\s|\n*$)/m);
+  if (!m) return false;
+  const section = m[1].trim();
+  return section !== '' && section !== '_Add test plan during implementation._';
+}
+
 function parseFrontmatter(raw: string): Record<string, any> {
   const m = raw.match(/^---\n([\s\S]*?)\n---/);
   if (!m) return {};
@@ -128,6 +135,15 @@ tests_human_reviewed: false
   const planPath = path.join(REPO_ROOT, planRel);
   if (!fs.existsSync(path.dirname(planPath))) fs.mkdirSync(path.dirname(planPath), { recursive: true });
   fs.writeFileSync(planPath, planContent, 'utf-8');
+
+  // Auto-detect tests_defined from proposal body
+  const bodyMatch = raw.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  const proposalBody = bodyMatch ? bodyMatch[1] : '';
+  if (proposalBody && hasTestingPlan(proposalBody)) {
+    const planRaw = fs.readFileSync(planPath, 'utf-8');
+    const updated = planRaw.replace(/^(tests_defined:\s*).+$/m, `$1true`);
+    if (updated !== planRaw) fs.writeFileSync(planPath, updated);
+  }
 
   // Move proposal to proposals/approved/ (only after plan is safely on disk)
   const dstDir = path.join(REPO_ROOT, 'proposals', 'approved');

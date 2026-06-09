@@ -27,6 +27,7 @@ export function lintDocument(
   filePath: string,
   fm: Record<string, any>,
   _profile: ProfileConfig,
+  parentStatuses?: Record<string, string>,
 ): LintResult[] {
   const results: LintResult[] = [];
 
@@ -73,6 +74,42 @@ export function lintDocument(
     (fm.phase === undefined || fm.phase === null || String(fm.phase).trim() === '')
   ) {
     results.push({ field: 'phase', severity: 'warn', message: 'Active plan has no phase assignment — set phase: in frontmatter' });
+  }
+
+  // Suggest parent_plan for Phase 2+ plan documents (non-phase-overview) that lack it
+  if (
+    filePath.startsWith('plans/') &&
+    !filePath.startsWith('plans/completed/') &&
+    !/^phase-/.test(filePath.replace(/^.*\//, '')) &&
+    fm.phase &&
+    parseInt(String(fm.phase)) >= 2 &&
+    !fm.parent_plan
+  ) {
+    results.push({
+      field: 'parent_plan',
+      severity: 'warn',
+      message: `Phase ${fm.phase} plan without parent_plan — consider setting parent_plan to the phase overview plan`,
+    });
+  }
+
+  // Stale parent detection: completed sub-plan whose parent deliverable isn't ✅
+  if (
+    filePath.startsWith('plans/') &&
+    fm.status === 'completed' &&
+    fm.parent_plan &&
+    fm.parent_deliverable
+  ) {
+    const parentPlan = String(fm.parent_plan);
+    const deliverableNum = String(fm.parent_deliverable);
+    const key = `${parentPlan}|${deliverableNum}`;
+    const parentStatus = parentStatuses?.[key];
+    if (parentStatus && parentStatus !== '✅ Done' && parentStatus !== '✅') {
+      results.push({
+        field: 'parent_plan',
+        severity: 'warn',
+        message: `sub-plan complete but parent deliverable #${deliverableNum} in ${parentPlan} still shows "${parentStatus}"`,
+      });
+    }
   }
 
   // Research document rules

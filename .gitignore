@@ -64,3 +64,4 @@ spike/
 # Source maps
 *.js.map
 .logs/
+session-ses_*.md

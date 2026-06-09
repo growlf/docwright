@@ -246,39 +246,69 @@
   // ---------------------------------------------------------------------------
   // Save / frontmatter actions
   // ---------------------------------------------------------------------------
-  async function save() {
-    if (mode === 'edit') syncHtmlToRaw();
-    if (frontmatter) raw = buildRaw(frontmatter, content);
-    const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: raw }),
-    });
-    if (!res.ok) {
-      showToast(`Save failed (${res.status}) — check the console`, 5000);
-      return;
-    }
-    if (res.ok) {
-      mode = 'read';
-      const parsed = splitFrontmatter(raw);
-      frontmatter = parsed.frontmatter;
-      content = parsed.body;
-      html = md.render(content);
-      showToast('Saved', 2000);
-      if (docType === 'proposal') {
-        if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
-        else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
-        // On-save trigger: fire improvement pass non-blocking on first save of a new proposal
-        if (lastBodyLen === 0) triggerImproveOnSave();
+  async function triggerPlanCompletedTransition() {
+    try {
+      const planName = filePath().replace(/^plans\//, '').replace(/\.md$/, '');
+      const transRes = await fetch('/api/lifecycle/transition-completed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planName }),
+      });
+      if (transRes.ok) {
+        const data = await transRes.json().catch(() => ({ doc: null }));
+        showToast(`Plan complete ✓ — archived to ${data.doc || 'plans/completed/'}`, 3000);
+        setTimeout(() => goto('/status'), 800);
+      } else {
+        const err = await transRes.json().catch(() => ({ error: `HTTP ${transRes.status}` }));
+        showToast(`⚠ ${err.error}`, 5000);
       }
+    } catch (e) {
+      showToast(`⚠ Transition failed: ${e instanceof Error ? e.message : 'unknown error'}`, 5000);
+    }
+  }
+
+  async function save() {
+    try {
+      if (mode === 'edit') syncHtmlToRaw();
+      if (frontmatter) raw = buildRaw(frontmatter, content);
+      const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: raw }),
+      });
+      if (!res.ok) {
+        showToast(`Save failed (${res.status}) — check the console`, 5000);
+        return;
+      }
+      if (res.ok) {
+        mode = 'read';
+        const parsed = splitFrontmatter(raw);
+        frontmatter = parsed.frontmatter;
+        content = parsed.body;
+        html = md.render(content);
+        showToast('Saved', 2000);
+        if (docType === 'plan' && frontmatter?.status === 'completed') {
+          await triggerPlanCompletedTransition();
+        }
+        if (docType === 'proposal') {
+          if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
+          else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
+          // On-save trigger: fire improvement pass non-blocking on first save of a new proposal
+          if (lastBodyLen === 0) triggerImproveOnSave();
+        }
+      }
+    } catch (e) {
+      showToast(`⚠ Save error: ${e instanceof Error ? e.message : 'unknown error'}`, 5000);
     }
   }
 
   async function saveFrontmatter(fm?: Record<string, any>) {
     // When called from the layout's PropertiesPane, fm contains the mutated
     // frontmatter — apply it to local state before saving
-    const prevApproved = frontmatter?.approved;
-    const prevStatus = frontmatter?.status;
+    // Capture prev state from raw file content (NOT from reactive frontmatter,
+    // which may already be mutated by $bindable() propagation).
+    const prevParsed = splitFrontmatter(raw);
+    const prevApproved = prevParsed.frontmatter?.approved;
     if (fm) frontmatter = { ...fm };
     // If the plan body was edited (not just frontmatter), reset tests_defined
     // so the user must re-run tests before completing.
@@ -289,30 +319,7 @@
       }
     }
     if (frontmatter) raw = buildRaw(frontmatter, content);
-    await save();
-
-    // When a plan transitions to completed, call the MCP transition endpoint
-    // to archive the file to plans/completed/ and generate the doc.
-    if (
-      docType === 'plan' &&
-      frontmatter?.status === 'completed' &&
-      prevStatus !== 'completed'
-    ) {
-      const planName = filePath().replace(/^plans\//, '').replace(/\.md$/, '');
-      const transRes = await fetch('/api/lifecycle/transition-completed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planName }),
-      });
-      if (transRes.ok) {
-        const { doc } = await transRes.json();
-        showToast(`Plan complete ✓ — archived to ${doc || 'plans/completed/'}`, 3000);
-        setTimeout(() => goto('/status'), 800);
-      } else {
-        const { error } = await transRes.json().catch(() => ({ error: 'Transition failed' }));
-        showToast(`⚠ ${error}`, 5000);
-      }
-    }
+    await save();  // save() already triggers transition for completed plans
 
     // When a proposal is saved with approved: true and is still in proposals/ root
     // (not proposals/approved/), trigger the full approval flow — move + plan creation.

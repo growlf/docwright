@@ -103,6 +103,8 @@ function entry(p: string, fm: Record<string, any>) {
     depends_on: asList(fm.depends_on),
     proposal_source: asList(fm.proposal_source),
     phase: fm.phase !== undefined && fm.phase !== '' ? String(fm.phase) : null,
+    parentPlan: String(fm.parent_plan ?? ''),
+    parentDeliverable: String(fm.parent_deliverable ?? ''),
   };
 }
 

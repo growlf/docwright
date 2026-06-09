@@ -14,6 +14,8 @@ proposal_source: proposals/approved/research-plan-execution-modes.md
 priority: high
 automated: guided
 assigned_to: NetYeti
+parent_plan: phase-2-foundation.md
+parent_deliverable: "10"
 tests_defined: true
 phase: 2
 scenario_synthesis: Research process — surveys, naming analysis, UI mocks, enforcement contract; no infrastructure steps

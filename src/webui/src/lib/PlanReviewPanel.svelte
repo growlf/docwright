@@ -24,6 +24,19 @@
 
   let scrollEl: HTMLDivElement | undefined = $state();
 
+  let elapsed = $state(0);
+  let elapsedTimer: ReturnType<typeof setInterval> | undefined = $state();
+
+  $effect(() => {
+    if (loading) {
+      elapsed = 0;
+      elapsedTimer = setInterval(() => elapsed++, 1000);
+    } else {
+      if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = undefined; }
+    }
+    return () => { if (elapsedTimer) clearInterval(elapsedTimer); };
+  });
+
   async function scrollToBottom() {
     await tick();
     if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
@@ -46,12 +59,14 @@
   {#if loading}
     <div class="content-scroll streaming" bind:this={scrollEl}>
       {#if status}
-        <div class="status-line">{status}</div>
+        <div class="status-line">{status} <span class="elapsed">({elapsed}s)</span></div>
+      {:else}
+        <div class="status-line">Waiting for AI response… <span class="elapsed">({elapsed}s)</span></div>
       {/if}
       {#if findings}
         <pre class="streaming-text">{findings}<span class="cursor">▊</span></pre>
-      {:else}
-        <div class="status-line">Waiting for AI response…</div>
+      {:else if elapsed > 20}
+        <div class="status-line hint">Still waiting… the model may be cold-starting. No timeout yet.</div>
       {/if}
     </div>
   {:else if !improved}
@@ -111,6 +126,8 @@
 
   .streaming { font-family: monospace; font-size: 12px; line-height: 1.6; color: $fg; }
   .status-line { color: $blue; font-weight: 600; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-line .elapsed { font-weight: 400; opacity: 0.7; }
+  .status-line.hint { color: $muted; font-weight: 400; font-size: 10px; text-transform: none; letter-spacing: 0; }
   .streaming-text { white-space: pre-wrap; margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; color: inherit; }
   .cursor { animation: blink 0.8s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }

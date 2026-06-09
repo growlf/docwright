@@ -49,6 +49,54 @@ describe('Frontmatter linter', () => {
   });
 });
 
+describe('Stale parent detection', () => {
+  it('warns when completed sub-plan has stale parent deliverable', () => {
+    const fm = {
+      title: 'Sub plan', status: 'completed', author: 'NetYeti',
+      created: '2026-06-09', assigned_to: 'Dev',
+      parent_plan: 'phase-parent.md', parent_deliverable: '3',
+    };
+    const parentStatuses = { 'phase-parent.md|3': '⏳ Planned' };
+    const results = lintDocument('plans/sub.md', fm, profile, parentStatuses);
+    const stale = results.find(r => r.field === 'parent_plan' && r.severity === 'warn');
+    assert.ok(stale, 'should warn when parent deliverable is stale');
+    assert.ok(stale!.message.includes('#3'), 'message should reference deliverable number');
+  });
+
+  it('passes when completed sub-plan has parent deliverable marked done', () => {
+    const fm = {
+      title: 'Sub plan', status: 'completed', author: 'NetYeti',
+      created: '2026-06-09', assigned_to: 'Dev',
+      parent_plan: 'phase-parent.md', parent_deliverable: '2',
+    };
+    const parentStatuses = { 'phase-parent.md|2': '✅ Done' };
+    const results = lintDocument('plans/sub.md', fm, profile, parentStatuses);
+    const stale = results.find(r => r.field === 'parent_plan');
+    assert.ok(!stale, 'should not warn when parent deliverable is done');
+  });
+
+  it('is no-op when parent_plan is absent', () => {
+    const fm = {
+      title: 'Sub plan', status: 'completed', author: 'NetYeti',
+      created: '2026-06-09', assigned_to: 'Dev',
+    };
+    const results = lintDocument('plans/sub.md', fm, profile, {});
+    const stale = results.find(r => r.field === 'parent_plan');
+    assert.ok(!stale, 'should not warn when parent_plan is absent');
+  });
+
+  it('is no-op when no parentStatuses provided', () => {
+    const fm = {
+      title: 'Sub plan', status: 'completed', author: 'NetYeti',
+      created: '2026-06-09', assigned_to: 'Dev',
+      parent_plan: 'phase-parent.md', parent_deliverable: '1',
+    };
+    const results = lintDocument('plans/sub.md', fm, profile);
+    const stale = results.find(r => r.field === 'parent_plan');
+    assert.ok(!stale, 'should not warn when no parent statuses provided');
+  });
+});
+
 describe('Frontmatter linter — research documents', () => {
   const validResearch = {
     title: 'Research: SSE vs WebSocket for live updates',

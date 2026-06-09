@@ -14,6 +14,8 @@ proposal_source: proposals/mcp-tool-batch-fix-stale-approvals
 priority: medium
 automated: guided
 assigned_to: NetYeti
+parent_plan: phase-2-foundation.md
+parent_deliverable: "11"
 tests_defined: true
 tests_human_reviewed: false
 phase: 2

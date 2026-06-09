@@ -40,6 +40,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
+
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError:
@@ -125,15 +127,18 @@ def _set_frontmatter_field(text: str, field: str, value: str) -> str:
 
 
 def _has_pending_steps(text: str) -> bool:
-    """Return True if text has ⏳ in a pipe-table row inside Implementation Steps section."""
+    """Return True if ⏳ appears in the Status column (last cell) of a step row.
+    ⏳ in the Details column is fine — only the Status column matters."""
     in_sec = False
     for line in text.splitlines():
         if line.startswith("## "):
             in_sec = "Implementation Steps" in line
         elif line.startswith("### ") and not in_sec:
             pass
-        elif in_sec and line.startswith("|") and "⏳" in line:
-            return True
+        elif in_sec and line.startswith("|") and not line.startswith("|---"):
+            cells = [c.strip() for c in line.split("|") if c.strip()]
+            if cells and "⏳" in cells[-1]:
+                return True
     return False
 
 
@@ -172,6 +177,91 @@ def _update_step_counts(text: str) -> str:
     text = _ensure_frontmatter_field(text, "total_steps", str(total))
     text = _ensure_frontmatter_field(text, "completed_steps", str(completed))
     return text
+
+
+def _update_parent_deliverable(
+    sub_plan_text: str, sub_plan_name: str
+) -> str:
+    """
+    If the plan has parent_plan + parent_deliverable frontmatter, update
+    the parent's Deliverables table row to ✅ Done and append history.
+    Returns status message or empty string if no parent fields set.
+    """
+    fm = _parse_frontmatter(sub_plan_text)
+    parent_plan = (fm.get("parent_plan") or "").strip()
+    parent_deliverable = (fm.get("parent_deliverable") or "").strip()
+    if not parent_plan or not parent_deliverable:
+        return ""
+
+    # Normalize parent filename
+    if not parent_plan.endswith(".md"):
+        parent_plan += ".md"
+    parent_path = f"plans/{parent_plan}"
+
+    try:
+        parent_text = _read_file(parent_path)
+    except FileNotFoundError:
+        return f"WARNING: Parent plan '{parent_plan}' not found — no deliverable updated."
+
+    deliverable_num = parent_deliverable.strip()
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Find the ## Deliverables section and update the matching row
+    in_deliverables = False
+    lines = parent_text.splitlines()
+    new_lines: list[str] = []
+    row_found = False
+    old_status = ""
+
+    for line in lines:
+        if line.startswith("## "):
+            in_deliverables = "Deliverables" in line
+
+        if in_deliverables and line.startswith("|") and not line.startswith("|---"):
+            parts = line.split("|")
+            # parts[1] is the first cell (after opening |)
+            if len(parts) >= 2 and parts[1].strip() == deliverable_num:
+                # Replace the last non-empty cell with ✅ Done
+                for i in range(len(parts) - 1, -1, -1):
+                    if parts[i].strip():
+                        old_status = parts[i].strip()
+                        parts[i] = " ✅ Done "
+                        break
+                line = "|".join(parts)
+                row_found = True
+
+        new_lines.append(line)
+
+    if not row_found:
+        return f"WARNING: Deliverable row #{deliverable_num} not found in parent '{parent_plan}' — no update."
+
+    new_parent_text = "\n".join(new_lines)
+
+    # Write back and verify
+    _write_file(parent_path, new_parent_text)
+    verify = _read_file(parent_path)
+    if verify != new_parent_text:
+        return f"ERROR: Parent '{parent_plan}' write verification failed — file may be corrupted."
+
+    # Append history to parent
+    history_row = f"| {now} | Sub-plan {sub_plan_name.replace('.md','')} completed — Deliverable {deliverable_num}: {old_status} → ✅ Done | _auto_ |"
+    if "## Document History" in verify:
+        verify = verify.rstrip("\n") + "\n" + history_row + "\n"
+    else:
+        verify += f"\n\n## Document History\n\n| Date | Change | Author |\n|------|--------|--------|\n{history_row}\n"
+    _write_file(parent_path, verify)
+
+    return f"Parent '{parent_plan}' deliverable #{deliverable_num}: {old_status} → ✅ Done."
+
+
+def _has_testing_plan(content: str) -> bool:
+    """Check if content has a ## Testing Plan section with non-empty content."""
+    m = re.search(r"^##\s+Testing Plan\s*\n(.*?)(?=^##\s|\Z)", content, re.MULTILINE | re.DOTALL)
+    if not m:
+        return False
+    section = m.group(1).strip()
+    # Consider it meaningful if it has more than just a placeholder or empty text
+    return bool(section) and section not in ("_Add test plan during implementation._", "", "{{VALUE:testing}}")
 
 
 def _check_completion_gate(text: str, plan_name: str) -> str | None:
@@ -603,11 +693,30 @@ async def run_dry_run() -> str:
 
 
 @mcp.tool()
+def _parse_frontmatter(text: str) -> dict:
+    """Parse YAML frontmatter from markdown text into a dict."""
+    m = re.match(r"^---\s*\n(.*?)\n---", text, re.DOTALL)
+    if not m:
+        return {}
+    try:
+        return yaml.safe_load(m.group(1)) or {}
+    except yaml.YAMLError:
+        return {}
+
+
+def _format_yaml_list(items: list) -> str:
+    """Format a list as indented YAML lines."""
+    if not items:
+        return ""
+    return "\n" + "\n".join(f"  - {item}" for item in items)
+
+
 async def transition_to_approved(proposal_name: str) -> str:
     """
     Transition a proposal with approved: true to proposals/approved/ and create a plan.
     Only call this after the human has set approved: true and assigned_to in the frontmatter.
     Validates: approved must be true, assigned_to must be non-empty.
+    Carries over priority, parent_plan, parent_deliverable, phase, tags from the proposal.
     """
     safe = Path(proposal_name if proposal_name.endswith(".md") else proposal_name + ".md").name
 
@@ -616,9 +725,11 @@ async def transition_to_approved(proposal_name: str) -> str:
     except FileNotFoundError:
         return f"ERROR: Proposal '{proposal_name}' not found in proposals/."
 
-    approved = _extract_frontmatter_field(text, "approved")
-    assigned = _extract_frontmatter_field(text, "assigned_to")
-    title = _extract_frontmatter_field(text, "title") or safe.replace(".md", "")
+    fm = _parse_frontmatter(text)
+
+    approved = str(fm.get("approved", "")).lower()
+    assigned = str(fm.get("assigned_to", "")).strip()
+    title = fm.get("title") or safe.replace(".md", "")
 
     if approved != "true":
         return f"ERROR: Proposal '{proposal_name}' has approved={approved}. Only humans set approved: true."
@@ -627,30 +738,80 @@ async def transition_to_approved(proposal_name: str) -> str:
 
     _move_file(f"proposals/{safe}", f"proposals/approved/{safe}")
 
-    plan_slug = safe.replace(".md", ".md")
+    tags = fm.get("tags", [])
+    if isinstance(tags, str):
+        tags = [tags]
+    tags_yaml = _format_yaml_list(tags)
+
+    priority = fm.get("priority", "medium")
+    phase = fm.get("phase", "")
+    parent_plan = fm.get("parent_plan", "")
+    parent_deliverable = fm.get("parent_deliverable", "")
+    complexity = fm.get("complexity", "")
+
+    fields = []
+    fields.append(f"title: {title}")
+    fields.append(f"status: approved")
+    fields.append(f"author: {fm.get('author') or 'NetYeti'}")
+    fields.append(f"created: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}")
+    fields.append(f"tags:{tags_yaml}")
+    fields.append(f"proposal_source: proposals/approved/{safe}")
+    fields.append(f"priority: {priority}")
+    if phase:
+        fields.append(f"phase: {phase}")
+    if complexity:
+        fields.append(f"complexity: {complexity}")
+    fields.append(f"automated: guided")
+    fields.append(f"assigned_to: {assigned}")
+    if parent_plan:
+        fields.append(f"parent_plan: {parent_plan}")
+    if parent_deliverable:
+        fields.append(f"parent_deliverable: \"{parent_deliverable}\"")
+    has_tests = _has_testing_plan(body)
+    fields.append(f"tests_defined: {'true' if has_tests else 'false'}")
+
+    plan_slug = safe
+
+    # Extract proposal body (everything after frontmatter) as overview material
+    body = re.sub(r"^---.*?\n---\s*", "", text, count=1, flags=re.DOTALL).strip()
+
     plan_content = f"""---
-title: {title}
-status: approved
-author: {_extract_frontmatter_field(text, 'author') or 'NetYeti'}
-created: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
-tags: {_extract_frontmatter_field(text, 'tags') or ''}
-proposal_source: proposals/approved/{safe}
-priority: medium
-automated: guided
-assigned_to: {assigned}
+{chr(10).join(fields)}
 ---
 
-## Summary
+# {title}
+
+## Overview
 
 *Plan generated from approved proposal: {title}*
 
-## Tasks
+{body}
 
-- [ ] Task 1
+## Implementation Steps
 
-## Progress
+| Step | Action | Details | Status |
+|------|--------|---------|--------|
+| 1 | | | ⏳ Pending |
 
-- [ ] Plan created from approved proposal
+## Testing Plan
+
+_Add test plan during implementation._
+
+## Rollback Procedures
+
+_Add rollback procedures during implementation._
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| {datetime.now(timezone.utc).strftime('%Y-%m-%d')} | Created from approved proposal | {fm.get('author') or 'NetYeti'} |
 """
     _write_file(f"plans/{plan_slug}", plan_content)
 
@@ -679,6 +840,9 @@ async def transition_to_completed(plan_name: str) -> str:
 
     if _has_pending_steps(text):
         return f"ERROR: Plan '{plan_name}' has ⏳ pending steps. Mark all step rows ✅ Done before completing."
+
+    # Update parent plan's Deliverables table if parent_plan + parent_deliverable set
+    parent_msg = _update_parent_deliverable(text, safe)
 
     completed_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -711,7 +875,10 @@ tags: {_extract_frontmatter_field(text, 'tags') or ''}
     _write_file(f"docs/{doc_slug}", doc_content)
 
     _log_transition("COMPLETED", f"plan/{safe} → plans/completed/ + doc generated")
-    return f"✅ Plan '{safe}' completed and moved to plans/completed/. Doc generated at docs/{doc_slug}."
+    msg = f"✅ Plan '{safe}' completed and moved to plans/completed/. Doc generated at docs/{doc_slug}."
+    if parent_msg:
+        msg += f"\n{parent_msg}"
+    return msg
 
 
 @mcp.tool()
@@ -858,8 +1025,9 @@ async def write_plan(plan_name: str, content: str) -> str:
         )
 
     content = _update_step_counts(content)
-    # Reset tests_defined on structural rewrite — mutations invalidate coverage
-    content = _set_frontmatter_field(content, "tests_defined", "false")
+    # Auto-detect tests_defined from content — mutations may add or remove tests
+    has_tests = _has_testing_plan(content)
+    content = _set_frontmatter_field(content, "tests_defined", "true" if has_tests else "false")
     _write_file(f"plans/{safe}", content)
     _log_transition("PLAN_REWRITE", f"plan/{safe}: structural rewrite")
     return f"✅ Plan '{safe}' rewritten. Step counts updated in frontmatter."

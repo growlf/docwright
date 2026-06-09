@@ -265,6 +265,58 @@ validate_location_invariant() {
 }
 
 # =============================================================================
+# Parent plan sync validation
+# =============================================================================
+validate_parent_plan_sync() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && return 0
+    [[ "$FILE" =~ ^plans/completed/ ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "completed" ] && return 0
+
+    local PARENT_PLAN=$(echo "$FM" | grep "^parent_plan:" | sed 's/^parent_plan:[[:space:]]*//' | tr -d '"' | xargs)
+    local DELIVERABLE=$(echo "$FM" | grep "^parent_deliverable:" | sed 's/^parent_deliverable:[[:space:]]*//' | tr -d '"' | xargs)
+    [ -z "$PARENT_PLAN" ] || [ -z "$DELIVERABLE" ] && return 0
+
+    # Normalize parent filename
+    [[ "$PARENT_PLAN" == *.md ]] || PARENT_PLAN="${PARENT_PLAN}.md"
+
+    local PARENT_FILE="plans/${PARENT_PLAN}"
+    [ ! -f "$PARENT_FILE" ] && print_warning "$FILE: references parent_plan '${PARENT_PLAN}' but file not found" && return 0
+
+    local PARENT_FM=$(get_frontmatter "$PARENT_FILE"); [ -z "$PARENT_FM" ] && return 0
+    local IN_DELIVERABLES=0
+    local FOUND_STATUS=""
+    while IFS= read -r line; do
+        if echo "$line" | grep -q "^## "; then
+            if echo "$line" | grep -q "Deliverables"; then
+                IN_DELIVERABLES=1
+            else
+                IN_DELIVERABLES=0
+            fi
+            continue
+        fi
+        [ "$IN_DELIVERABLES" != "1" ] && continue
+        # Skip separator rows (---|---|---)
+        echo "$line" | grep -qE '^\|[-\s|]+\|$' && continue
+        # Match data rows
+        if echo "$line" | grep -q "^|"; then
+            local FIRST_CELL=$(echo "$line" | cut -d'|' -f2 | xargs)
+            if [ "$FIRST_CELL" = "$DELIVERABLE" ]; then
+                FOUND_STATUS=$(echo "$line" | awk -F'|' '{print $NF}' | xargs)
+                break
+            fi
+        fi
+    done < "$PARENT_FILE"
+
+    [ -z "$FOUND_STATUS" ] && print_warning "$FILE: deliverable #${DELIVERABLE} not found in ${PARENT_PLAN}'s Deliverables table" && return 0
+    echo "$FOUND_STATUS" | grep -qE '^✅' && return 0
+    print_warning "$FILE: completed but parent deliverable #${DELIVERABLE} in ${PARENT_PLAN} still shows \"${FOUND_STATUS}\""
+    return 0
+}
+
+# =============================================================================
 # 11. File existence invariant (no duplicate proposal/plan in root + approved)
 # =============================================================================
 validate_no_duplicate_locations() {
@@ -341,6 +393,7 @@ for FILE in $STAGED; do
     validate_no_self_approval "$FILE" || ((ERRORS++))
     validate_location_invariant "$FILE" || ((ERRORS++))
     validate_phase_review_gate "$FILE" || ((ERRORS++))
+    validate_parent_plan_sync "$FILE" || ((WARNINGS++))
     validate_no_duplicate_locations "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^research/.+\.md$ ]] && { validate_research_document "$FILE" || ((ERRORS++)); }
 done

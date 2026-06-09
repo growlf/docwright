@@ -38,6 +38,18 @@ export async function POST({ request }) {
       const dirParam = `directory=${encodeURIComponent(REPO_ROOT)}`;
 
       try {
+        // Quick connectivity check — 10s to reach OpenCode
+        send('status', { message: 'Connecting to AI...' });
+        const connectCtrl = new AbortController();
+        const connectTimer = setTimeout(() => connectCtrl.abort(), 10_000);
+        try {
+          await fetch(opencodeUrl, { method: 'HEAD', signal: connectCtrl.signal });
+        } catch {
+          clearTimeout(connectTimer);
+          throw new Error('AI backend unreachable — is the OpenCode server running?');
+        }
+        clearTimeout(connectTimer);
+
         send('status', { message: 'Building context...' });
         const context = buildPlanReviewContext(planPath, planRaw, REPO_ROOT);
 

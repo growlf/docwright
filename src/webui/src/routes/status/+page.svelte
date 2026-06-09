@@ -453,6 +453,9 @@
                       {#if p.depends_on && p.depends_on.length > 0}
                         <span class="item-deps">↳ needs: {p.depends_on.map((d: string) => d.replace(/^plans\/(completed\/)?/, '').replace(/\.md$/, '')).join(', ')}</span>
                       {/if}
+                      {#if p.parentPlan}
+                        <span class="item-deps">↳ parent: <a href="/plans/{p.parentPlan.replace(/\.md$/, '')}" onclick={(e) => { e.stopPropagation(); navTo({ path: 'plans/' + p.parentPlan }); }}>{p.parentPlan.replace(/\.md$/, '')}</a></span>
+                      {/if}
                     </td>
                     <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
                     <td class="item-date">{p.assigned_to || '—'}</td>

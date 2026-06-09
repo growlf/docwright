@@ -14,6 +14,8 @@ priority: medium
 phase: 2
 automated: guided
 assigned_to: NetYeti
+parent_plan: phase-2-foundation.md
+parent_deliverable: "12"
 tests_defined: true
 tests_human_reviewed: false
 total_steps: 6

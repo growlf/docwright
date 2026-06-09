@@ -20,7 +20,12 @@ function hasPendingSteps(text: string): boolean {
   let inSteps = false;
   for (const line of text.split('\n')) {
     if (line.startsWith('## ')) { inSteps = line.includes('Implementation Steps'); continue; }
-    if (inSteps && line.startsWith('|') && line.includes('⏳')) return true;
+    if (inSteps && line.startsWith('|') && !line.startsWith('|---')) {
+      // Only check the Status column (last cell) — ⏳ in Details column is fine
+      const cells = line.split('|').filter(c => c.trim() !== '');
+      const lastCell = cells[cells.length - 1] || '';
+      if (lastCell.includes('⏳')) return true;
+    }
   }
   return false;
 }

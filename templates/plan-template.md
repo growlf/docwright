@@ -11,6 +11,8 @@ phase: {{VALUE:phase}}
 automated: guided
 waiting_reason:  # Populated when status = waiting-for-user
 assigned_to: ["{{VALUE:assigned_to}}"]
+# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
+# parent_deliverable: "1"            # row number in parent's Deliverables table
 related_to: []
 depends_on: []
 blocks: []

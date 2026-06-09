@@ -15,6 +15,8 @@ proposal_source: proposals/approved/research-stage-methodology.md
 priority: medium
 automated: guided
 assigned_to: Netyeti
+parent_plan: phase-2-foundation.md
+parent_deliverable: "9"
 tests_defined: true
 total_steps: 8
 completed_steps: 8

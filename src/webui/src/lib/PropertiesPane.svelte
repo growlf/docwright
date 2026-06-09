@@ -204,7 +204,15 @@
     // Only count rows inside the Implementation Steps section
     const stepsMatch = body.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
     const section = stepsMatch ? stepsMatch[0] : body;
-    return (section.match(/⏳/g) ?? []).length;
+    // Only check the Status column (last cell) — ⏳ in Details column is fine
+    const rows = section.split('\n').filter(l => l.startsWith('|') && !l.startsWith('|---'));
+    let count = 0;
+    for (const row of rows) {
+      const cells = row.split('|').filter(c => c.trim() !== '');
+      const lastCell = cells[cells.length - 1] || '';
+      if (lastCell.includes('⏳')) count++;
+    }
+    return count;
   });
 
   // Warn if approved with no assignee
@@ -314,6 +322,21 @@
         {#if estimateConfidence !== null}
           <span class="estimate-confidence">{Math.round(estimateConfidence * 100)}% confidence</span>
         {/if}
+      </div>
+    {/if}
+
+    <!-- Parent plan indicator -->
+    {#if docType === 'plan' && frontmatter.parent_plan}
+      <div class="field">
+        <div class="field-label">Part of</div>
+        <span class="fval">
+          <a href="/plans/{String(frontmatter.parent_plan).replace(/\.md$/, '')}">
+            ↳ {String(frontmatter.parent_plan).replace(/\.md$/, '')}
+            {#if frontmatter.parent_deliverable}
+              <span class="fval muted">(deliverable #{frontmatter.parent_deliverable})</span>
+            {/if}
+          </a>
+        </span>
       </div>
     {/if}
 

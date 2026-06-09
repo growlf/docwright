@@ -1,6 +1,8 @@
 ---
 title: Need a Way to Quickly Discern Raw Proposals
-status: approved
+status: canceled
+canceled_date: 2026-06-09
+cancellation_reason: \"Superseded by the docwright-raw-proposal skill which detects and drafts raw proposals automatically. No separate discernment mechanism needed.\"
 author: NetYeti
 created: 2026-06-08
 tags: 
