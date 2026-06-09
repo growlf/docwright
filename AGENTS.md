@@ -85,6 +85,7 @@ Never write `status: completed` directly to the file. Never skip step 2.
 - `frontmatter-validate.md` — Required fields per document type
 - `no-work-before-approval.md` — No implementation before plan approval
 - `bugs-before-features.md` — Resolve known bugs before starting feature work
+- `hook-failure-feedback.md` — Pre-commit hook failures must automatically trigger systemic fix proposals
 
 ## Getting Started
 
