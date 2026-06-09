@@ -25,8 +25,10 @@
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",
+    "compile:mcp": "tsc -p tsconfig.json",
     "watch": "tsc -watch -p tsconfig.json",
     "typecheck": "tsc --noEmit",
+    "start:mcp": "node dist/mcp/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "sync:skills": "tsx scripts/sync-claude-skills.ts",
@@ -44,6 +46,7 @@
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
@@ -57,6 +60,8 @@
     "typescript": "^5.3.0"
   },
   "dependencies": {
-    "@opencode-ai/sdk": "^1.15.13"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@opencode-ai/sdk": "^1.15.13",
+    "js-yaml": "^4.2.0"
   }
 }
