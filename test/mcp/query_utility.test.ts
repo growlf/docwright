@@ -1,7 +1,7 @@
 import * as assert from 'node:assert';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { getSessionContext, listActivePlans, getPlan, getStatus } from '../../src/mcp/tools/query';
+import { getSessionContext, listActivePlans, getPlan, getStatus, resetStatusCache } from '../../src/mcp/tools/query';
 import { getFacts, collate, runDryRun, auditLog } from '../../src/mcp/tools/utility';
 import { setRepoRoot } from '../../src/mcp/lib/paths';
 
@@ -14,7 +14,11 @@ describe('Query and Utility Tools', () => {
     if (!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'completed'))) fs.mkdirSync(path.join(FIXTURE_DIR, 'plans', 'completed'), { recursive: true });
     if (!fs.existsSync(path.join(FIXTURE_DIR, 'docs', 'SOPs'))) fs.mkdirSync(path.join(FIXTURE_DIR, 'docs', 'SOPs'), { recursive: true });
     if (!fs.existsSync(path.join(FIXTURE_DIR, '.docwright'))) fs.mkdirSync(path.join(FIXTURE_DIR, '.docwright'), { recursive: true });
+  });
+
+  beforeEach(() => {
     setRepoRoot(FIXTURE_DIR);
+    resetStatusCache();
   });
 
   afterEach(() => {
@@ -45,13 +49,14 @@ describe('Query and Utility Tools', () => {
   });
 
   it('get_status: builds a vault summary', async () => {
-    fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'p1.md'), '---\ntitle: "P1"\n---\n');
+    fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'p1.md'), '---\ntitle: "P1"\nstatus: false\n---\n');
     fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'active.md'), '---\nstatus: approved\ntitle: "Active"\n---\n');
     
     const res = await getStatus();
-    assert.ok(res.includes('Proposals: 1 raw'));
-    assert.ok(res.includes('Active Plans'));
-    assert.ok(res.includes('Active'));
+    assert.ok(res.includes('LIFECYCLE DOCUMENT STATUS'));
+    assert.ok(res.includes('PROPOSALS (proposals/)'));
+    assert.ok(res.includes('PLANS (plans/)'));
+    assert.ok(res.includes('p1.md'));
   });
 
   it('collate: finds overlapping documents', async () => {
@@ -59,7 +64,7 @@ describe('Query and Utility Tools', () => {
     fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'auth2.md'), 'Authentication and login system.');
     
     const res = await collate(0.1);
-    assert.ok(res.includes('Document Collation'));
+    assert.ok(res.includes('Overlap analysis'));
     assert.ok(res.includes('auth1.md'));
     assert.ok(res.includes('auth2.md'));
   });

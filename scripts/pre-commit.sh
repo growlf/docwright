@@ -89,7 +89,7 @@ get_frontmatter() { awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "
 validate_assigned_to() {
     local FILE=$1 TYPE=$2 FM=$(get_frontmatter "$FILE")
     [ -z "$FM" ] && return 0
-    local ASSIGNED=$(echo "$FM" | python3 -c "import sys,yaml; fm=yaml.safe_load(sys.stdin); a=fm.get('assigned_to',[]); print(a[0]) if a and len(a)>0 else None" 2>/dev/null)
+    local ASSIGNED=$(echo "$FM" | node -e 'const yaml = require("js-yaml"); const fm = yaml.load(require("fs").readFileSync(0, "utf8")); const a = fm.assigned_to; console.log(Array.isArray(a) ? a[0] : (a || ""))' 2>/dev/null)
     [ "$TYPE" = "proposal" ] && echo "$FM" | grep -q "^approved: true" && { [ -z "$ASSIGNED" ] && print_warning "$FILE: Approved but assigned_to empty!" && return 0; }
     if [ "$TYPE" = "plan" ]; then
         local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
@@ -207,15 +207,15 @@ validate_required_fields() {
     if [[ "$FILE" =~ ^proposals/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^proposals/approved/ ]]; then
         local REQUIRED=(title author created tags approved created_by assigned_to)
         for field in "${REQUIRED[@]}"; do
-            if ! echo "$FM" | python3 -c "
-import sys, yaml
-field = '$field'
-try:
-    fm = yaml.safe_load(sys.stdin)
-    if not fm or field not in fm:
-        sys.exit(1)
-except:
-    sys.exit(1)
+            if ! echo "$FM" | node -e "
+const yaml = require('js-yaml');
+const field = '$field';
+try {
+    const fm = yaml.load(require('fs').readFileSync(0, 'utf8'));
+    if (!fm || !(field in fm)) process.exit(1);
+} catch(e) {
+    process.exit(1);
+}
 " 2>/dev/null; then
                 print_error "$FILE: missing required frontmatter field '$field'"
                 return 1

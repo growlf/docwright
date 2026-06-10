@@ -1,0 +1,40 @@
+{"ts":"2026-06-09T20:21:29.942Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-09T20:21:29.951Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-09T20:21:29.953Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-09T20:21:29.954Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-09T20:22:38.367Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-09T20:22:38.377Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-09T20:22:38.378Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-09T20:22:38.379Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-09T20:31:51.756Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-09T20:31:51.764Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-09T20:31:51.766Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-09T20:31:51.767Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T02:53:27.488Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T02:53:27.502Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T02:53:27.504Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T02:53:27.505Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:09:07.441Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:09:07.449Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:09:07.450Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:09:07.451Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:13:40.163Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:13:40.172Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:13:40.172Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:13:40.173Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:15:06.740Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:15:06.749Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:15:06.750Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:15:06.751Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:15:32.688Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:15:32.697Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:15:32.698Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:15:32.699Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:18:24.882Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:18:24.891Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:18:24.892Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:18:24.893Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-10T03:19:12.050Z","host":"phoenix","event":"STEP_UPDATE","user":"NetYeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-10T03:19:12.059Z","host":"phoenix","event":"HISTORY_APPEND","user":"NetYeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-10T03:19:12.061Z","host":"phoenix","event":"FIELD_SET","user":"NetYeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-10T03:19:12.062Z","host":"phoenix","event":"PLAN_REWRITE","user":"NetYeti","details":"plan/test.md: structural rewrite"}

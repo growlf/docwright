@@ -15,10 +15,10 @@ set -uo pipefail
 
 INPUT=$(cat)
 
-py() { python3 -c "$1" 2>/dev/null || echo ""; }
+node_eval() { node -e "const input = JSON.parse(require('fs').readFileSync(0, 'utf8')); $1" <<< "$INPUT" 2>/dev/null || echo ""; }
 
 # Extract the bash command that was just run
-CMD=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" <<< "$INPUT")
+CMD=$(node_eval "console.log(input.tool_input?.command || '')")
 
 # Only proceed for git push commands that include version tags
 if ! printf '%s' "$CMD" | grep -qE 'git push'; then

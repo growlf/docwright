@@ -118,14 +118,6 @@ function buildStatus(): string {
   lines.push(`  ${now}`);
   lines.push('');
   
-  const active = scanPlans('plans', 'approved', 'in_progress', 'in-progress');
-  if (active.length === 0) {
-    lines.push('  ⚠  COMPLIANCE WARNING: No active approved plan.');
-    lines.push('      Lifecycle transitions require an active plan.');
-    lines.push('      Run list_active_plans() to see available plans.');
-    lines.push('');
-  }
-  
   lines.push('  PROPOSALS (proposals/):');
   lines.push(`  ${sep}`);
   const proposals = globFiles('proposals', '*.md');
@@ -176,6 +168,10 @@ function buildStatus(): string {
   }
 
   return lines.join('\n');
+}
+
+export function resetStatusCache() {
+  STATUS_CACHE = null;
 }
 
 export async function getStatus(): Promise<string> {

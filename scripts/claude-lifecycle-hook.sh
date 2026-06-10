@@ -24,10 +24,10 @@ INPUT=$(cat)
 # Resolve effective agent role (Phase 2 will enforce code-role boundaries here)
 EFFECTIVE_AGENT_ROLE="${DOCWRIGHT_AGENT_ROLE:-${CLAUDE_AGENT_ROLE:-orchestrator}}"
 
-py() { python3 -c "$1" 2>/dev/null || echo ""; }
+node_eval() { node -e "const input = JSON.parse(require('fs').readFileSync(0, 'utf8')); $1" <<< "$INPUT" 2>/dev/null || echo ""; }
 
-TOOL_NAME=$(py "import sys,json; print(json.load(sys.stdin).get('tool_name',''))" <<< "$INPUT")
-FILE_PATH=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))" <<< "$INPUT")
+TOOL_NAME=$(node_eval "console.log(input.tool_name || '')")
+FILE_PATH=$(node_eval "console.log(input.tool_input?.file_path || '')")
 
 [ -z "$FILE_PATH" ] && exit 0
 
@@ -45,7 +45,7 @@ BLOCK=0
 REASON=""
 
 if [[ "$TOOL_NAME" == "Write" ]]; then
-    CONTENT=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('content',''))" <<< "$INPUT")
+    CONTENT=$(node_eval "console.log(input.tool_input?.content || '')")
 
     # Block writing approved: true into proposals/approved/ without human auth
     if [[ "$REL" == proposals/approved/* ]] && echo "$CONTENT" | grep -q "^approved: true"; then
@@ -65,8 +65,8 @@ if [[ "$TOOL_NAME" == "Write" ]]; then
     fi
 
 elif [[ "$TOOL_NAME" == "Edit" ]]; then
-    OLD_STR=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('old_string',''))" <<< "$INPUT")
-    NEW_STR=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('new_string',''))" <<< "$INPUT")
+    OLD_STR=$(node_eval "console.log(input.tool_input?.old_string || '')")
+    NEW_STR=$(node_eval "console.log(input.tool_input?.new_string || '')")
 
     # Block any edit that flips approved: false → approved: true in any lifecycle file
     if echo "$NEW_STR" | grep -q "approved: true" && echo "$OLD_STR" | grep -q "approved: false"; then
@@ -100,10 +100,7 @@ elif [[ "$TOOL_NAME" == "Edit" ]]; then
 fi
 
 if [[ "$BLOCK" -eq 1 ]]; then
-    python3 -c "
-import json, sys
-print(json.dumps({'continue': False, 'stopReason': sys.argv[1]}))
-" "$REASON"
+    node -e "console.log(JSON.stringify({ continue: false, stopReason: process.argv[1] }))" "$REASON"
     exit 1
 fi
 

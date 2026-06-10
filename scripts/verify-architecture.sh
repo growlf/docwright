@@ -228,16 +228,11 @@ echo "=== F: Config validation ==="
 
 # F1: opencode.jsonc is valid JSON (strip comments first)
 TOTAL=$((TOTAL+1))
-if python3 -c "
-import json, re
-with open('opencode.jsonc') as f:
-    content = ''
-    for line in f:
-        s = line.strip()
-        if not s.startswith('//') and not s.startswith('/*'):
-            content += line
-    json.loads(content)
-    print('OK')
+if node -e "
+const fs = require('fs');
+let c = fs.readFileSync('opencode.jsonc', 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//gm, '');
+JSON.parse(c);
+console.log('OK');
 " 2>/dev/null | grep -q OK; then
     pass "F1: opencode.jsonc parses as valid JSON"
 else
@@ -246,15 +241,11 @@ fi
 
 # F2: opencode.jsonc has instructions section
 TOTAL=$((TOTAL+1))
-if python3 -c "
-import json
-with open('opencode.jsonc') as f:
-    content = ''.join(line for line in f if not line.strip().startswith('//'))
-    cfg = json.loads(content)
-    if 'instructions' in cfg and len(cfg['instructions']) > 0:
-        print('OK')
-    else:
-        print('MISSING')
+if node -e "
+const fs = require('fs');
+let c = fs.readFileSync('opencode.jsonc', 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//gm, '');
+const cfg = JSON.parse(c);
+if (cfg.instructions && cfg.instructions.length > 0) console.log('OK');
 " 2>/dev/null | grep -q OK; then
     pass "F2: opencode.jsonc has instructions with referenced files"
 else

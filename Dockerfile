@@ -10,17 +10,10 @@ FROM node:22-bookworm-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
-        python3 \
-        python3-pip \
-        python3-venv \
         wget \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# ── Python venv + MCP server deps ─────────────────────────────────────────────
-RUN python3 -m venv .venv \
-    && .venv/bin/pip install --no-cache-dir mcp
 
 # ── Node deps for webui (install before copying source for layer caching) ─────
 COPY src/webui/package*.json ./src/webui/

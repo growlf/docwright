@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import { transitionToApproved, transitionToCompleted, transitionToCanceled } from '../../src/mcp/tools/transitions';
 import { setRepoRoot } from '../../src/mcp/lib/paths';
 
-const FIXTURE_DIR = path.resolve(__dirname, 'fixtures', 'sample-vault');
+const FIXTURE_DIR = path.resolve(__dirname, 'fixtures', 'transitions-vault');
 const PYTHON_BASELINE = path.resolve(__dirname, 'fixtures', 'python-baseline');
 
 function capturePythonBaseline() {
@@ -76,11 +76,14 @@ describe('Lifecycle Transition Tools', () => {
     });
 
     it('completes plan, moves to completed, and generates doc', async () => {
-      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'success.md'), '---\nstatus: completed\ntitle: "Test Plan"\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |');
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'success.md'), '---\ntitle: "Test Plan"\nstatus: completed\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |');
       const res = await transitionToCompleted('success.md');
+      console.log('Transition Result:', res);
+      const docPath = path.join(FIXTURE_DIR, 'docs', 'success.md');
+      console.log('Checking Doc Path:', docPath, 'Exists:', fs.existsSync(docPath));
       assert.ok(res.includes('✅ Plan \'success.md\' completed'));
       assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'completed', 'success.md')));
-      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'docs', 'success.md')));
+      assert.ok(fs.existsSync(docPath));
     });
   });
 

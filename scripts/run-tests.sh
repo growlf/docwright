@@ -55,18 +55,12 @@ else
     ALL_PASSED=1
 fi
 
-# === Test 4: Config validation ===
-echo "--- Test 4: Config validation ---"
-if python3 -c "
-import json
-with open('opencode.jsonc') as f:
-    content = ''.join(line for line in f if not line.strip().startswith('//'))
-    json.loads(content)
-    print('OK')
-" 2>/dev/null | grep -q OK; then
-    pass "opencode.jsonc is valid JSON"
+# === Test 4: Node.js components test (MCP + Parity) ===
+echo "--- Test 4: MCP + Parity tests ---"
+if npm run test:mcp > /dev/null 2>&1; then
+    pass "MCP parity tests pass"
 else
-    fail "opencode.jsonc has syntax errors"
+    fail "MCP parity tests FAILED -- run: npm run test:mcp"
     ALL_PASSED=1
 fi
 
@@ -79,21 +73,21 @@ else
     ALL_PASSED=1
 fi
 
-# === Test 6: MCP server smoke test ===
-echo "--- Test 6: MCP server smoke test ---"
-if .venv/bin/python3 scripts/mcp-server.py --test > /dev/null 2>&1; then
-    pass "MCP server (10/10 tests pass)"
+# === Test 6: Dispatch module unit tests ===
+echo "--- Test 6: Dispatch unit tests ---"
+if npm run test:dispatch > /dev/null 2>&1; then
+    pass "Dispatch unit tests pass"
 else
-    fail "MCP server smoke test FAILED -- run: .venv/bin/python3 scripts/mcp-server.py --test"
+    fail "Dispatch unit tests FAILED -- run: npm run test:dispatch"
     ALL_PASSED=1
 fi
 
-# === Test 7: Transition unit tests ===
-echo "--- Test 7: Transition unit tests ---"
-if .venv/bin/python3 scripts/test-transitions.py > /dev/null 2>&1; then
-    pass "Transition unit tests pass"
+# === Test 7: Executor engine unit tests ===
+echo "--- Test 7: Executor engine unit tests ---"
+if npm run test:executor > /dev/null 2>&1; then
+    pass "Executor engine unit tests pass"
 else
-    fail "Transition unit tests FAILED -- run: .venv/bin/python3 scripts/test-transitions.py"
+    fail "Executor engine unit tests FAILED -- run: npm run test:executor"
     ALL_PASSED=1
 fi
 

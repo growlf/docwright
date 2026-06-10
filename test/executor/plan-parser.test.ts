@@ -119,7 +119,8 @@ describe('plan-parser', () => {
 
     it('parses the actual auto-plan-executor plan correctly', () => {
       const fs = require('node:fs');
-      const content = fs.readFileSync('plans/auto-plan-executor.md', 'utf-8');
+      const content = fs.readFileSync('plans/completed/auto-plan-executor.md', 'utf8');
+
       const steps = parsePlanSteps(content);
       assert.strictEqual(steps.length, 9);
       assert.strictEqual(steps[0].stepNumber, 1);
@@ -128,7 +129,7 @@ describe('plan-parser', () => {
       assert.ok(steps[0].status === 'done' || steps[0].status === 'pending');
       assert.strictEqual(steps[8].stepNumber, 9);
       assert.strictEqual(steps[8].action.includes('Test suite'), true);
-      assert.strictEqual(steps[8].status, 'pending');
+      assert.strictEqual(steps[8].status, 'done');
     });
   });
 
@@ -141,7 +142,7 @@ describe('plan-parser', () => {
     });
 
     it('reads and parses a real plan file', () => {
-      const steps = readPlanSteps('plans/auto-plan-executor.md');
+      const steps = readPlanSteps('plans/completed/auto-plan-executor.md');
       assert.strictEqual(steps.length, 9);
       assert.strictEqual(steps[0].stepNumber, 1);
     });

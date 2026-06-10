@@ -165,9 +165,13 @@ function countCompletedStepsInSection(content) {
     }
     if (!inSection) continue;
     
-    // Only count data rows that contain ✅ (ignore header/separator)
-    if (line.startsWith('|') && !line.startsWith('|---') && !line.startsWith('| ---') && line.includes('✅')) {
-      count++;
+    // Only count data rows where the final column contains ✅
+    if (line.startsWith('|') && !line.startsWith('|---') && !line.startsWith('| ---')) {
+      const cells = line.split('|');
+      const lastCell = cells[cells.length - 2] || ''; // -1 is the empty string after the last |
+      if (lastCell.includes('✅')) {
+        count++;
+      }
     }
   }
   return count;

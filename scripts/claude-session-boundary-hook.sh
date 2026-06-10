@@ -12,9 +12,9 @@ set -uo pipefail
 
 INPUT=$(cat)
 
-py() { python3 -c "$1" 2>/dev/null || echo ""; }
+node_eval() { node -e "const input = JSON.parse(require('fs').readFileSync(0, 'utf8')); $1" <<< "$INPUT" 2>/dev/null || echo ""; }
 
-FILE_PATH=$(py "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))" <<< "$INPUT")
+FILE_PATH=$(node_eval "console.log(input.tool_input?.file_path || '')")
 [ -z "$FILE_PATH" ] && exit 0
 
 BASENAME=$(basename "$FILE_PATH")

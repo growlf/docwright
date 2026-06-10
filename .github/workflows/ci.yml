@@ -33,14 +33,6 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: pip install mcp
-
       - name: Install Node dependencies
         run: npm ci
 
@@ -52,8 +44,6 @@ jobs:
 
       - name: Test dispatch module (outside extension host)
         run: npm run test:dispatch
-      # If test:dispatch fails because of a vscode import in src/dispatch/,
-      # that is correct behaviour — fix the import, not the test.
 
       - name: Test lifecycle-gate pending-step detection
         run: npm run test:hooks:pending
@@ -61,8 +51,8 @@ jobs:
       - name: Test claude-lifecycle-hook PreToolUse gate
         run: npm run test:hooks
 
-      - name: Test MCP plan mutation tools
-        run: python3 test/mcp/test-plan-tools.py
+      - name: Test MCP tools (TypeScript)
+        run: npm run test:mcp
 
       - name: Test cross-tool compatibility (skills table, agent roles, spec docs)
         run: npm run test:compat

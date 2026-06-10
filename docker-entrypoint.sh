@@ -14,22 +14,14 @@ if [ -n "${GIT_TOKEN}" ]; then
         >> /root/.git-credentials
 fi
 
-# ── MCP server (Python, port 3002, background) ────────────────────────────────
-DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-/vault}" \
-DOCWRIGHT_CACHE_DIR="${DOCWRIGHT_CACHE_DIR:-/tmp}" \
-MCP_HOST=0.0.0.0 \
-MCP_PORT=3002 \
-    /app/.venv/bin/python3 /app/scripts/mcp-server.py --serve &
-PY_MCP_PID=$!
-
-# ── MCP server (TypeScript, port 3100, background) ─────────────────────────────
+# ── MCP server (TypeScript, background) ────────────────────────────────────────
 DOCWRIGHT_VAULT_ROOT="${DOCWRIGHT_ROOT:-/vault}" \
 DOCWRIGHT_CACHE_DIR="${DOCWRIGHT_CACHE_DIR:-/tmp}" \
-DOCWRIGHT_MCP_PORT=3100 \
+DOCWRIGHT_MCP_PORT="${MCP_PORT:-3002}" \
     node /app/dist/mcp/server.js --mode vault --transport sse &
-TS_MCP_PID=$!
+MCP_PID=$!
 
-trap 'kill "$PY_MCP_PID" "$TS_MCP_PID" 2>/dev/null; exit' INT TERM EXIT
+trap 'kill "$MCP_PID" 2>/dev/null; exit' INT TERM EXIT
 
 # ── Web UI (Vite dev server) ──────────────────────────────────────────────────
 cd /app/src/webui

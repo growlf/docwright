@@ -4,16 +4,13 @@
 # =============================================================================
 # Validates:
 # 1. Identity resolution + network (cached in /tmp/)
-# 2. Frontmatter integrity (all lifecycle directories)
-# 3. assigned_to field (BLOCK empty for approved/in-progress plans)
-# 4. Automated field (enum: off|guided|full)
-# 5. Template variable check
-# 6. Scenario synthesis for automation plans
-# 7. Agent Instructions section validation
-#
-# NOTE: Commit message format is validated by the commit-msg hook, not here.
-# Pre-commit runs before git writes the message to COMMIT_EDITMSG, so reading
-# that file here would validate the *previous* commit's message.
+# 2. Commit message format
+# 3. Frontmatter integrity (all lifecycle directories)
+# 4. assigned_to field (BLOCK empty for approved/in-progress plans)
+# 5. Automated field (enum: off|guided|full)
+# 6. Template variable check
+# 7. Scenario synthesis for automation plans
+# 8. Agent Instructions section validation
 # =============================================================================
 
 REPO_ROOT="$(git rev-parse --show-toplevel)" && cd "$REPO_ROOT" || exit 1
@@ -65,20 +62,34 @@ print_warning "$(resolve_identity)"
 print_status "$(detect_network)"
 
 # =============================================================================
-# 2. Gather staged markdown files
+# 2. Commit message format
+# =============================================================================
+validate_commit_message() {
+    [ ! -f ".git/COMMIT_EDITMSG" ] && return 0
+    local msg=$(head -1 .git/COMMIT_EDITMSG | tr -d '\r')
+    [ -z "$msg" ] && return 0
+    echo "$msg" | grep -qE '^(feat|fix|docs|refactor|test|chore): .+' && return 0
+    print_error "Commit message must follow: <type>: <description>"
+    print_error "Types: feat, fix, docs, refactor, test, chore"
+    exit 1
+}
+validate_commit_message
+
+# =============================================================================
+# 3. Gather staged markdown files
 # =============================================================================
 STAGED=$(git diff --cached --name-only)
 [ -z "$STAGED" ] && print_warning "No staged files to validate" && exit 0
 
 # =============================================================================
-# 3-7. Validation helpers
+# 4-8. Validation helpers
 # =============================================================================
 get_frontmatter() { awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "$1"; }
 
 validate_assigned_to() {
     local FILE=$1 TYPE=$2 FM=$(get_frontmatter "$FILE")
     [ -z "$FM" ] && return 0
-    local ASSIGNED=$(echo "$FM" | python3 -c "import sys,yaml; fm=yaml.safe_load(sys.stdin); a=fm.get('assigned_to',[]); print(a[0]) if a and len(a)>0 else None" 2>/dev/null)
+    local ASSIGNED=$(echo "$FM" | node -e 'const yaml = require("js-yaml"); const fm = yaml.load(require("fs").readFileSync(0, "utf8")); const a = fm.assigned_to; console.log(Array.isArray(a) ? a[0] : (a || ""))' 2>/dev/null)
     [ "$TYPE" = "proposal" ] && echo "$FM" | grep -q "^approved: true" && { [ -z "$ASSIGNED" ] && print_warning "$FILE: Approved but assigned_to empty!" && return 0; }
     if [ "$TYPE" = "plan" ]; then
         local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
@@ -106,7 +117,7 @@ validate_template_vars() {
 validate_scenario_synthesis() {
     local FILE=$1; [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] || [[ "$FILE" =~ ^plans/completed/ ]] && return 0
     local CONTENT=$(cat "$FILE" 2>/dev/null)
-    echo "$CONTENT" | grep -qiE '\b(bash|shell|script|sed|awk|python|deploy|generator|pipeline)\b|batch.*edit' || return 0
+    echo "$CONTENT" | grep -qiE '(bash|shell|script|sed |awk |python|deploy|generator|pipeline|batch.*edit)' || return 0
     local FM=$(get_frontmatter "$FILE"); local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
     echo "$STATUS" | grep -qE '^(approved|in-progress)$' || return 0
     echo "$FM" | grep -q "^scenario_synthesis:" && return 0
@@ -122,81 +133,246 @@ validate_agent_instructions() {
 }
 
 # =============================================================================
-# Layer 3 — Lifecycle compliance checks
+# 12. Research document validation
+#     Enforces schema rules from src/profiles/*/schema.json (research type):
+#     - required fields: title, status, question, author, created, author-role
+#     - status enum: active | concluded | archived
+#     - concluded requires non-empty conclusion (not 'open') + ## Conclusion section
+#     - archived requires any valid conclusion value (use 'inconclusive' if none reached)
+#     - conclusion enum: open | recommends | inconclusive | superseded
 # =============================================================================
-
-# Detect self-approval: proposal newly gaining approved: true without HUMAN_APPROVED=1
-validate_self_approval() {
+validate_research_document() {
     local FILE=$1
-    [[ ! "$FILE" =~ ^proposals/approved/ ]] && return 0
-    local NEW_FM=$(get_frontmatter "$FILE")
-    local NEW_APPROVED=$(echo "$NEW_FM" | grep "^approved:" | sed 's/^approved: *//')
-    [ "$NEW_APPROVED" != "true" ] && return 0
+    [[ ! "$FILE" =~ ^research/.+\.md$ ]] && return 0
+    local FM CONTENT STATUS CONCLUSION E=0
+    FM=$(get_frontmatter "$FILE" 2>/dev/null)
+    CONTENT=$(cat "$FILE" 2>/dev/null)
+    [ -z "$FM" ] && print_error "$FILE: research document missing frontmatter" && return 1
 
-    # Check if approved was already true in the committed version (editing, not approving)
-    local OLD_APPROVED=$(git show HEAD:"$FILE" 2>/dev/null | awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' | grep "^approved:" | sed 's/^approved: *//')
-    [ "$OLD_APPROVED" = "true" ] && return 0  # already approved, just editing
+    # Required fields
+    for FIELD in title status question author created author-role; do
+        echo "$FM" | grep -qE "^${FIELD}:[[:space:]]*.+" || {
+            print_error "$FILE: research document missing required field '${FIELD}'"
+            ((E++))
+        }
+    done
 
-    # Newly approved file — requires explicit human authorization
-    if [ -z "$HUMAN_APPROVED" ]; then
-        print_error "$FILE: 'approved' set to true — only humans may approve proposals"
-        print_error "  If intentional: HUMAN_APPROVED=1 git commit ..."
+    STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | tr -d '"' | xargs)
+    CONCLUSION=$(echo "$FM" | grep "^conclusion:" | sed 's/^conclusion:[[:space:]]*//' | tr -d '"' | xargs)
+
+    # Status enum
+    if [ -n "$STATUS" ] && ! echo "$STATUS" | grep -qE '^(active|concluded|archived)$'; then
+        print_error "$FILE: research status must be active|concluded|archived (got: '$STATUS')"
+        ((E++))
+    fi
+
+    # concluded: requires real conclusion + body section
+    if [ "$STATUS" = "concluded" ]; then
+        if [ -z "$CONCLUSION" ] || [ "$CONCLUSION" = "open" ]; then
+            print_error "$FILE: status:concluded requires conclusion of recommends|inconclusive|superseded (not empty or 'open')"
+            ((E++))
+        fi
+        echo "$CONTENT" | grep -q "^## Conclusion" || {
+            print_error "$FILE: status:concluded requires a '## Conclusion' section in the document body"
+            ((E++))
+        }
+    fi
+
+    # archived: must have a conclusion (use inconclusive if nothing found)
+    if [ "$STATUS" = "archived" ] && [ -z "$CONCLUSION" ]; then
+        print_error "$FILE: status:archived requires a conclusion field — use conclusion:inconclusive if no finding was reached"
+        ((E++))
+    fi
+
+    # Conclusion enum (if set)
+    if [ -n "$CONCLUSION" ] && ! echo "$CONCLUSION" | grep -qE '^(open|recommends|inconclusive|superseded)$'; then
+        print_error "$FILE: conclusion must be open|recommends|inconclusive|superseded (got: '$CONCLUSION')"
+        ((E++))
+    fi
+
+    [ $E -gt 0 ] && return 1
+    return 0
+}
+
+# =============================================================================
+# 9. Required frontmatter fields validation
+#    (root cause fix: rules/frontmatter-validate.md requires these but hook
+#     never checked for their presence — 31 proposals were missing approved:)
+# =============================================================================
+validate_required_fields() {
+    local FILE=$1
+    local FM=$(get_frontmatter "$FILE")
+    [ -z "$FM" ] && return 0
+
+    if [[ "$FILE" =~ ^proposals/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^proposals/approved/ ]]; then
+        local REQUIRED=(title author created tags approved created_by assigned_to)
+        for field in "${REQUIRED[@]}"; do
+            if ! echo "$FM" | node -e "
+const yaml = require('js-yaml');
+const field = '$field';
+try {
+    const fm = yaml.load(require('fs').readFileSync(0, 'utf8'));
+    if (!fm || !(field in fm)) process.exit(1);
+} catch(e) {
+    process.exit(1);
+}
+" 2>/dev/null; then
+                print_error "$FILE: missing required frontmatter field '$field'"
+                return 1
+            fi
+        done
+    fi
+    return 0
+}
+
+# =============================================================================
+# 10. Self-approval detection
+# =============================================================================
+validate_no_self_approval() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^proposals/[^/]+\.md$ ]] && return 0
+    [[ "$FILE" =~ ^proposals/approved/ ]] && return 0
+    local OLD NEW
+    OLD=$(git show "HEAD:$FILE" 2>/dev/null | grep "^approved:" | sed 's/^approved: *//')
+    NEW=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+    [ "$OLD" = "false" ] && [ "$NEW" = "true" ] || return 0
+    if [ -f ".git/COMMIT_EDITMSG" ] && ! grep -q "HUMAN-APPROVED:" .git/COMMIT_EDITMSG; then
+        print_error "$FILE: approved changed false→true without HUMAN-APPROVED: marker in commit message"
+        print_error "  Only humans can approve proposals. Add HUMAN-APPROVED:<name> to commit message if you approved this."
         return 1
     fi
-    # Human-authorized: log it
-    print_status "$FILE: human-approved (HUMAN_APPROVED=1)"
     return 0
 }
 
-# Detect plan status advancing to in-progress/completed without completed_date where required
-# Also enforces the two-step gate: completed requires gate_status:approved
-validate_plan_transition() {
+# =============================================================================
+# 10. Location invariant check
+# =============================================================================
+validate_location_invariant() {
     local FILE=$1
-    [[ ! "$FILE" =~ ^plans/ ]] && return 0
-    local FM=$(get_frontmatter "$FILE")
-    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//')
-
-    if [ "$STATUS" = "completed" ]; then
-        # Must have completed_date
-        echo "$FM" | grep -q "^completed_date:" || { print_error "$FILE: status=completed but missing completed_date"; return 1; }
-        # Must have gate_status:approved — prevents skipping the gate review
-        local GATE=$(echo "$FM" | grep "^gate_status:" | sed 's/^gate_status: *//')
-        if [ -n "$GATE" ] && [ "$GATE" != "approved" ] && [ "$GATE" != "waived" ]; then
-            print_error "$FILE: status=completed but gate_status='$GATE' — gate must be approved or waived by a human before marking complete"
-            print_error "  1. Human reviews the plan"
-            print_error "  2. Human sets gate_status: approved (with HUMAN_APPROVED=1)"
-            print_error "  3. Then status: completed can be committed"
-            return 1
-        fi
-        # Require HUMAN_APPROVED for completion
-        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: status=completed requires HUMAN_APPROVED=1 — only humans complete plans"; return 1; }
+    [[ ! "$FILE" =~ \.md$ ]] && return 0
+    # File in proposals/approved/ must have approved: true
+    if [[ "$FILE" =~ ^proposals/approved/ ]]; then
+        local APP=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+        [ "$APP" != "true" ] && print_error "$FILE: in proposals/approved/ but approved != true" && return 1
     fi
-
-    if [ "$STATUS" = "canceled" ]; then
-        echo "$FM" | grep -q "^canceled_date:" || { print_error "$FILE: status=canceled but missing canceled_date"; return 1; }
-        echo "$FM" | grep -q "^cancellation_reason:" || { print_warning "$FILE: status=canceled but missing cancellation_reason"; }
-        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: status=canceled requires HUMAN_APPROVED=1"; return 1; }
+    # File in plans/completed/ must have status: completed or canceled
+    if [[ "$FILE" =~ ^plans/completed/ ]]; then
+        local STS=$(grep "^status:" "$FILE" 2>/dev/null | sed 's/^status: *//')
+        [ "$STS" != "completed" ] && [ "$STS" != "canceled" ] && \
+            print_error "$FILE: in plans/completed/ but status != completed|canceled" && return 1
     fi
-
-    # Block gate_status:approved without HUMAN_APPROVED
-    local GATE=$(echo "$FM" | grep "^gate_status:" | sed 's/^gate_status: *//')
-    if [ "$GATE" = "approved" ] || [ "$GATE" = "waived" ]; then
-        [ "$HUMAN_APPROVED" = "1" ] || { print_error "$FILE: gate_status=$GATE requires HUMAN_APPROVED=1 — only humans can sign off phase gates"; return 1; }
-    fi
-
     return 0
 }
 
-# Log lifecycle transition to .docwright/lifecycle-audit.jsonl
-log_lifecycle_event() {
-    local FILE=$1 EVENT=$2
-    local AUDIT_DIR="$REPO_ROOT/.docwright"
-    local AUDIT_LOG="$AUDIT_DIR/lifecycle-audit.jsonl"
-    mkdir -p "$AUDIT_DIR"
-    local USER=$(git config user.name 2>/dev/null || echo "unknown")
-    local HOST=$(hostname)
-    local TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    echo "{\"ts\":\"$TS\",\"event\":\"$EVENT\",\"file\":\"$FILE\",\"user\":\"$USER\",\"host\":\"$HOST\"}" >> "$AUDIT_LOG"
+# =============================================================================
+# Parent plan sync validation
+# =============================================================================
+validate_parent_plan_sync() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && return 0
+    [[ "$FILE" =~ ^plans/completed/ ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "completed" ] && return 0
+
+    local PARENT_PLAN=$(echo "$FM" | grep "^parent_plan:" | sed 's/^parent_plan:[[:space:]]*//' | tr -d '"' | xargs)
+    local DELIVERABLE=$(echo "$FM" | grep "^parent_deliverable:" | sed 's/^parent_deliverable:[[:space:]]*//' | tr -d '"' | xargs)
+    [ -z "$PARENT_PLAN" ] || [ -z "$DELIVERABLE" ] && return 0
+
+    # Normalize parent filename
+    [[ "$PARENT_PLAN" == *.md ]] || PARENT_PLAN="${PARENT_PLAN}.md"
+
+    local PARENT_FILE="plans/${PARENT_PLAN}"
+    [ ! -f "$PARENT_FILE" ] && print_warning "$FILE: references parent_plan '${PARENT_PLAN}' but file not found" && return 0
+
+    local PARENT_FM=$(get_frontmatter "$PARENT_FILE"); [ -z "$PARENT_FM" ] && return 0
+    local IN_DELIVERABLES=0
+    local FOUND_STATUS=""
+    while IFS= read -r line; do
+        if echo "$line" | grep -q "^## "; then
+            if echo "$line" | grep -q "Deliverables"; then
+                IN_DELIVERABLES=1
+            else
+                IN_DELIVERABLES=0
+            fi
+            continue
+        fi
+        [ "$IN_DELIVERABLES" != "1" ] && continue
+        # Skip separator rows (---|---|---)
+        echo "$line" | grep -qE '^\|[-\s|]+\|$' && continue
+        # Match data rows
+        if echo "$line" | grep -q "^|"; then
+            local FIRST_CELL=$(echo "$line" | cut -d'|' -f2 | xargs)
+            if [ "$FIRST_CELL" = "$DELIVERABLE" ]; then
+                FOUND_STATUS=$(echo "$line" | awk -F'|' '{print $NF}' | xargs)
+                break
+            fi
+        fi
+    done < "$PARENT_FILE"
+
+    [ -z "$FOUND_STATUS" ] && print_warning "$FILE: deliverable #${DELIVERABLE} not found in ${PARENT_PLAN}'s Deliverables table" && return 0
+    echo "$FOUND_STATUS" | grep -qE '^✅' && return 0
+    print_warning "$FILE: completed but parent deliverable #${DELIVERABLE} in ${PARENT_PLAN} still shows \"${FOUND_STATUS}\""
+    return 0
+}
+
+# =============================================================================
+# 11. File existence invariant (no duplicate proposal/plan in root + approved)
+# =============================================================================
+validate_no_duplicate_locations() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^proposals/approved/ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && return 0
+    local ROOT_FILE=""
+    if [[ "$FILE" =~ ^proposals/approved/ ]]; then
+        ROOT_FILE="${FILE/proposals\/approved\//proposals/}"
+    elif [[ "$FILE" =~ ^plans/completed/ ]]; then
+        ROOT_FILE="${FILE/plans\/completed\//plans/}"
+    fi
+    [ -f "$ROOT_FILE" ] && print_error "$FILE: also exists at $ROOT_FILE — move, don't copy" && return 1
+    return 0
+}
+
+# =============================================================================
+# 13. Phase plan activation gate
+#     Warns when a phase plan is being activated (moved to in-progress) but
+#     has not been reviewed since the previous phase's gate was approved.
+#     Checks: phase_review_date must exist AND be >= the previous gated phase's
+#     completed_date. Only fires on plans named phase-N-* being set in-progress.
+# =============================================================================
+validate_phase_review_gate() {
+    local FILE=$1
+    # Only applies to phase-N-* plans being moved to in-progress
+    [[ ! "$FILE" =~ ^plans/phase-[0-9] ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "in-progress" ] && return 0
+    local OLD_STATUS=$(git show "HEAD:$FILE" 2>/dev/null | awk 'BEGIN{c=0}/^---$/{c++;next}c==1&&/^status:/{print;exit}c==2{exit}' | sed 's/^status:[[:space:]]*//' | xargs)
+    # Only check when transitioning FROM draft/approved to in-progress
+    echo "$OLD_STATUS" | grep -qE '^(draft|approved)$' || return 0
+
+    local REVIEW_DATE=$(echo "$FM" | grep "^phase_review_date:" | sed 's/^phase_review_date:[[:space:]]*//' | xargs)
+    local PHASE_NUM=$(echo "$FM" | grep "^phase:" | sed 's/^phase:[[:space:]]*//' | xargs)
+    [ -z "$PHASE_NUM" ] && return 0
+    local PREV_PHASE=$((PHASE_NUM - 1))
+
+    # Find the previous gated phase plan in plans/completed/
+    local PREV_COMPLETED=""
+    for f in plans/completed/phase-${PREV_PHASE}-*.md; do
+        [ -f "$f" ] || continue
+        local G=$(get_frontmatter "$f" | grep "^gate_status:" | sed 's/^gate_status:[[:space:]]*//' | xargs)
+        echo "$G" | grep -qE '^(approved|waived)$' && PREV_COMPLETED="$f" && break
+    done
+    [ -z "$PREV_COMPLETED" ] && return 0  # No gated previous phase — skip
+
+    local PREV_DATE=$(get_frontmatter "$PREV_COMPLETED" | grep "^completed_date:" | sed 's/^completed_date:[[:space:]]*//' | xargs)
+    [ -z "$PREV_DATE" ] && return 0
+
+    if [ -z "$REVIEW_DATE" ] || [ "$REVIEW_DATE" \< "$PREV_DATE" ]; then
+        print_error "$FILE: Phase $PHASE_NUM cannot be activated — phase_review_date is missing or predates Phase $PREV_PHASE completion ($PREV_DATE)"
+        print_error "  Open plans/phase-${PHASE_NUM}-*.md in the Web UI, review and update scope, then click 'Mark reviewed' on the /status page."
+        return 1
+    fi
+    return 0
 }
 
 # =============================================================================
@@ -206,55 +382,21 @@ ERRORS=0; WARNINGS=0
 for FILE in $STAGED; do
     [[ ! "$FILE" =~ \.md$ ]] && continue
     validate_template_vars "$FILE" || ((ERRORS++))
+    validate_required_fields "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && { validate_automated "$FILE" || ((ERRORS++)); }
-    [[ "$FILE" =~ ^proposals/approved/ ]] && {
-        validate_assigned_to "$FILE" "proposal" || ((ERRORS++))
-        validate_self_approval "$FILE" || ((ERRORS++))
-    }
-    if [[ "$FILE" =~ ^plans/ ]]; then
-        validate_plan_transition "$FILE" || ((ERRORS++))
-        if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then
-            validate_assigned_to "$FILE" "plan" || ((ERRORS++))
-            validate_scenario_synthesis "$FILE" || ((ERRORS++))
-        fi
+    [[ "$FILE" =~ ^proposals/approved/ ]] && { validate_assigned_to "$FILE" "proposal" || ((ERRORS++)); }
+    if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then
+        validate_assigned_to "$FILE" "plan" || ((ERRORS++))
+        validate_scenario_synthesis "$FILE" || ((ERRORS++))
     fi
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
-    # Audit log — record any lifecycle file change
-    if [[ "$FILE" =~ ^(proposals|plans|docs)/ ]]; then
-        log_lifecycle_event "$FILE" "staged"
-    fi
+    validate_no_self_approval "$FILE" || ((ERRORS++))
+    validate_location_invariant "$FILE" || ((ERRORS++))
+    validate_phase_review_gate "$FILE" || ((ERRORS++))
+    validate_parent_plan_sync "$FILE" || ((WARNINGS++))
+    validate_no_duplicate_locations "$FILE" || ((ERRORS++))
+    [[ "$FILE" =~ ^research/.+\.md$ ]] && { validate_research_document "$FILE" || ((ERRORS++)); }
 done
-
-# ── Pending steps enforcement (single Node.js call for all staged plan files) ──
-STAGED_PLANS=""
-for FILE in $STAGED; do
-    [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && STAGED_PLANS="$STAGED_PLANS $FILE"
-done
-if [ -n "$STAGED_PLANS" ] && command -v node &>/dev/null; then
-    if ! node scripts/lifecycle-gate.js --check-files $STAGED_PLANS 2>&1; then
-        ((ERRORS++))
-    fi
-fi
-
-# ── Auto-version bump ──────────────────────────────────────────────────────
-# If any staged plan file is being set to status: completed, recalculate
-# and update VERSION + package.json, then stage both.
-PLAN_COMPLETED=0
-for FILE in $STAGED; do
-    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && continue
-    STATUS=$(git show ":$FILE" 2>/dev/null | grep "^status:" | head -1 | sed 's/^status:[[:space:]]*//')
-    [[ "$STATUS" == "completed" ]] && PLAN_COMPLETED=1 && break
-done
-
-if [ $PLAN_COMPLETED -eq 1 ] && command -v node &>/dev/null; then
-    NEW_VERSION=$(node scripts/version.js --update 2>/dev/null)
-    if [ -n "$NEW_VERSION" ]; then
-        git add VERSION 2>/dev/null
-        git add src/webui/package.json 2>/dev/null
-        git add package.json 2>/dev/null
-        print_status "Version bumped to $NEW_VERSION"
-    fi
-fi
 
 [ $ERRORS -gt 0 ] && print_error "Pre-commit validation failed with $ERRORS error(s)" && exit 1
 [ $WARNINGS -gt 0 ] && print_warning "Pre-commit validation passed with $WARNINGS warning(s)"

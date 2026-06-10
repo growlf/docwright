@@ -14,9 +14,13 @@ export function countSteps(text: string): { total: number; completed: number } {
     }
     if (!inSection || !line.startsWith('|') || line.startsWith('|---') || line.startsWith('| ---')) continue;
     
-    total++;
     const parts = line.split('|');
-    const lastCell = parts[parts.length - 2] || '';
+    const lastCell = (parts[parts.length - 2] || '').trim();
+    
+    // Skip header row
+    if (lastCell.toLowerCase() === 'status') continue;
+    
+    total++;
     if (lastCell.includes('✅')) {
       completed++;
     }

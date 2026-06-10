@@ -19,8 +19,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-py() { python3 -c "$1" 2>/dev/null || echo ""; }
-
 # Resolve version: argument > VERSION file
 VERSION="${1:-$(cat "$ROOT/VERSION" 2>/dev/null | tr -d '[:space:]')}"
 
@@ -76,16 +74,17 @@ RUN_ID=""
 for i in $(seq 1 15); do
     RUN_ID=$(gh run list --repo "$REPO" --limit 5 \
         --json databaseId,event,headBranch,status 2>/dev/null | \
-        py "
-import sys, json, re
-runs = json.load(sys.stdin)
-for r in runs:
-    branch = r.get('headBranch', '')
-    event  = r.get('event', '')
-    status = r.get('status', '')
-    if event == 'push' and re.match(r'^v0\.[0-9]+\.[0-9]+\$', branch) and status != 'completed':
-        print(r['databaseId'])
-        break
+        node -e "
+const runs = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+for (const r of runs) {
+    const branch = r.headBranch || '';
+    const event  = r.event || '';
+    const status = r.status || '';
+    if (event === 'push' && /^v0\.[0-9]+\.[0-9]+$/.test(branch) && status !== 'completed') {
+        process.stdout.write(String(r.databaseId));
+        break;
+    }
+}
 ")
     if [ -n "$RUN_ID" ]; then
         echo "  Run #${RUN_ID} found — watching until complete…"

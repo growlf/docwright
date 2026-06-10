@@ -34,7 +34,7 @@
     "sync:skills": "tsx scripts/sync-claude-skills.ts",
     "test:dispatch": "mocha --require tsx/cjs 'test/dispatch/**/*.test.ts'",
     "test:executor": "mocha --require tsx/cjs 'test/executor/**/*.test.ts'",
-    "test:mcp": "mocha --require tsx/cjs 'test/mcp/**/*.test.ts'",
+    "test:mcp": "mocha --require tsx/cjs test/mcp/config.test.ts && mocha --require tsx/cjs test/mcp/mutation.test.ts && mocha --require tsx/cjs test/mcp/transitions.test.ts && mocha --require tsx/cjs test/mcp/query_utility.test.ts && mocha --require tsx/cjs test/mcp/parity.test.ts",
     "test:hooks:pending": "node test/hooks/test-pending-steps.js",
     "test:hooks": "bash test/hooks/test-lifecycle-hook.sh && bash test/hooks/test-research-hook.sh",
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
