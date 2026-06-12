@@ -78,3 +78,7 @@
 {"ts":"2026-06-11T05:09:56.909Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
 {"ts":"2026-06-11T05:09:56.910Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
 {"ts":"2026-06-11T05:09:56.911Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-12T22:01:36.467Z","host":"phoenix","event":"STEP_UPDATE","user":"netyeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-12T22:01:36.486Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-12T22:01:36.487Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-12T22:01:36.489Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}

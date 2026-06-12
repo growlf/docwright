@@ -392,3 +392,40 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Version bumped to 0.2.4, tagged v0.2.4 pushed
 
 **Session note:** `docs/session-notes/session_note_202606082345.md`
+
+---
+
+## Session: 2026-06-12 — Completed sub-plans and v0.3.1 bump
+
+**Focus:** Completed sub-plans, TS MCP cut-over, plan review overhaul, v0.3.1 bump
+
+**Completed:**
+- [x] Completed and archived 7 sub-plans (TS MCP server, profile override merge, session start, phase close-out, next-action, sub-plan approval, plan-from-body)
+- [x] Full cut-over from Python to TypeScript MCP server
+- [x] Plan review UI: streaming micro-calls (step-review, section-review, overview) replacing single-prompt
+- [x] Sub-plan auto-approval from parent plan PropertiesPane
+- [x] Profile engine: vault-override merging with +prefix array append
+- [x] Session start/end automation skills
+- [x] Phase close-out procedure and script
+- [x] Fixed unquoted colon YAML parsing bug in pre-commit hook
+- [x] Bumped version to 0.3.1, committed and pushed
+
+**Session note:** `docs/session-notes/session_note_202606121455.md`
+
+---
+
+## Session: 2026-06-12 — AI bundle complete, Olla GPU investigation
+
+**Focus:** Steps 9-12 of AI Capabilities Bundle, Olla GPU debugging
+
+**Completed:**
+- [x] Step 9 — auto-certify + human-first-review gate
+- [x] Step 10 — Perspective Synthesis panel and API endpoint
+- [x] Step 11 — wire Perspective Synthesis into multi-review workflow
+- [x] Step 12 — Model Voting aggregate summary (bundle complete, 12/12)
+- [x] Modular AI Review complete (3/3, Olla-backed micro-calls)
+- [x] Drafted Policy Atom Framework proposal and plan
+
+**BLOCKER:** Olla Intel Arc GPU reports 0 VRAM — plan-review hangs. Inference requests to Docker ollama time out.
+
+**Session note:** `docs/session-notes/session_note_202606130024.md`
