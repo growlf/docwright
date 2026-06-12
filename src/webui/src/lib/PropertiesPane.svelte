@@ -233,6 +233,43 @@
     docType === 'proposal' && frontmatter.approved === true &&
     (!frontmatter.assigned_to || String(frontmatter.assigned_to).trim() === '')
   );
+
+  // Detect unapproved sub-plan proposals referenced in plan body as wikilinks
+  let subPlansToApprove = $derived.by(() => {
+    if (docType !== 'plan' || !body || !body.includes('[[proposals/')) return [];
+    const links = [...body.matchAll(/\[\[proposals\/([^\]]+)\]\]/g)];
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const m of links) {
+      const name = m[1].replace(/\.md$/, '');
+      if (!seen.has(name)) { seen.add(name); result.push(name); }
+    }
+    return result;
+  });
+
+  let approvingSubPlan = $state<string | null>(null);
+
+  async function approveSubPlan(name: string) {
+    approvingSubPlan = name;
+    try {
+      const res = await fetch('/api/approve-sub-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent_plan: (frontmatter._path || '').replace(/^plans\//, '').replace(/\.md$/, ''), proposal_name: name }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(`Auto-approve failed: ${data.error}`);
+      } else {
+        alert(`✅ Approved "${name}"\n\n${data.message}`);
+        location.reload();
+      }
+    } catch (err: any) {
+      alert(`Auto-approve failed: ${err.message}`);
+    } finally {
+      approvingSubPlan = null;
+    }
+  }
 </script>
 
 <div class="pane-inner">
@@ -317,6 +354,18 @@
         {#if frontmatter.status !== 'completed' && frontmatter.status !== 'canceled'}
           <button class="act cancel-plan" onclick={() => setPlanStatus('canceled')}
             title="Set status: canceled — plan will no longer appear as active">Cancel</button>
+        {/if}
+        {#if subPlansToApprove.length > 0}
+          <div class="sub-plan-section">
+            <div class="sub-plan-label">Sub-Plans</div>
+            {#each subPlansToApprove as spName}
+              <button class="act approve" onclick={() => approveSubPlan(spName)}
+                disabled={approvingSubPlan !== null}
+                title="Auto-approve this sub-plan proposal — chains critique → improve → approve → create plan">
+                {approvingSubPlan === spName ? '⏳…' : '✓ ' + spName}
+              </button>
+            {/each}
+          </div>
         {/if}
       {/if}
       {#if mode === 'edit'}
@@ -482,6 +531,21 @@
     margin-top: 2px;
   }
 
+  .sub-plan-section {
+    width: 100%;
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .sub-plan-label {
+    width: 100%;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $muted;
+    margin-bottom: 1px;
+  }
   .m-badge {
     font-size: 10px;
     padding: 1px 6px;

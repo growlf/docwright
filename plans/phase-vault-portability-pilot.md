@@ -15,32 +15,25 @@ priority: high
 automated: guided
 assigned_to: NetYeti
 gate_reviewer: NetYeti
-gate_status: pending
-tests_defined: false
+gate_status: reviewed
+tests_defined: true
 tests_human_reviewed: false
 depends_on:
   - phase-2-foundation
 total_steps: 11
-completed_steps: 0
+completed_steps: 5
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
+_path: plans/phase-vault-portability-pilot.md
 ---
-
 # Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
 
 ## Overview
 
-Establishes clean tool/vault separation so DocWright can manage any external project,
-not just itself. Delivers a real-world MSP pilot (non-profit managed services), a
-structured upstream contribution pipeline, and the architectural foundation that all
-subsequent phases build on.
+Establishes clean tool/vault separation so DocWright can manage any external project, not just itself. Delivers a real-world MSP pilot (non-profit managed services), a structured upstream contribution pipeline, and the architectural foundation that all subsequent phases build on.
 
-Also provisions Cascade STEAM's vault early — using `docwright init` — so leadership
-has hands-on access before the full Phase 5 infrastructure (Forgejo, AI stack) is
-in place. Phase 5 then focuses purely on Cascade STEAM's production infrastructure,
-not on proving DocWright works with an external vault (Phase 3 proves that).
+Also provisions Cascade STEAM's vault early — using `docwright init` — so leadership has hands-on access before the full Phase 5 infrastructure (Forgejo, AI stack) is in place. Phase 5 then focuses purely on Cascade STEAM's production infrastructure, not on proving DocWright works with an external vault (Phase 3 proves that).
 
-See [[proposals/approved/phase-vault-portability-pilot.md]] for full design rationale,
-architecture diagrams, and alternatives considered.
+See [[proposals/approved/phase-vault-portability-pilot.md]] for full design rationale, architecture diagrams, and alternatives considered.
 
 **Prerequisite:** Phase 2 gate review by NetYeti must complete before this plan begins.
 
@@ -48,11 +41,11 @@ architecture diagrams, and alternatives considered.
 
 | # | Deliverable | Sub-Plan Proposal | Status |
 |---|-------------|-------------------|--------|
-| 1 | TypeScript MCP Server with `--mode` flag | [[proposals/sub-plan-ts-mcp-server.md]] | ⏳ Planned |
-| 2 | Vault Portability Foundation (path resolution + .mcp.json) | [[proposals/sub-plan-vault-portability-foundation.md]] | ⏳ Planned |
-| 3 | `docwright init` scaffold | [[proposals/sub-plan-docwright-init-scaffold.md]] | ⏳ Planned |
-| 4 | Profile override merge engine | [[proposals/sub-plan-profile-override-merge.md]] | ⏳ Planned |
-| 5 | Vault migration system (`MIGRATION.md` + `vault:migrate`) | [[proposals/sub-plan-vault-migration-system.md]] | ⏳ Planned |
+| 1 | TypeScript MCP Server with `--mode` flag | [[proposals/sub-plan-ts-mcp-server.md]] | ✅ Done |
+| 2 | Vault Portability Foundation (path resolution + .mcp.json) | [[proposals/sub-plan-vault-portability-foundation.md]] | ✅ Done |
+| 3 | `docwright init` scaffold | [[proposals/sub-plan-docwright-init-scaffold.md]] | ✅ Done |
+| 4 | Profile override merge engine | [[proposals/sub-plan-profile-override-merge.md]] | ✅ Done |
+| 5 | Vault migration system (`MIGRATION.md` + `vault:migrate`) | [[proposals/sub-plan-vault-migration-system.md]] | 🚧 In Progress |
 | 6 | Contribution pipeline & friction log | [[proposals/sub-plan-contribution-pipeline.md]] | ⏳ Planned |
 | 7 | MSP pilot vault (non-profit managed services) | [[proposals/sub-plan-msp-pilot-vault.md]] | ⏳ Planned |
 | 8 | Cascade STEAM early-access vault | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⏳ Planned |
@@ -64,13 +57,13 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Vault-portable TypeScript MCP server with `--mode` flag | Rewrite `scripts/mcp-server.py` in TypeScript. `DOCWRIGHT_VAULT_ROOT` env var is first-class config. `--mode upstream` flag switches the server to target DocWright's own repo instead of the vault. Zero hard-coded paths. Replaces Python server; remove Python from Dockerfile. Parity test: all existing tools pass against both vault and upstream modes. | ⏳ Pending |
+| 1 | Vault-portable TypeScript MCP server with `--mode` flag | Rewrite `scripts/mcp-server.py` in TypeScript. `DOCWRIGHT_VAULT_ROOT` env var is first-class config. `--mode upstream` flag switches the server to target DocWright's own repo instead of the vault. Zero hard-coded paths. Replaces Python server; remove Python from Dockerfile. Parity test: all existing tools pass against both vault and upstream modes. | ✅ Done |
 | 2 | Contribution pipeline tools on dw-upstream | Add to the TypeScript MCP server's upstream mode: `contribute_upstream(title, description, category, docwright_version)` — reads `DOCWRIGHT_CONTRIB_APPROVED=1` env var (human-set, AI cannot forge); validates sanitization schema; creates GitHub issue via `DOCWRIGHT_GITHUB_TOKEN` or generates pre-filled URL fallback; logs to `.docwright/contributions.log`. Also add: `log_friction(description, category)` on vault mode; `list_docwright_issues`; `create_docwright_proposal`. Define `MIGRATION.md` format and write first entry. | ⏳ Pending |
-| 3 | Path resolution — no hardcoded paths | `docwright init` writes `.env` with `DOCWRIGHT_PATH` as first step. All vault-side files reference `$DOCWRIGHT_PATH` — never absolute paths. Update `.claude/settings.json` hook commands to use `$DOCWRIGHT_PATH`. Hook install script: `npm run hook:install -- --vault /path`. | ⏳ Pending |
-| 4 | `.mcp.json` template | Define `.mcp.json` template wiring `dw-vault` (vault mode) and `dw-upstream` (upstream mode). Both reference `$DOCWRIGHT_PATH`. Template generated by `docwright init`. | ⏳ Pending |
-| 5 | `docwright init` scaffold | `npm run init -- --dest /path/to/new-vault --profile org-operations` creates full vault structure, `.docwright/config.json`, `.env`, `.mcp.json`, `.claude/settings.json`, pre-commit hook, `profile.json` stub, `docs/friction-log.md`. Must work end-to-end: init → open in web UI → create proposal → approve → create plan. | ⏳ Pending |
+| 3 | Path resolution — no hardcoded paths | `docwright init` writes `.env` with `DOCWRIGHT_PATH` as first step. All vault-side files reference `$DOCWRIGHT_PATH` — never absolute paths. Update `.claude/settings.json` hook commands to use `$DOCWRIGHT_PATH`. Hook install script: `npm run hook:install -- --vault /path`. | ✅ Done |
+| 4 | `.mcp.json` template | Define `.mcp.json` template wiring `dw-vault` (vault mode) and `dw-upstream` (upstream mode). Both reference `$DOCWRIGHT_PATH`. Template generated by `docwright init`. | ✅ Done |
+| 5 | `docwright init` scaffold | `npm run init -- --dest /path/to/new-vault --profile org-operations` creates full vault structure, `.docwright/config.json`, `.env`, `.mcp.json`, `.claude/settings.json`, pre-commit hook, `profile.json` stub, `docs/friction-log.md`. Must work end-to-end: init → open in web UI → create proposal → approve → create plan. | ✅ Done |
 | 6 | `vault:migrate` script + `MIGRATION.md` | Define `MIGRATION.md` schema (per-version BREAKING sections with migration commands). Implement `npm run vault:migrate -- --vault /path --from X --to Y`: reads `MIGRATION.md`, applies steps in version range, updates `.docwright/config.json`, never touches vault content. Write first `MIGRATION.md` entry. | ⏳ Pending |
-| 7 | Profile override merge | Profile engine reads vault-root `profile.json` and merges onto bundled profile: scalars replace, objects deep-merge, `+array` appends, unprefixed array replaces. Test: MSP vault adds one required field without losing bundled defaults. | ⏳ Pending |
+| 7 | Profile override merge | Profile engine reads vault-root `profile.json` and merges onto bundled profile: scalars replace, objects deep-merge, `+array` appends, unprefixed array replaces. Test: MSP vault adds one required field without losing bundled defaults. | ✅ Done |
 | 8 | MSP pilot vault | Create git repo for non-profit managed services. Run `docwright init`. Write policies: service-catalog, change-management, incident-response, security-baseline, onboarding. Complete at least one full proposal→plan→completed cycle entirely through DocWright. Record friction log entries throughout. Acceptance bar: full lifecycle works with no manual file edits required. | ⏳ Pending |
 | 9 | Cascade STEAM early-access vault | Using `docwright init` and the Phase 3 architecture, provision a Cascade STEAM vault on a local git repo. No Forgejo, no AI stack yet — just the vault structure, org-operations profile, and stub policies from the Drive vault seed. Gives leadership hands-on access and validates the vault seed content before Phase 5 production infrastructure begins. Acceptance bar: leadership can open the Web UI, read the vault seed, and submit their first proposal. | ⏳ Pending |
 | 10 | Friction log tooling | `log_friction(description, category)` MCP tool creates structured entry in `docs/friction-log.md`. Categories: `bug`, `feature-request`, `ux-friction`, `docs-gap`, `missing-abstraction`. Document review cadence. Wire periodic review: friction entries → `contribute_upstream` (with consent) → GitHub issues. | ⏳ Pending |
@@ -88,14 +81,16 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 
 ## Phase Gate
 
-- [ ] Phase 2 gate review complete (prerequisite)
-- [ ] Sub-plan #1: TypeScript MCP server replaces Python — all tools passing
+- [x] Phase 2 gate review complete (prerequisite)
+- [x] Sub-plan #1: TypeScript MCP server replaces Python — all tools passing
+- [x] Sub-plan #2: Vault portability foundation — path resolution + .mcp.json template
+- [x] Sub-plan #3: `docwright init` produces a working vault end-to-end
+- [x] Sub-plan #4: Profile override merge engine tested
 - [ ] Sub-plan #6: Contribution pipeline live with consent enforcement
-- [ ] Sub-plan #3: `docwright init` produces a working vault end-to-end
 - [ ] Sub-plan #7: MSP pilot vault — one complete proposal→plan→completed cycle
 - [ ] Sub-plan #8: Cascade STEAM early-access vault provisioned and accessible to leadership
 - [ ] Sub-plan #9: `docs/vault-portability.md` written and accurate
-- [ ] Phase 3 gate review by NetYeti
+- [x] Phase 3 gate review by NetYeti
 
 ## Document History
 
@@ -106,3 +101,9 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 | 2026-06-08 | Created from approved proposal | NetYeti |
 | 2026-06-09 | Decomposed into 9 standalone sub-plans with proposals and Deliverables table — TS MCP server, vault foundation, init scaffold, profile merge, migration system, contribution pipeline, MSP pilot, Cascade STEAM, architecture doc | NetYeti |
 | 2026-06-09 | Decomposed into 9 standalone sub-plans with proposals and Deliverables table | NetYeti |
+| 2026-06-11 | Gate approved by NetYeti. Step 1 marked done (sub-plan-ts-mcp-server completed). | NetYeti |
+| 2026-06-11 | Steps 3-4 done: DOCWRIGHT_PATH introduced across config, .mcp.json, opencode.json, .claude/settings.json, install-hooks.sh. Vault .mcp.json template (dw-vault + dw-upstream) defined. | NetYeti |
+| 2026-06-11 | Step 5 done: docwright init scaffold (scripts/init.ts, npm run init). Creates full vault structure: .env, .mcp.json, profile.json, brand.json, .docwright/, docs/friction-log.md, proposals/, plans/. | NetYeti |
+| 2026-06-11 | Deliverables table synced — Dels 1-3 ✅, Phase Gate checkboxes updated. | NetYeti |
+| 2026-06-11 | Sub-plan #4 (Profile Override Merge) approved and set in-progress. Plan populated with 5 steps. | NetYeti |
+| 2026-06-11 | Sub-plan #4 completed: mergeProfiles() in src/dispatch/profile.ts, wired into profile-config API, 13 tests passing. | NetYeti |

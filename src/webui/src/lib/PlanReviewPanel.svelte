@@ -1,23 +1,20 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import MarkdownRenderer from '../routes/MarkdownRenderer.svelte';
 
   let {
-    findings = '',
+    steps = {} as Record<string, string>,
+    sections = {} as Record<string, string>,
+    overview = '',
     status = '',
-    changes = '',
-    improved = '',
     loading = false,
-    onaccept,
     ondismiss,
     onrerun,
   }: {
-    findings?: string;
+    steps?: Record<string, string>;
+    sections?: Record<string, string>;
+    overview?: string;
     status?: string;
-    changes?: string;
-    improved?: string;
     loading?: boolean;
-    onaccept?: (improved: string) => void;
     ondismiss?: () => void;
     onrerun?: () => void;
   } = $props();
@@ -43,66 +40,74 @@
   }
 
   $effect(() => {
-    if (findings || loading) scrollToBottom();
+    if (loading) scrollToBottom();
   });
+
+  const stepNumbers = $derived(
+    Object.keys(steps).sort((a, b) => Number(a) - Number(b))
+  );
+  const sectionKeys = $derived(Object.keys(sections));
+
+  function groupLabel(key: string): string {
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  }
 </script>
 
 <div class="panel">
   <div class="panel-header">
-    <span class="panel-title">
-      AI Review
-    </span>
+    <span class="panel-title">AI Review</span>
     <button class="rerun-btn" onclick={onrerun} title="Re-run critique" disabled={loading}>↺</button>
     <button class="close-btn" onclick={ondismiss} title="Close">← Props</button>
   </div>
 
-  {#if loading}
-    <div class="content-scroll streaming" bind:this={scrollEl}>
-      {#if status}
-        <div class="status-line">{status} <span class="elapsed">({elapsed}s)</span></div>
-      {:else}
-        <div class="status-line">Waiting for AI response… <span class="elapsed">({elapsed}s)</span></div>
-      {/if}
-      {#if findings}
-        <pre class="streaming-text">{findings}<span class="cursor">▊</span></pre>
-      {:else if elapsed > 20}
-        <div class="status-line hint">Still waiting… the model may be cold-starting. No timeout yet.</div>
-      {/if}
-    </div>
-  {:else if !improved}
-    {#if findings && findings.startsWith('Error:')}
-      <div class="empty error">{findings}</div>
-    {:else if findings && findings !== '*(No text response from AI)*'}
-      <div class="empty findings-only"><pre>{findings}</pre></div>
-    {:else}
-      <div class="empty">No review yet.</div>
+  <div class="content-scroll" class:streaming={loading} bind:this={scrollEl}>
+    {#if loading}
+      <div class="status-line">{status || 'Reviewing plan...'} <span class="elapsed">({elapsed}s)</span></div>
     {/if}
-  {:else}
-    <div class="tabs">
-      <button class="tab" class:active={true} onclick={() => {}}>
-        Changes
-      </button>
-    </div>
-    <div class="content-scroll done" bind:this={scrollEl}>
-      {#if changes && changes !== '(No specific changes listed)'}
-        <div class="changes">
-          <MarkdownRenderer content={changes} />
+
+    {#if stepNumbers.length > 0 || sectionKeys.length > 0 || overview}
+      {#if stepNumbers.length > 0}
+        <div class="group">
+          <div class="group-header">Steps</div>
+          {#each stepNumbers as num (num)}
+            <div class="item" class:done={steps[num] && !steps[num].startsWith('Error:')} class:error={steps[num].startsWith('Error:')}>
+              <span class="item-icon">{steps[num].startsWith('Error:') ? '⚠' : '✅'}</span>
+              <span class="item-label">Step {num}</span>
+              <pre class="item-text">{steps[num]}</pre>
+            </div>
+          {/each}
         </div>
-        <div class="preview-label">Preview of improved plan:</div>
       {/if}
-      <div class="improved-body">
-        <MarkdownRenderer content={improved} />
+
+      {#if sectionKeys.length > 0}
+        <div class="group">
+          <div class="group-header">Sections</div>
+          {#each sectionKeys as key (key)}
+            <div class="item" class:done={sections[key] && !sections[key].startsWith('Error:')} class:error={sections[key].startsWith('Error:')}>
+              <span class="item-icon">{sections[key].startsWith('Error:') ? '⚠' : '✅'}</span>
+              <span class="item-label">{groupLabel(key)}</span>
+              <pre class="item-text">{sections[key]}</pre>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if overview}
+        <div class="group">
+          <div class="group-header">Overall Assessment</div>
+          <pre class="overview-text" class:error={overview.startsWith('Error:')}>{overview}</pre>
+        </div>
+      {/if}
+    {:else if !loading}
+      <div class="empty">
+        <div>No review yet.</div>
+        <button class="run-btn" onclick={onrerun}>Run Review</button>
       </div>
-      <div class="critique-section">
-        <div class="preview-label">Critique</div>
-        <pre class="critique-text">{findings || '(No critique returned)'}</pre>
-      </div>
-    </div>
+    {/if}
+  </div>
+
+  {#if !loading && (stepNumbers.length > 0 || sectionKeys.length > 0 || overview)}
     <div class="panel-footer">
-      <button class="accept-btn" onclick={() => onaccept?.(improved)}
-        title="Replace plan body with the improved version">
-        Accept Improvements
-      </button>
       <button class="dismiss-btn" onclick={ondismiss}>Dismiss</button>
     </div>
   {/if}
@@ -119,42 +124,29 @@
   .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } }
 
   .empty { padding: 24px 16px; color: $muted; font-size: 13px; text-align: center; line-height: 1.6; }
-  .empty.error { color: #e05a5a; text-align: left; word-break: break-word; }
-  .empty.findings-only { text-align: left; pre { white-space: pre-wrap; font-size: 12px; } }
+  .run-btn { margin-top: 12px; padding: 8px 20px; border: 1px solid $blue-bdr; border-radius: 6px; background: $blue-bg; color: $blue; font-size: 13px; font-weight: 600; cursor: pointer; &:hover { filter: brightness(1.3); } }
 
   .content-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .content-scroll.streaming { font-family: monospace; font-size: 12px; line-height: 1.6; color: $fg; }
 
-  .streaming { font-family: monospace; font-size: 12px; line-height: 1.6; color: $fg; }
-  .status-line { color: $blue; font-weight: 600; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-line { color: $blue; font-weight: 600; margin-bottom: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   .status-line .elapsed { font-weight: 400; opacity: 0.7; }
-  .status-line.hint { color: $muted; font-weight: 400; font-size: 10px; text-transform: none; letter-spacing: 0; }
-  .streaming-text { white-space: pre-wrap; margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; color: inherit; }
-  .cursor { animation: blink 0.8s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
 
-  .tabs { display: flex; border-bottom: 1px solid $border; flex-shrink: 0; }
-  .tab  { flex: 1; padding: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: $muted; background: none; border: none; cursor: pointer; &:hover { color: $fg; } &.active { color: $blue; border-bottom: 2px solid $blue; } }
+  .group { margin-bottom: 16px; &:last-child { margin-bottom: 0; } }
 
-  .changes :global(h1), .changes :global(h2), .changes :global(h3) { margin-top: 1em; font-size: 13px; }
-  .changes :global(ul), .changes :global(ol) { padding-left: 18px; }
-  .changes :global(li) { margin-bottom: 6px; font-size: 12px; line-height: 1.5; color: $fg; }
+  .group-header { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: $muted; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid $border; }
 
-  .preview-label { margin-top: 16px; padding-top: 12px; border-top: 1px solid $border; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: $muted; }
-  .improved-body { margin-top: 8px; }
-  .improved-body :global(h1), .improved-body :global(h2), .improved-body :global(h3) { margin-top: 1em; }
-  .improved-body :global(h1) { font-size: 15px; }
-  .improved-body :global(h2) { font-size: 13px; }
-  .improved-body :global(h3) { font-size: 12px; }
-  .improved-body :global(p) { font-size: 12px; line-height: 1.5; }
-  .improved-body :global(code) { font-size: 11px; }
-  .improved-body :global(table) { font-size: 11px; }
-  .improved-body :global(ul), .improved-body :global(ol) { padding-left: 16px; font-size: 12px; }
-  .improved-body :global(li) { margin-bottom: 4px; }
+  .item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; background: $bg-2; }
+  .item.done { border-left: 2px solid $green; }
+  .item.error { border-left: 2px solid $red; }
 
-  .critique-section { margin-top: 16px; }
-  .critique-text { white-space: pre-wrap; font-size: 12px; line-height: 1.6; color: $fg; font-family: inherit; margin: 8px 0 0 0; }
+  .item-icon { flex-shrink: 0; font-size: 12px; line-height: 1.5; }
+  .item-label { flex-shrink: 0; font-size: 11px; font-weight: 600; color: $fg-dim; line-height: 1.5; min-width: 48px; }
+  .item-text { flex: 1; font-family: inherit; font-size: 12px; line-height: 1.5; color: $fg; white-space: pre-wrap; margin: 0; }
 
-  .panel-footer { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid $border; }
-  .accept-btn  { flex: 1; padding: 8px 12px; border: 1px solid $green-bdr; border-radius: 6px; background: $green-bg; color: $green; font-size: 12px; font-weight: 600; cursor: pointer; &:hover { filter: brightness(1.15); } }
+  .overview-text { font-family: inherit; font-size: 12px; line-height: 1.6; color: $fg; white-space: pre-wrap; margin: 0; padding: 8px; background: $bg-2; border-radius: 4px; }
+  .overview-text.error { color: $red; }
+
+  .panel-footer { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid $border; justify-content: flex-end; }
   .dismiss-btn { padding: 8px 12px; border: 1px solid $border; border-radius: 6px; background: none; color: $muted; font-size: 12px; cursor: pointer; &:hover { color: $fg; border-color: $muted; } }
 </style>

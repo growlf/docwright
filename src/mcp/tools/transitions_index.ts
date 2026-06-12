@@ -1,5 +1,5 @@
 import { McpTool } from '../types';
-import { transitionToApproved, transitionToCompleted, transitionToCanceled } from './transitions';
+import { transitionToApproved, transitionToCompleted, transitionToCanceled, approveSubPlan } from './transitions';
 
 export const transitionTools: McpTool[] = [
   {
@@ -45,6 +45,22 @@ export const transitionTools: McpTool[] = [
     },
     handler: async (args) => {
       const result = await transitionToCanceled(String(args.plan_name), String(args.cancellation_reason));
+      return { content: [{ type: 'text', text: result }] };
+    }
+  },
+  {
+    name: 'approve_sub_plan',
+    description: 'Approve a sub-plan proposal from a parent plan. Chains critique → improve → approve → create plan → update parent deliverable.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        parent_plan: { type: 'string', description: 'Name of the parent plan (e.g. "phase-vault-portability-pilot")' },
+        proposal_name: { type: 'string', description: 'Name of the sub-plan proposal (e.g. "sub-plan-vault-migration-system")' }
+      },
+      required: ['parent_plan', 'proposal_name']
+    },
+    handler: async (args) => {
+      const result = await approveSubPlan(String(args.parent_plan), String(args.proposal_name));
       return { content: [{ type: 'text', text: result }] };
     }
   }

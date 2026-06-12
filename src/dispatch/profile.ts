@@ -54,6 +54,13 @@ const DEFAULT_PROFILE: ProfileConfig = {
   features: { wikilinks: true, graph: true, naming: true, llmWiki: false },
 };
 
+export class MergeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MergeError';
+  }
+}
+
 export function loadProfile(vaultRoot: string): ProfileConfig | null {
   const profilePath = path.join(vaultRoot, 'profile.json');
   try {
@@ -61,13 +68,122 @@ export function loadProfile(vaultRoot: string): ProfileConfig | null {
   } catch { return null; }
 }
 
-export function getActiveProfile(vaultRoot: string): ProfileConfig {
-  const custom = loadProfile(vaultRoot);
-  if (custom) return custom;
+function getRepoRoot(): string {
+  // Try DOCWRIGHT_ROOT env var first
+  if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
+  // Try __dirname (available in both CJS and tsx/cjs)
+  const dir = typeof __dirname !== 'undefined' ? __dirname : '';
+  if (dir && fs.existsSync(path.join(dir, '../../src/profiles'))) {
+    return path.resolve(dir, '../..');
+  }
+  // Fallback to cwd
+  return process.cwd();
+}
 
-  // Try bundled org-operations profile relative to this file
-  const bundledPath = path.resolve(__dirname, '../../src/profiles/org-operations/profile.json');
+function loadBundledProfile(): ProfileConfig {
+  const repoRoot = getRepoRoot();
+  const bundledPath = path.join(repoRoot, 'src/profiles/org-operations/profile.json');
   try {
     return JSON.parse(fs.readFileSync(bundledPath, 'utf-8')) as ProfileConfig;
-  } catch { return DEFAULT_PROFILE; }
+  } catch {
+    return DEFAULT_PROFILE;
+  }
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/**
+ * Merge a vault-root profile override onto a bundled profile.
+ *
+ * Merge rules:
+ * - Scalar: vault value replaces bundled
+ * - Object: deep-merge (vault keys supplement, never remove bundled keys)
+ * - Array with `+` prefix string: append vault items to bundled
+ * - Array without prefix: replace bundled entirely
+ *
+ * Validation:
+ * - `+` prefix on non-array bundled field -> MergeError
+ * - Type mismatch (scalar vs object) -> MergeError
+ * - Unknown fields -> warning logged, no error (forward-compatible)
+ */
+export function mergeProfiles(
+  bundled: ProfileConfig,
+  vaultOverride: Partial<ProfileConfig>,
+): ProfileConfig {
+  const warnings: string[] = [];
+
+  function mergeValue(key: string, bundledVal: unknown, vaultVal: unknown): unknown {
+    // Unknown field in vault (not in bundled) — warn, pass through
+    if (!(key in bundled)) {
+      warnings.push(`Unknown field '${key}' in vault override — passed through`);
+      return vaultVal;
+    }
+
+    // Scalar (or null/undefined) — replace
+    if (!isObject(bundledVal) && !Array.isArray(bundledVal)) {
+      if (isObject(vaultVal) || Array.isArray(vaultVal)) {
+        throw new MergeError(`Field '${key}': vault value is ${typeof vaultVal} but bundled value is ${typeof bundledVal}`);
+      }
+      return vaultVal;
+    }
+
+    // Object — deep merge
+    if (isObject(bundledVal)) {
+      if (!isObject(vaultVal)) {
+        throw new MergeError(`Field '${key}': vault value is ${typeof vaultVal} but bundled value is object`);
+      }
+      const merged: Record<string, unknown> = { ...bundledVal };
+      for (const [vk, vv] of Object.entries(vaultVal)) {
+        merged[vk] = mergeValue(vk, bundledVal[vk], vv);
+      }
+      return merged;
+    }
+
+    // Array
+    if (Array.isArray(bundledVal)) {
+      // Vault value must be array too
+      if (!Array.isArray(vaultVal)) {
+        throw new MergeError(`Field '${key}': vault value is ${typeof vaultVal} but bundled value is array`);
+      }
+
+      // Check for append prefix on first element
+      if (vaultVal.length > 0 && typeof vaultVal[0] === 'string' && (vaultVal[0] as string).startsWith('+')) {
+        // Strip the '+' marker from the first element, keep rest as-is
+        const firstItem = (vaultVal[0] as string).slice(1);
+        const appendItems = [firstItem, ...vaultVal.slice(1)];
+        return [...bundledVal, ...appendItems];
+      }
+
+      return vaultVal;
+    }
+
+    return vaultVal;
+  }
+
+  const merged: Record<string, unknown> = { ...bundled as unknown as Record<string, unknown> };
+  for (const [key, vaultVal] of Object.entries(vaultOverride)) {
+    if (vaultVal === undefined || vaultVal === null) continue;
+    const bundledVal = (bundled as unknown as Record<string, unknown>)[key];
+    const mergedVal = mergeValue(key, bundledVal, vaultVal);
+    if (mergedVal !== undefined) {
+      (merged as Record<string, unknown>)[key] = mergedVal;
+    }
+  }
+
+  if (warnings.length > 0) {
+    for (const w of warnings) {
+      console.warn(`[profile-merge] ${w}`);
+    }
+  }
+
+  return merged as unknown as ProfileConfig;
+}
+
+export function getActiveProfile(vaultRoot: string): ProfileConfig {
+  const bundled = loadBundledProfile();
+  const vaultOverride = loadProfile(vaultRoot);
+  if (!vaultOverride) return bundled;
+  return mergeProfiles(bundled, vaultOverride);
 }

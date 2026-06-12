@@ -4,11 +4,14 @@
     "docwright": {
       "type": "local",
       "command": [
-        "/home/netyeti/Projects/DocWright/.venv/bin/python3",
-        "/home/netyeti/Projects/DocWright/scripts/mcp-server.py"
+        "node",
+        "${DOCWRIGHT_PATH}/dist/mcp/server.js",
+        "--mode",
+        "vault"
       ],
       "environment": {
-        "DOCWRIGHT_ROOT": "/home/netyeti/Projects/DocWright"
+        "DOCWRIGHT_PATH": "${DOCWRIGHT_PATH}",
+        "DOCWRIGHT_VAULT_ROOT": "${DOCWRIGHT_VAULT_ROOT}"
       },
       "enabled": true
     }

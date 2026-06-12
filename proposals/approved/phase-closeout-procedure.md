@@ -1,5 +1,5 @@
 ---
-title: "Formalize phase close-out procedure — version bump, tag, push"
+title: Formalize phase close-out procedure — version bump, tag, push
 author: NetYeti
 created: 2026-06-08
 tags:
@@ -8,9 +8,11 @@ tags:
   - phase-lifecycle
   - tooling
   - code-over-memory
-approved: false
-created_by: "NetYeti@phoenix"
-assigned_to: ""
+approved: true
+created_by: NetYeti@phoenix
+assigned_to: netyeti
+_path: proposals/phase-closeout-procedure.md
+consumed_by: plans/phase-closeout-procedure.md
 ---
 
 ## Problem

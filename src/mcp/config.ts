@@ -3,6 +3,7 @@ import * as path from 'node:path';
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface Config {
+  docwrightPath: string;
   vaultRoot: string;
   mcpPort: number;
   profile?: string;
@@ -10,6 +11,12 @@ export interface Config {
 }
 
 export function loadConfig(): Config {
+  const docwrightPath = process.env.DOCWRIGHT_PATH
+    ? path.resolve(process.env.DOCWRIGHT_PATH)
+    : process.env.DOCWRIGHT_ROOT
+      ? path.resolve(process.env.DOCWRIGHT_ROOT)
+      : '';
+
   const vaultRootEnv = process.env.DOCWRIGHT_VAULT_ROOT || process.env.DOCWRIGHT_ROOT;
   
   // The plan allows it to throw or return an error if missing when mode=vault,
@@ -46,6 +53,7 @@ export function loadConfig(): Config {
   }
 
   return {
+    docwrightPath,
     vaultRoot,
     mcpPort,
     profile,

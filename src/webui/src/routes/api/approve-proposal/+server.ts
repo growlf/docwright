@@ -82,7 +82,80 @@ export async function POST({ request }) {
   const planRel = `plans/${planSlug}`;
   const approvedRel = `proposals/approved/${norm}`;
 
-  // Write plan file FIRST — if this fails, proposal stays untouched
+  // Build plan content from proposal body sections
+  function parseSections(body: string): { name: string; content: string }[] {
+    const sections: { name: string; content: string }[] = [];
+    const lines = body.split('\n');
+    let currentName = 'Overview';
+    let currentLines: string[] = [];
+    for (const line of lines) {
+      const m = line.match(/^##\s+(.+)/);
+      if (m) {
+        if (currentLines.length > 0 || sections.length === 0) {
+          sections.push({ name: currentName, content: currentLines.join('\n').trim() });
+        }
+        currentName = m[1].trim();
+        currentLines = [];
+      } else {
+        currentLines.push(line);
+      }
+    }
+    if (currentLines.length > 0 || sections.length === 0) {
+      sections.push({ name: currentName, content: currentLines.join('\n').trim() });
+    }
+    return sections;
+  }
+
+  const bodyMatch = raw.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  const proposalBody = bodyMatch ? bodyMatch[1].trim() : '';
+  const proposalSections = parseSections(proposalBody);
+
+  const KNOWN = ['testing plan', 'risk assessment', 'rollback procedures', 'implementation steps', 'proposed solution', 'proposed approach'];
+  const mapped: Record<string, { name: string; content: string }> = {};
+  const context: { name: string; content: string }[] = [];
+  for (const s of proposalSections) {
+    if (KNOWN.includes(s.name.toLowerCase())) {
+      mapped[s.name.toLowerCase()] = s;
+    } else {
+      context.push(s);
+    }
+  }
+
+  let stepsBody = '';
+  if (mapped['implementation steps']) {
+    stepsBody = mapped['implementation steps'].content;
+  } else if (mapped['proposed solution']) {
+    const items: string[] = [];
+    for (const line of mapped['proposed solution'].content.split('\n')) {
+      const li = line.match(/^\s*\d+\.\s+(.+)/);
+      if (li) items.push(li[1].trim());
+    }
+    if (items.length > 0) {
+      stepsBody = items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
+    }
+  } else if (mapped['proposed approach']) {
+    const items: string[] = [];
+    for (const line of mapped['proposed approach'].content.split('\n')) {
+      const li = line.match(/^\s*\d+\.\s+(.+)/);
+      if (li) items.push(li[1].trim());
+    }
+    if (items.length > 0) {
+      stepsBody = items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
+    }
+  }
+  if (!stepsBody) {
+    stepsBody = '| Step | Action | Details | Status |\n|------|--------|---------|--------|\n| 1 | | | ⏳ Pending |';
+  }
+
+  let contextBody = '';
+  for (const s of context) {
+    if (s.content) contextBody += `\n### ${s.name}\n\n${s.content}\n`;
+  }
+
+  const testingBody = mapped['testing plan'] ? mapped['testing plan'].content : '_Testing plan TBD_';
+  const rollbackBody = mapped['rollback procedures'] ? mapped['rollback procedures'].content : '_Rollback procedures TBD_';
+  const riskBody = mapped['risk assessment'] ? mapped['risk assessment'].content : '_Risk assessment TBD_';
+
   const planContent = `---
 title: ${title}
 status: approved
@@ -102,29 +175,23 @@ tests_human_reviewed: false
 ## Overview
 
 *Plan generated from approved proposal: ${title}*
+${contextBody}
 
 ## Implementation Steps
 
-> When marking a task ✅ Complete, update every step row in this table
-> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
-
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | | | ⏳ Pending |
+${stepsBody}
 
 ## Testing Plan
 
-
+${testingBody}
 
 ## Rollback Procedures
 
-
+${rollbackBody}
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| | | | |
+${riskBody}
 
 ## Document History
 
@@ -137,8 +204,6 @@ tests_human_reviewed: false
   fs.writeFileSync(planPath, planContent, 'utf-8');
 
   // Auto-detect tests_defined from proposal body
-  const bodyMatch = raw.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
-  const proposalBody = bodyMatch ? bodyMatch[1] : '';
   if (proposalBody && hasTestingPlan(proposalBody)) {
     const planRaw = fs.readFileSync(planPath, 'utf-8');
     const updated = planRaw.replace(/^(tests_defined:\s*).+$/m, `$1true`);

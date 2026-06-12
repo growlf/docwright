@@ -47,11 +47,15 @@ This plan tracks all Phase 4 deliverables. Each deliverable will be broken out i
 
 ## Phase Context
 
-See [[plans/phase-3-vault-portability-pilot]] for Phase 3 deliverables. Phase 4 begins after Phase 3 is complete and vault portability is established.
+See \[\[plans/phase-3-vault-portability-pilot\]\] for Phase 3 deliverables. Phase 4 begins after Phase 3 is complete and vault portability is established.
+
+\## Review Context
+
+  
 
 ## Document History
 
 | Date | Change | Author |
 | --- | --- | --- |
-| 2026-06-08 | Renumbered Phase 3 → Phase 4; depends_on updated to phase-3-vault-portability-pilot | NetYeti |
+| 2026-06-08 | Renumbered Phase 3 → Phase 4; depends\_on updated to phase-3-vault-portability-pilot | NetYeti |
 | 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |

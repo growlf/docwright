@@ -26,7 +26,26 @@ Read:
 - Active plans via `dw-mcp_list_active_plans`
 - Session context via `dw-mcp_get_session_context`
 
-### 3. Create session note
+### 3. Phase close-out check
+
+Scan `plans/completed/` for any file matching `phase-(\d+)-*.md` that was completed
+in this session (check git log or file modification date against session start time).
+Also read `VERSION` file.
+
+If a phase plan was completed this session AND the current VERSION has NOT been
+bumped past that phase (e.g. Phase 2 completed but VERSION still shows 0.2.x),
+emit a BLOCKING WARNING:
+
+```
+⚠  Phase <N> plan was completed this session but version has not been bumped.
+   Run `npm run phase:close -- <N>` before ending the session.
+```
+
+Stop and do not proceed until the user has taken one of:
+- Run `npm run phase:close -- <N>` and it succeeds
+- Explicitly acknowledge the warning and choose to defer the close-out
+
+### 4. Create session note
 
 Write `docs/session-notes/session_note_YYYYMMDDHHMM.md`:
 
@@ -70,7 +89,7 @@ Write `docs/session-notes/session_note_YYYYMMDDHHMM.md`:
 ```
 ```
 
-### 4. Update SESSION-LOG.md
+### 5. Update SESSION-LOG.md
 
 Append a new entry after the last `---`:
 
@@ -87,6 +106,6 @@ Append a new entry after the last `---`:
 **Session note:** `docs/session-notes/session_note_YYYYMMDDHHMM.md`
 ```
 
-### 5. Report
+### 6. Report
 
 Print a concise summary: session note path, plans active, git status, and any action items for next session.

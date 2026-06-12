@@ -2,7 +2,7 @@
   "name": "docwright",
   "displayName": "docwright",
   "description": "Organizational operating system for policy-driven teams",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "publisher": "growlf",
   "repository": {
@@ -40,8 +40,11 @@
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
     "test:integration": "mocha --require tsx/cjs 'test/integration/**/*.test.ts'",
     "test": "npm run test:dispatch && npm run test:executor && npm run test:mcp && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration",
+    "hook:install": "bash scripts/install-hooks.sh",
+    "init": "npx tsx scripts/init.ts",
     "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
     "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
+    "phase:close": "npx tsx scripts/phase-close.ts",
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile"

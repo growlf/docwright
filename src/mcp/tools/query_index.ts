@@ -1,5 +1,5 @@
 import { McpTool } from '../types';
-import { getSessionContext, listActivePlans, getPlan, getStatus } from './query';
+import { getSessionContext, getSessionContextStructured, listActivePlans, getPlan, getStatus, nextAction } from './query';
 
 export const queryTools: McpTool[] = [
   {
@@ -12,6 +12,18 @@ export const queryTools: McpTool[] = [
     handler: async () => {
       const res = await getSessionContext();
       return { content: [{ type: 'text', text: res }] };
+    }
+  },
+  {
+    name: 'session_context',
+    description: 'Structured session start context: identity, active plans with step progress, pending proposals, last session log entry, and git status. Returns JSON.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    },
+    handler: async () => {
+      const res = getSessionContextStructured();
+      return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
     }
   },
   {
@@ -51,6 +63,17 @@ export const queryTools: McpTool[] = [
     handler: async () => {
       const res = await getStatus();
       return { content: [{ type: 'text', text: res }] };
+    }
+  },
+  {
+    name: 'next_action',
+    description: 'Intelligent step-level recommendation for "what should I work on next?" Scans active plans sorted by priority, finds the first pending step, checks sub-plan proposal approval status. Returns structured JSON.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    },
+    handler: async () => {
+      return { content: [{ type: 'text', text: JSON.stringify(nextAction(), null, 2) }] };
     }
   }
 ];

@@ -8,7 +8,7 @@
   import { toasts, dismissToast, showToast } from '$lib/toast';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewFindings, planReviewLoading, planReviewStatus, planReviewImproved, planReviewChanges, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
   showExecutionPanel, executingPlanName
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
@@ -75,11 +75,11 @@ import {
   let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
   let cr = $state<any[]>([]); $effect(() => { const u = collationRelationships.subscribe(v => cr = v); return u; });
   let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
-  let prf = $state('');       $effect(() => { const u = planReviewFindings.subscribe(v => prf = v); return u; });
+  let prSteps    = $state<Record<string, string>>({}); $effect(() => { const u = planReviewSteps.subscribe(v => prSteps = v); return u; });
+  let prSections = $state<Record<string, string>>({}); $effect(() => { const u = planReviewSections.subscribe(v => prSections = v); return u; });
+  let prOverview = $state(''); $effect(() => { const u = planReviewOverview.subscribe(v => prOverview = v); return u; });
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
   let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
-  let pri = $state('');       $effect(() => { const u = planReviewImproved.subscribe(v => pri = v); return u; });
-  let prc = $state('');       $effect(() => { const u = planReviewChanges.subscribe(v => prc = v); return u; });
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
@@ -117,11 +117,11 @@ import {
     collationMatches.set([]);
     collationRelationships.set([]);
     collationLoading.set(false);
-    planReviewFindings.set('');
+    planReviewSteps.set({});
+    planReviewSections.set({});
+    planReviewOverview.set('');
     planReviewLoading.set(false);
     planReviewStatus.set('');
-    planReviewImproved.set('');
-    planReviewChanges.set('');
     improveResult.set(null);
     improveLoading.set(false);
     improvePhase.set('improve-thinking');
@@ -197,10 +197,10 @@ import {
     if (!fp) return;
     rightTab = 'review';
     showRightPanel = true;
-    planReviewFindings.set('');
+    planReviewSteps.set({});
+    planReviewSections.set({});
+    planReviewOverview.set('');
     planReviewStatus.set('');
-    planReviewImproved.set('');
-    planReviewChanges.set('');
     planReviewLoading.set(true);
     try {
       const res = await fetch('/api/plan-review', {
@@ -209,10 +209,9 @@ import {
         body: JSON.stringify({ path: fp }),
       });
       const reader = res.body?.getReader();
-      if (!reader) { planReviewFindings.set('No response stream'); return; }
+      if (!reader) { planReviewStatus.set('No response stream'); return; }
       const decoder = new TextDecoder();
       let buffer = '';
-      let accumulated = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -227,52 +226,25 @@ import {
           const event = eventLine ? eventLine.slice(7).trim() : '';
           try {
             const data = JSON.parse(dataLine.slice(6));
-            if (event === 'token') {
-              accumulated += data.text;
-              planReviewFindings.set(accumulated);
+            if (event === 'step-review') {
+              planReviewSteps.update(s => { s[data.number] = data.text; return s; });
+            } else if (event === 'section-review') {
+              planReviewSections.update(s => { s[data.name] = data.text; return s; });
+            } else if (event === 'overview') {
+              planReviewOverview.set(data.text);
             } else if (event === 'status') {
               planReviewStatus.set(data.message);
             } else if (event === 'done') {
-              planReviewChanges.set(data.changes || '');
-              planReviewImproved.set(data.improved_body || '');
-              planReviewFindings.set(data.findings || accumulated);
+              if (data.error) planReviewOverview.set(`Error: ${data.error}`);
             }
           } catch { /* skip malformed JSON */ }
         }
       }
     } catch (e: any) {
-      planReviewFindings.set(`Error: ${e}`);
+      planReviewOverview.set(`Error: ${e}`);
     } finally {
       planReviewLoading.set(false);
       planReviewStatus.set('');
-    }
-  }
-
-  async function handleAcceptReview(improved: string) {
-    const fp = $currentDoc.filePath;
-    if (!fp || !improved) return;
-    const fm = $currentDoc.frontmatter ?? {};
-    const fmLines = Object.entries(fm)
-      .filter(([k]) => k !== '_path')
-      .map(([k, v]) => {
-        if (Array.isArray(v)) return v.length ? `${k}:\n${v.map(i => `  - ${i}`).join('\n')}` : `${k}: []`;
-        if (typeof v === 'boolean') return `${k}: ${v}`;
-        if (v === null || v === undefined || v === '') return `${k}:`;
-        return `${k}: ${v}`;
-      }).join('\n');
-    const newRaw = `---\n${fmLines}\n---\n${improved}`;
-    const res = await fetch('/api/write?path=' + encodeURIComponent(fp), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newRaw }),
-    });
-    if (res.ok) {
-      showToast('Plan updated with AI improvements', 3000);
-      rightTab = 'properties';
-      planReviewFindings.set('');
-      planReviewStatus.set('');
-      planReviewChanges.set('');
-      planReviewImproved.set('');
     }
   }
 
@@ -758,7 +730,7 @@ import {
       {#if $currentDoc.docType === 'plan'}
         <button class="right-tab" class:active={rightTab === 'review'}
           onclick={() => showReviewTab.set(true)}>
-          Review{prl ? ' ⏳' : pri ? ' ✓' : ''}
+          Review{prl ? ' ⏳' : ''}
         </button>
         {#if rightTab === 'execute'}
           <button class="right-tab" class:active={true}>Execute ⚡</button>
@@ -803,13 +775,12 @@ import {
       />
     {:else if rightTab === 'review'}
       <PlanReviewPanel
-        findings={prf}
+        steps={prSteps}
+        sections={prSections}
+        overview={prOverview}
         status={prs}
-        changes={prc}
-        improved={pri}
         loading={prl}
-        onaccept={handleAcceptReview}
-        ondismiss={() => { rightTab = 'properties'; planReviewFindings.set(''); planReviewStatus.set(''); planReviewChanges.set(''); planReviewImproved.set(''); }}
+        ondismiss={() => { rightTab = 'properties'; planReviewSteps.set({}); planReviewSections.set({}); planReviewOverview.set(''); planReviewStatus.set(''); planReviewLoading.set(false); }}
         onrerun={handleReview}
       />
     {:else if rightTab === 'execute'}

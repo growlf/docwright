@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { loadConfig } from './config';
 import { setRepoRoot } from './lib/paths';
 import { allTools } from './tools/index';
@@ -31,7 +32,7 @@ for (let i = 0; i < args.length; i++) {
       process.exit(1);
     }
   } else if (args[i] === '--test') {
-    // Stub for smoke test mode (used later in parity suite)
+    // Stub for smoke test mode
     console.log('Smoke test mode not yet implemented.');
     process.exit(0);
   }
@@ -43,12 +44,11 @@ async function main() {
   // Root resolution
   let repoRoot: string;
   if (mode === 'upstream') {
-    const rootEnv = process.env.DOCWRIGHT_ROOT;
-    if (!rootEnv) {
-      console.error('Error: DOCWRIGHT_ROOT is required when --mode=upstream');
+    if (!config.docwrightPath) {
+      console.error('Error: DOCWRIGHT_PATH (or DOCWRIGHT_ROOT) is required when --mode=upstream');
       process.exit(1);
     }
-    repoRoot = path.resolve(rootEnv);
+    repoRoot = config.docwrightPath;
   } else {
     // vault mode
     if (!config.vaultRoot) {
@@ -106,14 +106,31 @@ async function main() {
 }
 
 export function setupTools(server: Server) {
-  for (const tool of allTools) {
-    server.tool(
-      tool.name,
-      tool.description,
-      tool.inputSchema.properties,
-      tool.handler as any
-    );
-  }
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: allTools.map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      }))
+    };
+  });
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const tool = allTools.find(t => t.name === request.params.name);
+    if (!tool) {
+      throw new Error(`Unknown tool: ${request.params.name}`);
+    }
+
+    try {
+      return await tool.handler(request.params.arguments || {});
+    } catch (error: any) {
+      return {
+        content: [{ type: 'text', text: `Error: ${error.message}` }],
+        isError: true,
+      };
+    }
+  });
 }
 
 // Start

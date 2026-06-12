@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash /home/netyeti/Projects/DocWright/scripts/claude-lifecycle-hook.sh",
+            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-lifecycle-hook.sh\"",
             "timeout": 10,
             "statusMessage": "Lifecycle gate…"
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash /home/netyeti/Projects/DocWright/scripts/claude-session-boundary-hook.sh",
+            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-session-boundary-hook.sh\"",
             "timeout": 5,
             "statusMessage": "Session boundary check…"
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash /home/netyeti/Projects/DocWright/scripts/claude-tag-push-watch.sh",
+            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-tag-push-watch.sh\"",
             "timeout": 300,
             "statusMessage": "Watching CI for tag push…"
           }

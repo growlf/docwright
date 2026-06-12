@@ -11,13 +11,12 @@ export const collationMatches = writable<any[]>([]);
 export const collationRelationships = writable<any[]>([]);
 export const collationLoading = writable(false);
 
-/** Plan review (AI critique) panel state */
-export const planReviewFindings = writable('');
+/** Plan review (AI critique) panel state — structured micro-calls */
+export const planReviewSteps    = writable<Record<string, string>>({});
+export const planReviewSections = writable<Record<string, string>>({});
+export const planReviewOverview = writable('');
 export const planReviewLoading  = writable(false);
 export const planReviewStatus   = writable('');
-/** Plan review — improved body + changelog for accept flow */
-export const planReviewImproved = writable('');
-export const planReviewChanges  = writable('');
 
 /** Proposal improvement panel state */
 export const improveResult  = writable<{ improved: string; critique: string } | null>(null);
