@@ -41,6 +41,9 @@ export const executingPlanName = writable('');
 /** Toggle to Multi-Review panel instead of ChatPanel */
 export const showMultiReview = writable(false);
 
+/** Collected multi-review responses — populated by MultiReviewPanel, consumed by SynthesisPanel */
+export const multiReviewResponses = writable<Array<{ label: string; text: string }>>([]);
+
 /** Profile feature flags — gate Plan button, auto-detect, etc. */
 export const featureFlags = writable({
   showPlanButton: true,

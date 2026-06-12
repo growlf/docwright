@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { showChatPanel, showMultiReview } from './pane';
+  import { showChatPanel, showMultiReview, multiReviewResponses } from './pane';
+  import SynthesisPanel from './SynthesisPanel.svelte';
 
   const DEFAULT_URL = 'http://localhost:4096';
   const MAX_COLUMNS = 4;
@@ -94,6 +95,11 @@
 
     await Promise.allSettled(sessionPromises);
     running = false;
+
+    multiReviewResponses.set(columns
+      .filter(c => c.status === 'done' && c.response && c.response !== '(empty response)')
+      .map(c => ({ label: c.label, text: c.response }))
+    );
   }
 
   function cancelReview() {
@@ -230,6 +236,9 @@
         </div>
       {/each}
     </div>
+    <SynthesisPanel
+      responses={$multiReviewResponses}
+    />
   {/if}
 </div>
 
