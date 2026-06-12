@@ -16,7 +16,7 @@ scenario_synthesis: Dispatch + MCP + web UI changes; AI test generation and pers
 assigned_to: NetYeti
 tests_defined: false
 total_steps: 12
-completed_steps: 9
+completed_steps: 10
 _path: plans/bundle-ai-capabilities.md
 phase: 5
 ---
@@ -42,7 +42,7 @@ See [[proposals/approved/bundle-ai-capabilities.md]] for the full specification.
 | 7 | Test lifecycle: MCP mutation resets `tests_defined` | Already partially done in `mcp-server.py` line 735 (update_step resets). Extend to `write_plan` mutation path. Verify `_check_completion_gate` blocks correctly. | ✅ Done |
 | 8 | Test lifecycle: AI test generation dispatch | When a step is marked ✅ Done, dispatch code agent to identify changed files and generate/update tests. Depends on split-agent-governance orchestrator. Scaffold the dispatch point. | ✅ Done |
 | 9 | Test lifecycle: auto-certify + human-first-review gate | After AI test generation: full coverage → `tests_defined: true`. Untestable gap → records blocker in `gate_note`. First AI test gen requires human "Certify tests" click. Add `tests_human_reviewed` frontmatter field. | ✅ Done |
-| 10 | Perspective Synthesis: synthesizer panel | Add `SynthesisPanel.svelte` — reads all multi-review responses, sends to a synthesis model via OpenCode. Output: agreement areas, disagreements with specifics, recommendation labeled as one more perspective. Display alongside raw perspectives, never instead of. | ⏳ Pending |
+| 10 | Perspective Synthesis: synthesizer panel | Add `SynthesisPanel.svelte` — reads all multi-review responses, sends to a synthesis model via OpenCode. Output: agreement areas, disagreements with specifics, recommendation labeled as one more perspective. Display alongside raw perspectives, never instead of. | ✅ Done |
 | 11 | Perspective Synthesis: UI integration | Wire synthesis into the multi-review workflow — "Synthesize" button appears after N responses collected. Visual distinction between raw perspectives and synthesized output. | ⏳ Pending |
 | 12 | Model Voting: evaluate and build if warranted | After parallel review panel is in use: structured review output with confidence scoring. Aggregated summary ("3/3 models flagged X"). Only build if users naturally want aggregate signals. Re-evaluate after items 4–6 ship. | ⏳ Pending |
 
@@ -87,4 +87,5 @@ See [[proposals/approved/bundle-ai-capabilities.md]] for the full specification.
 | 2026-06-12 | Step 7 completed — MCP mutation resets tests_defined (update_step + write_plan + completion gate) verified in TypeScript port | NetYeti |
 | 2026-06-12 | Step 8 completed — AI test generation dispatch scaffold: dispatchTestGen() in src/dispatch/test-gen.ts calls git diff on step completion, logs to audit trail; updateStep() hook added in mutation.ts | NetYeti |
 | 2026-06-12 | Step 9 completed — auto-certify + human-first-review gate: tests_human_reviewed field on plan creation, file classification in dispatchTestGen (untestable→gate_note, testable+humanReviewed→auto-certify), updateStep applies frontmatter changes | NetYeti |
+| 2026-06-12 | Step 10 completed — Perspective Synthesis: SynthesisPanel.svelte component and /api/synthesize endpoint created; sends multi-review responses to Olla for structured synthesis (agreement, disagreement, recommendation, human-judgment items) | NetYeti |
 
