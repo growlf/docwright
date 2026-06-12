@@ -27,5 +27,6 @@ export * from './wikilinks';
 export * from './acl';
 export * from './gates';
 export * from './audit';
+export * from './test-gen';
 
 export const DISPATCH_VERSION = '0.1.0';

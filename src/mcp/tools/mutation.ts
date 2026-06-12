@@ -2,6 +2,7 @@ import { readFile, writeFile } from '../lib/paths';
 import { extractFrontmatterField, setFrontmatterField } from '../lib/frontmatter';
 import { logTransition } from '../lib/audit';
 import { getHumanIdentity } from '../lib/identity';
+import { dispatchTestGen } from '../../dispatch/test-gen';
 import { 
   updateStepCounts, 
   replaceStepStatus, 
@@ -55,7 +56,17 @@ export async function updateStep(planName: string, stepMatch: string, newStatus:
   
   writeFile(`plans/${safe}`, final);
   logTransition('STEP_UPDATE', `plan/${safe}: '${stepMatch.slice(0, 50)}' -> ${normalized}`);
-  return `✅ Step updated in '${safe}': '${stepMatch.slice(0, 50)}' -> ${normalized}.`;
+
+  let dispatchMsg = '';
+  if (normalized === '✅ Done') {
+    const stepAction = extractFrontmatterField(text, 'title') || stepMatch;
+    const result = dispatchTestGen(safe, stepMatch, stepAction);
+    if (result.dispatched) {
+      dispatchMsg = `\n${result.message}`;
+    }
+  }
+
+  return `✅ Step updated in '${safe}': '${stepMatch.slice(0, 50)}' -> ${normalized}.${dispatchMsg}`;
 }
 
 export async function updatePlanStatus(planName: string, newStatus: string): Promise<string> {
