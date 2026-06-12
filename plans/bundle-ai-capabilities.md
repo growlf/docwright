@@ -16,7 +16,7 @@ scenario_synthesis: Dispatch + MCP + web UI changes; AI test generation and pers
 assigned_to: NetYeti
 tests_defined: false
 total_steps: 12
-completed_steps: 11
+completed_steps: 12
 _path: plans/bundle-ai-capabilities.md
 phase: 5
 ---
@@ -44,7 +44,7 @@ See [[proposals/approved/bundle-ai-capabilities.md]] for the full specification.
 | 9 | Test lifecycle: auto-certify + human-first-review gate | After AI test generation: full coverage → `tests_defined: true`. Untestable gap → records blocker in `gate_note`. First AI test gen requires human "Certify tests" click. Add `tests_human_reviewed` frontmatter field. | ✅ Done |
 | 10 | Perspective Synthesis: synthesizer panel | Add `SynthesisPanel.svelte` — reads all multi-review responses, sends to a synthesis model via OpenCode. Output: agreement areas, disagreements with specifics, recommendation labeled as one more perspective. Display alongside raw perspectives, never instead of. | ✅ Done |
 | 11 | Perspective Synthesis: UI integration | Wire synthesis into the multi-review workflow — "Synthesize" button appears after N responses collected. Visual distinction between raw perspectives and synthesized output. | ✅ Done |
-| 12 | Model Voting: evaluate and build if warranted | After parallel review panel is in use: structured review output with confidence scoring. Aggregated summary ("3/3 models flagged X"). Only build if users naturally want aggregate signals. Re-evaluate after items 4–6 ship. | ⏳ Pending |
+| 12 | Model Voting: evaluate and build if warranted | After parallel review panel is in use: structured review output with confidence scoring. Aggregated summary ("3/3 models flagged X"). Only build if users naturally want aggregate signals. Re-evaluate after items 4–6 ship. | ✅ Done |
 
 ## Testing Plan
 
@@ -89,4 +89,5 @@ See [[proposals/approved/bundle-ai-capabilities.md]] for the full specification.
 | 2026-06-12 | Step 9 completed — auto-certify + human-first-review gate: tests_human_reviewed field on plan creation, file classification in dispatchTestGen (untestable→gate_note, testable+humanReviewed→auto-certify), updateStep applies frontmatter changes | NetYeti |
 | 2026-06-12 | Step 10 completed — Perspective Synthesis: SynthesisPanel.svelte component and /api/synthesize endpoint created; sends multi-review responses to Olla for structured synthesis (agreement, disagreement, recommendation, human-judgment items) | NetYeti |
 | 2026-06-12 | Step 11 completed — Perspective Synthesis UI integration: multiReviewResponses store added to pane.ts, MultiReviewPanel populates store on review completion, SynthesisPanel renders below columns with Synthesize button | NetYeti |
+| 2026-06-12 | Step 12 completed — Model Voting: VoteSummary.svelte component aggregates N/M model findings via AI; /api/synthesize extended to support _promptOverride; integrated into MultiReviewPanel below SynthesisPanel. All 12 steps complete! | NetYeti |
 

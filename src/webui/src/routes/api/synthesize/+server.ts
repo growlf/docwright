@@ -3,30 +3,35 @@ const OLLA_BASE = process.env.OLLA_BASE || 'http://100.123.141.125:40114/olla/ol
 const OLLA_MODEL = process.env.OLLA_MODEL || 'llama3.1:8b';
 
 export async function POST({ request }) {
-  const { responses } = await request.json();
+  const { responses, _promptOverride } = await request.json();
   if (!Array.isArray(responses) || responses.length < 2) {
     return new Response('Need at least 2 perspectives to synthesize', { status: 400 });
   }
 
-  const perspectives = responses
-    .map((r: { label?: string; text: string }, i: number) => {
-      const label = r.label || `Review ${i + 1}`;
-      return `--- ${label} ---\n${r.text.slice(0, 1000)}`;
-    })
-    .join('\n\n');
+  let prompt: string;
+  if (_promptOverride) {
+    prompt = _promptOverride;
+  } else {
+    const perspectives = responses
+      .map((r: { label?: string; text: string }, i: number) => {
+        const label = r.label || `Review ${i + 1}`;
+        return `--- ${label} ---\n${r.text.slice(0, 1000)}`;
+      })
+      .join('\n\n');
 
-  const prompt = [
-    `You are reading ${responses.length} perspectives on the same question.`,
-    `Synthesize them into:`,
-    `1. Areas of agreement`,
-    `2. Areas of disagreement (with specifics)`,
-    `3. Your own recommendation — clearly labeled as one more perspective, not a verdict`,
-    `4. Items that need human judgment before proceeding`,
-    ``,
-    `Keep each section to 2-3 sentences.`,
-    ``,
-    perspectives,
-  ].join('\n');
+    prompt = [
+      `You are reading ${responses.length} perspectives on the same question.`,
+      `Synthesize them into:`,
+      `1. Areas of agreement`,
+      `2. Areas of disagreement (with specifics)`,
+      `3. Your own recommendation — clearly labeled as one more perspective, not a verdict`,
+      `4. Items that need human judgment before proceeding`,
+      ``,
+      `Keep each section to 2-3 sentences.`,
+      ``,
+      perspectives,
+    ].join('\n');
+  }
 
   try {
     const res = await fetch(`${OLLA_BASE}/chat/completions`, {

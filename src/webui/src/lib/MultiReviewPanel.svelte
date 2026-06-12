@@ -1,6 +1,7 @@
 <script lang="ts">
   import { showChatPanel, showMultiReview, multiReviewResponses } from './pane';
   import SynthesisPanel from './SynthesisPanel.svelte';
+  import VoteSummary from './VoteSummary.svelte';
 
   const DEFAULT_URL = 'http://localhost:4096';
   const MAX_COLUMNS = 4;
@@ -237,6 +238,9 @@
       {/each}
     </div>
     <SynthesisPanel
+      responses={$multiReviewResponses}
+    />
+    <VoteSummary
       responses={$multiReviewResponses}
     />
   {/if}
