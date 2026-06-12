@@ -185,6 +185,7 @@ export async function transitionToApproved(proposalName: string): Promise<string
   if (parentPlan) fields.push(`parent_plan: ${parentPlan}`);
   if (parentDeliverable) fields.push(`parent_deliverable: ${parentDeliverable}`);
   fields.push(`tests_defined: false`);
+  fields.push(`tests_human_reviewed: false`);
   fields.push(`_path: plans/${safe}`);
 
   // Extract proposal body (content after frontmatter)

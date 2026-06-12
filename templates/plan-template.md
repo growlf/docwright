@@ -22,6 +22,7 @@ canceled_date:  # Populated when plan is canceled
 cancellation_reason:  # Populated when plan is canceled
 template_version: "1.0"
 tests_defined: false  # Set to true after confirming test coverage is adequate — required before plan can be completed
+tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
 # Gate fields — populated when a lifecycle gate applies to this document
 gate_reviewer:  # Who must review (set automatically by gate rules)
 gate_status:    # pending | approved | waived

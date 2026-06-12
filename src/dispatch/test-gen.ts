@@ -29,9 +29,25 @@ function logAudit(event: string, details: string): void {
   }
 }
 
+const UNTESTABLE_PATTERNS = [
+  /\.(css|scss|less|sass)$/,
+  /\.(md|mdx)$/,
+  /\.(json|jsonc|yaml|yml|toml)$/,
+  /\.(svg|png|jpg|jpeg|gif|ico)$/,
+  /\.(config|conf|ini|cfg)$/,
+  /\.(env|env\.example)$/,
+  /\.gitignore$/,
+  /\/Dockerfile$/,
+  /\.dockerignore$/,
+  /\/\.github\//,
+  /\/templates\//,
+];
+
 export interface TestGenResult {
   dispatched: boolean;
   changedFiles: string[];
+  untestable: boolean;
+  gateNote: string;
   message: string;
 }
 
@@ -48,6 +64,25 @@ export function getChangedFiles(): string[] {
   }
 }
 
+function classifyChanges(files: string[]): { untestable: boolean; reason: string } {
+  const testable = files.filter(f => !UNTESTABLE_PATTERNS.some(p => p.test(f)));
+  const untestable = files.filter(f => UNTESTABLE_PATTERNS.some(p => p.test(f)));
+
+  if (testable.length === 0 && untestable.length > 0) {
+    return {
+      untestable: true,
+      reason: `Changed files are untestable types: ${untestable.join(', ')}`,
+    };
+  }
+  if (testable.length > 0 && untestable.length > 0) {
+    return {
+      untestable: false,
+      reason: `Mixed changes: testable (${testable.join(', ')}) + untestable (${untestable.join(', ')})`,
+    };
+  }
+  return { untestable: false, reason: '' };
+}
+
 export function dispatchTestGen(
   planName: string,
   stepMatch: string,
@@ -59,10 +94,27 @@ export function dispatchTestGen(
   if (!hasChanges) {
     const msg = `No uncommitted changes detected for step '${stepMatch}'. Tests not generated.`;
     logAudit('TEST_GEN_SKIP', `plan/${planName}: ${msg}`);
-    return { dispatched: false, changedFiles: [], message: msg };
+    return { dispatched: false, changedFiles: [], untestable: false, gateNote: '', message: msg };
   }
 
+  const classification = classifyChanges(changedFiles);
   const fileList = changedFiles.join(', ');
+
+  if (classification.untestable) {
+    logAudit('TEST_GEN_UNTESTABLE', [
+      `plan/${planName}`,
+      `step: ${stepMatch.slice(0, 60)}`,
+      `reason: ${classification.reason}`,
+    ].join(' | '));
+    return {
+      dispatched: true,
+      changedFiles,
+      untestable: true,
+      gateNote: classification.reason,
+      message: `⏸ No test generation needed: ${classification.reason}`,
+    };
+  }
+
   const prompt = [
     `Step completed: "${stepMatch}"`,
     `Action: ${stepAction.slice(0, 200)}`,
@@ -70,8 +122,6 @@ export function dispatchTestGen(
     ``,
     `Generate or update tests for the changed files above.`,
     `Consider: unit tests, integration tests, edge cases.`,
-    `If the change is purely visual or structural (CSS, config),`,
-    `note that no test changes are needed.`,
   ].join('\n');
 
   logAudit('TEST_GEN_DISPATCH', [
@@ -84,6 +134,8 @@ export function dispatchTestGen(
   return {
     dispatched: true,
     changedFiles,
+    untestable: false,
+    gateNote: '',
     message: [
       `🧪 Test generation dispatched for step '${stepMatch}'.`,
       `Changed files: ${fileList}`,

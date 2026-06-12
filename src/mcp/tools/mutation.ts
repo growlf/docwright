@@ -61,6 +61,18 @@ export async function updateStep(planName: string, stepMatch: string, newStatus:
   if (normalized === '✅ Done') {
     const stepAction = extractFrontmatterField(text, 'title') || stepMatch;
     const result = dispatchTestGen(safe, stepMatch, stepAction);
+
+    let planText = readFile(`plans/${safe}`);
+    if (result.untestable && result.gateNote) {
+      planText = setFrontmatterField(planText, 'gate_note', result.gateNote);
+    } else if (result.dispatched && !result.untestable) {
+      const humanReviewed = extractFrontmatterField(planText, 'tests_human_reviewed');
+      if (String(humanReviewed) === 'true') {
+        planText = setFrontmatterField(planText, 'tests_defined', true);
+      }
+    }
+    writeFile(`plans/${safe}`, planText);
+
     if (result.dispatched) {
       dispatchMsg = `\n${result.message}`;
     }
