@@ -34,11 +34,13 @@ completed_steps: 0
 Decomposes DocWright's governance from a monolithic rule-set into small, standalone,
 individually-enforceable units ("atoms"). Each atom has three synchronized representations
 sized for different consumers. A generic `policy-atoms-core` library provides the index-
-builder, router, resolver, and sync-checker — reusable by any project DocWright manages.
+builder, router, resolver, and sync-checker — reusable by any project DocWright manages,
+and by any AI surface (OpenCode, Claude, Gemini, local LLMs via Olla/LiteLLM).
 
 Full design (atom schema, two-pass consumption model, `check_kind` split, three-tier
 enforcement resolution, open questions) is in [[docs/policy-atom-framework-concept.md]].
-The design is considered done; this plan executes it.
+The design is considered done; this plan executes it. See **Design Decisions Required**
+for the five questions that must be answered before Step 1 begins.
 
 ## Problem
 
@@ -63,33 +65,183 @@ problems:
 Introduce a **Policy Atom Framework**: decompose governance rules into atoms, each with
 three synchronized representations:
 
-| Representation | Size | Consumer |
-|----------------|------|----------|
-| **Synopsis** | 1–2 sentences | Synopsis index — loaded every session, always in context |
-| **Context** | Full rule, rationale, examples | Loaded on-demand when the router routes a query to this atom |
-| **Code** | Executable check function (deterministic atoms only) | Run by the MCP server or pre-commit hook with zero AI cost |
+| Representation | Canonical? | Size | Consumer |
+|----------------|-----------|------|----------|
+| **Synopsis** | — | 1–2 sentences | Synopsis index — loaded every session, always in context |
+| **Context** | Judgment atoms | Full rule, rationale, examples | Loaded on-demand when the router routes a query to this atom |
+| **Code** | Deterministic atoms | Executable check function | Run by MCP server or pre-commit hook with zero AI cost |
 
-The `policy-atoms-core` library provides:
-- **Index-builder** — scans `policies/` and produces a synopsis index
-- **Router** — pass-1: cheaply identifies which atoms are in scope for a given action
-- **Resolver** — pass-2: loads full context for the routed atoms only
-- **Sync-checker** — validates that all three representations stay in sync
+**The canonical source direction is not symmetric.** For `deterministic` atoms the code
+is the ground truth — the prose describes what the code does, and if they diverge the
+code wins. For `judgment` atoms there is no code — the context prose is the canonical
+source, and the synopsis must accurately summarize it. The sync-checker enforces the
+correct direction per `check_kind`, not a generic "all three must match" rule.
 
-**Two-pass consumption model:**
-- Pass 1 (cheap): load synopsis index → router identifies relevant atoms
-- Pass 2 (on-demand): resolver loads full context for only the relevant atoms
+### Synopsis format and the `scope` field
 
-**`check_kind` split:**
-- `deterministic` — pure code evaluation, no AI cost, no context needed
-- `judgment` — still requires an LLM, but now explicitly scoped and routed
+Each synopsis index entry is compact YAML. The `scope` field is the router's primary
+routing signal — an agent committing code loads only `scope: [git-commit]` atoms; an
+agent reviewing a plan loads `scope: [plan]` atoms. No agent loads everything.
 
-**Three-tier enforcement resolution** (lowest wins):
+```yaml
+atoms:
+  - id: commit-format
+    kind: deterministic
+    scope: [git-commit]
+    synopsis: "Commit messages must follow 'type: description' format."
+
+  - id: no-self-approval
+    kind: deterministic
+    scope: [proposal, plan]
+    synopsis: "AI cannot set approved:true or gate_status:approved on governance docs."
+
+  - id: plan-scope-adequacy
+    kind: judgment
+    scope: [plan]
+    synopsis: "Plan steps must be specific enough to be actionable without clarification."
+```
+
+**Scope expressions support inheritance.** A rule scoped to `plan` applies to all plans.
+A rule scoped to `plan.approved` applies only during the approval transition. A rule
+scoped to `plan.*` matches any plan sub-scope. This avoids atom explosion (one per edge
+case) and coarse over-loading (everything applies everywhere). Scope expression syntax
+is defined in the atom schema and enforced by the sync-checker.
+
+### `check_kind` — the decision is permanent-ish
+
+Classifying a rule as `deterministic` means committing to maintaining its code check in
+sync with its prose for the life of the rule. A `judgment` rule is cheaper to write but
+permanently dependent on a capable LLM. Get the classification right early.
+
+**Expected split for DocWright's current rules (~80/20):**
+
+| Kind | Examples | ~% of rules |
+|------|----------|-------------|
+| `deterministic` | field presence, regex, status-transition tables, file placement, required section headers, numeric ranges | ~80% |
+| `judgment` | scope adequacy ("is this specific enough?"), conflict detection, quality thresholds ("is this testing plan meaningful?") | ~20% |
+
+The deterministic majority is the core value: most governance enforcement runs as code
+with zero AI involvement and works identically on OpenCode, Claude, Gemini, and any
+local model.
+
+### Sync-checker scope
+
+The sync-checker validates **structure, not semantics**:
+
+- **Deterministic atoms:** synopsis exists; context has required sections; code check
+  compiles and exports the correct function signature; code and synopsis describe the
+  same field/pattern (light structural check — e.g., a `field_required` atom's synopsis
+  must name the field the code checks).
+- **Judgment atoms:** synopsis exists and is under the length budget; context has required
+  sections (rule statement, rationale, examples, scope); no code check present. Semantic
+  equivalence between synopsis and context is a human review responsibility, not CI.
+
+### `policy-atoms-core` library components
+
+- **Index-builder** — scans `policies/` and produces the synopsis index YAML
+- **Router** — pass-1: given an action context (commit, plan write, proposal approval),
+  returns the list of atom IDs whose scope matches
+- **Resolver** — pass-2: loads full context for a given atom ID list only
+- **Sync-checker** — validates structure and canonical-source direction per `check_kind`
+- **Check-type library** — reusable deterministic check functions:
+  `field_required`, `status_transition_allowed`, `regex_match`,
+  `linked_artifact_exists`, `section_present`, `enum_value`
+
+### Two-pass consumption model
+
+- **Pass 1 (cheap):** load synopsis index → router returns relevant atom IDs
+- **Pass 2 (on-demand):** resolver loads full context for only the relevant atoms
+
+This model works across all AI surfaces because the synopsis index is the only thing that
+must always fit in context — Pass 2 is optional and pay-per-use.
+
+### Three-tier enforcement resolution (lowest wins)
+
 1. Atom default — what the atom ships with
-2. Instance config — this installation's preference (`.docwright/config.json`)
+2. Instance config — this installation's override (`.docwright/config.json`)
 3. Org-policy floor — optional signed override from an external org bundle
 
-**Org-bundle tier:** scoped to pluggable interface only in this plan. The transport and
-trust-anchor question is explicitly deferred until a real org-governance need exists.
+**Org-bundle tier:** scoped to a pluggable `org-source` hook interface only in this plan.
+Transport and trust-anchor are explicitly deferred until a real org-governance need exists.
+
+### Future direction: LiteLLM as atom dispatch layer
+
+Not in scope for this plan, but the natural next step: LiteLLM sits between DocWright's
+MCP server and AI backends. The atom router communicates `check_kind` to LiteLLM so it
+can route `deterministic` atoms to code execution (zero LLM), and `judgment` atoms to the
+cheapest capable model for the complexity. The org-source hook interface (Step 5) is the
+natural sibling to the LiteLLM routing hook — design the interface with this extension
+point in mind. Evaluation caching (keyed on `atom_id + document_hash + atom_version`)
+belongs at this layer too.
+
+### Multi-AI surface compatibility
+
+The synopsis-index → on-demand resolver model is the design's key portability guarantee.
+Context constraints differ significantly across surfaces:
+
+| Surface | Practical context | Impact |
+|---------|-----------------|--------|
+| Local 8b model (Olla) | 4k–8k tokens | Synopsis index must fit in ~2k tokens to leave working room |
+| Claude | 200k tokens | Synopsis always fits; temptation to load everything — resist it |
+| Gemini | 1M+ tokens | More slack, but routing discipline still prevents token waste |
+| OpenCode | Session-scoped | MCP tools are the natural router integration point |
+
+The synopsis size budget (to be decided in **Design Decisions Required** Q1) must be
+set for the most constrained realistic surface and held there.
+
+## Design Decisions Required
+
+These five questions must be answered before Step 1 begins. Answers here become the
+specification inputs for the atom schema and `policy-atoms-core` architecture.
+
+**Q1 — Synopsis index size budget**
+What is the maximum token count for the full synopsis index? This number constrains
+the total atom count and average synopsis length, and must be set for the most
+constrained realistic AI surface (local 8b model). The sync-checker enforces this
+limit on every commit to `policies/`. Proposed starting point: **2,000 tokens** —
+enough for ~40 atoms at an average 50-token synopsis. To be confirmed.
+
+> **Decision:** ___
+
+**Q2 — Bootstrap: bundled default atoms or vault-starts-empty?**
+Does DocWright ship a default `policies/` directory that every new vault inherits
+(like the bundled profiles), or does each vault start empty and define its own atoms
+from scratch? The answer determines whether `docwright init` needs a policy-seeding
+step and whether DocWright's own governance atoms are a dependency of every managed
+project or just a reference example.
+
+> **Decision:** ___
+
+**Q3 — MCP router invocation pattern**
+Two options:
+- **Option A — New MCP tool:** Add `route_governance_query(action, context)` as an
+  explicit MCP tool. Agents call it deliberately. Clean interface; requires agents to
+  know to call it.
+- **Option B — Hook into existing tools:** `update_plan_status`, `write_plan`, etc.
+  internally consult the router before executing. Agents get governance automatically.
+  Requires touching every MCP tool; harder to test the router in isolation.
+
+Recommendation: **Option A for the pilot (Step 2)**, evaluate Option B for migration
+(Step 3) once the router is proven. But the decision locks the Step 2 architecture.
+
+> **Decision:** ___
+
+**Q4 — Judgment atom cache key**
+When a judgment atom evaluation is cached (to avoid re-running LLM checks on unchanged
+documents), what is the cache key? Proposed: `(atom_id, document_hash, atom_version)`.
+`atom_version` invalidates cache entries when the atom's context prose is updated —
+ensuring a rule rewrite produces fresh evaluations. Agree?
+
+> **Decision:** ___
+
+**Q5 — LiteLLM integration depth in this plan**
+The LiteLLM dispatch layer (routing judgment atoms to appropriate models, caching
+evaluation results) is noted as a future direction. Should the org-source hook interface
+(Step 5) be designed now to make the LiteLLM hook a natural extension — i.e., spec the
+interface with both hooks in mind — or should Step 5 remain minimal and LiteLLM routing
+be a genuinely separate later plan?
+
+> **Decision:** ___
 
 ## Implementation Steps
 
@@ -128,8 +280,10 @@ trust-anchor question is explicitly deferred until a real org-governance need ex
 
 - **Migration disruption (Step 3):** Atom checks run alongside old checks before any old-path is retired. No hard cutover. Low risk.
 - **Scope creep (org-bundle tier):** Explicitly scoped to interface-only. Transport and trust-anchor are deferred.
-- **Synopsis index size creep:** If the index grows beyond practical context size it defeats the whole design. Enforce a byte-budget in the sync-checker from Step 1.
-- **Judgment atom quality regression:** When judgment atoms replace old rule prose, the LLM may interpret them differently. Pilot (Step 2) catches this early with side-by-side comparison.
+- **Synopsis index size creep:** If the index grows beyond the budget it defeats the whole design for small-context models. Sync-checker enforces the budget from Step 1. Budget is set in Design Decision Q1.
+- **Judgment atom quality regression:** When judgment atoms replace old rule prose, the LLM may interpret them differently across model families. Pilot (Step 2) catches this with side-by-side comparison — run the old check and the atom check on the same document, compare outcomes before retiring the old path.
+- **Canonical source drift:** If deterministic atom prose diverges from its code check silently, governance is misrepresented to agents. The sync-checker's direction-aware validation (code canonical for deterministic, prose canonical for judgment) prevents this — but only if it runs in CI. Enforce as a pre-commit gate from Step 1.
+- **Scope expression complexity:** Hierarchical scope expressions (`plan.*`, `plan.approved`) add expressiveness but also parser complexity. Define and freeze the scope expression grammar in Step 1 before any atoms are written — retrofitting grammar changes is expensive.
 
 ## Rollback Procedures
 
@@ -163,5 +317,6 @@ trust-anchor question is explicitly deferred until a real org-governance need ex
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-06-14 | Design expanded — canonical source direction, synopsis format, scope inheritance, sync-checker scope, LiteLLM future direction, multi-AI surface table, Design Decisions Required section | NetYeti |
 | 2026-06-14 | Plan rewritten — steps from Notes section, duplicates removed, frontmatter corrected | NetYeti |
 | 2026-06-12 | Initial draft created | NetYeti |
