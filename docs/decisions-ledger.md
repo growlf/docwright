@@ -115,14 +115,15 @@ read this before proposing changes — no more repeating past failures.
 
 **Date:** 2026-06-14
 **Tried by:** NetYeti @ phoenix
-**Result:** ✅ Reachable at ~7ms via NetBird VPN
+**Result:** ⚠️ Reachable at ~7ms via NetBird VPN, but GPU NOT working
 **Config:**
 - Host: `10.10.0.201`
 - Port: `11434`
 - Network: NetBird VPN (100.123.x.x/16)
-- GPU: RTX 3090 Ti, 24GB VRAM
+- GPU: RTX 3090 Ti, 24GB VRAM (reported, but inference is CPU-speed)
 - Latency: 6.75-7.10ms ping
-**Verdict:** Fast remote inference target. Always prefer routing here.
+**Updated 2026-06-14:** Benchmarked qwen2.5-coder:14b at 0.5 tok/s, llama3.2:3b at 10.5 tok/s. These are CPU-level speeds despite the RTX 3090 Ti. Remote node's GPU acceleration is broken — needs investigation on the remote host.
+**Verdict:** NOT currently a fast path. Falls back to CPU inference. Routing here gives no speed benefit over local Vulkan Ollama.
 
 ---
 
@@ -137,10 +138,11 @@ read this before proposing changes — no more repeating past failures.
 
 ### S2 — Using opencode directly against remote Nvidia Ollama (bypass Olla)
 
-**Status:** Unknown — not tested
-**Reasoning:** Could add remote Nvidia as an opencode OpenAI-compatible provider directly, skipping Olla entirely. Would need the provider URL to be `http://10.10.0.201:11434/v1`.
-**Trade-off:** Loses Olla's fallback to local if remote is down. Adds direct dependency on VPN.
-**Verdict:** Not recommended. Olla provides health checking, fallback, and model discovery.
+**Status:** ❌ Tested — remote node also CPU-bound
+**Date tested:** 2026-06-14
+**Result:** 24-28s latency for qwen2.5-coder:14b at 0.5 tok/s. Same as local.
+**Reasoning:** Added `cluster-nvidia` provider to global opencode config. Direct connection to `http://10.10.0.201:11434/v1` works but is not faster than local because the remote GPU is also broken.
+**Verdict:** Configured but not beneficial until remote node GPU is fixed. Use local Vulkan path instead.
 
 ---
 
