@@ -396,10 +396,189 @@ Respond with ONLY valid JSON:`;
   }
 }
 
+// ── OllamaEngine (OpenAI-compatible — remote NVIDIA primary) ──────────────────
+
+export class OllamaEngine implements AIEngine {
+  private baseUrl: string;
+  private model: string;
+
+  constructor(baseUrl: string, model: string) {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.model = model;
+  }
+
+  private async chat(prompt: string): Promise<string> {
+    const res = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Ollama request failed: ${res.status}`);
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    return data?.choices?.[0]?.message?.content ?? '';
+  }
+
+  async findSimilar(targetPath: string, candidates: string[], vaultRoot: string): Promise<SimilarityResult[]> {
+    const targetRaw = fs.readFileSync(path.join(vaultRoot, targetPath), 'utf-8');
+    const body = stripFrontmatter(targetRaw).slice(0, 1200);
+    const list = candidates
+      .filter(c => c !== targetPath)
+      .map(c => {
+        try {
+          const raw = fs.readFileSync(path.join(vaultRoot, c), 'utf-8');
+          return { path: c, title: getFrontmatterTitle(raw), excerpt: stripFrontmatter(raw).slice(0, 600) };
+        } catch { return null; }
+      })
+      .filter(Boolean) as Array<{ path: string; title: string; excerpt: string }>;
+
+    const prompt =
+      `You are a document similarity engine for a governance system.\n\n` +
+      `Rate each candidate for semantic overlap with the target. ` +
+      `Return ONLY a valid JSON array:\n[{"path":"...","score":0.0-1.0},...]\n` +
+      `Score 0 = no overlap, 1 = identical topic. Include only score > 0.1.\n\n` +
+      `TARGET:\n${body}\n\nCANDIDATES:\n` +
+      list.map(c => `PATH:${c.path}\nTITLE:${c.title}\n${c.excerpt}`).join('\n---\n');
+
+    try {
+      const text = await this.chat(prompt);
+      const match = text.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('No JSON array in response');
+      const scored = JSON.parse(match[0]) as Array<{ path: string; score: number }>;
+      return scored.map(s => {
+        const raw = fs.readFileSync(path.join(vaultRoot, s.path), 'utf-8');
+        return { path: s.path, title: getFrontmatterTitle(raw), score: s.score, sections: parseSections(stripFrontmatter(raw)) };
+      }).sort((a, b) => b.score - a.score);
+    } catch {
+      return new KeywordEngine().findSimilar(targetPath, candidates, vaultRoot);
+    }
+  }
+
+  async fillProposal(fm: Record<string, any>, body: string): Promise<string> {
+    const title = fm.title || '(untitled)';
+    const tags  = Array.isArray(fm.tags) ? fm.tags.join(', ') : String(fm.tags || '');
+    const prompt =
+      `You are a governance document assistant. Improve the following proposal body.\n` +
+      `Rules:\n` +
+      `- Flesh out sparse sections (Problem, Proposed Solution, Out of Scope)\n` +
+      `- Keep the author's intent unchanged — do not reverse decisions already made\n` +
+      `- Add missing sections only when clearly needed\n` +
+      `- Do NOT modify the YAML frontmatter\n` +
+      `- Return ONLY the improved markdown body with no preamble or commentary\n\n` +
+      `FRONTMATTER CONTEXT:\ntitle: ${title}\ntags: ${tags}\n\n` +
+      `CURRENT BODY:\n${body}`;
+    try {
+      return await this.chat(prompt);
+    } catch {
+      return new KeywordEngine().fillProposal(fm, body);
+    }
+  }
+
+  async critiqueDocument(content: string): Promise<string> {
+    const prompt =
+      `You are a governance document reviewer. Critique the following document.\n` +
+      `Identify: missing sections, weak reasoning, unstated assumptions, ` +
+      `security or governance concerns, and concrete improvement suggestions.\n` +
+      `Return a structured critique in plain markdown. Be specific and actionable.\n\n` +
+      `DOCUMENT:\n${content.slice(0, 4000)}`;
+    try {
+      return await this.chat(prompt);
+    } catch {
+      return new KeywordEngine().critiqueDocument(content);
+    }
+  }
+
+  async gatePreReview(
+    gateId: string,
+    gateDescription: string,
+    docTitle: string,
+    docBody: string,
+    scopeDocs: Array<{ path: string; title: string; excerpt: string }>,
+    aiPrompt?: string,
+  ): Promise<GatePreReviewResult> {
+    const defaultPrompt = `You are a gate review assistant for a governance system.
+Gate "${gateId}": ${gateDescription}
+Document: "${docTitle}"
+
+Read the document body and any related scope documents below, then produce a readiness assessment.
+
+Respond in valid JSON:
+{
+  "summary": "Brief readiness summary (2-3 sentences)",
+  "concerns": ["Specific concern 1", "Specific concern 2"],
+  "incomplete_items": ["Item 1 not ready", "Item 2 not ready"],
+  "readiness": "ready | needs-work | blocked"
+}`;
+
+    const prompt = `${aiPrompt || defaultPrompt}
+
+--- DOCUMENT BODY ---
+${docBody.slice(0, 3000)}
+
+--- SCOPE DOCUMENTS ---
+${scopeDocs.map(d => `[${d.path}] ${d.title}\n${d.excerpt.slice(0, 500)}`).join('\n\n')}
+
+--- END ---
+Respond with ONLY valid JSON:`;
+
+    try {
+      const text = await this.chat(prompt);
+      const match = text.match(/\{[\s\S]*"readiness"[\s\S]*\}/);
+      if (!match) throw new Error('No JSON in response');
+      return JSON.parse(match[0]) as GatePreReviewResult;
+    } catch {
+      const pendingSteps = (docBody.match(/⏳/g) ?? []).length;
+      return {
+        summary: `Pre-review (LLM unavailable): ${pendingSteps > 0 ? `${pendingSteps} steps still pending` : 'No obvious blockers found'}.`,
+        concerns: pendingSteps > 0 ? ['Pending implementation steps'] : [],
+        incomplete_items: pendingSteps > 0 ? ['Implementation steps not completed'] : [],
+        readiness: pendingSteps === 0 ? 'ready' : 'needs-work',
+      };
+    }
+  }
+
+  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+    const title = frontmatter.title || '(untitled)';
+    const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : String(frontmatter.tags || '');
+    const deps = Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on.join(', ') : '';
+
+    const prompt =
+      `You are a complexity estimation engine for a governance document system.\n\n` +
+      `Given a proposal's frontmatter and body, evaluate:\n` +
+      `1. Scope — how many distinct work items or modules are affected\n` +
+      `2. Risk — how risky changes are (reversibility, dependency cascades)\n` +
+      `3. Dependencies — how many external systems or other proposals are involved\n` +
+      `4. Implementation scale — rough lines/screens/steps estimate\n\n` +
+      `Return ONLY valid JSON:\n` +
+      `{"complexity":"low|medium|high","confidence":0.0-1.0,"reasoning":"2-3 sentence explanation"}\n\n` +
+      `--- FRONTMATTER ---\n` +
+      `title: ${title}\ntags: ${tags}\ndepends_on: ${deps}\n\n` +
+      `--- BODY ---\n` +
+      `${body.slice(0, 3000)}\n\n` +
+      `Respond with ONLY valid JSON:`;
+
+    try {
+      const text = await this.chat(prompt);
+      const match = text.match(/\{[\s\S]*"complexity"[\s\S]*\}/);
+      if (!match) throw new Error('No JSON in response');
+      return JSON.parse(match[0]) as ComplexityResult;
+    } catch {
+      return new KeywordEngine().estimateComplexity(body, frontmatter);
+    }
+  }
+}
+
 // ── Factory ────────────────────────────────────────────────────────────────────
 
 export function getAIEngine(vaultRoot: string): AIEngine {
-  const url = process.env.OPENCODE_URL;
-  if (url) return new OpenCodeEngine(url, vaultRoot);
+  const ollaBase  = process.env.OLLA_BASE;
+  const ollaModel = process.env.OLLA_MODEL;
+  if (ollaBase && ollaModel) return new OllamaEngine(ollaBase, ollaModel);
+
+  const opencodeUrl = process.env.OPENCODE_URL;
+  if (opencodeUrl) return new OpenCodeEngine(opencodeUrl, vaultRoot);
+
   return new KeywordEngine();
 }
