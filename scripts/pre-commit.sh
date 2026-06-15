@@ -135,6 +135,7 @@ validate_agent_instructions() {
 validate_research_document() {
     local FILE=$1
     [[ ! "$FILE" =~ ^research/.+\.md$ ]] && return 0
+    [[ "$FILE" =~ /INDEX\.md$ ]] && return 0  # index file, not a research document
     local FM CONTENT STATUS CONCLUSION E=0
     FM=$(get_frontmatter "$FILE" 2>/dev/null)
     CONTENT=$(cat "$FILE" 2>/dev/null)

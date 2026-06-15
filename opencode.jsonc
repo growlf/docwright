@@ -30,6 +30,7 @@
   "instructions": [
     "AGENTS.md",
     "docs/decisions-ledger.md",
+    "research/INDEX.md",
     ".opencode/rules/commit-format.md",
     ".opencode/rules/frontmatter-validate.md",
     ".opencode/rules/no-plaintext-creds.md",
