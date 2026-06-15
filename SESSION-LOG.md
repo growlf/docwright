@@ -480,6 +480,24 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 ---
 
+## Session: 2026-06-15 — Research infrastructure + RLM/TRM evaluation
+
+**Focus:** Research infrastructure, RLM evaluation, architecture decisions
+
+**Completed:**
+- [x] Added `OllamaEngine` to route AI inference to remote NVIDIA via Meshy (carry-over from prior context)
+- [x] Evaluated RLMs (arxiv MIT OASYS) — not a paradigm shift; Python microservice integration path identified
+- [x] Evaluated TRM/Mamba-2 SSM (arxiv 2602.12078) — primarily ai-stack/Meshy relevance, not DocWright
+- [x] Created `research/INDEX.md` and wired into `opencode.jsonc` instructions
+- [x] Created `research/rlm-recursive-language-models.md` with full analysis + Related Work
+- [x] Fixed pre-commit hook: `research/INDEX.md` excluded from research frontmatter validation
+- [x] Added Emerging Architecture Watch to ai-stack `docs/models.md`
+- [x] New rule: always read local docs first — never assume project state
+
+**Session note:** `docs/session-notes/session_note_202606151500.md`
+
+---
+
 ## Session: 2026-06-14 — Codebase quality sweep
 
 **Focus:** Systematic improvement of code quality, correctness, and maintainability
