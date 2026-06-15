@@ -198,10 +198,14 @@ specification inputs for the atom schema and `policy-atoms-core` architecture.
 What is the maximum token count for the full synopsis index? This number constrains
 the total atom count and average synopsis length, and must be set for the most
 constrained realistic AI surface (local 8b model). The sync-checker enforces this
-limit on every commit to `policies/`. Proposed starting point: **2,000 tokens** —
-enough for ~40 atoms at an average 50-token synopsis. To be confirmed.
+limit on every commit to `policies/`. Hard limit: **1,500 tokens** (~30 atoms at an
+average 50-token synopsis), with a soft warning at 1,200. Rationale: a local 8b model
+at 4k context cannot spare more than ~1,500 tokens for the index and still have useful
+working context. 30 atoms is sufficient if scope expressions (`plan.*`) are used to
+avoid atom explosion.
 
-> **Decision:** ___
+> **Decision:** 1,500 token hard limit enforced by sync-checker; 1,200 token soft
+> warning. Scope expressions are the primary tool for keeping atom count manageable.
 
 **Q2 — Bootstrap: bundled default atoms or vault-starts-empty?**
 Does DocWright ship a default `policies/` directory that every new vault inherits
@@ -210,38 +214,67 @@ from scratch? The answer determines whether `docwright init` needs a policy-seed
 step and whether DocWright's own governance atoms are a dependency of every managed
 project or just a reference example.
 
-> **Decision:** ___
+> **Decision:** Ship a bundled default `policies/` with DocWright, seeded by
+> `docwright init` the same way profiles are seeded. DocWright's own governance atoms
+> are the reference implementation and first thing any adopter sees. Vaults can
+> override or extend; they do not start from nothing.
 
 **Q3 — MCP router invocation pattern**
-Two options:
-- **Option A — New MCP tool:** Add `route_governance_query(action, context)` as an
-  explicit MCP tool. Agents call it deliberately. Clean interface; requires agents to
-  know to call it.
-- **Option B — Hook into existing tools:** `update_plan_status`, `write_plan`, etc.
-  internally consult the router before executing. Agents get governance automatically.
-  Requires touching every MCP tool; harder to test the router in isolation.
+The answer differs by `check_kind` — the two atom types have different invocation needs:
 
-Recommendation: **Option A for the pilot (Step 2)**, evaluate Option B for migration
-(Step 3) once the router is proven. But the decision locks the Step 2 architecture.
+- **`none` (deterministic) atoms** already run automatically today through pre-commit
+  hooks and MCP validation logic. The migration for these atoms is *how* they run
+  (monolithic rule file → atom code check), not *when*. Auto-wiring into existing MCP
+  tools (Option B) is correct here — low risk, fast checks, no circular dependency.
 
-> **Decision:** ___
+- **`reasoning`/judgment atoms** must not fire automatically on every MCP mutation —
+  the cost is too high and most mutations don't warrant a judgment evaluation. These
+  fire at defined lifecycle gates (plan approval, proposal creation, gate transitions)
+  via an explicit `evaluate_at_gate(gate_id, document_path)` call. This is Option A,
+  but the tool is gate-scoped, not a generic query router.
+
+With `ai_category` labels on every atom (from the AI Task Category Taxonomy proposal),
+the dispatcher reads the label rather than inferring the task type — so no general-
+purpose `route_governance_query` tool is needed at all.
+
+> **Decision:** Split by kind. Deterministic (`ai_category: none`) atoms auto-wire
+> into existing MCP tools (Option B pattern). Judgment atoms use explicit
+> `evaluate_at_gate(gate_id, document_path)` at lifecycle gate points (scoped Option A).
+> No generic `route_governance_query` tool — `ai_category` labels replace runtime
+> inference. Architecture locked for Step 2.
 
 **Q4 — Judgment atom cache key**
 When a judgment atom evaluation is cached (to avoid re-running LLM checks on unchanged
-documents), what is the cache key? Proposed: `(atom_id, document_hash, atom_version)`.
-`atom_version` invalidates cache entries when the atom's context prose is updated —
-ensuring a rule rewrite produces fresh evaluations. Agree?
+documents), the cache key must include the model used — a judgment from `llama3.1:8b`
+and one from `claude-sonnet-4-6` are not the same judgment and must not share a cache
+slot. Without `model_id`, stale judgments from a weaker model are served to a stronger
+one (or vice versa) after a backend switch.
 
-> **Decision:** ___
+> **Decision:** Cache key is `(atom_id, document_hash, atom_version, model_id)`.
+> `atom_version` invalidates on rule prose updates. `model_id` invalidates on model
+> changes. All four components required; omitting any risks serving stale or wrong
+> judgments.
 
 **Q5 — LiteLLM integration depth in this plan**
-The LiteLLM dispatch layer (routing judgment atoms to appropriate models, caching
-evaluation results) is noted as a future direction. Should the org-source hook interface
-(Step 5) be designed now to make the LiteLLM hook a natural extension — i.e., spec the
-interface with both hooks in mind — or should Step 5 remain minimal and LiteLLM routing
-be a genuinely separate later plan?
+The LiteLLM dispatch layer is future scope, but the hook interface defined in Step 5
+should make it a natural extension rather than requiring a later interface change.
+Step 5 defines two pluggable hooks in the resolver — both as stub implementations only,
+no routing logic built in this plan:
 
-> **Decision:** ___
+1. `org_source_hook` — today's scope: pluggable org-policy floor (returns `null` when
+   unconfigured)
+2. `judgment_dispatch_hook` — new addition: accepts `(ai_category: string, payload: string)`
+   and returns `Promise<string>`; stub returns `null` (falls back to default model).
+   Signature is specified now so the LiteLLM integration slots in without touching the
+   resolver interface again.
+
+The `ai_category` parameter is the concrete output of the AI Task Category Taxonomy
+proposal — the two proposals are explicitly coupled at this interface point.
+
+> **Decision:** Step 5 defines both hooks as named, typed, stub interfaces. The
+> `judgment_dispatch_hook` signature is `(ai_category: string, payload: string) =>
+> Promise<string | null>`. Actual LiteLLM routing implementation is a separate later
+> plan that fulfills this interface. No routing logic built here.
 
 ## Implementation Steps
 
@@ -317,6 +350,7 @@ be a genuinely separate later plan?
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-06-14 | Design decisions filled — Q1 budget 1.5k tokens, Q2 bundled default, Q3 split by kind, Q4 four-component cache key, Q5 dual hook stubs; coupled to AI Task Category Taxonomy proposal | NetYeti |
 | 2026-06-14 | Design expanded — canonical source direction, synopsis format, scope inheritance, sync-checker scope, LiteLLM future direction, multi-AI surface table, Design Decisions Required section | NetYeti |
 | 2026-06-14 | Plan rewritten — steps from Notes section, duplicates removed, frontmatter corrected | NetYeti |
 | 2026-06-12 | Initial draft created | NetYeti |
