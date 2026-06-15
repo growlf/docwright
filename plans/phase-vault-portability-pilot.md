@@ -16,7 +16,7 @@ automated: guided
 assigned_to: NetYeti
 gate_reviewer: NetYeti
 gate_status: reviewed
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 depends_on:
   - phase-2-foundation
@@ -71,6 +71,17 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 
 ## Testing Plan
 
+- [ ] Step 1: Vault-portable TypeScript MCP server with `--mode` flag
+- [ ] Step 2: Contribution pipeline tools on dw-upstream
+- [ ] Step 3: Path resolution — no hardcoded paths
+- [ ] Step 4: `.mcp.json` template
+- [ ] Step 5: `docwright init` scaffold
+- [ ] Step 6: `vault:migrate` script + `MIGRATION.md`
+- [ ] Step 7: Profile override merge
+- [ ] Step 8: MSP pilot vault
+- [ ] Step 9: Cascade STEAM early-access vault
+- [ ] Step 10: Friction log tooling
+- [ ] Step 11: Architecture boundary document
 - TypeScript MCP server: parity test all tools in both vault and upstream modes against Python baseline
 - `docwright init`: end-to-end smoke test — init, open in web UI, complete proposal→plan→completed cycle
 - Profile override merge: unit test all three merge modes (scalar replace, deep-merge, `+array` append vs replace)

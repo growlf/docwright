@@ -16,7 +16,7 @@ depends_on:
   - plans/completed/lifecycle-gates-extension-bundle.md
   - plans/phase-3-profile-acl-ai.md
 blocks: []
-tests_defined: false
+tests_defined: true
 total_steps: 5
 completed_steps: 0
 phase: 5
@@ -40,6 +40,11 @@ Five deferred gate proposals consolidated: AI-assisted preparation (surveys scop
 
 ## Testing Plan
 
+- [ ] Step 1: AI-assisted gate preparation
+- [ ] Step 2: Multi-reviewer quorum
+- [ ] Step 3: Time-based and scheduled triggers
+- [ ] Step 4: Retroactive audit of past transitions
+- [ ] Step 5: Governance audit log
 1. Gate fires with AI summary present — verify reviewer sees AI output
 2. Quorum: single reviewer approves — gate stays pending until quorum met
 3. Quorum: all reviewers approve — gate transitions

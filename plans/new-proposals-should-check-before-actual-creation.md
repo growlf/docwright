@@ -15,7 +15,7 @@ related_to:
 depends_on: []
 blocks:
   - proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md
-tests_defined: false
+tests_defined: true
 total_steps: 5
 completed_steps: 0
 phase: 3
@@ -39,6 +39,11 @@ Before writing a new proposal file, check across existing proposals, plans, and 
 
 ## Testing Plan
 
+- [ ] Step 1: Description-first creation flow
+- [ ] Step 2: Relevance and duplication check engine
+- [ ] Step 3: Overlap result presentation
+- [ ] Step 4: Assisted title generation
+- [ ] Step 5: File creation after check passes
 1. Description with no matches → creates file immediately
 2. Description matching an existing proposal → shows overlap warning with correct similarity %
 3. Description matching a completed plan → shows "already addressed" message

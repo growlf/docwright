@@ -14,7 +14,7 @@ proposal_source: proposals/approved/bundle-chat-session-panel.md
 priority: medium
 automated: guided
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 phase: 5
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md

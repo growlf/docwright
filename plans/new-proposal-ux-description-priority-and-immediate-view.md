@@ -15,7 +15,7 @@ related_to:
 depends_on:
   - proposals/new-proposals-should-check-before-actual-creation.md
 blocks: []
-tests_defined: false
+tests_defined: true
 total_steps: 6
 completed_steps: 0
 phase: 3
@@ -40,6 +40,12 @@ Replace the title-first creation flow with a description + priority dialog. AI g
 
 ## Testing Plan
 
+- [ ] Step 1: Replace creation dialog with description + priority
+- [ ] Step 2: AI generates title and full structure from description
+- [ ] Step 3: Navigate immediately to new proposal
+- [ ] Step 4: Approve button triggers related check
+- [ ] Step 5: Fix Find Related not showing results
+- [ ] Step 6: AI review button for pre-approval critique
 1. Creation dialog shows description and priority fields only
 2. Submitting description + priority triggers AI generation
 3. AI-generated content is written to disk only after completion

@@ -22,7 +22,7 @@ reviewed_date:
 canceled_date:
 cancellation_reason:
 template_version: 1.0
-tests_defined: false
+tests_defined: true
 gate_reviewer:
 gate_status:
 gate_date:
@@ -74,6 +74,13 @@ re-implementing it.
 
 ## Testing Plan
 
+- [ ] Step 1: Verify existing creation flow state
+- [ ] Step 2: Add `category` enum to proposal frontmatter schema
+- [ ] Step 3: Create typed proposal templates
+- [ ] Step 4: Build `POST /api/generate-title` endpoint
+- [ ] Step 5: Update "New Proposal" creation flow
+- [ ] Step 6: Show category in proposal lists and status page
+- [ ] Step 7: Tests
 - **Unit**: `generateTitle` fallback (no OpenCode), frontmatter validation for unknown
   category values, template selection logic per category
 - **Manual**: New Proposal → select "bug" → enter description → verify bug template

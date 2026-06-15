@@ -477,3 +477,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Updated ai-stack docs and intel_nuc AGENT_ORCHESTRATION.md with Vulkan/iGPU path
 
 **Session note:** `docs/session-notes/session_note_202606141900.md`
+
+---
+
+## Session: 2026-06-14 — Codebase quality sweep
+
+**Focus:** Systematic improvement of code quality, correctness, and maintainability
+
+**Completed:**
+- [x] Broken compat test fixed — `sync:skills` run, `docwright-session-start` added to CLAUDE.md table
+- [x] Hardcoded private IP (100.123.141.125) removed from 3 API routes; `OLLA_BASE`, `OLLA_MODEL`, `OPENCODE_URL` added to `.env` and documented in `.env.example`
+- [x] Canonical frontmatter module (`src/dispatch/frontmatter.ts`) — 7 local parser copies replaced with single js-yaml-backed source of truth; MCP lib re-exports from dispatch
+- [x] Test-criteria auto-sync (`src/dispatch/test-criteria.ts`) — new plans get Testing Plan section on creation; write route keeps criteria current on every save
+- [x] Executor checkpoint/lock paths fixed — `DOCWRIGHT_ROOT` resolved correctly (was landing in `src/webui/.docwright/` instead of vault root)
+- [x] Dead files removed: `opencode.json`, `opencode.jsonc.bak`, `opencode_test.jsonc`, `scripts/mcp-server.py`; `opencode-config` route updated to target `opencode.jsonc` and correct JS server path
+- [x] `proposals/Check our path forward.md` (spaces, no frontmatter) moved to `docs/profile-contribution-architecture.md`
+- [x] Pre-commit hook: deleted-file guard added to prevent word-split crash on spaced filenames
+- [x] 9 existing plans backfilled with test criteria via `syncTestCriteria`; all now have `tests_defined: true`
+- [x] `opencode.jsonc` model field removed — model configured via `opencode providers` CLI, not hardcoded
+
+**Session note:** *(no separate note — work captured in commit bf7ceea)*

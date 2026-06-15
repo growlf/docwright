@@ -16,7 +16,7 @@ related_to:
 depends_on: []
 blocks: []
 template_version: "1.0"
-tests_defined: false
+tests_defined: true
 total_steps: 7
 completed_steps: 0
 phase: 4
@@ -42,6 +42,13 @@ Build a lifecycle graph view on the status page that visualises the full project
 
 ## Testing Plan
 
+- [ ] Step 1: Add funnel view component to status page
+- [ ] Step 2: SVG arrow connectors between stages
+- [ ] Step 3: Click-to-navigate on cards
+- [ ] Step 4: Hover tooltip with frontmatter summary
+- [ ] Step 5: Filter controls
+- [ ] Step 6: Phase view mode (Phase 3)
+- [ ] Step 7: Dependency graph (Phase 3)
 1. Funnel view renders correctly for empty vault (no proposals yet)
 2. Funnel view renders correctly for vault with docs at every lifecycle stage
 3. Clicking each card navigates to the correct document path
