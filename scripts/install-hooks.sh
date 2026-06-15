@@ -77,12 +77,21 @@ echo ""
 # Check source exists
 [ ! -f "$SOURCE_HOOK" ] && fail "Source hook not found at $SOURCE_HOOK"
 
-# Ensure .git/hooks exists
-mkdir -p .git/hooks
+# Determine install target.
+# DocWright uses core.hooksPath=.githooks so hooks are version-controlled.
+# Vault repos use the standard .git/hooks path (no custom hooksPath).
+HOOKS_PATH=$(git -C "$REPO_ROOT" config --local core.hooksPath 2>/dev/null || true)
+if [ -z "$VAULT_TARGET" ] && [ -n "$HOOKS_PATH" ]; then
+  HOOK_TARGET="$REPO_ROOT/$HOOKS_PATH/pre-commit"
+  mkdir -p "$REPO_ROOT/$HOOKS_PATH"
+else
+  HOOK_TARGET="$REPO_ROOT/.git/hooks/pre-commit"
+  mkdir -p "$REPO_ROOT/.git/hooks"
+fi
 
 # Copy with validation
-cp "$SOURCE_HOOK" .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
-pass "Copied hook -> .git/hooks/pre-commit"
+cp "$SOURCE_HOOK" "$HOOK_TARGET" && chmod +x "$HOOK_TARGET"
+pass "Copied hook -> ${HOOK_TARGET#$REPO_ROOT/}"
 
 # For vault installations, write a .env if not present
 if [ -n "$VAULT_TARGET" ] && [ ! -f "$REPO_ROOT/.env" ]; then
@@ -131,7 +140,7 @@ fi
 
 # Verify match (self-install only)
 if [ -z "$VAULT_TARGET" ]; then
-  if diff -q "$SOURCE_HOOK" .git/hooks/pre-commit > /dev/null 2>&1; then
+  if diff -q "$SOURCE_HOOK" "$HOOK_TARGET" > /dev/null 2>&1; then
     pass "Integrity verified: source and installed hook match"
   else
     fail "Integrity FAILED: files differ after copy"
@@ -139,7 +148,7 @@ if [ -z "$VAULT_TARGET" ]; then
 fi
 
 # Test hook is executable
-[ -x ".git/hooks/pre-commit" ] && pass "Hook is executable" || fail "Hook not executable"
+[ -x "$HOOK_TARGET" ] && pass "Hook is executable" || fail "Hook not executable"
 
 # Quick smoke test
 echo ""

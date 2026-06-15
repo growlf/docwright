@@ -61,22 +61,13 @@ detect_network() {
 print_warning "$(resolve_identity)"
 print_status "$(detect_network)"
 
-# =============================================================================
-# 2. Commit message format
-# =============================================================================
-validate_commit_message() {
-    [ ! -f ".git/COMMIT_EDITMSG" ] && return 0
-    local msg=$(head -1 .git/COMMIT_EDITMSG | tr -d '\r')
-    [ -z "$msg" ] && return 0
-    echo "$msg" | grep -qE '^(feat|fix|docs|refactor|test|chore): .+' && return 0
-    print_error "Commit message must follow: <type>: <description>"
-    print_error "Types: feat, fix, docs, refactor, test, chore"
-    exit 1
-}
-validate_commit_message
+# Commit message format is validated by .githooks/commit-msg, which receives
+# the message file path as $1 from git — always current, never stale.
+# It must not be re-checked here: pre-commit reads COMMIT_EDITMSG which
+# retains the previous failed commit's message after a hook rejection.
 
 # =============================================================================
-# 3. Gather staged markdown files
+# 2. Gather staged markdown files
 # =============================================================================
 STAGED=$(git diff --cached --name-only)
 [ -z "$STAGED" ] && print_warning "No staged files to validate" && exit 0
