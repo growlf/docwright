@@ -18,6 +18,8 @@ parent_plan: phase-vault-portability-pilot.md
 parent_deliverable: 5
 tests_defined: false
 _path: plans/sub-plan-vault-migration-system.md
+total_steps: 3
+completed_steps: 3
 ---
 
 # Sub-Plan: Vault Migration System
@@ -49,9 +51,9 @@ Automated migration on `docwright init --upgrade`. A `MIGRATION.md` linter that 
 
 ## Implementation Steps
 
-| 1 | **`MIGRATION.md` schema** — Per-version `## BREAKING` sections listing migration commands: | | ⏳ Pending |
-| 2 | **`npm run vault:migrate -- --vault /path --from X --to Y`** — Reads `MIGRATION.md`, applies steps in the version range, updates `.docwright/config.json`, never touches vault content (proposals, plans, docs). | | ⏳ Pending |
-| 3 | **First entry** — Write the initial `MIGRATION.md` entry documenting the Phase 3 vault-portable schema changes. | | ⏳ Pending |
+| 1 | **`MIGRATION.md` schema** — Per-version `## BREAKING` sections listing migration commands: | | ✅ Done |
+| 2 | **`npm run vault:migrate -- --vault /path --from X --to Y`** — Reads `MIGRATION.md`, applies steps in the version range, updates `.docwright/config.json`, never touches vault content (proposals, plans, docs). | | ✅ Done |
+| 3 | **First entry** — Write the initial `MIGRATION.md` entry documenting the Phase 3 vault-portable schema changes. | | ✅ Done |
 
 ## Testing Plan
 
@@ -70,3 +72,4 @@ _Risk assessment TBD_
 | Date | Change | Author |
 | --- | --- | --- |
 | 2026-06-11 | Created from approved proposal | NetYeti |
+| 2026-06-14 | Steps 1-3 completed: MIGRATION.md format defined, vault:migrate script built and tested, first v1 entry written for Phase 3 vault-portable schema. init.ts updated to generate .docwright/config.json. | NetYeti |

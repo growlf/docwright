@@ -1,5 +1,5 @@
 const AI_TIMEOUT = 60_000;
-const OLLA_BASE = process.env.OLLA_BASE || 'http://100.123.141.125:40114/olla/ollama/v1';
+const OLLA_BASE = process.env.OLLA_BASE || 'http://localhost:11434/v1';
 const OLLA_MODEL = process.env.OLLA_MODEL || 'llama3.1:8b';
 
 export async function POST({ request }) {

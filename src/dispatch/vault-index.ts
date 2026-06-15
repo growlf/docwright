@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { parseFrontmatter } from './frontmatter';
 
 export interface VaultEntry {
   path: string;
@@ -18,30 +19,7 @@ const SCAN_DIRS = [
   'policies', 'policies/core',
 ];
 
-export function parseFrontmatter(raw: string): Record<string, any> {
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return {};
-  const result: Record<string, any> = {};
-  const lines = m[1].split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const ci = lines[i].indexOf(':');
-    if (ci <= 0) { i++; continue; }
-    const key  = lines[i].slice(0, ci).trim();
-    const rest = lines[i].slice(ci + 1).trim();
-    if (rest === '' || rest === '[]') {
-      i++;
-      const arr: string[] = [];
-      while (i < lines.length && /^\s+-\s/.test(lines[i]))
-        arr.push(lines[i++].replace(/^\s+-\s*/, '').trim());
-      result[key] = arr; continue;
-    }
-    let val: any = rest.replace(/^["']|["']$/g, '');
-    if (val === 'true') val = true; else if (val === 'false') val = false;
-    result[key] = val; i++;
-  }
-  return result;
-}
+export { parseFrontmatter } from './frontmatter';
 
 export function buildIndex(vaultRoot: string): VaultIndex {
   const index: VaultIndex = {};

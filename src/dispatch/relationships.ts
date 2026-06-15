@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { tokenize, jaccard, stripFrontmatter, getFrontmatterTitle } from './ai';
+import { tokenize, jaccard } from './ai';
+import { parseFrontmatter, stripFrontmatter, getFrontmatterTitle } from './frontmatter';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -64,40 +65,6 @@ const WEIGHTS = {
   explicit_related: 0.10,
   wikilink_cooccurrence: 0.05,
 };
-
-// ── Frontmatter parsing ────────────────────────────────────────────────────────
-
-function parseFrontmatter(raw: string): Record<string, any> {
-  const m = raw.match(/^---\n([\s\S]*?)\n---\n/);
-  if (!m) return {};
-  const fm: Record<string, any> = {};
-  const lines = m[1].split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    // Key with no inline value — may be a block sequence (- item lines)
-    const keyEmpty = line.match(/^(\w+):\s*$/);
-    if (keyEmpty) {
-      const arr: string[] = [];
-      while (i + 1 < lines.length && /^\s+-/.test(lines[i + 1])) {
-        i++;
-        arr.push(lines[i].replace(/^\s+-\s*/, '').trim().replace(/^["']|["']$/g, ''));
-      }
-      fm[keyEmpty[1]] = arr.length > 0 ? arr : '';
-      continue;
-    }
-    const kv = line.match(/^(\w+):\s*(.+)/);
-    if (kv) {
-      let val: any = kv[2].trim();
-      if (val.startsWith('[') && val.endsWith(']')) {
-        val = val.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-      } else if (val === 'true') val = true;
-      else if (val === 'false') val = false;
-      else val = val.replace(/^["']|["']$/g, '');
-      fm[kv[1]] = val;
-    }
-  }
-  return fm;
-}
 
 function getFrontmatterList(raw: string, field: string): string[] {
   const fm = parseFrontmatter(raw);

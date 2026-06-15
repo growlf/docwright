@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { parseFrontmatter, setFrontmatterField } from '../../../../../dispatch/frontmatter';
+import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -11,32 +13,9 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') || 'plan';
 }
 
-function hasTestingPlan(content: string): boolean {
-  const m = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=^##\s|\n*$)/m);
-  if (!m) return false;
-  const section = m[1].trim();
-  return section !== '' && section !== '_Add test plan during implementation._';
-}
-
 function readFrontmatter(filePath: string): Record<string, any> | null {
   if (!fs.existsSync(filePath)) return null;
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) return null;
-  const fm: Record<string, any> = {};
-  for (const line of match[1].split('\n')) {
-    const ci = line.indexOf(':');
-    if (ci <= 0) continue;
-    const key = line.slice(0, ci).trim();
-    let val: any = line.slice(ci + 1).trim();
-    if (val.startsWith('[') && val.endsWith(']')) {
-      val = val.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-    } else if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    else if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-    fm[key] = val;
-  }
-  return fm;
+  return parseFrontmatter(fs.readFileSync(filePath, 'utf-8'));
 }
 
 function resolvePath(p: string): string {
@@ -52,6 +31,76 @@ function readTemplate(): string {
     if (fs.existsSync(p)) return fs.readFileSync(p, 'utf-8');
   }
   return '';
+}
+
+function readFileBody(filePath: string): string {
+  const resolved = path.join(REPO_ROOT, resolvePath(filePath));
+  if (!fs.existsSync(resolved)) return '';
+  const raw = fs.readFileSync(resolved, 'utf-8');
+  const m = raw.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  return m ? m[1].trim() : '';
+}
+
+function parseProposalSections(body: string): Record<string, string> {
+  const sections: Record<string, string> = {};
+  const lines = body.split('\n');
+  let currentName = '';
+  let currentLines: string[] = [];
+  for (const line of lines) {
+    const m = line.match(/^##\s+(.+)/);
+    if (m) {
+      if (currentName) sections[currentName.toLowerCase()] = currentLines.join('\n').trim();
+      currentName = m[1].trim();
+      currentLines = [];
+    } else {
+      currentLines.push(line);
+    }
+  }
+  if (currentName) sections[currentName.toLowerCase()] = currentLines.join('\n').trim();
+  return sections;
+}
+
+function extractStepsFromProposal(sections: Record<string, string>): string {
+  // Ordered list of section names to try for step extraction
+  const stepSourceSections = [
+    'implementation steps',
+    'proposed solution',
+    'proposed approach',
+    'notes for plan generation',
+    'phasing',
+    'implementation plan',
+  ];
+  for (const sectionName of stepSourceSections) {
+    if (sections[sectionName]) {
+      const items: string[] = [];
+      for (const line of sections[sectionName].split('\n')) {
+        const li = line.match(/^\s*\d+\.\s+(.+)/);
+        if (li) items.push(li[1].trim());
+      }
+      if (items.length > 0) {
+        return items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
+      }
+    }
+  }
+  return '';
+}
+
+function getProposalSection(sections: Record<string, string>, names: string[]): string {
+  for (const name of names) {
+    if (sections[name]) return sections[name];
+  }
+  return '';
+}
+
+function getContextSections(sections: Record<string, string>, exclude: string[]): string {
+  const parts: string[] = [];
+  const excludeLower = exclude.map(s => s.toLowerCase());
+  for (const [name, content] of Object.entries(sections)) {
+    if (!excludeLower.includes(name) && content) {
+      parts.push(`### ${name.charAt(0).toUpperCase() + name.slice(1)}\n\n${content}\n`);
+    }
+  }
+  return parts.join('\n');
 }
 
 function detectCurrentPhase(repoRoot: string): string {
@@ -131,6 +180,19 @@ export async function POST({ request }) {
 
   const sourceProposal = candidates[0] || validCandidates[0] || '';
 
+  // Parse the first candidate proposal's body to extract sections
+  const proposalBody = readFileBody(sourceProposal);
+  const proposalSections = proposalBody ? parseProposalSections(proposalBody) : {};
+  const stepsBody = extractStepsFromProposal(proposalSections) || '| 1 | | | ⏳ Pending |';
+  const testingBody = getProposalSection(proposalSections, ['testing plan', 'test plan', 'testing']) || '';
+  const riskBody = getProposalSection(proposalSections, ['risk assessment', 'risks', 'risk']) || '';
+  const rollbackBody = getProposalSection(proposalSections, ['rollback procedures', 'rollback', 'rollback plan']) || '';
+  const contextBody = getContextSections(proposalSections, ['implementation steps', 'proposed solution', 'proposed approach', 'testing plan', 'test plan', 'testing', 'risk assessment', 'risks', 'risk', 'rollback procedures', 'rollback', 'rollback plan', 'expected outcomes', 'resources required', 'notes for plan generation']);
+
+  const overviewBody = validCandidates.length > 1
+    ? `This plan bundles: ${validCandidates.map(c => `[[${c.replace(/\.md$/, '')}]]`).join(', ')}`
+    : (contextBody || '');
+
   if (template && template.includes('{{VALUE:')) {
     const filled = template
       .replace(/\{\{VALUE:title\}\}/g, title)
@@ -142,16 +204,19 @@ export async function POST({ request }) {
       .replace(/\{\{VALUE:priority\}\}/g, 'medium')
       .replace(/\{\{VALUE:phase\}\}/g, currentPhase)
       .replace(/\{\{VALUE:assigned_to\}\}/g, 'NetYeti')
-      .replace(/\{\{VALUE:overview\}\}/g, validCandidates.length > 1 ? `Bundles: ${validCandidates.map(c => c.split('/').pop()?.replace('.md', '')).join(', ')}` : '')
-      .replace(/\{\{VALUE:testing\}\}/g, '')
-      .replace(/\{\{VALUE:rollback\}\}/g, '');
+      .replace(/\{\{VALUE:overview\}\}/g, overviewBody)
+      .replace(/\{\{VALUE:testing\}\}/g, testingBody)
+      .replace(/\{\{VALUE:rollback\}\}/g, rollbackBody)
+      .replace(/\{\{VALUE:risk\}\}/g, riskBody)
+      .replace(/\{\{VALUE:steps\}\}/g, stepsBody);
     // Strip any unprocessed template syntax (Handlebars blocks, leftover tokens)
     const cleaned = filled
       .replace(/\{\{#if[^}]*\}\}/g, '')
       .replace(/\{\{else if[^}]*\}\}/g, '')
       .replace(/\{\{else\}\}/g, '')
       .replace(/\{\{\/if\}\}/g, '')
-      .replace(/\{\{[#\/][^}]*\}\}/g, '');
+      .replace(/\{\{[#\/][^}]*\}\}/g, '')
+      .replace(/\{\{VALUE:[^}]*\}\}/g, '');
     // Ensure plan status is draft (not proposal) — created plans begin as drafts
     const final = cleaned.replace(/^status:\s*proposal$/m, 'status: draft');
     fs.mkdirSync(path.dirname(resolved), { recursive: true });
@@ -160,6 +225,10 @@ export async function POST({ request }) {
     const depsList = validCandidates.length > 1
       ? `\nrelated_to:\n${validCandidates.map(c => `  - ${c}`).join('\n')}`
       : '\nrelated_to: []';
+    const contextSection = contextBody ? `\n${contextBody}\n` : '';
+    const testingSection = testingBody ? `\n## Testing Plan\n\n${testingBody}\n` : '';
+    const riskSection = riskBody ? `\n## Risk Assessment\n\n${riskBody}\n` : '';
+    const rollbackSection = rollbackBody ? `\n## Rollback Procedures\n\n${rollbackBody}\n` : '';
     const content = `---
 title: "${title}"
 status: draft
@@ -180,14 +249,14 @@ tests_human_reviewed: false${depsList}
 
 ## Overview
 
-${validCandidates.length > 1 ? `This plan bundles: ${validCandidates.map(c => `[[${c.replace(/\.md$/, '')}]]`).join(', ')}` : ''}
+${overviewBody || '*Plan generated from proposal*'}
 
 ## Implementation Steps
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | | | ⏳ Pending |
-
+${stepsBody}
+${testingSection}${riskSection}${rollbackSection}
 ## Document History
 
 | Date | Change | Author |
@@ -198,17 +267,12 @@ ${validCandidates.length > 1 ? `This plan bundles: ${validCandidates.map(c => `[
     fs.writeFileSync(resolved, content, 'utf-8');
   }
 
-  // Check candidate proposals for testing plan sections → auto-set tests_defined
-  const hasAnyTesting = validCandidates.some(cand => {
-    const candPath = path.join(REPO_ROOT, resolvePath(cand));
-    if (!fs.existsSync(candPath)) return false;
-    const raw = fs.readFileSync(candPath, 'utf-8');
-    return hasTestingPlan(raw);
-  });
-  if (hasAnyTesting) {
+  // Sync test criteria into the plan — always ensures the Testing Plan section exists
+  {
     const planRaw = fs.readFileSync(resolved, 'utf-8');
-    const updated = planRaw.replace(/^(tests_defined:\s*).+$/m, `$1true`);
-    if (updated !== planRaw) fs.writeFileSync(resolved, updated);
+    const synced = syncTestCriteria(planRaw, title);
+    const withTestsDefined = setFrontmatterField(synced, 'tests_defined', true);
+    fs.writeFileSync(resolved, withTestsDefined, 'utf-8');
   }
 
   // Set consumed_by on each valid candidate (skip already-planned)

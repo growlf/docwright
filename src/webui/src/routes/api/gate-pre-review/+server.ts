@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { getGateDefinition, getScheduleGatesForDocument, getGatesForTransition } from '../../../../../dispatch/gates';
-import { getAIEngine, getFrontmatterTitle, stripFrontmatter } from '../../../../../dispatch/ai';
+import { getAIEngine } from '../../../../../dispatch/ai';
+import { parseFrontmatter, getFrontmatterTitle, stripFrontmatter } from '../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -10,23 +11,7 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
 
 function readFrontmatter(filePath: string): Record<string, any> | null {
   if (!fs.existsSync(filePath)) return null;
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return null;
-  const fm: Record<string, any> = {};
-  for (const line of match[1].split('\n')) {
-    const ci = line.indexOf(':');
-    if (ci <= 0) continue;
-    const key = line.slice(0, ci).trim();
-    let val: any = line.slice(ci + 1).trim();
-    if (val.startsWith('[') && val.endsWith(']')) {
-      val = val.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-    } else if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    else if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-    fm[key] = val;
-  }
-  return fm;
+  return parseFrontmatter(fs.readFileSync(filePath, 'utf-8'));
 }
 
 export async function GET({ url }) {

@@ -23,8 +23,9 @@ export type VerifyStepFn = (
 ) => Promise<VerifyResult>;
 
 export function isExecuting(planName: string): boolean {
+  const root = process.env.DOCWRIGHT_ROOT ?? process.cwd();
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const lockPath = path.join('.docwright', 'executor-locks', `${safeName}.lock`);
+  const lockPath = path.join(root, '.docwright', 'executor-locks', `${safeName}.lock`);
   return fs.existsSync(lockPath);
 }
 

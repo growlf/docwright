@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { rebuildRelationships } from '../../../../../dispatch/relationships';
+import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
+import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -26,10 +28,16 @@ function hasTestingPlan(content: string): boolean {
 function updateTestsDefined(filePath: string, resolved: string, content: string): void {
   if (!isPlanDoc(filePath)) return;
   const testsVal = hasTestingPlan(content) ? 'true' : 'false';
-  // Replace or add tests_defined in frontmatter
   const raw = fs.readFileSync(resolved, 'utf-8');
   const updated = raw.replace(/^(tests_defined:\s*).+$/m, `$1${testsVal}`);
   if (updated !== raw) fs.writeFileSync(resolved, updated);
+}
+
+function applySyncTestCriteria(filePath: string, content: string): string {
+  if (!isPlanDoc(filePath)) return content;
+  const fm = parseFrontmatter(content);
+  const title = String(fm.title || '');
+  return syncTestCriteria(content, title);
 }
 
 export async function POST({ url, request }) {
@@ -45,10 +53,12 @@ export async function POST({ url, request }) {
   const dir = path.dirname(resolved);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-  fs.writeFileSync(resolved, content, 'utf-8');
+  // Sync test criteria before writing — ensures Testing Plan section stays current
+  const finalContent = applySyncTestCriteria(filePath, content);
+  fs.writeFileSync(resolved, finalContent, 'utf-8');
 
   // Auto-detect tests_defined for plan docs
-  updateTestsDefined(filePath, resolved, content);
+  updateTestsDefined(filePath, resolved, finalContent);
 
   // Trigger async relationship map rebuild for lifecycle docs
   if (isLifecycleDoc(filePath)) {

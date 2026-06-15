@@ -1,6 +1,33 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "ollama/llama3.1:latest",
+  // "openai" is no longer a valid top-level key. 
+  // Custom provider base URLs are now managed via 'opencode providers' CLI.
+  "permission": {
+    "edit": "ask",
+    "write": "ask",
+    "bash": "ask"
+  },
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "mcp": {
+    "dw-mcp": {
+      "type": "local",
+      "command": [
+        "node",
+        "dist/mcp/server.js",
+        "--mode",
+        "vault"
+      ],
+      "environment": {
+        "DOCWRIGHT_VAULT_ROOT": "${PWD}"
+      },
+      "enabled": true
+    }
+  },
   "instructions": [
     "AGENTS.md",
     ".opencode/rules/commit-format.md",
@@ -10,24 +37,7 @@
     ".opencode/rules/no-work-before-approval.md",
     ".opencode/rules/hook-failure-feedback.md"
   ],
-  "permission": {
-    "edit": "ask",
-    "write": "ask",
-    "bash": "ask"
-  },
-  "server": {
-    "hostname": "127.0.0.1"
-  },
-  "skills": {
-    "paths": [".opencode/skills"]
-  },
-  "mcp": {
-    "dw-mcp": {
-      "type": "local",
-      "command": [".venv/bin/python3", "scripts/mcp-server.py"]
-    }
-  },
-  "agent": {
+  "mode": {
     "design": {
       "mode": "primary",
       "description": "Plan mode — can edit plans, proposals, docs, and profile definitions",
@@ -38,7 +48,7 @@
         "bash": "ask",
         "read": "allow"
       },
-      "prompt": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning.\n\nLIFECYCLE ENFORCEMENT — lifecycle state transitions MUST use the MCP server's transition_to_* tools, not direct file edits. Never set approved: true on any proposal — only humans do that. The pre-commit hook will reject commits that violate lifecycle rules."
+      "instructions": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning.\n\nLIFECYCLE ENFORCEMENT — lifecycle state transitions MUST use the MCP server's transition_to_* tools, not direct file edits. Never set approved: true on any proposal — only humans do that. The pre-commit hook will reject commits that violate lifecycle rules."
     }
   }
 }

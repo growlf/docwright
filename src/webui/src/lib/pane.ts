@@ -34,6 +34,9 @@ export const triggerImprovePending = writable(false);
 /** Signal to switch to Review tab (set by PropertiesPane, consumed by layout) */
 export const showReviewTab = writable(false);
 
+/** Fingerprint of plan body at time of last review — used to detect edits since review */
+export const planReviewBodyFingerprint = writable('');
+
 /** Plan execution panel state */
 export const showExecutionPanel = writable(false);
 export const executingPlanName = writable('');

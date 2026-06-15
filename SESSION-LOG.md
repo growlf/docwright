@@ -429,3 +429,51 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 **BLOCKER:** Olla Intel Arc GPU reports 0 VRAM — plan-review hangs. Inference requests to Docker ollama time out.
 
 **Session note:** `docs/session-notes/session_note_202606130024.md`
+
+---
+
+## Session: 2026-06-13 — Plan review holistic path + step generation
+
+**Focus:** Holistic plan review for no-steps plans
+
+**Completed:**
+- [x] Holistic review path in `/api/plan-review` when no Implementation Steps exist (analyze goal, suggest steps, gaps, preconditions)
+- [x] Step generation in `/api/apply-review` from holistic analysis (inserts markdown table)
+- [x] Review tab stays active after Apply when steps were generated (generatedSteps flag)
+- [x] Touchscreen mode badge click handling fix (X/Y coords check)
+- [x] Clean production build
+
+**Session note:** `docs/session-notes/session_note_202606131435.md`
+
+---
+
+## Session: 2026-06-14 — Olla GPU routing fix
+
+**Focus:** Olla GPU routing fix
+
+**Completed:**
+- [x] Identified Intel Arc crash root cause: 0 dedicated VRAM, 14B models swap → CPU fallback → thermal event
+- [x] Fixed Olla routing: `least-connections` → `priority` load balancer, remote Nvidia priority 90, local Arc 70
+- [x] Reduced local ollama Docker mem_limit from 32g to 8g
+- [x] Updated opencode.jsonc to route through Olla (`openai/llama3.1:8b` at `http://100.123.141.125:40114/olla/ollama/v1`)
+- [x] Created `docs/ai-inference-routing-research.md` with full findings
+- [x] Updated `intel_nuc_skullcanyon_ollama_with_gpu` repo: tool-calling, memory optimization, Olla routing docs
+- [x] Confirmed remote Nvidia inference: 0.6-1.2s vs local Arc 22-27s for llama3.1:8b
+
+**Session note:** `docs/session-notes/session_note_202606141344.md`
+
+---
+
+## Session: 2026-06-14 — Phoenix Arc GPU acceleration
+
+**Focus:** Phoenix Arc GPU acceleration + local AI reliability
+
+**Completed:**
+- [x] Verified SYCL dead-end on Meteor Lake Arc UMA (0 VRAM)
+- [x] Tested native Ollama v0.30.7 + Vulkan on port 11435 — GPU detected with 23 GiB
+- [x] qwen2.5:0.5b 25/25 layers on GPU, qwen2.5-coder:14b 26/49 layers on GPU
+- [x] Installed permanent systemd service with OLLAMA_VULKAN=1 + OLLAMA_IGPU_ENABLE=1
+- [x] Removed Docker ollama from docker-compose.arc.yml
+- [x] Updated ai-stack docs and intel_nuc AGENT_ORCHESTRATION.md with Vulkan/iGPU path
+
+**Session note:** `docs/session-notes/session_note_202606141900.md`

@@ -8,7 +8,7 @@
   import { toasts, dismissToast, showToast } from '$lib/toast';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
   showExecutionPanel, executingPlanName
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
@@ -70,6 +70,7 @@ import {
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
+  let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
   let cm = $state<any[]>([]); $effect(() => { const u = collationMatches.subscribe(v => cm = v); return u; });
@@ -80,6 +81,7 @@ import {
   let prOverview = $state(''); $effect(() => { const u = planReviewOverview.subscribe(v => prOverview = v); return u; });
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
   let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
+  let prFingerprint = $state(''); $effect(() => { const u = planReviewBodyFingerprint.subscribe(v => prFingerprint = v); return u; });
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
@@ -122,6 +124,7 @@ import {
     planReviewOverview.set('');
     planReviewLoading.set(false);
     planReviewStatus.set('');
+    planReviewBodyFingerprint.set('');
     improveResult.set(null);
     improveLoading.set(false);
     improvePhase.set('improve-thinking');
@@ -245,16 +248,18 @@ import {
     } finally {
       planReviewLoading.set(false);
       planReviewStatus.set('');
+      // Store body fingerprint so we can detect edits since last review
+      const body = $currentDoc?.body;
+      if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
     }
   }
 
-  // React to signal to switch to Review tab
+  // React to signal to switch to Review tab (just show tab, don't auto-run)
   $effect(() => {
     if ($showReviewTab) {
       rightTab = 'review';
       showRightPanel = true;
       showReviewTab.set(false);
-      handleReview();
     }
   });
 
@@ -396,6 +401,69 @@ import {
       improveResult.set(null);
     }
   }
+
+  async function handleApplyReview() {
+    const fp = $currentDoc.filePath;
+    if (!fp || applyingReview) return;
+    applyingReview = true;
+    planReviewLoading.set(true);
+    planReviewStatus.set('Applying review...');
+    try {
+      const res = await fetch('/api/apply-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: fp,
+          steps: prSteps,
+          sections: prSections,
+          overview: prOverview,
+        }),
+      });
+      if (!res.ok) { showToast('Apply review failed', 3000); return; }
+      const data = await res.json();
+      if (data.error) { showToast(data.error, 3000); return; }
+      if (!data.improved) return;
+      let author = 'DocWright Review';
+      try {
+        const idRes = await fetch('/api/git/config?key=user.name');
+        if (idRes.ok) { const v = await idRes.json(); if (v.value) author = v.value; }
+      } catch {}
+      const bodyWithHistory = appendDocHistory(data.improved, 'AI-improved via Review', author);
+      const fm = { ...($currentDoc.frontmatter ?? {}) };
+      fm.status = 'draft'; // reset so plan can be re-approved and re-started
+      const fmLines = Object.entries(fm)
+        .filter(([k]) => k !== '_path')
+        .map(([k, v]) => {
+          if (Array.isArray(v)) return v.length ? `${k}:\n${v.map(i => `  - ${i}`).join('\n')}` : `${k}: []`;
+          if (typeof v === 'boolean') return `${k}: ${v}`;
+          if (v === null || v === undefined || v === '') return `${k}:`;
+          return `${k}: ${v}`;
+        }).join('\n');
+      const newRaw = `---\n${fmLines}\n---\n${bodyWithHistory}`;
+      const writeRes = await fetch('/api/write?path=' + encodeURIComponent(fp), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newRaw }),
+      });
+      if (writeRes.ok) {
+        const wasStepGeneration = data.generatedSteps === true;
+        showToast(wasStepGeneration ? 'Implementation steps generated from analysis' : 'Plan updated with review suggestions', 3000);
+        if (!wasStepGeneration) rightTab = 'properties';
+        planReviewSteps.set({});
+        planReviewSections.set({});
+        planReviewOverview.set('');
+      }
+    } finally {
+      applyingReview = false;
+      planReviewLoading.set(false);
+      planReviewStatus.set('');
+    }
+  }
+
+  let canRerun = $derived(
+    !!($currentDoc.body) && !!prFingerprint &&
+    ($currentDoc.body.length + ':' + $currentDoc.body.slice(0, 100)) !== prFingerprint
+  );
 
   // Close sidebar on navigation (mobile only)
   $effect(() => {
@@ -722,14 +790,14 @@ import {
   <Panel side="right" bind:open={showRightPanel}>
     <div class="right-tab-bar">
       <button class="right-tab" class:active={rightTab === 'properties'}
-        onclick={() => rightTab = 'properties'}>Properties</button>
+        onclick={() => { if (!applyingReview) rightTab = 'properties'; }}>Properties</button>
       <button class="right-tab" class:active={rightTab === 'related'}
-        onclick={() => { rightTab = 'related'; if (!collationMatches.length && $currentDoc.filePath) findRelated($currentDoc.filePath); }}>
+        onclick={() => { if (!applyingReview) { rightTab = 'related'; if (!collationMatches.length && $currentDoc.filePath) findRelated($currentDoc.filePath); } }}>
         Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
       </button>
       {#if $currentDoc.docType === 'plan'}
         <button class="right-tab" class:active={rightTab === 'review'}
-          onclick={() => showReviewTab.set(true)}>
+          onclick={() => { if (!applyingReview) showReviewTab.set(true); }}>
           Review{prl ? ' ⏳' : ''}
         </button>
         {#if rightTab === 'execute'}
@@ -738,7 +806,7 @@ import {
       {/if}
       {#if $currentDoc.docType === 'proposal'}
         <button class="right-tab" class:active={rightTab === 'improve'}
-          onclick={handleImprove}>
+          onclick={() => { if (!applyingReview) handleImprove(); }}>
           Improve{il ? ' ⏳' : ir ? ' ✓' : ''}
         </button>
       {/if}
@@ -780,8 +848,11 @@ import {
         overview={prOverview}
         status={prs}
         loading={prl}
-        ondismiss={() => { rightTab = 'properties'; planReviewSteps.set({}); planReviewSections.set({}); planReviewOverview.set(''); planReviewStatus.set(''); planReviewLoading.set(false); }}
+        canRerun={canRerun}
+        applying={applyingReview}
+        ondismiss={() => { rightTab = 'properties'; }}
         onrerun={handleReview}
+        onapply={handleApplyReview}
       />
     {:else if rightTab === 'execute'}
       <PlanExecutePanel />

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -13,25 +14,6 @@ function hasTestingPlan(content: string): boolean {
   if (!m) return false;
   const section = m[1].trim();
   return section !== '' && section !== '_Add test plan during implementation._';
-}
-
-function parseFrontmatter(raw: string): Record<string, any> {
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return {};
-  const result: Record<string, any> = {};
-  for (const line of m[1].split('\n')) {
-    const ci = line.indexOf(':');
-    if (ci <= 0) continue;
-    const key = line.slice(0, ci).trim();
-    let val: any = line.slice(ci + 1).trim();
-    if (val.startsWith('[') && val.endsWith(']')) {
-      val = val.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-    } else if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    else if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-    result[key] = val;
-  }
-  return result;
 }
 
 function logAudit(action: string, detail: string) {

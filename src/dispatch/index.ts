@@ -16,10 +16,12 @@
  */
 
 // Barrel export
+export * from './frontmatter';
+export * from './test-criteria';
 export * from './registry';
 export * from './profile';
 export * from './relationships';
-export { tokenize, jaccard, parseSections, stripFrontmatter, getFrontmatterTitle, KeywordEngine, OpenCodeEngine, getAIEngine } from './ai';
+export { tokenize, jaccard, parseSections, KeywordEngine, OpenCodeEngine, getAIEngine } from './ai';
 export * from './vault-index';
 export * from './linter';
 export * from './ai';

@@ -23,6 +23,7 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 | `docwright-proposal` | Create properly templated proposals with required frontmatter | [`.opencode/skills/docwright-proposal/SKILL.md`](.opencode/skills/docwright-proposal/SKILL.md) |
 | `docwright-raw-proposal` | Detect raw proposals and draft them into structured form | [`.opencode/skills/docwright-raw-proposal/SKILL.md`](.opencode/skills/docwright-raw-proposal/SKILL.md) |
 | `docwright-security` | Security practices for credential management, network access, and system hardening | [`.opencode/skills/docwright-security/SKILL.md`](.opencode/skills/docwright-security/SKILL.md) |
+| `docwright-session-start` | Automated session startup — resolves identity, gathers active plans, session history, git status, and sets up todo | [`.opencode/skills/docwright-session-start/SKILL.md`](.opencode/skills/docwright-session-start/SKILL.md) |
 | `docwright-templates` | Document format templates for audit plans, mitigation tracking, and assessment reports | [`.opencode/skills/docwright-templates/SKILL.md`](.opencode/skills/docwright-templates/SKILL.md) |
 | `docwright-tools` | Security audit and hardening tools reference — lynis, rkhunter, fail2ban, firewalld, OpenSCAP, auditd | [`.opencode/skills/docwright-tools/SKILL.md`](.opencode/skills/docwright-tools/SKILL.md) |
 | `endsession` | Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status | [`.opencode/skills/endsession/SKILL.md`](.opencode/skills/endsession/SKILL.md) |

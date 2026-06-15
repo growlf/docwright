@@ -104,7 +104,12 @@ export async function runStepSession(
           signal: abortCtrl.signal,
         },
       );
-      if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
+      if (!msgRes.ok) {
+        const friendly = msgRes.status === 500
+          ? 'AI unavailable — model backend not responding. Check that ollama/Olla is running.'
+          : `Message failed: ${msgRes.status}`;
+        throw new Error(friendly);
+      }
       const data = await msgRes.json();
       const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
       const fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');

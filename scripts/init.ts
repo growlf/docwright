@@ -145,6 +145,15 @@ function main() {
     console.log('  ✓ brand.json');
   }
 
+  // .docwright/config.json
+  const configPath = path.join(dest, '.docwright', 'config.json');
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({
+      schema_version: '1',
+    }, null, 2) + '\n', 'utf8');
+    console.log('  ✓ .docwright/config.json (schema_version: 1)');
+  }
+
   // .docwright/.gitignore
   const giPath = path.join(dest, '.docwright', '.gitignore');
   if (!fs.existsSync(giPath)) {

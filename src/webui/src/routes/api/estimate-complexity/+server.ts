@@ -2,40 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { getAIEngine } from '../../../../../dispatch/ai';
+import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
   return path.resolve(process.cwd(), '../..');
 })();
-
-function parseFrontmatter(raw: string): Record<string, any> {
-  const fm: Record<string, any> = {};
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return fm;
-  let curKey = '';
-  let curArr: string[] | null = null;
-  for (const line of m[1].split('\n')) {
-    const kv = line.match(/^(\w[\w_-]*):\s*(.*)/);
-    if (kv) {
-      if (curArr && curKey) fm[curKey] = curArr;
-      curArr = null;
-      curKey = kv[1];
-      const val = kv[2].trim();
-      if (val === '') {
-        curArr = [];
-      } else if (val === 'true') fm[curKey] = true;
-      else if (val === 'false') fm[curKey] = false;
-      else fm[curKey] = val;
-    } else if (curArr !== null && line.match(/^\s+-\s+/)) {
-      curArr.push(line.replace(/^\s+-\s+/, '').trim());
-    } else if (curArr !== null && curKey) {
-      fm[curKey] = curArr;
-      curArr = null;
-    }
-  }
-  if (curArr && curKey) fm[curKey] = curArr;
-  return fm;
-}
 
 export async function GET({ url }) {
   const docPath = url.searchParams.get('path');

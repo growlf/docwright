@@ -2,7 +2,8 @@ import assert from 'assert';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { buildIndex, readIndex, writeIndex, parseFrontmatter } from '../../src/dispatch/vault-index';
+import { buildIndex, readIndex, writeIndex } from '../../src/dispatch/vault-index';
+import { parseFrontmatter } from '../../src/dispatch/frontmatter';
 
 function makeVault(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dw-idx-'));

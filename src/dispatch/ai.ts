@@ -1,5 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { stripFrontmatter, getFrontmatterTitle } from './frontmatter';
+export { stripFrontmatter, getFrontmatterTitle } from './frontmatter';
 
 export interface Section {
   heading: string;
@@ -85,15 +87,6 @@ export function parseSections(body: string): Section[] {
   if (cur?.lines.join('').trim())
     sections.push({ heading: cur.heading, content: cur.lines.join('\n').trim() });
   return sections;
-}
-
-export function stripFrontmatter(raw: string): string {
-  return raw.replace(/^---\n[\s\S]*?\n---\n/, '');
-}
-
-export function getFrontmatterTitle(raw: string): string {
-  const m = raw.match(/^title:\s*["']?([^\n"']+)/m);
-  return m ? m[1].trim() : '';
 }
 
 // ── KeywordEngine (Jaccard stub — default) ─────────────────────────────────────

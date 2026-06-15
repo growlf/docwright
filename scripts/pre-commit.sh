@@ -381,6 +381,9 @@ validate_phase_review_gate() {
 ERRORS=0; WARNINGS=0
 for FILE in $STAGED; do
     [[ ! "$FILE" =~ \.md$ ]] && continue
+    # Skip deleted files — they no longer exist on disk and need no validation.
+    # Also guards against word-splitting of filenames that contained spaces.
+    [[ ! -f "$FILE" ]] && continue
     validate_template_vars "$FILE" || ((ERRORS++))
     validate_required_fields "$FILE" || ((ERRORS++))
     [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]] && { validate_automated "$FILE" || ((ERRORS++)); }

@@ -7,16 +7,22 @@
     overview = '',
     status = '',
     loading = false,
+    canRerun = false,
+    applying = false,
     ondismiss,
     onrerun,
+    onapply,
   }: {
     steps?: Record<string, string>;
     sections?: Record<string, string>;
     overview?: string;
     status?: string;
     loading?: boolean;
+    canRerun?: boolean;
+    applying?: boolean;
     ondismiss?: () => void;
     onrerun?: () => void;
+    onapply?: () => void;
   } = $props();
 
   let scrollEl: HTMLDivElement | undefined = $state();
@@ -43,6 +49,10 @@
     if (loading) scrollToBottom();
   });
 
+  const hasResults = $derived(
+    Object.keys(steps).length > 0 || Object.keys(sections).length > 0 || overview.length > 0
+  );
+
   const stepNumbers = $derived(
     Object.keys(steps).sort((a, b) => Number(a) - Number(b))
   );
@@ -56,8 +66,10 @@
 <div class="panel">
   <div class="panel-header">
     <span class="panel-title">AI Review</span>
-    <button class="rerun-btn" onclick={onrerun} title="Re-run critique" disabled={loading}>↺</button>
-    <button class="close-btn" onclick={ondismiss} title="Close">← Props</button>
+    {#if hasResults && canRerun}
+      <button class="rerun-btn" onclick={onrerun} title="Plan was edited — re-run critique" disabled={loading || applying}>↺</button>
+    {/if}
+    <button class="close-btn" onclick={ondismiss} title="Close" disabled={applying}>← Props</button>
   </div>
 
   <div class="content-scroll" class:streaming={loading} bind:this={scrollEl}>
@@ -65,7 +77,7 @@
       <div class="status-line">{status || 'Reviewing plan...'} <span class="elapsed">({elapsed}s)</span></div>
     {/if}
 
-    {#if stepNumbers.length > 0 || sectionKeys.length > 0 || overview}
+    {#if hasResults}
       {#if stepNumbers.length > 0}
         <div class="group">
           <div class="group-header">Steps</div>
@@ -101,14 +113,15 @@
     {:else if !loading}
       <div class="empty">
         <div>No review yet.</div>
-        <button class="run-btn" onclick={onrerun}>Run Review</button>
+        <button class="run-btn" onclick={onrerun}>Generate Review</button>
       </div>
     {/if}
   </div>
 
-  {#if !loading && (stepNumbers.length > 0 || sectionKeys.length > 0 || overview)}
+  {#if !loading && hasResults}
     <div class="panel-footer">
       <button class="dismiss-btn" onclick={ondismiss}>Dismiss</button>
+      <button class="apply-btn" onclick={() => onapply?.()} title="Apply review findings to the plan" disabled={applying}>{applying ? 'Applying...' : 'Apply Review'}</button>
     </div>
   {/if}
 </div>
@@ -121,7 +134,7 @@
   .panel-header { display: flex; align-items: center; gap: 6px; padding: 12px 16px; border-bottom: 1px solid $border; flex-shrink: 0; }
   .panel-title  { @include section-header; padding: 0; flex: 1; }
   .rerun-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; padding: 1px 6px; font-size: 13px; &:hover:not(:disabled) { color: $blue; border-color: $blue-bdr; } &:disabled { opacity: 0.4; cursor: default; } }
-  .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } }
+  .close-btn    { @include flat-btn; border: 1px solid $border; border-radius: 3px; font-size: 10px; padding: 1px 6px; white-space: nowrap; &:hover { color: $fg-dim; border-color: $muted; } &:disabled { opacity: 0.4; cursor: default; &:hover { color: inherit; border-color: $border; } } }
 
   .empty { padding: 24px 16px; color: $muted; font-size: 13px; text-align: center; line-height: 1.6; }
   .run-btn { margin-top: 12px; padding: 8px 20px; border: 1px solid $blue-bdr; border-radius: 6px; background: $blue-bg; color: $blue; font-size: 13px; font-weight: 600; cursor: pointer; &:hover { filter: brightness(1.3); } }
@@ -148,5 +161,6 @@
   .overview-text.error { color: $red; }
 
   .panel-footer { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid $border; justify-content: flex-end; }
-  .dismiss-btn { padding: 8px 12px; border: 1px solid $border; border-radius: 6px; background: none; color: $muted; font-size: 12px; cursor: pointer; &:hover { color: $fg; border-color: $muted; } }
+  .dismiss-btn { padding: 8px 12px; border: 1px solid $border; border-radius: 6px; background: none; color: $muted; font-size: 12px; cursor: pointer; &:hover { color: $fg; border-color: $muted; } &:disabled { opacity: 0.4; cursor: default; &:hover { color: $muted; border-color: $border; } } }
+  .apply-btn   { padding: 8px 12px; border: 1px solid $green-bdr; border-radius: 6px; background: $green-bg; color: $green; font-size: 12px; font-weight: 600; cursor: pointer; &:hover { filter: brightness(1.3); } &:disabled { opacity: 0.4; cursor: default; filter: none; } }
 </style>

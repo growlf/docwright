@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName } from './pane';
+  import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName, improveResult } from './pane';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -234,6 +234,11 @@
     (!frontmatter.assigned_to || String(frontmatter.assigned_to).trim() === '')
   );
 
+  // Proposal must be improved/reviewed before it can be approved
+  let canApproveProposal = $derived(
+    docType !== 'proposal' || frontmatter.approved || ($improveResult?.improved && $improveResult?.critique)
+  );
+
   // Detect unapproved sub-plan proposals referenced in plan body as wikilinks
   let subPlansToApprove = $derived.by(() => {
     if (docType !== 'plan' || !body || !body.includes('[[proposals/')) return [];
@@ -278,8 +283,8 @@
     <div class="pane-actions">
       {#if docType === 'proposal'}
         {#if !frontmatter.approved}
-          <button class="act approve" onclick={approve}
-            title="Set approved: true and save — marks this proposal as approved for planning">Approve</button>
+          <button class="act approve" onclick={approve} disabled={!canApproveProposal}
+            title={canApproveProposal ? 'Set approved: true and save — marks this proposal as approved for planning' : 'Run ✨ Improve first — AI must review the proposal before it can be approved'}>Approve</button>
         {:else}
           <button class="act unapprove" onclick={unapprove}
             title="Revoke approval — sets approved: false">Unapprove</button>
@@ -394,13 +399,13 @@
 
     <!-- Parent plan indicator -->
     {#if docType === 'plan'}
-      {@const mode = frontmatter.automated || 'off'}
+      {@const execMode = frontmatter.automated || 'off'}
       <div class="field">
         <div class="field-label">Execution Mode</div>
         <div class="mode-badges">
-          <span class="m-badge" class:active={mode === 'off'} title="Mentorship: human executes, LLM advises">Mentor</span>
-          <span class="m-badge guided" class:active={mode === 'guided'} title="Guided: LLM drafts/stages, human approves">Guided</span>
-          <span class="m-badge auto" class:active={mode === 'full'} title="Autonomous: LLM executes steps independently">Auto</span>
+          <button class="m-badge" class:active={execMode === 'off'} onclick={() => { setField('automated', ''); onsave?.(frontmatter); }} title="Mentorship: human executes, LLM advises">Mentor</button>
+          <button class="m-badge guided" class:active={execMode === 'guided'} onclick={() => { setField('automated', 'guided'); onsave?.(frontmatter); }} title="Guided: LLM drafts/stages, human approves">Guided</button>
+          <button class="m-badge auto" class:active={execMode === 'full'} onclick={() => { setField('automated', 'full'); onsave?.(frontmatter); }} title="Autonomous: LLM executes steps independently">Auto</button>
         </div>
       </div>
     {/if}
@@ -514,7 +519,7 @@
 
   .act {
     @include act-base;
-    &.approve    { @include act-variant($green,   $green-bg,   $green-bdr); }
+    &.approve    { @include act-variant($green,   $green-bg,   $green-bdr); &:disabled { opacity: 0.35; cursor: default; &:hover { filter: none; } } }
     &.plan       { @include act-variant($magenta,  $magenta-bg, $magenta-bdr); }
     &.unapprove  { border-color: $amber-bdr; color: $amber; }
     &.start,
@@ -554,6 +559,17 @@
     border: 1px solid $border;
     color: $muted;
     opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s;
+    &:hover {
+      opacity: 0.9;
+      border-color: $fg-dim;
+      color: $fg;
+    }
+    &:focus-visible {
+      outline: 2px solid $blue-bdr;
+      outline-offset: 1px;
+    }
     &.active {
       opacity: 1;
       color: $fg;

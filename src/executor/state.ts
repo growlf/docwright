@@ -7,13 +7,19 @@ export interface Checkpoint {
   started_at: string;
 }
 
-const BASE_DIR = '.docwright';
-const LOCK_DIR = path.join(BASE_DIR, 'executor-locks');
-const CHECKPOINT_DIR = path.join(BASE_DIR, 'executor-checkpoints');
+function getDocwrightDir(): string {
+  const root = process.env.DOCWRIGHT_ROOT ?? process.cwd();
+  return path.resolve(root, '.docwright');
+}
+
+function getLockDir(): string { return path.join(getDocwrightDir(), 'executor-locks'); }
+function getCheckpointDir(): string { return path.join(getDocwrightDir(), 'executor-checkpoints'); }
 
 function ensureDirs() {
-  if (!fs.existsSync(LOCK_DIR)) fs.mkdirSync(LOCK_DIR, { recursive: true });
-  if (!fs.existsSync(CHECKPOINT_DIR)) fs.mkdirSync(CHECKPOINT_DIR, { recursive: true });
+  const lockDir = getLockDir();
+  const cpDir = getCheckpointDir();
+  if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
+  if (!fs.existsSync(cpDir)) fs.mkdirSync(cpDir, { recursive: true });
 }
 
 /**
@@ -23,7 +29,7 @@ function ensureDirs() {
 export function acquireLock(planName: string): boolean {
   ensureDirs();
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const lockPath = path.join(LOCK_DIR, `${safeName}.lock`);
+  const lockPath = path.join(getLockDir(), `${safeName}.lock`);
   
   try {
     fs.mkdirSync(lockPath);
@@ -39,7 +45,7 @@ export function acquireLock(planName: string): boolean {
  */
 export function releaseLock(planName: string): void {
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const lockPath = path.join(LOCK_DIR, `${safeName}.lock`);
+  const lockPath = path.join(getLockDir(), `${safeName}.lock`);
   if (fs.existsSync(lockPath)) {
     fs.rmdirSync(lockPath);
   }
@@ -51,7 +57,7 @@ export function releaseLock(planName: string): void {
 export function writeCheckpoint(planName: string, checkpoint: Checkpoint): void {
   ensureDirs();
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const cpPath = path.join(CHECKPOINT_DIR, `${safeName}.json`);
+  const cpPath = path.join(getCheckpointDir(), `${safeName}.json`);
   fs.writeFileSync(cpPath, JSON.stringify(checkpoint, null, 2), 'utf-8');
 }
 
@@ -60,7 +66,7 @@ export function writeCheckpoint(planName: string, checkpoint: Checkpoint): void 
  */
 export function readCheckpoint(planName: string): Checkpoint | null {
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const cpPath = path.join(CHECKPOINT_DIR, `${safeName}.json`);
+  const cpPath = path.join(getCheckpointDir(), `${safeName}.json`);
   if (!fs.existsSync(cpPath)) return null;
   try {
     return JSON.parse(fs.readFileSync(cpPath, 'utf-8'));
@@ -74,7 +80,7 @@ export function readCheckpoint(planName: string): Checkpoint | null {
  */
 export function removeCheckpoint(planName: string): void {
   const safeName = planName.replace(/[/\\?%*:|"<>]/g, '-');
-  const cpPath = path.join(CHECKPOINT_DIR, `${safeName}.json`);
+  const cpPath = path.join(getCheckpointDir(), `${safeName}.json`);
   if (fs.existsSync(cpPath)) {
     fs.unlinkSync(cpPath);
   }

@@ -8,44 +8,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { parseFrontmatter, stripFrontmatter } from '../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
-
-function parseFrontmatter(raw: string): Record<string, any> {
-  const m = raw.match(/^---\n([\s\S]*?)\n---\n/);
-  if (!m) return {};
-  const fm: Record<string, any> = {};
-  const lines = m[1].split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const keyEmpty = lines[i].match(/^(\w+):\s*$/);
-    if (keyEmpty) {
-      const arr: string[] = [];
-      while (i + 1 < lines.length && /^\s+-/.test(lines[i + 1])) {
-        i++;
-        arr.push(lines[i].replace(/^\s+-\s*/, '').trim().replace(/^["']|["']$/g, ''));
-      }
-      fm[keyEmpty[1]] = arr.length > 0 ? arr : '';
-      continue;
-    }
-    const kv = lines[i].match(/^(\w+):\s*(.+)/);
-    if (kv) {
-      let val: any = kv[2].trim();
-      if (val.startsWith('[') && val.endsWith(']'))
-        val = val.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-      else if (val === 'true') val = true;
-      else if (val === 'false') val = false;
-      else val = val.replace(/^["']|["']$/g, '');
-      fm[kv[1]] = val;
-    }
-  }
-  return fm;
-}
-
-function stripFrontmatter(raw: string): string {
-  return raw.replace(/^---\n[\s\S]*?\n---\n/, '');
-}
 
 function buildPrompt(fm: Record<string, any>, body: string): string {
   const title = fm.title || '(untitled)';
@@ -182,7 +149,7 @@ export async function POST({ request }) {
             AI_TIMEOUT,
           );
         } catch (err: any) {
-          improved = body + `\n\n*(AI improvement ${err.message} — showing original body)*`;
+          improved = body + `\n\n*(AI improvement ${err.message === 'Message failed: 500' ? 'model backend not responding. Check that ollama/Olla is running.' : err.message} — showing original body)*`;
           send('token', { phase: 'improve', text: improved });
         }
 
@@ -197,7 +164,7 @@ export async function POST({ request }) {
             AI_TIMEOUT,
           );
         } catch (err: any) {
-          critique = `*(AI critique ${err.message})*`;
+          critique = `*(AI unavailable — ${err.message === 'Message failed: 500' ? 'model backend not responding. Check that ollama/Olla is running.' : err.message})*`;
           send('token', { phase: 'critique', text: critique });
         } finally {
           clearTimeout(abortTimer2);

@@ -1,12 +1,11 @@
 /**
- * Manages the DocWright MCP entry in opencode.json.
- * Only enables the MCP server if it can actually start — a broken MCP
- * entry causes OpenCode to hang on every message while it retries.
+ * Reports MCP server availability and registers it in opencode.jsonc.
+ * Only enables the entry if the compiled server actually exists — a broken
+ * MCP entry causes OpenCode to hang on every message while it retries.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { json } from '@sveltejs/kit';
 
 const REPO_ROOT = (() => {
@@ -14,97 +13,71 @@ const REPO_ROOT = (() => {
   return path.resolve(process.cwd(), '../..');
 })();
 
-const MCP_SERVER_PATH = path.join(REPO_ROOT, 'scripts', 'mcp-server.py');
-const NODE_MCP_PATH   = path.join(REPO_ROOT, 'dist', 'mcp-server.js');
-const OPENCODE_JSON   = path.join(REPO_ROOT, 'opencode.json');
+const NODE_MCP_PATH  = path.join(REPO_ROOT, 'dist', 'mcp', 'server.js');
+const OPENCODE_JSONC = path.join(REPO_ROOT, 'opencode.jsonc');
 
-// Prefer venv Python if it exists — that's where project deps are installed
-const VENV_PYTHON = path.join(REPO_ROOT, '.venv', 'bin', 'python3');
-function getPython(): string {
-  return fs.existsSync(VENV_PYTHON) ? VENV_PYTHON : 'python3';
+function mcpServerExists(): boolean {
+  return fs.existsSync(NODE_MCP_PATH);
 }
 
-type McpStatus = 'python-ok' | 'node-ok' | 'unavailable';
-
-function probeMcpServer(): McpStatus {
-  if (fs.existsSync(MCP_SERVER_PATH)) {
-    const python = getPython();
-    const result = spawnSync(python, ['-c',
-      'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("mcp") else 1)'
-    ], { timeout: 3000 });
-    if (result.status === 0) return 'python-ok';
-  }
-  if (fs.existsSync(NODE_MCP_PATH)) return 'node-ok';
-  return 'unavailable';
-}
-
-function buildMcpEntry(status: McpStatus) {
-  if (status === 'python-ok') {
-    return {
-      type: 'local',
-      command: [getPython(), MCP_SERVER_PATH],
-      environment: { DOCWRIGHT_ROOT: REPO_ROOT },
-      enabled: true,
-    };
-  }
-  if (status === 'node-ok') {
-    return {
-      type: 'local',
-      command: ['node', NODE_MCP_PATH],
-      environment: { DOCWRIGHT_ROOT: REPO_ROOT },
-      enabled: true,
-    };
-  }
-  // Server not available — register disabled so it doesn't cause hangs
+function buildMcpEntry(enabled: boolean) {
   return {
     type: 'local',
-    command: [getPython(), MCP_SERVER_PATH],
-    environment: { DOCWRIGHT_ROOT: REPO_ROOT },
-    enabled: false,
-    _note: 'Disabled: mcp package not found. Run: .venv/bin/pip install mcp',
+    command: ['node', NODE_MCP_PATH, '--mode', 'vault'],
+    environment: { DOCWRIGHT_VAULT_ROOT: REPO_ROOT },
+    enabled,
+    ...(!enabled && { _note: 'Disabled: dist/mcp/server.js not found. Run: npm run compile' }),
   };
 }
 
-/** GET — status: registered, enabled, mcp server availability */
+/** GET — status: whether the compiled MCP server exists and is registered */
 export function GET() {
   let existing: Record<string, any> = {};
-  if (fs.existsSync(OPENCODE_JSON)) {
-    try { existing = JSON.parse(fs.readFileSync(OPENCODE_JSON, 'utf-8')); } catch { /* ignore */ }
+  if (fs.existsSync(OPENCODE_JSONC)) {
+    try {
+      const raw = fs.readFileSync(OPENCODE_JSONC, 'utf-8');
+      // Strip JSONC comments before parsing
+      const stripped = raw.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+      existing = JSON.parse(stripped);
+    } catch { /* ignore */ }
   }
-  const entry = existing?.mcp?.docwright;
+  const entry = existing?.mcp?.['dw-mcp'];
   const registered = !!entry;
   const enabled    = registered && entry.enabled === true;
-  const mcpStatus  = probeMcpServer();
-  return json({ registered, enabled, mcpStatus, mcpServerExists: fs.existsSync(MCP_SERVER_PATH) });
+  const compiled   = mcpServerExists();
+  return json({ registered, enabled, compiled, mcpServerPath: NODE_MCP_PATH });
 }
 
-/** POST — register MCP entry; enable only if server is actually usable */
+/** POST — register/refresh the MCP entry; enables only when compiled server exists */
 export function POST() {
-  const mcpStatus = probeMcpServer();
+  const compiled = mcpServerExists();
   let existing: Record<string, any> = {};
-  if (fs.existsSync(OPENCODE_JSON)) {
-    try { existing = JSON.parse(fs.readFileSync(OPENCODE_JSON, 'utf-8')); } catch { /* start fresh */ }
+  if (fs.existsSync(OPENCODE_JSONC)) {
+    try {
+      const raw = fs.readFileSync(OPENCODE_JSONC, 'utf-8');
+      const stripped = raw.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+      existing = JSON.parse(stripped);
+    } catch { /* start fresh */ }
   }
 
   const merged = {
     ...existing,
     mcp: {
       ...(existing.mcp ?? {}),
-      docwright: buildMcpEntry(mcpStatus),
+      'dw-mcp': buildMcpEntry(compiled),
     },
   };
 
   try {
-    fs.writeFileSync(OPENCODE_JSON, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
-    const ok = mcpStatus !== 'unavailable';
+    fs.writeFileSync(OPENCODE_JSONC, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
     return json({
-      ok,
+      ok: compiled,
       registered: true,
-      enabled: ok,
-      mcpStatus,
-      message: ok
+      enabled: compiled,
+      compiled,
+      message: compiled
         ? 'MCP server registered and enabled'
-        : 'MCP server registered but disabled — mcp package not installed (pip install mcp)',
+        : 'MCP server registered but disabled — run: npm run compile',
     });
   } catch (e: any) {
     return json({ ok: false, error: e.message }, { status: 500 });
