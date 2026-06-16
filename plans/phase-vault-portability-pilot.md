@@ -90,6 +90,45 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 - Cascade STEAM early access: leadership can open Web UI and submit a proposal
 - Contribution pipeline: test with/without token; verify `DOCWRIGHT_CONTRIB_APPROVED=1` gate
 
+## Real-World Pilot: DAFO Infrastructure Vault (2026-06-16)
+
+*First unplanned external vault adoption. Garth Johnson (growlf / Cascade Steam Technology) used DocWright to scaffold and version-control an existing Obsidian client vault for DAFO, a non-profit serving the public good. Documents discoveries that directly inform Steps 8, 9, and 11.*
+
+### What was done
+
+An existing Obsidian vault (`~/Obsidian/DAFO`) containing client notes, project logs, system documentation, and six newly-written infrastructure proposals was adopted into DocWright governance and pushed to a new private GitHub repo (`growlf/dafo-infrastructure`).
+
+The vault was **not** a fresh directory — `docwright init` was therefore blocked. The full adoption was performed manually in a single session, producing the following deliverables:
+- 6 fully critiqued infrastructure proposals (critique cycle, effort estimates, DocWright frontmatter)
+- Cover letter and engagement summary
+- Complete DocWright directory scaffold
+- Pre-commit hook validation passing
+- Private GitHub repo with all sensitive Obsidian content gitignored
+
+### Gaps discovered (directly actionable for Steps 8, 9, 11)
+
+| Gap | Severity | Current Workaround | Proposed Fix |
+|-----|---------|--------------------|--------------|
+| `init.ts` refuses non-empty directories — blocks all existing vault adoption | 🚫 Blocking | Manual file creation (15+ steps) | `scripts/adopt-vault.ts` or `--adopt` flag on `init.ts` — see [[proposals/docwright-adopt-existing-vault.md]] |
+| Pre-commit hook requires `js-yaml` in vault's `node_modules` — undocumented | ⚠️ Warn | `ln -s $DOCWRIGHT_PATH/node_modules ./node_modules` | Document in `docs/vault-portability.md`; consider `NODE_PATH` injection in hook |
+| `.docwright/.gitignore` silently blocks `config.json` and itself from staging — confusing | ⚠️ Warn | Force-add or just don't add them (they're intentionally local) | Clarify in `docs/vault-portability.md` that only `registry.example.json` is committed |
+| Non-proposal markdown in `proposals/` (e.g. cover letters, SOW docs) must carry full proposal frontmatter or the hook rejects them | ⚠️ Warn | Added minimal frontmatter with `type: proposal` | Loosen hook to allow `type: document` or similar non-lifecycle type in `proposals/` |
+| No status migration path — existing notes using `status: pending` fail validation | ⚠️ Warn | Manual sed/python pass across all files | `adopt-vault.ts` should normalise status values during adoption |
+| Sensitive Obsidian vault content (Dailys, system docs, stack files) needs gitignore before first commit — not guided | ⚠️ Warn | Manual `.gitignore` construction | `adopt-vault.ts` should audit existing content and generate a protective gitignore interactively |
+
+### What worked well
+
+- `npm run hook:install -- --vault /path` worked perfectly on a pre-existing git repo
+- Profile override merge and `.mcp.json` template applied without issues
+- The `docwright-raw-proposal` skill pattern (even applied manually) produced solid, critiqued proposals from vault notes in a single session
+- Git + GitHub private repo creation via `gh` CLI integrated cleanly
+
+### Implications for upcoming steps
+
+- **Step 8 (MSP pilot):** If the MSP vault is also an existing repo/directory, `init.ts` will refuse. Plan for manual adoption OR ship `adopt-vault.ts` first.
+- **Step 9 (Cascade STEAM early access):** Garth has indicated this is the next vault to be adopted (within the same session). Will be a direct replication test of the DAFO process.
+- **Step 11 (Architecture boundary doc):** The `node_modules` symlink requirement and `.docwright/.gitignore` behaviour must be documented explicitly — they are the two most surprising sharp edges for new adopters.
+
 ## Phase Gate
 
 - [x] Phase 2 gate review complete (prerequisite)
@@ -119,3 +158,4 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 | 2026-06-11 | Sub-plan #4 (Profile Override Merge) approved and set in-progress. Plan populated with 5 steps. | NetYeti |
 | 2026-06-11 | Sub-plan #4 completed: mergeProfiles() in src/dispatch/profile.ts, wired into profile-config API, 13 tests passing. | NetYeti |
 | 2026-06-14 | Sub-plan #5 (Vault migration system) completed — MIGRATION.md format, vault:migrate script, first entry. Step 6 marked done. | NetYeti |
+| 2026-06-16 | Real-world pilot: DAFO Infrastructure Vault adopted by Garth Johnson (Cascade Steam Technology). First unplanned external vault adoption — existing Obsidian vault, non-empty directory, 6 proposals, GitHub private repo. Gaps documented in "Real-World Pilot" section above. Proposal [[proposals/docwright-adopt-existing-vault.md]] created for adopt-vault tooling. | NetYeti |
