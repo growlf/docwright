@@ -1,0 +1,8 @@
+id: ci-watch-on-tag-push
+kind: judgment
+scope: [git-commit]
+synopsis: "After pushing a version tag (v0.*.*), immediately run `bash scripts/claude-tag-push-watch.sh` and do not proceed until the CI run completes."
+version: 1
+ai_category: classification
+distributable: true
+tags: [ci, tags, release, monitoring]

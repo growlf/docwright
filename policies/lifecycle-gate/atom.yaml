@@ -1,0 +1,8 @@
+id: lifecycle-gate
+kind: deterministic
+scope: [plan.completing, plan.approved, proposal.approving]
+synopsis: "Completed plans must have completed_date set; canceled plans must have canceled_date and cancellation_reason; approved/waived gate_status may only be set by humans."
+version: 1
+ai_category: none
+distributable: true
+tags: [lifecycle, governance, gate, plan]

@@ -1,0 +1,8 @@
+id: governance-writes
+kind: judgment
+scope: [plan, proposal, doc, session]
+synopsis: "All mutations to plans/, proposals/, policies/, docs/SOPs/, AGENTS.md, and CLAUDE.md must go through MCP tools — never write to these paths directly."
+version: 1
+ai_category: classification
+distributable: true
+tags: [governance, mcp, writes]

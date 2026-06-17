@@ -1,0 +1,8 @@
+id: one-off-formalization
+kind: judgment
+scope: [plan, session]
+synopsis: "When you run a one-off script or multi-step command that handles a recurring lifecycle event, create a priority:4 proposal for the formalized version before moving on."
+version: 1
+ai_category: reasoning
+distributable: true
+tags: [formalization, scripts, proposals, one-off]

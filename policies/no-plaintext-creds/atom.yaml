@@ -1,0 +1,8 @@
+id: no-plaintext-creds
+kind: deterministic
+scope: [git-commit, proposal, plan]
+synopsis: "Credentials in documents must reference a secrets vault (Bitwarden/VaultWarden), not contain plaintext passwords, tokens, or keys."
+version: 1
+ai_category: none
+distributable: true
+tags: [security, credentials, secrets]

@@ -1,0 +1,8 @@
+id: hook-failure-feedback
+kind: judgment
+scope: [git-commit, session]
+synopsis: "When a pre-commit hook rejects a commit, fix the immediate issue AND create a proposal to eliminate the systemic gap that allowed the invalid state to be reached."
+version: 1
+ai_category: reasoning
+distributable: true
+tags: [hooks, pre-commit, proposals, systemic]

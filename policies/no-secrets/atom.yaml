@@ -1,0 +1,8 @@
+id: no-secrets
+kind: deterministic
+scope: [git-commit]
+synopsis: "Never include plaintext passwords, API tokens, SSH private keys, or credentials in any committed file or commit message."
+version: 1
+ai_category: none
+distributable: true
+tags: [security, secrets, git-commit]

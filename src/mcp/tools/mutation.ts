@@ -3,13 +3,14 @@ import { extractFrontmatterField, setFrontmatterField } from '../lib/frontmatter
 import { logTransition } from '../lib/audit';
 import { getHumanIdentity } from '../lib/identity';
 import { dispatchTestGen } from '../../dispatch/test-gen';
-import { 
-  updateStepCounts, 
-  replaceStepStatus, 
-  hasPendingSteps, 
-  checkCompletionGate, 
-  hasTestingPlan 
+import {
+  updateStepCounts,
+  replaceStepStatus,
+  hasPendingSteps,
+  checkCompletionGate,
+  hasTestingPlan
 } from '../lib/steps';
+import { atomRoutingCheck } from './atom-routing';
 
 const STEP_STATUS_MAP: Record<string, string> = {
   'done': '✅ Done', 'complete': '✅ Done', 'completed': '✅ Done',
@@ -110,6 +111,7 @@ export async function updatePlanStatus(planName: string, newStatus: string): Pro
   
   writeFile(`plans/${safe}`, final);
   logTransition('STATUS_CHANGE', `plan/${safe}: ${current} -> ${newStatus}`);
+  await atomRoutingCheck(`plans/${safe}`, final, `plan.${newStatus}`);
   return `✅ Plan '${safe}' status: ${current} -> ${newStatus}.`;
 }
 
@@ -200,5 +202,6 @@ export async function writePlan(planName: string, content: string): Promise<stri
   
   writeFile(`plans/${safe}`, final);
   logTransition('PLAN_REWRITE', `plan/${safe}: structural rewrite`);
+  await atomRoutingCheck(`plans/${safe}`, final, 'plan');
   return `✅ Plan '${safe}' rewritten successfully.`;
 }
