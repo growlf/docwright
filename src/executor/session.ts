@@ -5,6 +5,7 @@ export interface SessionConfig {
   repoRoot: string;
   stepTimeout: number;
   maxRetries: number;
+  model?: string; // e.g. "opencode/big-pickle" — read from opencode.json at plan-execute time
 }
 
 export interface SessionEvents {
@@ -82,10 +83,18 @@ export async function runStepSession(
 
     try {
       events.onLog('Creating session…\n');
+      // Pass model if configured — splits "provider/modelID" into parts OpenCode expects
+      let sessionBody: Record<string, string> = {};
+      if (config.model) {
+        const slash = config.model.indexOf('/');
+        if (slash > 0) {
+          sessionBody = { providerID: config.model.slice(0, slash), modelID: config.model.slice(slash + 1) };
+        }
+      }
       const sessRes = await fetch(`${config.opencodeUrl}/session?${dirParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify(sessionBody),
         signal: abortCtrl.signal,
       });
       if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);

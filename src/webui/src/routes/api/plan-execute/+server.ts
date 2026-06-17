@@ -14,6 +14,17 @@ const OPENCODE_URL = process.env.OPENCODE_URL;
 const STEP_TIMEOUT = parseInt(process.env.DOCWRIGHT_EXECUTOR_TIMEOUT_SECONDS || '300', 10) * 1000;
 const MAX_RETRIES = parseInt(process.env.DOCWRIGHT_EXECUTOR_MAX_RETRIES || '1', 10);
 
+function readProjectModel(): string | undefined {
+  try {
+    const p = path.join(REPO_ROOT, 'opencode.json');
+    if (fs.existsSync(p)) {
+      const cfg = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      return cfg.model || undefined;
+    }
+  } catch { /* ignore */ }
+  return undefined;
+}
+
 function sse(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
@@ -47,6 +58,7 @@ export async function POST({ request }) {
     repoRoot: REPO_ROOT,
     stepTimeout: STEP_TIMEOUT,
     maxRetries: MAX_RETRIES,
+    model: readProjectModel(),
   };
 
   const stream = new ReadableStream({
