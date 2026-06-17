@@ -1,6 +1,7 @@
 ---
 name: docwright-project
 description: Project registry and vault switching for multi-project DocWright workspaces
+distributable: false
 ---
 
 # DocWright Project Skill

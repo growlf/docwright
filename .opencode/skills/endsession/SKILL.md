@@ -3,6 +3,7 @@ name: endsession
 description: Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status
 triggers: endsession, end session, shutdown, wrap up, session end
 required_permission: none
+distributable: true
 ---
 
 # DocWright Session Shutdown Skill

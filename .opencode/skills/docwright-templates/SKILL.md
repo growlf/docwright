@@ -1,6 +1,7 @@
 ---
 name: docwright-templates
 description: Document format templates for audit plans, mitigation tracking, and assessment reports
+distributable: true
 ---
 
 # DocWright Templates Skill

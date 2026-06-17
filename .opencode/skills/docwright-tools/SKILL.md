@@ -1,6 +1,7 @@
 ---
 name: docwright-tools
 description: Security audit and hardening tools reference — lynis, rkhunter, fail2ban, firewalld, OpenSCAP, auditd
+distributable: false
 ---
 
 # DocWright Tools Skill

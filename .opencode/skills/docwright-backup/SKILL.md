@@ -1,6 +1,7 @@
 ---
 name: docwright-backup
 description: Backup and recovery procedures for infrastructure and configuration
+distributable: false
 ---
 
 # DocWright Backup Skill

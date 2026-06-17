@@ -1,6 +1,7 @@
 ---
 name: docwright-infra
 description: Infrastructure placement and reliability standards
+distributable: false
 ---
 
 # DocWright Infrastructure Skill

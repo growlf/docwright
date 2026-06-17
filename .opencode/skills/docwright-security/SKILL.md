@@ -1,6 +1,7 @@
 ---
 name: docwright-security
 description: Security practices for credential management, network access, and system hardening
+distributable: false
 ---
 
 # DocWright Security Skill

@@ -1,6 +1,7 @@
 ---
 name: docwright-lifecycle
 description: DocWright document lifecycle management - proposals, plans, completed/canceled transitions
+distributable: true
 ---
 
 # DocWright Lifecycle Skill

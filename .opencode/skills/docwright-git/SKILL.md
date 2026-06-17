@@ -1,6 +1,7 @@
 ---
 name: docwright-git
 description: Git commit standards for DocWright projects
+distributable: true
 ---
 
 # DocWright Git Skill

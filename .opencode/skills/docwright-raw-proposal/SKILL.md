@@ -8,6 +8,7 @@ triggers:
   - discern raw
   - needs drafting
 required_permission: none
+distributable: true
 ---
 
 # DocWright Raw Proposal Skill

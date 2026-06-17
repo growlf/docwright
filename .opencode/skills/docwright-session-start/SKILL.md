@@ -3,6 +3,7 @@ name: docwright-session-start
 description: Automated session startup — resolves identity, gathers active plans, session history, git status, and sets up todo
 triggers: what's next, what is next, session start, resume, continue, status, start session, wake up
 required_permission: read
+distributable: true
 ---
 
 # DocWright Session Start Skill

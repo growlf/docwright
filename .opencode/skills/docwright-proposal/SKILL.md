@@ -1,6 +1,7 @@
 ---
 name: docwright-proposal
 description: Create properly templated proposals with required frontmatter
+distributable: true
 ---
 
 # DocWright Proposal Skill
