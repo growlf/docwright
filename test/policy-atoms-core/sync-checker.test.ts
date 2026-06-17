@@ -120,11 +120,12 @@ describe('policy-atoms-core / sync-checker', () => {
     assert.ok(issues.some(i => i.message.includes('must not have check.ts')));
   });
 
-  it('errors when atom.yaml is missing', () => {
-    fs.mkdirSync(path.join(tmpDir, 'orphan'), { recursive: true });
+  it('silently skips directories without atom.yaml (non-atom dirs like policies/core/)', () => {
+    fs.mkdirSync(path.join(tmpDir, 'core'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'core', 'some-policy.md'), '# Policy', 'utf8');
     const { valid, issues } = syncCheck(tmpDir);
-    assert.strictEqual(valid, false);
-    assert.ok(issues.some(i => i.message === 'atom.yaml not found'));
+    assert.strictEqual(valid, true);
+    assert.ok(!issues.some(i => i.atomId === 'core'));
   });
 
   it('reports token count', () => {

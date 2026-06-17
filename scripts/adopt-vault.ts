@@ -259,6 +259,26 @@ function writeFull(
     writeManaged(dest, '.docwright/.gitignore', '*\n!registry.example.json\n!manifest.json\n', manifest);
   }
 
+  // Seed pilot policy atoms
+  const atomIds = ['commit-format', 'frontmatter-validate', 'no-work-before-approval'];
+  const atomSeedFiles = ['atom.yaml', 'context.md', 'check.ts', 'check.js'];
+  let atomsSeeded = 0;
+  for (const atomId of atomIds) {
+    const srcDir = path.join(docwrightPath, 'policies', atomId);
+    const dstDir = path.join(dest, 'policies', atomId);
+    if (!fs.existsSync(srcDir)) continue;
+    fs.mkdirSync(dstDir, { recursive: true });
+    for (const f of atomSeedFiles) {
+      const src = path.join(srcDir, f);
+      if (fs.existsSync(src)) {
+        const content = fs.readFileSync(src, 'utf8');
+        writeManaged(dest, `policies/${atomId}/${f}`, content, manifest, true);
+        atomsSeeded++;
+      }
+    }
+  }
+  if (atomsSeeded > 0) pass(`policies/ (${atomIds.length} pilot atoms seeded)`);
+
   // Root .gitignore — append DocWright block (duplicate-safe)
   appendGitignore(dest);
 

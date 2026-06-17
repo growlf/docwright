@@ -58,11 +58,9 @@ export function syncCheck(policiesDir: string): SyncCheckResult {
     const checkFileJs = path.join(atomDir, 'check.js');
     const hasCheck = fs.existsSync(checkFileTs) || fs.existsSync(checkFileJs);
 
-    // atom.yaml must exist and be valid
-    if (!fs.existsSync(atomFile)) {
-      issues.push({ atomId, severity: 'error', message: 'atom.yaml not found' });
-      continue;
-    }
+    // Skip directories without atom.yaml — they may be non-atom subdirectories
+    // (e.g. policies/core/ for prose policy docs). Only atom dirs have atom.yaml.
+    if (!fs.existsSync(atomFile)) continue;
 
     let raw: Record<string, unknown>;
     try { raw = parseAtomYaml(fs.readFileSync(atomFile, 'utf8')); }

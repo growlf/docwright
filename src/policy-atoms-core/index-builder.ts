@@ -68,10 +68,8 @@ export function buildIndex(opts: BuildIndexOptions): BuildIndexResult {
 
   for (const dir of atomDirs) {
     const atomFile = path.join(policiesDir, dir, 'atom.yaml');
-    if (!fs.existsSync(atomFile)) {
-      errors.push({ file: path.join(dir, 'atom.yaml'), error: 'atom.yaml not found' });
-      continue;
-    }
+    // Skip non-atom directories (e.g. policies/core/ for prose docs)
+    if (!fs.existsSync(atomFile)) continue;
 
     let raw: Record<string, unknown>;
     try {

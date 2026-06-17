@@ -53,10 +53,13 @@ describe('policy-atoms-core / index-builder', () => {
     assert.ok(index.atoms.some(a => a.id === 'frontmatter-validate'));
   });
 
-  it('records error for atom.yaml missing', () => {
-    fs.mkdirSync(path.join(tmpDir, 'no-yaml'), { recursive: true });
-    const { errors } = buildIndex({ policiesDir: tmpDir });
-    assert.ok(errors.some(e => e.file.includes('atom.yaml')));
+  it('silently skips directories without atom.yaml (non-atom dirs)', () => {
+    // e.g. policies/core/ for prose docs — should not cause errors
+    fs.mkdirSync(path.join(tmpDir, 'core'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'core', 'some-policy.md'), '# Policy', 'utf8');
+    const { index, errors } = buildIndex({ policiesDir: tmpDir });
+    assert.strictEqual(errors.length, 0);
+    assert.strictEqual(index.atoms.length, 0);
   });
 
   it('records error for invalid atom frontmatter', () => {

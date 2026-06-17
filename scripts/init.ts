@@ -70,7 +70,7 @@ function main() {
     console.error('  Continuing with placeholder — edit .env after init.\n');
   }
 
-  const dirs = ['proposals', 'plans', 'docs', '.docwright'];
+  const dirs = ['proposals', 'plans', 'docs', '.docwright', 'policies'];
   for (const d of dirs) {
     fs.mkdirSync(path.join(dest, d), { recursive: true });
   }
@@ -223,6 +223,25 @@ function main() {
   fs.writeFileSync(path.join(dest, 'plans', '.gitkeep'), '', 'utf8');
   fs.writeFileSync(path.join(dest, 'docs', '.gitkeep'), '', 'utf8');
   console.log('  ✓ directory structure (proposals/, plans/, docs/)');
+
+  // Seed pilot policy atoms from DocWright installation
+  const atomIds = ['commit-format', 'frontmatter-validate', 'no-work-before-approval'];
+  const atomSeedFiles = ['atom.yaml', 'context.md', 'check.ts', 'check.js'];
+  let atomsSeeded = 0;
+  for (const atomId of atomIds) {
+    const srcDir = path.join(docwrightPath, 'policies', atomId);
+    const dstDir = path.join(dest, 'policies', atomId);
+    if (!fs.existsSync(srcDir)) continue;
+    fs.mkdirSync(dstDir, { recursive: true });
+    for (const f of atomSeedFiles) {
+      const src = path.join(srcDir, f);
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, path.join(dstDir, f));
+        atomsSeeded++;
+      }
+    }
+  }
+  if (atomsSeeded > 0) console.log(`  ✓ policies/ (${atomIds.length} pilot atoms seeded)`);
 
   // .docwright/manifest.json — records every file written by init for adopt --upgrade
   const manifestPath = path.join(dest, '.docwright', 'manifest.json');
