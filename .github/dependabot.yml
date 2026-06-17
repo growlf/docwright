@@ -1,10 +1,26 @@
 # DocWright Dependabot configuration
 #
-# Version updates are DISABLED. Dependency bumps are handled deliberately
-# via DocWright proposals and plans — not on an automated schedule.
+# Version updates are DISABLED for npm. Dependency bumps are handled
+# deliberately via DocWright proposals and plans — not on an automated schedule.
 #
-# Security updates (CVE patches) remain enabled via repo settings and will
-# auto-create PRs only when a known vulnerability is detected.
+# The docker entry is kept SOLELY for security alert monitoring of the base
+# image (node:22-bookworm-slim). GitHub's dependency graph does not ingest
+# Dockerfile FROM lines without an active docker ecosystem entry, so removing
+# it would silently drop base-image CVE coverage. Version update PRs from this
+# entry are acceptable — they are security-driven, not churn.
 
 version: 2
-updates: []
+updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

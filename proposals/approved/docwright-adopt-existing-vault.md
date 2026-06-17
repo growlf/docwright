@@ -11,6 +11,7 @@ tags:
 complexity: medium
 estimated_effort: M
 approved: true
+author-role: contributor
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
@@ -130,11 +131,11 @@ On `--upgrade`:
 
 1.  Read `.docwright/manifest.json`
 2.  For each file in the manifest: hash the current on-disk content
-3.  If hash matches manifest → user has not modified it → overwrite silently with the current DocWright version's template
-4.  If hash differs → user-modified → show a diff and prompt: skip / overwrite / merge
-5.  For files in the manifest that no longer exist in DocWright's templates → warn, do not delete
-6.  **For files in the current DocWright templates NOT present in the manifest → add them as new managed files.** This is the new-version propagation step: when DocWright 0.3.0 adds a new skill or config file, `--upgrade` delivers it to all existing adopted vaults.
-7.  Update `adopt_version`, `adopt_date`, and `adopt_mode` in `config.json` on success
+3.  If hash matches manifest → user has not modified it → overwrite silently with the current DocWright version's template; **update the manifest entry to the new file's hash**.
+4.  If hash differs → user-modified → show a diff and prompt: skip / overwrite / merge; if overwritten, **update the manifest entry to the new file's hash**.
+5.  For files in the manifest that no longer exist in DocWright's templates → warn, do not delete.
+6.  **For files in the current DocWright templates NOT present in the manifest → add them as new managed files; record their hash in the manifest.** Only files marked `distributable: true` in their source skill frontmatter are eligible (see §4). This prevents DocWright-internal skills from being delivered to client vaults.
+7.  Update `adopt_version`, `adopt_date`, and `adopt_mode` in `config.json` on success.
 
 Schema version migrations are delegated to `vault-migrate.ts` — `adopt --upgrade` calls it when `schema_version` in the vault is behind the current DocWright version.
 
@@ -198,7 +199,7 @@ Copies every file from `$DOCWRIGHT_PATH/.claude/skills/` into vault `.claude/ski
 
 **OpenCode/BigPickle bridge:**
 
-Copies every skill directory from `$DOCWRIGHT_PATH/.opencode/skills/` into vault `.opencode/skills/`. Includes full subdirectory contents (`SKILL.md` + any supporting files).
+Copies every skill directory from `$DOCWRIGHT_PATH/.opencode/skills/` into vault `.opencode/skills/`, **only if the skill's `SKILL.md` frontmatter contains `distributable: true`**. Includes full subdirectory contents (`SKILL.md` + any supporting files). Skills without `distributable: true` are DocWright-internal and must not be copied (e.g., `docwright-project` operates on DocWright's own vault registry; `docwright-infra` and `docwright-backup` govern DocWright's own hosting infrastructure).
 
 **Gemini CLI bridge:**
 
@@ -214,7 +215,7 @@ The Gemini CLI reads:
 *   `.gemini/settings.json` with MCP server config pointing at `$DOCWRIGHT_PATH/dist/mcp/server.js`.
 *   `.gemini/agents/` populated from `$DOCWRIGHT_PATH/.gemini/agents/` once DocWright has Gemini-format skill files (follow-on work; see Out of Scope).
 
-Add `.claude/skills/`, `.opencode/skills/`, and `.gemini/agents/` to the vault's `.gitignore` additions (appended, not overwritten — see §1 on `.gitignore` handling).
+Add `.claude/skills/`, `.opencode/skills/`, `.gemini/agents/`, and `.gemini/settings.json` to the vault's `.gitignore` additions (appended, not overwritten — see §7 on `.gitignore` handling). `.gemini/settings.json` contains a machine-local absolute path to `DOCWRIGHT_PATH` and must never be committed.
 
 Example structure after full adoption:
 
@@ -257,10 +258,17 @@ The pre-commit hook calls `js-yaml` via inline `node -e` one-liners (lines 83 an
 The hook installer already knows `DOCWRIGHT_PATH` and already generates a customized copy of `pre-commit.sh` into the vault's `.git/hooks/`. Change the copy step to substitute the require path at install time:
 
 ```bash
-# Replace the copy line in install-hooks.sh:
-sed "s|require('js-yaml')|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g; \
-     s|require(\"js-yaml\")|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g" \
-  "$SOURCE_HOOK" > "$HOOK_TARGET"
+# Replace the copy line in install-hooks.sh.
+# MUST be guarded on [ -n "$VAULT_TARGET" ] — self-installs must NOT bake a
+# machine-specific path into DocWright's own .githooks/pre-commit, which would
+# cause the integrity diff check (lines 142-148) to fail for every developer.
+if [ -n "$VAULT_TARGET" ]; then
+  sed "s|require('js-yaml')|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g; \
+       s|require(\"js-yaml\")|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g" \
+    "$SOURCE_HOOK" > "$HOOK_TARGET"
+else
+  cp "$SOURCE_HOOK" "$HOOK_TARGET"
+fi
 chmod +x "$HOOK_TARGET"
 ```
 
@@ -282,6 +290,7 @@ node_modules
 .claude/skills/
 .opencode/skills/
 .gemini/agents/
+.gemini/settings.json
 ```
 
 The script checks for each entry before appending to avoid duplicates. It presents the proposed additions for human review before writing (same interactive pattern as frontmatter audit).
@@ -365,7 +374,7 @@ Covers:
 
 This proposal is not complete until both adoption code paths are validated against real data:
 
-1.  **DAFO Infrastructure Vault — fresh adoption path:** Branch or copy the DAFO vault, wipe the DocWright infrastructure files (`.env`, `.mcp.json`, `.claude/`, `.opencode/`, `.docwright/`), run `adopt-vault.ts --mode full`. Must complete without manual steps.
+1.  **DAFO Infrastructure Vault — fresh adoption path:** Branch or copy the DAFO vault, wipe the DocWright infrastructure files (`.env`, `.envrc`, `.mcp.json`, `.claude/`, `.opencode/`, `.gemini/`, `.docwright/`), run `adopt-vault.ts --mode full`. Must complete without manual steps.
     
 2.  **DAFO Infrastructure Vault — upgrade path:** Run `adopt-vault.ts --upgrade` on the result of milestone 1 (or on the original manually-adopted vault). Must detect and update stale files, propagate any new-version files, and leave user-modified files untouched.
     

@@ -110,7 +110,7 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 
 | Gap | Severity | Current Workaround | Proposed Fix |
 |-----|---------|--------------------|--------------|
-| `init.ts` refuses non-empty directories — blocks all existing vault adoption | 🚫 Blocking | Manual file creation (15+ steps) | `scripts/adopt-vault.ts` or `--adopt` flag on `init.ts` — see [[proposals/docwright-adopt-existing-vault.md]] |
+| `init.ts` refuses non-empty directories — blocks all existing vault adoption | 🚫 Blocking | Manual file creation (15+ steps) | `scripts/adopt-vault.ts` or `--adopt` flag on `init.ts` — see [[proposals/approved/docwright-adopt-existing-vault.md]] |
 | Pre-commit hook requires `js-yaml` in vault's `node_modules` — undocumented | ⚠️ Warn | `ln -s $DOCWRIGHT_PATH/node_modules ./node_modules` | Document in `docs/vault-portability.md`; consider `NODE_PATH` injection in hook |
 | `.docwright/.gitignore` silently blocks `config.json` and itself from staging — confusing | ⚠️ Warn | Force-add or just don't add them (they're intentionally local) | Clarify in `docs/vault-portability.md` that only `registry.example.json` is committed |
 | Non-proposal markdown in `proposals/` (e.g. cover letters, SOW docs) must carry full proposal frontmatter or the hook rejects them | ⚠️ Warn | Added minimal frontmatter with `type: proposal` | Loosen hook to allow `type: document` or similar non-lifecycle type in `proposals/` |
@@ -159,4 +159,4 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 | 2026-06-11 | Sub-plan #4 (Profile Override Merge) approved and set in-progress. Plan populated with 5 steps. | NetYeti |
 | 2026-06-11 | Sub-plan #4 completed: mergeProfiles() in src/dispatch/profile.ts, wired into profile-config API, 13 tests passing. | NetYeti |
 | 2026-06-14 | Sub-plan #5 (Vault migration system) completed — MIGRATION.md format, vault:migrate script, first entry. Step 6 marked done. | NetYeti |
-| 2026-06-16 | Real-world pilot: DAFO Infrastructure Vault adopted by Garth Johnson (Cascade Steam Technology). First unplanned external vault adoption — existing Obsidian vault, non-empty directory, 6 proposals, GitHub private repo. Gaps documented in "Real-World Pilot" section above. Proposal [[proposals/docwright-adopt-existing-vault.md]] created for adopt-vault tooling. | NetYeti |
+| 2026-06-16 | Real-world pilot: DAFO Infrastructure Vault adopted by Garth Johnson (Cascade Steam Technology). First unplanned external vault adoption — existing Obsidian vault, non-empty directory, 6 proposals, GitHub private repo. Gaps documented in "Real-World Pilot" section above. Proposal [[proposals/approved/docwright-adopt-existing-vault.md]] created for adopt-vault tooling. | NetYeti |

@@ -157,7 +157,7 @@ function main() {
   // .docwright/.gitignore
   const giPath = path.join(dest, '.docwright', '.gitignore');
   if (!fs.existsSync(giPath)) {
-    fs.writeFileSync(giPath, '*\n!registry.example.json\n', 'utf8');
+    fs.writeFileSync(giPath, '*\n!registry.example.json\n!manifest.json\n', 'utf8');
     console.log('  ✓ .docwright/.gitignore');
   }
 
