@@ -201,3 +201,55 @@
 {"ts":"2026-06-17T07:31:54.445Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"stub-proposal.md → approved via parent.md"}
 {"ts":"2026-06-17T07:31:54.446Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/db-migration.md → proposals/approved/db-migration.md + plans/db-migration.md"}
 {"ts":"2026-06-17T07:31:54.446Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"db-migration.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:23.256Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/success.md → proposals/approved/success.md + plans/success.md"}
+{"ts":"2026-06-17T21:49:23.257Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/steps-test.md → proposals/approved/steps-test.md + plans/steps-test.md"}
+{"ts":"2026-06-17T21:49:23.258Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/approach-test.md → proposals/approved/approach-test.md + plans/approach-test.md"}
+{"ts":"2026-06-17T21:49:23.259Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/direct-steps.md → proposals/approved/direct-steps.md + plans/direct-steps.md"}
+{"ts":"2026-06-17T21:49:23.261Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/success.md → plans/completed/success.md + docs/success.md"}
+{"ts":"2026-06-17T21:49:23.262Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/phase-2-test.md → plans/completed/phase-2-test.md + docs/phase-2-test.md"}
+{"ts":"2026-06-17T21:49:23.263Z","host":"phoenix","event":"CANCELED","user":"netyeti","details":"plan/cancel.md → plans/completed/ (reason: reason text)"}
+{"ts":"2026-06-17T21:49:23.266Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/child-proposal.md → proposals/approved/child-proposal.md + plans/child-proposal.md"}
+{"ts":"2026-06-17T21:49:23.266Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"child-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:23.267Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/stub-proposal.md → proposals/approved/stub-proposal.md + plans/stub-proposal.md"}
+{"ts":"2026-06-17T21:49:23.267Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"stub-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:23.268Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/db-migration.md → proposals/approved/db-migration.md + plans/db-migration.md"}
+{"ts":"2026-06-17T21:49:23.268Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"db-migration.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:38.429Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/success.md → proposals/approved/success.md + plans/success.md"}
+{"ts":"2026-06-17T21:49:38.430Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/steps-test.md → proposals/approved/steps-test.md + plans/steps-test.md"}
+{"ts":"2026-06-17T21:49:38.431Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/approach-test.md → proposals/approved/approach-test.md + plans/approach-test.md"}
+{"ts":"2026-06-17T21:49:38.432Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/direct-steps.md → proposals/approved/direct-steps.md + plans/direct-steps.md"}
+{"ts":"2026-06-17T21:49:38.434Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/success.md → plans/completed/success.md + docs/success.md"}
+{"ts":"2026-06-17T21:49:38.435Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/phase-2-test.md → plans/completed/phase-2-test.md + docs/phase-2-test.md"}
+{"ts":"2026-06-17T21:49:38.436Z","host":"phoenix","event":"CANCELED","user":"netyeti","details":"plan/cancel.md → plans/completed/ (reason: reason text)"}
+{"ts":"2026-06-17T21:49:38.438Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/child-proposal.md → proposals/approved/child-proposal.md + plans/child-proposal.md"}
+{"ts":"2026-06-17T21:49:38.439Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"child-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:38.440Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/stub-proposal.md → proposals/approved/stub-proposal.md + plans/stub-proposal.md"}
+{"ts":"2026-06-17T21:49:38.440Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"stub-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T21:49:38.440Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/db-migration.md → proposals/approved/db-migration.md + plans/db-migration.md"}
+{"ts":"2026-06-17T21:49:38.440Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"db-migration.md → approved via parent.md"}
+{"ts":"2026-06-17T22:38:09.773Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/success.md → proposals/approved/success.md + plans/success.md"}
+{"ts":"2026-06-17T22:38:09.774Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/steps-test.md → proposals/approved/steps-test.md + plans/steps-test.md"}
+{"ts":"2026-06-17T22:38:09.774Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/approach-test.md → proposals/approved/approach-test.md + plans/approach-test.md"}
+{"ts":"2026-06-17T22:38:09.775Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/direct-steps.md → proposals/approved/direct-steps.md + plans/direct-steps.md"}
+{"ts":"2026-06-17T22:38:09.777Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/success.md → plans/completed/success.md + docs/success.md"}
+{"ts":"2026-06-17T22:38:09.778Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/phase-2-test.md → plans/completed/phase-2-test.md + docs/phase-2-test.md"}
+{"ts":"2026-06-17T22:38:09.779Z","host":"phoenix","event":"CANCELED","user":"netyeti","details":"plan/cancel.md → plans/completed/ (reason: reason text)"}
+{"ts":"2026-06-17T22:38:09.781Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/child-proposal.md → proposals/approved/child-proposal.md + plans/child-proposal.md"}
+{"ts":"2026-06-17T22:38:09.781Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"child-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T22:38:09.782Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/stub-proposal.md → proposals/approved/stub-proposal.md + plans/stub-proposal.md"}
+{"ts":"2026-06-17T22:38:09.782Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"stub-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T22:38:09.783Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/db-migration.md → proposals/approved/db-migration.md + plans/db-migration.md"}
+{"ts":"2026-06-17T22:38:09.783Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"db-migration.md → approved via parent.md"}
+{"ts":"2026-06-17T22:56:17.673Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/success.md → proposals/approved/success.md + plans/success.md"}
+{"ts":"2026-06-17T22:56:17.675Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/steps-test.md → proposals/approved/steps-test.md + plans/steps-test.md"}
+{"ts":"2026-06-17T22:56:17.676Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/approach-test.md → proposals/approved/approach-test.md + plans/approach-test.md"}
+{"ts":"2026-06-17T22:56:17.679Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/direct-steps.md → proposals/approved/direct-steps.md + plans/direct-steps.md"}
+{"ts":"2026-06-17T22:56:17.684Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/success.md → plans/completed/success.md + docs/success.md"}
+{"ts":"2026-06-17T22:56:17.686Z","host":"phoenix","event":"COMPLETED","user":"netyeti","details":"plans/phase-2-test.md → plans/completed/phase-2-test.md + docs/phase-2-test.md"}
+{"ts":"2026-06-17T22:56:17.688Z","host":"phoenix","event":"CANCELED","user":"netyeti","details":"plan/cancel.md → plans/completed/ (reason: reason text)"}
+{"ts":"2026-06-17T22:56:17.693Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/child-proposal.md → proposals/approved/child-proposal.md + plans/child-proposal.md"}
+{"ts":"2026-06-17T22:56:17.694Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"child-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T22:56:17.697Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/stub-proposal.md → proposals/approved/stub-proposal.md + plans/stub-proposal.md"}
+{"ts":"2026-06-17T22:56:17.697Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"stub-proposal.md → approved via parent.md"}
+{"ts":"2026-06-17T22:56:17.700Z","host":"phoenix","event":"APPROVED","user":"netyeti","details":"proposals/db-migration.md → proposals/approved/db-migration.md + plans/db-migration.md"}
+{"ts":"2026-06-17T22:56:17.700Z","host":"phoenix","event":"SUB_PLAN_APPROVED","user":"netyeti","details":"db-migration.md → approved via parent.md"}

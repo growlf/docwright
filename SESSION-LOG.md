@@ -562,3 +562,16 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] 3 new linter tests
 
 **Session note:** `docs/session-notes/session_note_202606172300.md`
+
+---
+
+## Session: 2026-06-17 — TS MCP Migration & Roadmap Enforcement
+
+**Focus:** TS MCP Migration Finalization & Roadmap Enforcement
+
+**Completed:**
+- [x] Finalized TypeScript MCP Server Migration — resolved registration bug, signed off gate, moved to completed/
+- [x] Repaired `opencode.jsonc` — removed deprecated keys, modernized schema, updated to Node.js MCP server
+- [x] Drafted Roadmap Sequencing Enforcement proposal — identified tooling-gap, defined mechanical enforcement strategy
+
+**Session note:** `docs/session-notes/session_note_202606171605.md`

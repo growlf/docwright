@@ -12,14 +12,16 @@ tags:
   - write
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 priority: critical
 phase: 3
-assigned_to:
+assigned_to: NetYeti
 related_to:
   - plans/phase-vault-portability-pilot.md
   - proposals/sub-plan-vault-document-index.md
   - proposals/knowledge-graph-cross-document-idea-linkage.md
+_path: proposals/sub-plan-vault-write-api.md
+consumed_by: plans/sub-plan-vault-write-api.md
 ---
 
 ## Problem
