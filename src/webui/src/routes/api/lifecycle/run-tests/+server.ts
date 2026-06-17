@@ -38,7 +38,10 @@ export async function POST({ request }) {
   }
   if (fs.existsSync(path.join(REPO, 'test', 'mcp'))) {
     const venv = path.join(REPO, '.venv', 'bin', 'python3');
-    if (fs.existsSync(venv)) {
+    const pyTest = path.join(REPO, 'test', 'mcp', 'test-plan-tools.py');
+    // Only add if both the venv and the test file exist — pyTest was removed;
+    // keeping the guard prevents a "file not found" failure in the test output.
+    if (fs.existsSync(venv) && fs.existsSync(pyTest)) {
       suites.push({
         label: 'mcp',
         cmd: [venv, 'test/mcp/test-plan-tools.py'],
@@ -57,6 +60,11 @@ export async function POST({ request }) {
     if (files.some(f => f.endsWith('.test.ts'))) {
       suites.push({ label: 'integration', cmd: ['npm', 'run', 'test:integration'], cwd: REPO });
     }
+  }
+  // Policy atom tests — always included when the package exists
+  if (fs.existsSync(path.join(REPO, 'test', 'policy-atoms-core'))) {
+    suites.push({ label: 'atoms', cmd: ['npm', 'run', 'test:atoms'], cwd: REPO });
+    suites.push({ label: 'atoms:isolation', cmd: ['npm', 'run', 'atoms:isolation'], cwd: REPO });
   }
 
   if (suites.length === 0) {
