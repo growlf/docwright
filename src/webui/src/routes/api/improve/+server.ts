@@ -14,6 +14,29 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
 
+/**
+ * Strip AI wrapper artifacts from improved text:
+ * - "Here's the improved body:" / "Sure, here is..." preamble lines
+ * - Wrapping ```markdown ... ``` or ``` ... ``` code fences
+ * These appear when the model ignores the "no preamble" instruction.
+ */
+function stripAIWrapper(text: string): string {
+  let s = text.trim();
+  // Unwrap a leading code fence (```markdown or ```) that wraps the whole response
+  const fenced = s.match(/^```(?:markdown|md)?\n([\s\S]+?)(?:\n```\s*)?$/);
+  if (fenced) return fenced[1].trimEnd();
+  // Strip preamble lines before the first markdown heading or bold text
+  // Only strip if the preamble is short (< 200 chars) and contains no headings itself
+  const headingIdx = s.search(/^#{1,6} /m);
+  if (headingIdx > 0 && headingIdx < 300) {
+    const before = s.slice(0, headingIdx);
+    if (!before.includes('\n##') && !before.includes('\n#')) {
+      s = s.slice(headingIdx);
+    }
+  }
+  return s;
+}
+
 function buildPrompt(fm: Record<string, any>, body: string): string {
   const title = fm.title || '(untitled)';
   const tags = Array.isArray(fm.tags) ? fm.tags.join(', ') : String(fm.tags || '');
@@ -24,7 +47,8 @@ function buildPrompt(fm: Record<string, any>, body: string): string {
     `- Keep the author's intent unchanged — do not reverse decisions already made\n` +
     `- Add missing sections only when clearly needed\n` +
     `- Do NOT modify the YAML frontmatter\n` +
-    `- Return ONLY the improved markdown body with no preamble or commentary\n\n` +
+    `- Return ONLY the improved markdown body — no preamble, no commentary, no code fences\n` +
+    `- Start your response directly with the first markdown heading (e.g. ## Problem)\n\n` +
     `FRONTMATTER CONTEXT:\ntitle: ${title}\ntags: ${tags}\n\n` +
     `CURRENT BODY:\n${body}`
   );
@@ -144,10 +168,11 @@ export async function POST({ request }) {
         send('stage', { phase: 'improve-thinking' });
         let improved: string;
         try {
-          improved = await withTimeout(
+          const raw = await withTimeout(
             callAI(buildPrompt(fm, body), 'improve', 'improve-streaming', abortCtrl.signal),
             AI_TIMEOUT,
           );
+          improved = stripAIWrapper(raw);
         } catch (err: any) {
           improved = body + `\n\n*(AI improvement ${err.message === 'Message failed: 500' ? 'model backend not responding. Check that ollama/Olla is running.' : err.message} — showing original body)*`;
           send('token', { phase: 'improve', text: improved });
