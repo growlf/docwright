@@ -1,0 +1,54 @@
+# Policy Atom Category Registry
+#
+# Display metadata for AiCategory values. The TypeScript union type in schema.ts
+# is the canonical contract — this file is additive metadata (names, descriptions,
+# status) for UIs, registries, and documentation. A value may exist here only if
+# it appears in the AiCategory union type.
+#
+# Status: active | deprecated
+# Deprecated IDs remain valid in existing atoms indefinitely; new atoms may not
+# use a deprecated ID. No forced migration — the cost of migration exceeds the
+# benefit of removing stale IDs.
+
+categories:
+  - id: none
+    name: "Deterministic"
+    description: "Runs as compiled code with no LLM involvement. Zero token cost, zero latency. Used by all deterministic governance atoms."
+    status: active
+    min_model: null
+    routing_notes: "Handler: code execution only. Never dispatched to any model."
+
+  - id: classification
+    name: "Classification"
+    description: "Fast yes/no, pick-from-list, or label-assignment tasks. Cheap local models are sufficient."
+    status: active
+    min_model: "qwen2.5:7b"
+    routing_notes: "temperature: 0.0 | max_tokens: 100 | Primary: cluster-nvidia/qwen2.5:14b"
+
+  - id: generation
+    name: "Generation"
+    description: "Structured content generation — proposals, plans, templates, session notes. Requires a capable general model."
+    status: active
+    min_model: "llama3.1:8b"
+    routing_notes: "temperature: 0.2 | max_tokens: 2000 | Primary: cluster-nvidia/mistral-small3.2:24b"
+
+  - id: reasoning
+    name: "Reasoning"
+    description: "Critique, evaluation, logical inference, scope adequacy judgment, overlap detection. Requires the deepest capable model."
+    status: active
+    min_model: "qwen2.5:14b"
+    routing_notes: "temperature: 0.5 | max_tokens: 800 | Primary: cluster-nvidia/mistral-small3.2:24b (verified tools)"
+
+  - id: coding
+    name: "Coding"
+    description: "Code generation, review, debugging, refactoring. Routes to code-specialist models, not general-purpose."
+    status: active
+    min_model: "qwen2.5-coder:14b"
+    routing_notes: "temperature: 0.1 | max_tokens: 4000 | Primary: cluster-nvidia/qwen2.5-coder:14b"
+
+  - id: agentic
+    name: "Agentic"
+    description: "Multi-step orchestration, tool use, executor coordination. Requires large context + verified tool-calling support."
+    status: active
+    min_model: "mistral-small3.2:24b"
+    routing_notes: "temperature: 0.3 | max_tokens: 8000 | Primary: cluster-nvidia/mistral-small3.2:24b (verified tools)"

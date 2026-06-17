@@ -12,7 +12,13 @@
 
 export type AtomKind = 'deterministic' | 'judgment';
 
-export type AiCategory = 'none' | 'classification' | 'generation' | 'reasoning';
+export type AiCategory =
+  | 'none'           // deterministic code check — zero LLM cost
+  | 'classification' // fast yes/no or pick-from-list; cheap local model
+  | 'generation'     // structured prose writing — proposals, plans, templates
+  | 'reasoning'      // critique, judgment, logical inference, adequacy evaluation
+  | 'coding'         // code generation, review, debugging — routes to code-specialist model
+  | 'agentic';       // multi-step orchestration, tool use, executor coordination
 
 /**
  * Frontmatter of an atom.yaml file.
@@ -136,7 +142,7 @@ export const ATOM_JSON_SCHEMA = {
       description: '1–2 sentence rule summary for the synopsis index',
     },
     version: { type: 'integer', minimum: 1 },
-    ai_category: { type: 'string', enum: ['none', 'classification', 'generation', 'reasoning'] },
+    ai_category: { type: 'string', enum: ['none', 'classification', 'generation', 'reasoning', 'coding', 'agentic'] },
     distributable: { type: 'boolean' },
     tags: { type: 'array', items: { type: 'string' } },
     related: {
@@ -202,8 +208,8 @@ export function validateAtomFrontmatter(data: unknown): { valid: boolean; errors
     errors.push({ field: 'version', message: 'must be positive integer' });
 
   // ai_category
-  if (!['none', 'classification', 'generation', 'reasoning'].includes(d.ai_category as string))
-    errors.push({ field: 'ai_category', message: 'must be none|classification|generation|reasoning' });
+  if (!['none', 'classification', 'generation', 'reasoning', 'coding', 'agentic'].includes(d.ai_category as string))
+    errors.push({ field: 'ai_category', message: 'must be none|classification|generation|reasoning|coding|agentic' });
 
   // deterministic atoms must have ai_category: none
   if (d.kind === 'deterministic' && d.ai_category !== 'none')

@@ -5,6 +5,7 @@
  * src/policy-atoms-core/. The CI isolation check enforces this.
  */
 export * from './schema.js';
+export * from './categories.js';
 export * from './scope.js';
 export * from './index-builder.js';
 export * from './router.js';

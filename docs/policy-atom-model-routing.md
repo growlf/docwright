@@ -12,6 +12,8 @@ failure modes, and efficiency requirements.
 | `classification` | Fast yes/no or pick-from-list | Yes — cheap, fast | 50–200 out |
 | `generation` | Structured content generation | Yes — capable | 200–2,000 out |
 | `reasoning` | Judgment, nuance, ambiguity | Yes — deepest capable | 200–1,000 out |
+| `coding` | Code generation, review, debugging | Yes — code-specialist | 200–4,000 out |
+| `agentic` | Multi-step orchestration, tool use, executor coordination | Yes — large context + tools | 500–8,000 out |
 
 ---
 
@@ -80,6 +82,38 @@ Reasoning atoms that call MCP tools (to fetch related docs for comparison) **req
 { "options": { "temperature": 0.6, "num_predict": 2048 } }
 ```
 May require explicit thinking-mode prompt prefix depending on Ollama version. Validate before relying on in production.
+
+---
+
+### `coding` — Code generation, review, debugging
+
+**Settings:** `temperature: 0.1` · `max_tokens: 4000` · Prompt budget: 8–16k (include file context + instructions).
+
+Routes to code-specialist models, not general-purpose. `mistral-small3.2:24b` is a general model that handles code adequately but is not the primary choice here.
+
+| Tier | Model | Latency | Why |
+|------|-------|---------|-----|
+| Primary | `cluster-nvidia/qwen2.5-coder:14b` | <1s | Code-specialist, verified tools, excellent TypeScript/bash |
+| Secondary | `cluster-nvidia/mistral-small3.2:24b` | 2–5s | Fallback if coder model unavailable; 131k context |
+| Cloud | `anthropic/claude-sonnet-4-6` | 2–4s | 200k context, excellent code quality |
+| Offline | `phoenix-local/qwen2.5:7b` | 5–15s | Acceptable for short code snippets only |
+| **Avoid** | `llama3.1:8b` for coding | — | Cannot handle DocWright's instruction payload (F3) |
+
+---
+
+### `agentic` — Multi-step orchestration, tool use, executor coordination
+
+**Settings:** `temperature: 0.3` · `max_tokens: 8000` · Prompt budget: 16–32k (needs full context + tool definitions + plan state).
+
+Requires verified tool-calling support — `qwen3.5:27b` cannot be used here (tool support unproven). Large context is critical; the agent needs to hold full plan state across many steps.
+
+| Tier | Model | Latency | Why |
+|------|-------|---------|-----|
+| Primary | `cluster-nvidia/mistral-small3.2:24b` | 3–10s | Only verified local tool-calling model at 24B; 131k context |
+| Cloud | `anthropic/claude-sonnet-4-6` | 2–5s | 200k context, excellent tool use, proven in DocWright sessions |
+| High-stakes | `anthropic/claude-opus-4-7` | 4–10s | Reserve for critical multi-step plans with irreversible actions |
+| **Avoid** | `cluster-nvidia/qwen3.5:27b` for agentic | — | Tool support unproven — do not use for plans with tool calls |
+| **Avoid** | `llama3.1:8b` | — | Cannot handle 5k+ token instruction payloads (F3) |
 
 ---
 

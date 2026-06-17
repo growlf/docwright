@@ -17,11 +17,23 @@ describe('policy-atoms-core / schema', () => {
       assert.strictEqual(ok, true, JSON.stringify(errors));
     });
 
-    it('accepts a valid judgment atom', () => {
+    it('accepts a valid judgment atom with reasoning', () => {
       const { valid: ok } = validateAtomFrontmatter({
-        ...valid,
-        kind: 'judgment',
-        ai_category: 'reasoning',
+        ...valid, kind: 'judgment', ai_category: 'reasoning',
+      });
+      assert.strictEqual(ok, true);
+    });
+
+    it('accepts coding ai_category for judgment atoms', () => {
+      const { valid: ok } = validateAtomFrontmatter({
+        ...valid, kind: 'judgment', ai_category: 'coding',
+      });
+      assert.strictEqual(ok, true);
+    });
+
+    it('accepts agentic ai_category for judgment atoms', () => {
+      const { valid: ok } = validateAtomFrontmatter({
+        ...valid, kind: 'judgment', ai_category: 'agentic',
       });
       assert.strictEqual(ok, true);
     });
