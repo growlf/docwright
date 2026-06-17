@@ -71,7 +71,7 @@ echo ""
 echo "🔔  Monitoring CI/CD pipeline…"
 
 RUN_ID=""
-for i in $(seq 1 15); do
+for i in $(seq 1 30); do
     RUN_ID=$(gh run list --repo "$REPO" --limit 5 \
         --json databaseId,event,headBranch,status \
         --jq '[.[] | select(.event=="push" and (.headBranch | test("^v0\\.[0-9]+\\.[0-9]+$")) and .status!="completed")] | first | .databaseId // empty' \
