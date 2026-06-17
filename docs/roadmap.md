@@ -18,168 +18,222 @@ current phase gate.
 
 ---
 
-## Phase 3 — Vault Portability & Real-World Pilot (Current)
+## Phase 3 — Vault Write API, Portability & Real-World Pilots (Current)
 
 **Plan:** [[plans/phase-vault-portability-pilot.md]] · 8/11 steps done
 
 **Thesis:** DocWright can be adopted by a real organization on an existing vault
-with no manual file edits required.
+with no manual file edits, no stale references, and no one-off repair scripts.
 
-**Gate:** Phase 3 closes when **both pilot vaults** complete a full
-proposal→plan→completed cycle unassisted, AND a dogfooding cycle surfaces and
-captures any friction found.
+**Gate:** Phase 3 closes when the vault write API is complete, both pilot vaults
+complete a full proposal→plan→completed cycle with no broken `_path:` fields or
+stale wikilinks, and a dogfooding cycle captures any remaining friction.
 
-### 3a — MSP Pilot Vault ⚡
+### 3a — Vault Write API ⚡ (must land before pilots run)
+
+**Why first and why now:** Every lifecycle transition that moves a file —
+approving a proposal, completing a plan, renaming a document — currently leaves
+stale `_path:` frontmatter and broken wikilinks. `fix-stale-approvals.ts` and
+`backfill-proposal-source.ts` exist because this API does not. The pilots will
+produce broken data without it. This is the right phase because the problem is
+already present.
+
+Deliverables:
+- `moveDocument(src, dest)` — move file, update `_path:` frontmatter, update all
+  wikilink references across the vault pointing to the old path
+- `renameDocument(path, newName)` — rename in-place with the same backlink integrity
+- `setField(path, field, value)` — promoted to THE canonical frontmatter write path;
+  all MCP tools and Web UI routes call this, no direct `fs.writeFile` on doc paths
+- `scripts/backfill-proposal-source.ts` is the last one-off repair script; all
+  future operations use the API
+
+**Implementation note:** backlink update at move time does a targeted grep scan
+across the vault — O(n) but infrequent. Does not require a prebuilt index. The
+full wikilink index (Phase 5) improves performance; correctness works without it.
+
+### 3b — MSP Pilot Vault ⚡
 
 [[proposals/sub-plan-msp-pilot-vault.md]] — **unapproved, approve first**
 
-### 3b — Cascade STEAM Early-Access Pilot ⚡
+### 3c — Cascade STEAM Early-Access Pilot ⚡
 
 [[proposals/sub-plan-cascade-steam-early-access.md]] — **unapproved, approve second**
 
 Both pilots must complete one full proposal→plan→completed cycle through DocWright
-with no manual file edits. That is the Phase 3 acceptance bar.
+with no manual file edits and no stale `_path:` fields. The vault write API (3a)
+makes that bar achievable.
 
-### 3c — Dogfooding Cycle
+### 3d — Dogfooding Cycle
 
-Use DocWright to manage DocWright's own Phase 3 closure work — specifically, use
-the Web UI and MCP tools to close Phase 3 itself. Capture any friction encountered
-via `log_friction()` and file proposals before Phase 4 starts. This is the only
-reliable way to surface missing features before they become blockers for external
-adopters.
+Use DocWright to manage DocWright's own Phase 3 closure work via Web UI and MCP
+tools. Capture friction via `log_friction()` and file proposals before Phase 4
+starts. This is the only reliable way to surface missing features before they
+become blockers for external adopters.
 
 ---
 
 ### 🔀 Cascade STEAM Production Deployment (parallel track, starts when Phase 3 closes)
 
-This is Cascade STEAM org work running in parallel with DocWright's Phase 4 — it
-is not gated by Phase 4 completion. The one DocWright feature it waits for is ACL
-integration (Phase 5, step 5c), which unlocks proper Forgejo team membership
-enforcement.
-
-Cascade STEAM production = Forgejo server, DNS/TLS, AI stack wired up, governance
-loop running with real users. This is the reference implementation.
+Cascade STEAM org work: Forgejo server, DNS/TLS, AI stack, governance loop with
+real users. Not gated by Phase 4 or 5; the one DocWright prerequisite is ACL
+integration (Phase 5, step 5c), which enables Forgejo team membership enforcement.
+This is the reference implementation.
 
 ---
 
-## Phase 4 — Governance Enforcement Foundations
+## Phase 4 — Query Foundation, Perception & Governance Enforcement
 
 **Gate:** Phase 3 must close before Phase 4 begins.
 
-**Thesis:** All governance rules are mechanically enforced, not just documented.
-After Phase 4, an AI agent operating on any vault is constrained by its plan's
-`mode:`, knows which rules apply via profile scope routing, and cannot bypass
-lifecycle gates.
+**Thesis:** After Phase 4 you can *see* the structure of your vault (knowledge
+graph), *query* it efficiently (document index), and *trust* that all governance
+rules are mechanically enforced. Perception and enforcement arrive together.
 
-Phase 4 has exactly **three items in strict order**. Each unlocks the next.
+Phase 4 has **two parallel chains** that converge at the phase gate. Chain A
+(query + graph) moves fast — days not weeks. Chain B (governance enforcement)
+is the larger work.
 
-### 4a — Execution Mode Enforcement ⚡ (must land first)
+### Chain A — Query Foundation & Knowledge Graph
 
-`plan-execution-mode-rename.md` (partial — linter done, migration done)
+#### 4a — Vault Query API ⚡ (Chain A, step 1)
 
-**Why first:** Without write intercept in the Web UI, `mode: autonomous` is a
-label with no enforcement. Everything in Phase 5 that involves AI doing work
-assumes modes are real constraints, not suggestions.
+In-memory document index built from frontmatter on startup and refreshed by SSE
+file-change events. No external database — git is still the canonical store.
 
-Remaining work:
-- Web UI mode badge (properties pane + document header)
-- Write intercept layer: mentor → staging panel; guided → review queue; autonomous → direct write + `ai-last-action:` stamp
-- AI preamble injection per mode on plan open
-- Update `AGENTS.md` and all profile templates
+Delivers:
+- Index keyed by path, type, status, phase, tags, `related_to`, `proposal_source`,
+  `depends_on`, `consumed_by`
+- Query methods: `byType`, `byStatus`, `byPhase`, `byTags`, `getEdges(path)`
+- `/api/graph` endpoint — nodes + edges for the knowledge graph
+- Deduplication query at proposal creation (replaces raw file scan in 5e)
 
-### 4b — Profile Engine Full Runtime ⚡ (unlocks 4c, and all of Phase 5)
+#### 4b — Basic Knowledge Graph (Chain A, step 2)
 
-Phase 4 plan, step 1.
+[[proposals/knowledge-graph-cross-document-idea-linkage.md]] Part C (basic)
 
-**Why second:** Profile-aware features — deduplication check, per-profile AI prompts,
-ACL enforcement, research context injection — cannot work without the full profile
-engine runtime. Schema migration, template resolution, and UI switching ship here.
-The override merge engine was Phase 3; full runtime is here.
+Depends on 4a. KG Parts A+B already done — data quality sufficient for a useful
+graph today.
 
-### 4c — Lifecycle Gates Phase 2 ⚡
+Edges from frontmatter: `proposal_source`, `related_to`, `depends_on`,
+`consumed_by`, `linked_proposals`. Force-directed D3.js graph as the 4th status
+tab (alongside List, Funnel, Audit).
 
-[[plans/bundle-lifecycle-gates-phase-2.md]]
+Gap detection overlays visible immediately:
+- Orphaned plans (no `proposal_source:`)
+- Concluded research with no follow-through (`linked_proposals: []`)
+- Approved proposals with no investigation
+- Dependency roadblocks (depends_on a canceled/deferred plan)
+- Phase orphans (active plans with no `phase:`)
 
-**Why third:** Its dependency (`lifecycle-gates-extension-bundle`) is already complete.
-Cascade STEAM going production requires proper gate enforcement — AI-assisted gate prep,
-multi-reviewer quorum, and scheduled compliance triggers are governance maturity
-prerequisites, not polish. Shipping without this is the governance equivalent of
-deploying without auth.
-
-Delivers: AI-assisted gate preparation, multi-reviewer quorum, retroactive audit,
-time-based/scheduled triggers, governance audit JSONL log.
+**Note:** wikilink body-text edges are added in Phase 5 (step 5a) when the full
+wikilink index ships. The basic graph is useful without them.
 
 ---
 
-## Phase 5 — Profile-Aware Features
+### Chain B — Governance Enforcement
 
-**Gate:** Phase 4 (all three items) must close before Phase 5 begins.
+#### 4c — Execution Mode Enforcement ⚡ (Chain B, step 1)
 
-**Thesis:** The enforcement infrastructure built in Phase 4 is used to deliver
-features that know which profile they're operating in. These items have structural
-dependencies on Phase 4 but are largely parallel to each other.
+`plan-execution-mode-rename.md` (partial — linter done, migration done)
 
-### 5a — Judgment Atom Mode Interaction
+Now sits cleanly on top of the vault write API (3a): the write intercept layer
+intercepts calls to `setField`/`moveDocument`/`renameDocument` and routes them
+based on the active plan's `mode:`. Without 3a, enforcement would be patchy
+(Web UI only). With 3a, it applies to every surface.
+
+Remaining work:
+- Web UI mode badge (properties pane + document header)
+- Write intercept: mentor → staging panel; guided → review queue; autonomous →
+  direct write + `ai-last-action:` stamp
+- AI preamble injection per mode on plan open
+- Update `AGENTS.md` and all profile templates
+
+#### 4d — Profile Engine Full Runtime ⚡ (Chain B, step 2)
+
+Depends on 4c. Schema migration, template resolution, UI profile switching.
+Unlocks 4e and all profile-aware Phase 5 features.
+
+#### 4e — Lifecycle Gates Phase 2 ⚡ (Chain B, step 3)
+
+[[plans/bundle-lifecycle-gates-phase-2.md]]
+
+Depends on 4d. AI-assisted gate preparation, multi-reviewer quorum, retroactive
+audit, time-based/scheduled triggers, governance audit JSONL log. Cascade STEAM
+going production requires this — shipping without it is the governance equivalent
+of deploying without auth.
+
+---
+
+## Phase 5 — Full Wikilink Index & Profile-Aware Features
+
+**Gate:** Phase 4 (all of Chain A + Chain B) must close before Phase 5 begins.
+
+**Thesis:** The vault query layer gets its richest data source (body text
+wikilinks), and the features that depend on profile-aware queries ship. The
+knowledge graph becomes significantly more revealing when wikilink edges land.
+
+### 5a — Full Wikilink Index ⚡ (enriches everything downstream)
+
+Body text `[[wikilinks]]` indexed as graph edges. Makes the knowledge graph (4b)
+reveal organic idea connections that frontmatter alone cannot. Enables backlink
+panels, autocomplete, and safe rename-with-backlink-update validation.
+
+Previously called "Vault-Wide Wikilink Index." The vault write API (3a) already
+handles correctness at move time; this index adds performance and completeness.
+
+### 5b — Judgment Atom Mode Interaction
 
 [[proposals/deferred-judgment-atom-mode-interaction.md]]
 
-Depends on 4c (lifecycle gates Phase 2 creates the MCP gate call sites this needs).
-Makes `evaluateJudgmentAtom()` results advisory/staged/blocking based on plan `mode:`.
-
-### 5b — Vault-Wide Wikilink Index
-
-Phase 5 plan, step 2. Required before contributor autocomplete, related-docs UX
-improvements, and wikilink backref updating on rename.
+Depends on 4e (lifecycle gates Phase 2 creates the MCP gate call sites). Makes
+`evaluateJudgmentAtom()` results advisory/staged/blocking based on plan `mode:`.
 
 ### 5c — Forgejo ACL Integration
 
-Phase 5 plan, step 3. Depends on 4b (profile engine) for `author-role:` field
-resolution against Forgejo team membership. When this lands, the Cascade STEAM
-production parallel track can fully close.
+Depends on 4d (profile engine) for `author-role:` resolution against Forgejo team
+membership. When this lands, the Cascade STEAM production parallel track can
+fully close.
 
 ### 5d — Research AI Tooling + RLM Microservice
 
-Phase 5 plan, steps 4–7. Depends on 4b (profile engine) for context injection.
+Depends on 4d (profile engine) for context injection.
 
-- AI-assisted research sessions (question + findings injected into chat context)
-- Research → proposal generation from concluded research docs
+- AI-assisted research sessions
+- Research → proposal generation
 - Multi-perspective research (parallel model review)
 - **RLM Python microservice** [[proposals/deferred-rlm-python-microservice.md]] —
-  the correct implementation for all multi-document AI tasks (collation, policy atom
-  cross-reference, knowledge-base ingest). ~50-line Python service wrapping `rlms`,
-  OpenAI-compatible endpoint. **Pending ai-stack GPU fix** (external dependency:
-  `qwen2.5-coder:14b` minimum; Phoenix Arc cannot run it; remote NVIDIA GPU currently
-  broken). Ships in this step when that fix lands. Until then: apply the RLM pattern
-  manually in prompts (scan index first, fetch targeted docs, then analyze).
+  ~50-line Python wrapper around `rlms`, OpenAI-compatible endpoint.
+  **Pending ai-stack GPU fix** (`qwen2.5-coder:14b` minimum; remote NVIDIA GPU
+  currently broken). Ships when that fix lands. Until then: apply the RLM pattern
+  manually (scan index first, fetch targeted docs, then analyze).
 
-### 5e — New Proposal UX & Structural Improvements
+### 5e — New Proposal UX & Deduplication
 
-Depends on 4b (profile engine) to know which document types to scan:
-- `new-proposals-should-check-before-actual-creation.md` — deduplication check before file creation
-- `new-proposal-ux-description-priority-and-immediate-view.md` — description+priority first, AI generates title
+- `new-proposals-should-check-before-actual-creation.md` — dedup query now uses
+  vault query API (4a, already done); profile engine (4d) needed for type-aware scan
+- `new-proposal-ux-description-priority-and-immediate-view.md` — description +
+  priority first, AI generates title
 
 ### 5f — Contribution Pipeline
 
-`sub-plan-contribution-pipeline.md`
-
-`contribute_upstream()` MCP tool, `log_friction()`, `list_docwright_issues`. No
-dependency on 5a–5e — can run in parallel with all of Phase 5. Moved from Phase 3
-gate because it doesn't gate anything there.
+`sub-plan-contribution-pipeline.md` — `contribute_upstream()` MCP tool,
+`log_friction()`, `list_docwright_issues`. No phase dependency — runs in parallel
+with all of Phase 5.
 
 ### 5g — Graph Views & Executor Panel Polish
 
-- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel/swimlane view (D3.js); share D3 install with KG
-- `knowledge-graph-cross-document-idea-linkage.md` Part C — cross-document idea-linkage graph, 4th status tab; **needs 5b (wikilink index) + KG Parts A+B (done)**
+- Knowledge graph enriched with wikilink edges (from 5a)
+- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel/swimlane view; shares D3
+  install with knowledge graph
 - `formalize-step-counter-sync.md` — auto-sync step counter validation
-- `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface current phase in status page
+- `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface
+  current phase in status page
 - `executor-panel-live-feedback.md` — step name display + token count
 
 ### 🔀 Chat & Session Panel Phase 2 (parallel track)
 
 [[plans/bundle-chat-session-panel.md]] — in progress, no phase dependency.
-
-Completes when it's done. Does not gate Phase 5 start and is not gated by it.
-Assign to Phase 6 close for planning purposes only.
+Closes before Phase 6 gate.
 
 ---
 
@@ -187,8 +241,8 @@ Assign to Phase 6 close for planning purposes only.
 
 **Gate:** Phase 5 must close; Cascade STEAM production must be live.
 
-**Thesis:** The system works and is deployed. Now improve it based on real usage
-feedback from non-developer governance users.
+**Thesis:** The system is deployed and validated by real users. Features are
+driven by observed friction, not speculation.
 
 | Work | Plan/Proposal | Priority |
 |------|-------------|---------|
@@ -200,9 +254,9 @@ feedback from non-developer governance users.
 | UI Polish cycle | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low — needs real user feedback first |
 
 **Decision required before Phase 6 starts — `plan-steps-structured-frontmatter.md`:**
-YAML steps as source of truth rewrites every plan file and is a breaking structural
-change. Either land it early Phase 5 (before anything builds on current step format)
-or defer it explicitly to Phase 6. **This must be a decision, not a note.**
+YAML steps as source of truth is a breaking structural change affecting every plan.
+Decide: land in Phase 5 (before anything builds on current step format) or defer
+to Phase 6. **A decision, not a note.**
 
 ---
 
@@ -219,9 +273,6 @@ or defer it explicitly to Phase 6. **This must be a decision, not a note.**
 ---
 
 ## Post-Alpha (Deliberately Deferred)
-
-Well-scoped and genuinely useful but do not start until the Web UI has been validated
-by non-developer governance users in production.
 
 | Work | Why deferred |
 |------|-------------|
@@ -264,30 +315,36 @@ by non-developer governance users in production.
 ## Dependency Graph
 
 ```
-Phase 3 (pilots + dogfooding)
-    │
-    ├──→ 🔀 Cascade STEAM production (parallel — waits for 5c ACL to fully close)
-    │
-Phase 4 (enforcement foundations — strictly ordered)
-    4a (mode enforcement) → 4b (profile engine) → 4c (lifecycle gates)
-    │
-Phase 5 (profile-aware features — largely parallel after Phase 4)
-    ├── 5a (judgment atom mode)    [needs 4c]
-    ├── 5b (wikilink index)        [needs 4b]
-    ├── 5c (Forgejo ACL)           [needs 4b] → closes Cascade STEAM production track
-    ├── 5d (research AI + RLM*)    [needs 4b + ai-stack GPU fix]
-    ├── 5e (proposal UX)           [needs 4b]
-    ├── 5f (contribution pipeline) [truly independent]
-    └── 5g (graph view + polish)   [needs 4b]
-    │
-    🔀 Chat & Session Panel Ph2    [no phase dependency — closes here]
-    │
-Phase 6 (feature bundles — needs real user feedback)
-    │
+Phase 3
+  3a (vault write API) ──→ 3b (MSP pilot) ──→ 3c (STEAM pilot) ──→ 3d (dogfooding)
+  │
+  ├──→ 🔀 Cascade STEAM production [waits for Phase 5 step 5c ACL]
+  │
+Phase 4 — two parallel chains, both must close before Phase 5
+  │
+  Chain A (fast):
+  4a (vault query API) ──→ 4b (basic knowledge graph)
+  │
+  Chain B (governance enforcement):
+  4c (mode enforcement) ──→ 4d (profile engine) ──→ 4e (lifecycle gates)
+  │
+Phase 5 — largely parallel after Phase 4
+  ├── 5a (full wikilink index) ──→ enriches 4b graph in 5g
+  ├── 5b (judgment atom mode)    [needs 4e]
+  ├── 5c (Forgejo ACL)           [needs 4d] ──→ closes STEAM production track
+  ├── 5d (research AI + RLM*)    [needs 4d + ai-stack GPU fix]
+  ├── 5e (proposal UX + dedup)   [needs 4a ✓, 4d for full features]
+  ├── 5f (contribution pipeline) [independent]
+  └── 5g (graph polish)          [needs 5a]
+  │
+  🔀 Chat & Session Panel Ph2    [no phase dependency — closes here]
+  │
+Phase 6 (feature bundles — real user feedback required)
+  │
 Phase 7 (public release)
 
-* RLM microservice: [[proposals/deferred-rlm-python-microservice.md]]
-  Pending ai-stack GPU fix. Policy atom pre-condition already met (v0.3.x).
+* RLM: [[proposals/deferred-rlm-python-microservice.md]]
+  Pending ai-stack GPU fix. Policy atom pre-condition met (v0.3.x).
 ```
 
 Small fixes and 5f (contribution pipeline) have no phase dependencies.
