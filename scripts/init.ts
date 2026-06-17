@@ -1,7 +1,12 @@
 #!/usr/bin/env tsx
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
+
+function sha256(content: string): string {
+  return crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+}
 
 function usage() {
   console.log(`Usage: npx tsx scripts/init.ts --dest /path/to/vault [--profile org-operations] [--name "My Vault"]
@@ -147,11 +152,18 @@ function main() {
 
   // .docwright/config.json
   const configPath = path.join(dest, '.docwright', 'config.json');
+  const pkgPath = path.join(docwrightPath, 'package.json');
+  let adoptVersion = '0.0.0';
+  try { adoptVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version ?? '0.0.0'; } catch { /* ignore */ }
+  const adoptDate = new Date().toISOString().split('T')[0];
   if (!fs.existsSync(configPath)) {
     fs.writeFileSync(configPath, JSON.stringify({
       schema_version: '1',
+      adopt_version: adoptVersion,
+      adopt_date: adoptDate,
+      adopt_mode: 'init',
     }, null, 2) + '\n', 'utf8');
-    console.log('  ✓ .docwright/config.json (schema_version: 1)');
+    console.log('  ✓ .docwright/config.json (schema_version: 1, adopt_version: ' + adoptVersion + ')');
   }
 
   // .docwright/.gitignore
@@ -211,6 +223,24 @@ function main() {
   fs.writeFileSync(path.join(dest, 'plans', '.gitkeep'), '', 'utf8');
   fs.writeFileSync(path.join(dest, 'docs', '.gitkeep'), '', 'utf8');
   console.log('  ✓ directory structure (proposals/, plans/, docs/)');
+
+  // .docwright/manifest.json — records every file written by init for adopt --upgrade
+  const manifestPath = path.join(dest, '.docwright', 'manifest.json');
+  const managedFiles = [
+    '.env', '.mcp.json', 'profile.json', 'brand.json',
+    '.docwright/config.json', '.docwright/.gitignore',
+    '.docwright/registry.json', '.docwright/registry.example.json',
+    'docs/friction-log.md',
+  ];
+  const manifest: Record<string, string> = {};
+  for (const rel of managedFiles) {
+    const abs = path.join(dest, rel);
+    if (fs.existsSync(abs)) {
+      manifest[rel] = sha256(fs.readFileSync(abs, 'utf8'));
+    }
+  }
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+  console.log('  ✓ .docwright/manifest.json (' + Object.keys(manifest).length + ' managed files)');
 
   console.log(`\n✅ DocWright vault initialized at ${dest}`);
   console.log(`\nNext steps:`);
