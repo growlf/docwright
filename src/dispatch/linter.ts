@@ -19,6 +19,7 @@ const REQUIRED_BY_PREFIX: Array<[string, string[]]> = [
 
 const VALID_COMPLEXITY        = new Set(['', 'XS', 'S', 'M', 'L', 'XL']);
 const VALID_AUTOMATED         = new Set(['off', 'guided', 'full']);
+const VALID_MODE              = new Set(['mentor', 'guided', 'autonomous']);
 const VALID_PLAN_STATUS       = new Set(['draft', 'approved', 'in-progress', 'completed', 'canceled']);
 const VALID_RESEARCH_STATUS   = new Set(['active', 'concluded', 'archived']);
 const VALID_RESEARCH_CONCLUSION = new Set(['open', 'recommends', 'inconclusive', 'superseded']);
@@ -53,8 +54,18 @@ export function lintDocument(
   if (fm.complexity !== undefined && fm.complexity !== '' && !VALID_COMPLEXITY.has(String(fm.complexity))) {
     results.push({ field: 'complexity', severity: 'warn', message: 'complexity should be XS | S | M | L | XL' });
   }
-  if (fm.automated !== undefined && fm.automated !== '' && !VALID_AUTOMATED.has(String(fm.automated))) {
-    results.push({ field: 'automated', severity: 'error', message: 'automated must be off | guided | full' });
+  // Accept both 'automated:' (legacy) and 'mode:' (canonical per plan-execution-mode-rename proposal).
+  // 'automated:' with old values (off/guided/full) → warn + migration hint.
+  // 'mode:' with new values (mentor/guided/autonomous) → valid, no warning.
+  if (fm.automated !== undefined && fm.automated !== '') {
+    if (!VALID_AUTOMATED.has(String(fm.automated))) {
+      results.push({ field: 'automated', severity: 'error', message: 'automated must be off | guided | full (or migrate to mode: mentor|guided|autonomous)' });
+    } else {
+      results.push({ field: 'automated', severity: 'warn', message: `'automated: ${fm.automated}' is deprecated — migrate to 'mode: ${fm.automated === 'off' ? 'mentor' : fm.automated === 'full' ? 'autonomous' : 'guided'}'` });
+    }
+  }
+  if (fm.mode !== undefined && fm.mode !== '' && !VALID_MODE.has(String(fm.mode))) {
+    results.push({ field: 'mode', severity: 'error', message: 'mode must be mentor | guided | autonomous' });
   }
   if (filePath.startsWith('plans/') && fm.status !== undefined && !VALID_PLAN_STATUS.has(String(fm.status))) {
     results.push({ field: 'status', severity: 'warn', message: `Unknown plan status '${fm.status}'` });

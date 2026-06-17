@@ -94,8 +94,12 @@ validate_assigned_to() {
 validate_automated() {
     local FILE=$1; [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] || [[ "$FILE" =~ ^plans/completed/ ]] && return 0
     local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    # Accept legacy 'automated:' field with old values
     local AUTO=$(echo "$FM" | grep "^automated:" | sed 's/^automated: *//' | tr -d ' ')
     [ -n "$AUTO" ] && [ "$AUTO" != "off" ] && [ "$AUTO" != "guided" ] && [ "$AUTO" != "full" ] && print_error "$FILE: automated must be off|guided|full (got: $AUTO)" && return 1
+    # Accept new canonical 'mode:' field with new values (plan-execution-mode-rename proposal)
+    local MODE=$(echo "$FM" | grep "^mode:" | sed 's/^mode: *//' | tr -d ' ')
+    [ -n "$MODE" ] && [ "$MODE" != "mentor" ] && [ "$MODE" != "guided" ] && [ "$MODE" != "autonomous" ] && print_error "$FILE: mode must be mentor|guided|autonomous (got: $MODE)" && return 1
     return 0
 }
 

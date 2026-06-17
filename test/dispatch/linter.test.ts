@@ -47,6 +47,28 @@ describe('Frontmatter linter', () => {
     assert.ok(err);
     assert.strictEqual(err?.severity, 'error');
   });
+
+  it('accepts valid mode: value on plan (new canonical field)', () => {
+    const fm = { title: 'P', status: 'approved', author: 'A', created: '2026-01-01', assigned_to: 'X', mode: 'autonomous' };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'mode');
+    assert.ok(!err, `unexpected error on mode field: ${err?.message}`);
+  });
+
+  it('flags invalid mode: value on plan', () => {
+    const fm = { title: 'P', status: 'approved', author: 'A', created: '2026-01-01', assigned_to: 'X', mode: 'full' };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'mode');
+    assert.ok(err);
+    assert.strictEqual(err?.severity, 'error');
+  });
+
+  it('warns on deprecated automated: field with valid legacy value', () => {
+    const fm = { title: 'P', status: 'approved', author: 'A', created: '2026-01-01', assigned_to: 'X', automated: 'full' };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'automated' && r.severity === 'warn');
+    assert.ok(warn, 'expected deprecation warning on automated: full');
+  });
 });
 
 describe('Stale parent detection', () => {
