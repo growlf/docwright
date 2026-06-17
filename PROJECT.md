@@ -1,8 +1,9 @@
 # docwright — Organizational Operating System for Policy-Driven Teams
 
-> **Status:** Draft v0.10 — 2026-06-07
-> **Repository:** `github.com/growlf/docwright` (proposed)
+> **Status:** v0.3.1 — Phase 3 in-progress — 2026-06-17
+> **Repository:** `github.com/growlf/docwright`
 > **License:** MIT
+> **Roadmap:** See [[docs/roadmap.md]] for current prioritization
 
 ---
 
@@ -1019,63 +1020,74 @@ client. Phase 1 built it end-to-end rather than starting with the VSCodium exten
 
 ---
 
-### Phase 2 — Foundation & Methodology (Current)
+### Phase 2 — Foundation & Methodology ✅ Complete (v0.3.x)
 
 **Goal:** Establish the research-stage methodology, engineering foundation (TypeScript
-MCP, CI, FOSS hygiene), profile engine runtime, and inbox capture. The research stage
-is marked critical — it shapes how all subsequent features are designed.
+MCP, CI, FOSS hygiene), profile engine runtime, and inbox capture.
 
-**Why methodology first:** the research stage (inbox → research → proposal → plan)
-changes the project flow itself. Building profile engine, chat panel, and collation
-without research baked in means retrofitting later. The MVP is small enough to land
-within Phase 2.
-
-#### Research Stage MVP (critical — lands first in Phase 2)
-- [ ] `research/` directory as first-class lifecycle stage
-- [ ] Research document type: frontmatter schema (`status`, `question`, `conclusion`,
-      `linked_proposals`, `related_research`, `author-role`), lifecycle states
-      (active → concluded → archived), `## Conclusion` enforcement
-- [ ] All bundled profiles updated: research document type + template (including `author-role:`)
-- [ ] Collation engine: add `research/` to scan directories; `informed-by` relationship type
-- [ ] Status page: Research section (active questions, recent conclusions)
-- [ ] Sidebar: `research/` recognised as special directory; `+ New Research` option
-- [ ] Pre-commit: `status: concluded` requires non-empty `conclusion` field
-
-#### Engineering Foundation
-- [ ] TypeScript MCP server (replace Python `mcp-server.py`)
-- [x] GitHub Actions CI: lint + typecheck + unit tests (done in Phase 1; moved here
-      for clarity — ci.yml runs on v0.x.x tags + workflow_dispatch, no .vsix step)
-- [x] FOSS hygiene: `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`,
-      `AGENTS.md`, `.github/` templates (ISSUE_TEMPLATE, PR template) — all present.
-      Remaining: `CODEOWNERS`, `dependabot.yml`
-- [x] Dispatch module CI: `test/dispatch/dispatch.test.ts` explicitly verifies zero
-      VS Code API symbols; cross-tool compat test guards skills table + spec docs
-- [ ] Inbox capture: minimal localhost web form → `/inbox/` stubs
-- [ ] `DOCWRIGHT_AGENT_ROLE` env-var hook (orchestrator vs. code agent enforcement)
-- [ ] Profile engine runtime: full load/validation, `profile.json` schema migration
+- [x] Research stage (`research/` directory, schema, lifecycle states, collation `informed-by`)
+- [x] TypeScript MCP server (replaced Python `mcp-server.py`)
+- [x] GitHub Actions CI (ci.yml; v0.x.x tags + workflow_dispatch)
+- [x] FOSS hygiene (`CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`, `AGENTS.md`, `.github/` templates)
+- [x] Dispatch module CI (zero VS Code API symbols verified)
+- [x] Profile engine runtime: load/validation, `profile.json` override merge
+- [x] **Policy Atom Framework** — `policy-atoms-core` library, 10 governance atoms,
+      `DOCWRIGHT_ATOM_ROUTING` coexistence shim, manager/project separation, hook stubs
+      (`OrgSourceHook`, `JudgmentDispatchHook`), `npm run atoms:check`, isolation CI gate
+- [x] **AI Task Category Taxonomy** Steps 1–2 — `AiCategory` extended to 6 values
+      (`coding`, `agentic`), `categories.yaml` registry, routing tables
+- [x] **Plan completion gate enforcement** — `checkCompletionGate` recognizes
+      `### Gate Criteria`; `tests_human_reviewed` gates completion; Complete button
+      shows blockers client-side
+- [x] **Vault adoption tooling** — `npm run adopt` (lightweight/full/upgrade), `npm run open`,
+      three-surface skills bridge (Claude Code, OpenCode, Gemini CLI), `npm run build:atoms`,
+      `npm run migrate:mode-field`, `npm run atoms:check`
+- [x] Executor heartbeat events (no more silent Execute panel during BigPickle sessions)
+- [x] Atomic plan generation at approval (`approve-proposal/plan-generator.ts`)
+- [x] `mode:` field accepted by linter/pre-commit (`mentor/guided/autonomous`); all 58 plans migrated
 
 ---
 
-### Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
+### Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (Current — 6/11 done)
 
 **Goal:** Deploy DocWright against an external vault (non-profit MSP pilot), establish
 the clean tool/vault separation architecture, and create a structured feedback pipeline
-so real-world usage drives DocWright's evolution. See [[proposals/phase-vault-portability-pilot.md]].
+so real-world usage drives DocWright's evolution. See [[plans/phase-vault-portability-pilot.md]].
 
-Key deliverables: vault-portable TypeScript MCP server, `--mode upstream` contribution
-pipeline, `docwright init` scaffold, version pinning model (`MIGRATION.md` + `vault:migrate`),
-profile override merge layer, MSP pilot vault live, friction log + GitHub issues pipeline.
+**Gate to close Phase 3:** MSP pilot vault (step 8) and Cascade STEAM early-access
+(step 9) are the real-world validation milestones. Both sub-plan proposals are unapproved —
+approving them is the immediate next action. See [[docs/roadmap.md]].
+
+- [x] TypeScript MCP server with `--mode` flag (vault / upstream)
+- [x] Vault portability foundation (no hardcoded paths, `DOCWRIGHT_PATH` env var)
+- [x] `docwright init` scaffold (`npm run init`)
+- [x] Profile override merge engine
+- [x] Vault migration system (`MIGRATION.md` + `npm run vault:migrate`)
+- [x] `docwright adopt` (lightweight/full/upgrade modes) — DAFO + bms-ai-cluster validated
+- [ ] Contribution pipeline & friction log (`sub-plan-contribution-pipeline` — in-progress)
+- [ ] MSP pilot vault — real-world non-profit governance test (**next: approve sub-plan-msp-pilot-vault**)
+- [ ] Cascade STEAM early-access vault (**next: approve sub-plan-cascade-steam-early-access**)
+- [ ] Friction log tooling (MCP tool `log_friction`)
+- [ ] Architecture boundary document (substantially covered by `docs/vault-portability.md`)
 
 ---
 
 ### Phase 4 — Profile Engine, ACL & Research AI Tooling
 
 **Goal:** Full profile system runtime, Forgejo ACL integration, vault-wide wikilink
-index, and AI-native research tooling built on top of the Phase 2 research infrastructure.
+index, AI-native research tooling, and governance atom integration.
 
 **Note on AI:** Core AI features (✨ Improve, ⚡ Plan Review, chat panel, fillProposal,
-critiqueDocument) shipped in Phase 1. Phase 4 AI work is specifically research-stage
-tooling — context injection, research-to-proposal generation, and multi-perspective review.
+critiqueDocument) shipped in Phase 1. Phase 4 AI work is governance atom integration,
+routing, and research-stage tooling.
+
+**Already delivered in Phase 4 (during Phase 3 close-out):**
+- [x] Policy Atom Framework — complete (moved forward from Phase 4 to unblock governance work)
+- [x] AI Task Category Taxonomy Steps 1–2 — `AiCategory` 6 values + `categories.yaml`
+- [x] Plan completion gate enforcement — `checkCompletionGate`, `tests_human_reviewed`, client-side Complete button blockers
+- [x] `mode:` field canonical — linter + pre-commit, all 58 plans migrated
+
+**Remaining Phase 4 work:**
 
 #### Profile & ACL
 - [ ] Profile engine: full runtime load/validation, schema migration, template resolution,
