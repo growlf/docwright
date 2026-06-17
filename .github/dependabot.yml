@@ -1,62 +1,10 @@
 # DocWright Dependabot configuration
-# See https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#
+# Version updates are DISABLED. Dependency bumps are handled deliberately
+# via DocWright proposals and plans — not on an automated schedule.
+#
+# Security updates (CVE patches) remain enabled via repo settings and will
+# auto-create PRs only when a known vulnerability is detected.
 
 version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    groups:
-      svelte:
-        patterns:
-          - "@sveltejs/*"
-          - "svelte"
-          - "vite"
-          - "@vitejs/*"
-      lint:
-        patterns:
-          - "eslint*"
-          - "prettier*"
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-
-  - package-ecosystem: "npm"
-    directory: "/src/webui"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
-      - "webui"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    groups:
-      svelte:
-        patterns:
-          - "@sveltejs/*"
-          - "svelte"
-          - "vite"
-          - "@vitejs/*"
+updates: []
