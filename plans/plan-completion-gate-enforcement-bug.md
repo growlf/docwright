@@ -1,6 +1,6 @@
 ---
 title: "Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-17
 tags: bug, governance, completion-gate, critical, enforcement
@@ -162,7 +162,7 @@ proposition of the governance system.
 |------|--------|---------|--------|
 | 1 | Normalize gate heading detection | Update `checkCompletionGate` to match both `## Phase Gate` and `### Gate Criteria` headings, and add `tests_human_reviewed` as a recognized completion gate in `src/mcp/lib/steps.ts` | ✅ Done |
 | 2 | Disable Complete button client-side | Conditionally disable the Complete button in `PropertiesPane.svelte` when pending steps, unchecked gate criteria, or `tests_human_reviewed: false` block completion | ✅ Done |
-| 3 | Template heading cleanup (cosmetic) | Fix 1 already normalizes both headings — `approve-proposal` template can stay as `### Gate Criteria` without breaking enforcement. Optional cleanup only: update error message references in `steps.ts` to consistently use "Gate Criteria" terminology. **Not a correctness blocker.** | ⏳ Pending |
+| 3 | Template heading cleanup (cosmetic) | Fix 1 already normalizes both headings — `approve-proposal` template can stay as `### Gate Criteria` without breaking enforcement. Optional cleanup only: update error message references in `steps.ts` to consistently use "Gate Criteria" terminology. **Not a correctness blocker.** | ✅ Done |
 
 ## Testing Plan
 
