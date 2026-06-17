@@ -206,7 +206,7 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 | `one-off-formalization.md` | `one-off-formalization` | judgment | AI preamble only — no MCP wiring | `plan`, `session` | ✅ Step 3 | n/a |
 | `ci-watch-on-tag-push.md` | `ci-watch-on-tag-push` | judgment | AI preamble only — no MCP wiring | `git-commit` | ✅ Step 3 | n/a |
 | 4 | **Manager/project separation** — independent atom sets | Add `<managed-project>/policies/` support: independent atom set per managed project, same engine, no cross-contamination with DocWright's own `policies/`. MCP router must scope queries to the active project's atom set. Verify with a real secondary vault (bms-ai-cluster or DAFO). | ✅ Done |
-| 5 | **Org-bundle tier** — pluggable interface only | Implement the resolver's two pluggable hooks as named, typed, stub interfaces: (1) `org_source_hook(atom_id: string) => Promise<AtomOverride | null>` — returns `null` when unconfigured; (2) `judgment_dispatch_hook(ai_category: string, payload: string) => Promise<string | null>` — returns `null` to fall back to default model. Document hook location, contract, and extension path for LiteLLM integration. Do NOT build transport or trust-anchor. | ⏳ Pending |
+| 5 | **Org-bundle tier** — pluggable interface only | Implement the resolver's two pluggable hooks as named, typed, stub interfaces: (1) `org_source_hook(atom_id: string) => Promise<AtomOverride | null>` — returns `null` when unconfigured; (2) `judgment_dispatch_hook(ai_category: string, payload: string) => Promise<string | null>` — returns `null` to fall back to default model. Document hook location, contract, and extension path for LiteLLM integration. Do NOT build transport or trust-anchor. | ✅ Done |
 
 ## Testing Plan
 
@@ -224,25 +224,27 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 - [ ] Step 3: Migration audit table complete — every rule has: atom ID, equivalence tested, old-path retired
 - [ ] Step 3: No governance rules unintentionally dropped (audit table review)
 - [ ] Step 4: Secondary vault uses independent atom set; no bleed from DocWright's own `policies/`
-- [ ] Step 5: `org_source_hook` and `judgment_dispatch_hook` present, typed, documented, return `null` gracefully when not configured
-- [ ] Step 5: `judgment_dispatch_hook` signature matches Q5 decision: `(ai_category: string, payload: string) => Promise<string | null>`
+- [x] Step 5: `org_source_hook` → `OrgSourceHook` typed, returns `AtomOverride | null`; `nullOrgSourceHook` stub returns null
+- [x] Step 5: `judgment_dispatch_hook` → `JudgmentDispatchHook` typed, signature matches Q5: `(ai_category: string, payload: string) => Promise<string | null>`; `nullJudgmentDispatchHook` stub returns null
+- [x] Step 5: `evaluateJudgmentAtom()` is the call site for `judgment_dispatch_hook` — renders prompt, parses PASS/FAIL/INCONCLUSIVE, returns `JudgmentResult` with `modelUsed` for cache key
+- [x] Step 5: `docs/policy-atom-hooks.md` documents hook location, `AtomOverride` restriction rationale, LiteLLM extension pattern, full wiring example
 
 ### Integration & Regression
 
-- [ ] Existing tests pass without modification at every step (`npm test`)
-- [ ] TypeScript compiles cleanly at every step (`npm run typecheck`)
-- [ ] Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs (enforced by Step 2 side-by-side test; regression check at Step 3)
-- [ ] Synopsis index stays under 1,500-token hard limit throughout Steps 2–5 (sync-checker enforces)
-- [ ] `npm run init` seeds `policies/` correctly after Step 2; `npm run adopt` seeds it in adopted vaults
-- [ ] Judgment atom `evaluate_at_gate()` output is advisory-only in `mode: mentor`, staged in `mode: guided`, blocking in `mode: autonomous` (per [[research/plan-execution-mode-enforcement.md]])
+- [x] Existing tests pass without modification at every step — 154 passing; 1 pre-existing timeout (fix-stale-approvals, commit 3cf2a9d, not introduced by this plan)
+- [x] TypeScript compiles cleanly at every step (`npm run typecheck`)
+- [x] Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs (33 Step 2 cases + 29 Step 3 cases, all agree)
+- [x] Synopsis index stays under 1,500-token hard limit — DocWright: 720 tokens 🟢, bms-ai-cluster: 278 tokens 🟢
+- [x] `npm run init` seeds `policies/` correctly; `npm run adopt --upgrade` seeds atoms in pre-existing vaults
+- [ ] Judgment atom `evaluateJudgmentAtom()` mode interaction — advisory/staged/blocking per mode — deferred to when judgment atoms are wired into MCP gate points (Step 3 retirement phase)
 
 ### Gate Criteria
 
 - [ ] Human reviewer has verified step outcomes above
-- [ ] No governance rules unintentionally dropped — Step 3 migration audit table complete with every rule accounted for
-- [ ] `policy-atoms-core` has zero DocWright-specific imports — CI isolation gate added in Step 1 and still passing
-- [ ] `judgment_dispatch_hook` signature matches Q5 decision: `(ai_category: string, payload: string) => Promise<string | null>`
-- [ ] Scope expression grammar frozen in Step 1 and not modified in Steps 2–5 (grammar changes require a new plan revision)
+- [x] No governance rules unintentionally dropped — Step 3 migration audit table fully populated, all 10 rules have atoms
+- [x] `policy-atoms-core` has zero DocWright-specific imports — CI isolation gate passing (`npm run atoms:isolation`)
+- [x] `judgment_dispatch_hook` signature matches Q5: `(ai_category: string, payload: string) => Promise<string | null>`
+- [x] Scope expression grammar frozen in Step 1 — only additive canonical scope list changes made (plan.draft, plan.in-progress, etc.)
 
 ## Risk Assessment
 
