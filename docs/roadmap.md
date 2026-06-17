@@ -284,7 +284,7 @@ to Phase 6. **A decision, not a note.**
 | Work | Effort | What it fixes |
 |------|--------|--------------|
 | `deferred-frontmatter-validate-assigned-to-strictness.md` | XS | False positive on `assigned_to: ""` for unapproved proposals |
-| `deferred-watcher-presence-indicator.md` | S | Show watcher presence badge during AI sessions |
+| `deferred-watcher-presence-indicator.md` | S | **Elevated from Small Fix** — show watcher/executor presence badge; recurring user confusion when executor runs silently |
 | `enforce-release-tag-script.md` | S | Pre-commit hook to block manual `git tag`, enforce `npm run release:tag` |
 | KG Foundation Part A ✅ | XS | `proposal_source:` linter warn on active plans missing the field |
 | KG Foundation Part B ✅ | XS | `related_to:` linter warn on approved proposals with empty links |

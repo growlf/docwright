@@ -132,7 +132,7 @@ function walkDeps(candidates: string[], repoRoot: string): string[] {
     const resolved = path.join(repoRoot, resolvePath(c));
     const fm = readFrontmatter(resolved);
     if (!fm) continue;
-    for (const field of ['depends_on', 'blocks', 'related_to']) {
+    for (const field of ['depends_on']) {
       const links = Array.isArray(fm[field]) ? fm[field] : (fm[field] ? [fm[field]] : []);
       for (const link of links) {
         if (link && !seen.has(link)) queue.push(link);
