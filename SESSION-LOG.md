@@ -515,3 +515,18 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] `opencode.jsonc` model field removed — model configured via `opencode providers` CLI, not hardcoded
 
 **Session note:** *(no separate note — work captured in commit bf7ceea)*
+
+---
+
+## Session: 2026-06-15 — Session setup, next-session context, AI shutdown
+
+**Focus:** Project state review, next-session handoff, AI services shutdown
+
+**Completed:**
+- [x] Reviewed project state — no active plans, 21 pending proposals
+- [x] Answered questions about last Claude and OpenCode sessions
+- [x] Set next-session focus: Policy Atom Framework Step 1 + RLM follow-up
+- [x] Shut down all local LLM/AI services (ollama-native, Docker AI containers)
+- [x] Documented next-session start commands
+
+**Session note:** `docs/session-notes/session_note_202606152209.md`

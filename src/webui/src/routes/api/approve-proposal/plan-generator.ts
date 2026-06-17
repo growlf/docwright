@@ -23,7 +23,13 @@ interface PlanSections {
   riskAssessment: string;
 }
 
-/** Create a session and send one prompt; return the model's text response. */
+/**
+ * Create a session, send one prompt, poll until the assistant responds.
+ *
+ * The OpenCode message POST returns an SSE stream — we can't parse it as JSON.
+ * Instead we POST the message, then poll GET /session/{id}/message until the
+ * assistant's response appears (identified by having more messages than we sent).
+ */
 async function callOpenCode(
   opencodeUrl: string,
   dirParam: string,
@@ -37,6 +43,7 @@ async function callOpenCode(
       : {};
   })() : {};
 
+  // Create session
   const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -47,15 +54,40 @@ async function callOpenCode(
   const sessionId: string = sess?.id ?? sess?.sessionID;
   if (!sessionId) throw new Error('no session id');
 
+  // Send message (POST returns SSE stream — we don't read the body)
   const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
   });
-  if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);
-  const data = await msgRes.json();
-  const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
-  return parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+  if (!msgRes.ok) throw new Error(`Message send failed: ${msgRes.status}`);
+  // Consume and discard the streaming response body so the connection closes
+  await msgRes.body?.cancel();
+
+  // Poll GET /session/{id}/message until the assistant replies (up to 120s)
+  const POLL_INTERVAL_MS = 3000;
+  const MAX_POLLS = 40;
+  for (let i = 0; i < MAX_POLLS; i++) {
+    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+    const histRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`);
+    if (!histRes.ok) continue;
+    const messages: Array<{ role?: string; parts?: Array<{ type: string; text?: string }> }> =
+      await histRes.json();
+
+    // Look for a message with assistant text that isn't just our prompt
+    for (const msg of messages) {
+      if (!msg.parts) continue;
+      const texts = msg.parts
+        .filter(p => p.type === 'text' && p.text && p.text.length > 10)
+        .map(p => p.text ?? '');
+      // Skip messages that are just our prompt
+      if (texts.some(t => t !== prompt && t.length > 20)) {
+        const combined = texts.filter(t => t !== prompt).join('');
+        if (combined.length > 10) return combined;
+      }
+    }
+  }
+  throw new Error(`no assistant response after ${MAX_POLLS} polls`);
 }
 
 /** ai_category: classification — extract structure from proposal */

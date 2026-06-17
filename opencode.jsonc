@@ -1,55 +1,17 @@
 {
-  "$schema": "https://opencode.ai/config.json",
-  // Model is NOT set here — configure via: opencode providers
-  // This avoids hardcoding a model that may not exist on every deployment.
-  "permission": {
-    "edit": "ask",
-    "write": "ask",
-    "bash": "ask"
-  },
-  "skills": {
-    "paths": [
-      ".opencode/skills"
-    ]
-  },
   "mcp": {
     "dw-mcp": {
       "type": "local",
       "command": [
         "node",
-        "dist/mcp/server.js",
+        "/home/netyeti/Projects/DocWright/dist/mcp/server.js",
         "--mode",
         "vault"
       ],
       "environment": {
-        "DOCWRIGHT_VAULT_ROOT": "${PWD}"
+        "DOCWRIGHT_VAULT_ROOT": "/home/netyeti/Projects/DocWright"
       },
       "enabled": true
-    }
-  },
-  "instructions": [
-    "AGENTS.md",
-    "docs/decisions-ledger.md",
-    "research/INDEX.md",
-    ".opencode/rules/commit-format.md",
-    ".opencode/rules/frontmatter-validate.md",
-    ".opencode/rules/no-plaintext-creds.md",
-    ".opencode/rules/no-secrets.md",
-    ".opencode/rules/no-work-before-approval.md",
-    ".opencode/rules/hook-failure-feedback.md"
-  ],
-  "mode": {
-    "design": {
-      "mode": "primary",
-      "description": "Plan mode — can edit plans, proposals, docs, and profile definitions",
-      "color": "#8B5CF6",
-      "permission": {
-        "edit": "allow",
-        "write": "allow",
-        "bash": "ask",
-        "read": "allow"
-      },
-      "instructions": "You are in design mode — a hybrid between plan and build. Your primary role is to analyze, plan, and propose like plan mode, but you are permitted to make edits to plan files (plans/*.md), proposal files (proposals/*.md), profile definitions (.docworkbench/*/), and documentation (docs/*.md). For other files, operate in a planning-only capacity and do not make direct edits. Always think before acting and explain your reasoning.\n\nLIFECYCLE ENFORCEMENT — lifecycle state transitions MUST use the MCP server's transition_to_* tools, not direct file edits. Never set approved: true on any proposal — only humans do that. The pre-commit hook will reject commits that violate lifecycle rules."
     }
   }
 }

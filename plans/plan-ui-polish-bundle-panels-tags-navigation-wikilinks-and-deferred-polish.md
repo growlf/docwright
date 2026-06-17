@@ -27,6 +27,7 @@ gate_note:      # Optional reviewer note
 gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
 phase: 4
+consumed_by: plans/plan-ai-task-category-taxonomy-route-atoms-and-plan-steps-to-the-right-model-at-authorship-time.md
 ---
 
 # Plan: UI Polish Bundle — Panels, Tags, Navigation, Wikilinks, and Deferred Polish
