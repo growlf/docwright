@@ -10,6 +10,7 @@ mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
+phase: 5
 _path: plans/formalize-step-counter-sync.md
 ---
 # Formalize validation and auto-sync for step counters

@@ -11,15 +11,15 @@ mode: guided
 assigned_to: netyeti
 related_to:
   - plans/completed/lifecycle-gates-extension-bundle.md
-  - plans/phase-3-profile-acl-ai.md
+  - plans/phase-4-profile-acl-ai.md
 depends_on:
   - plans/completed/lifecycle-gates-extension-bundle.md
-  - plans/phase-3-profile-acl-ai.md
+  - plans/phase-4-profile-acl-ai.md
 blocks: []
 tests_defined: true
 total_steps: 5
 completed_steps: 0
-phase: 5
+phase: 4
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log

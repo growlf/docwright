@@ -11,6 +11,7 @@ scenario_synthesis: Contribution pipeline and friction log; MCP tools, structure
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
+phase: 5
 _path: plans/sub-plan-contribution-pipeline.md
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log

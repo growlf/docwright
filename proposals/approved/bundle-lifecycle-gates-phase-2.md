@@ -22,7 +22,7 @@ absorbs:
   - proposals/governance-audit-log.md
 depends_on:
   - plans/completed/lifecycle-gates-extension-bundle.md
-  - plans/phase-3-profile-acl-ai.md
+  - plans/phase-4-profile-acl-ai.md
 _path: proposals/bundle-lifecycle-gates-phase-2.md
 consumed_by: plans/bundle-lifecycle-gates-phase-2.md
 ---

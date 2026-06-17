@@ -17,10 +17,12 @@ estimated_effort: L
 approved: false
 assigned_to: ""
 related_to:
+  - proposals/sub-plan-vault-write-api.md
+  - proposals/sub-plan-vault-document-index.md
   - plans/plan-ui-lifecycle-graph-view.md
   - proposals/deferred-rlm-python-microservice.md
   - research/rlm-recursive-language-models.md
-phase: 5
+phase: 3
 ---
 
 ## Problem

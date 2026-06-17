@@ -11,15 +11,16 @@ mode: guided
 assigned_to: ["NetYeti"]
 related_to:
   - proposals/gantt-view-dependencies.md
-  - plans/phase-3-profile-acl-ai.md
+  - plans/phase-4-profile-acl-ai.md
   - plans/completed/collation.md
+  - proposals/knowledge-graph-cross-document-idea-linkage.md
 depends_on: []
 blocks: []
 template_version: "1.0"
 tests_defined: true
 total_steps: 7
 completed_steps: 0
-phase: 4
+phase: 5
 ---
 
 # Plan: UI — Lifecycle Graph View

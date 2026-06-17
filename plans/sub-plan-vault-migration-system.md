@@ -17,6 +17,7 @@ assigned_to: NetYeti
 parent_plan: phase-vault-portability-pilot.md
 parent_deliverable: 5
 tests_defined: true
+phase: 3
 _path: plans/sub-plan-vault-migration-system.md
 total_steps: 3
 completed_steps: 3
