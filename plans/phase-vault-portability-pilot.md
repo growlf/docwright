@@ -24,6 +24,7 @@ total_steps: 11
 completed_steps: 6
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
 _path: plans/phase-vault-portability-pilot.md
+consumed_by: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 # Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
 

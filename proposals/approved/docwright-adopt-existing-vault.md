@@ -10,13 +10,14 @@ tags:
   - existing-vault
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: NetYeti
 related_to:
   - proposals/approved/sub-plan-docwright-init-scaffold.md
   - plans/phase-vault-portability-pilot.md
-_path: proposals/docwright-adopt-existing-vault.md
+_path: proposals/approved/docwright-adopt-existing-vault.md
+consumed_by: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 ## Problem
 
