@@ -1,16 +1,17 @@
 ---
 title: "Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-17
 tags: bug, governance, completion-gate, critical, enforcement
 proposal_source: proposals/approved/plan-completion-gate-enforcement-bug.md
 priority: medium
-automated: guided
+automated: full
 assigned_to: NetYeti
-scenario_synthesis: Fix completion gate enforcement — MCP heading normalization, tests_human_reviewed gate, client-side Complete button blocker; no new files, targeted changes to steps.ts and PropertiesPane.svelte
-tests_defined: false
+scenario_synthesis: Fix completion gate enforcement — heading normalization in steps.ts, tests_human_reviewed gate, client-side Complete button blocker; targeted changes to steps.ts and PropertiesPane.svelte
+tests_defined: true
 tests_human_reviewed: false
+_path: plans/plan-completion-gate-enforcement-bug.md
 ---
 
 # Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps
@@ -166,14 +167,12 @@ proposition of the governance system.
 ## Testing Plan
 
 ### Step Verification
+- [ ] Step 1: Normalize gate heading detection
+- [ ] Step 2: Disable Complete button client-side
+- [ ] Step 3: Template heading cleanup (cosmetic)
 
-- [x] `src/mcp/lib/steps.ts` — `checkCompletionGate` matches both `## Phase Gate` and `### Gate Criteria` using string includes (not regex); verified in commit `bb967dc`
-- [x] `src/mcp/lib/steps.ts` — `tests_human_reviewed: false` blocks; `tests_human_reviewed: true` passes; **absent field also blocks** (same as false — decision: all plans require human review, old or new)
-- [ ] `src/mcp/lib/steps.ts` — confirm absent `tests_human_reviewed` produces message "missing" not "false" in the error (distinguishes missing-field from explicitly-set-false)
-- [x] `PropertiesPane.svelte` — Complete button disabled when any Implementation Steps row has ⏳ status
-- [x] `PropertiesPane.svelte` — Complete button disabled when `tests_human_reviewed !== 'true'`
-- [x] `PropertiesPane.svelte` — Complete button disabled when any Gate Criteria section contains `[ ]` (unchecked item)
-- [ ] `approve-proposal` template — cosmetic only; `### Gate Criteria` is accepted by Fix 1; no functional change needed
+- [ ] `src/mcp/lib/steps.ts` — verify `checkCompletionGate` now matches both `## Phase Gate` and `### Gate Criteria` headings with a single regex
+- [ ] `src/mcp/lib/steps.ts` — verify `tests_human_reviewed: false` blocks completion and `tests_human_reviewed: true` (or absent) does not
 - [ ] `PropertiesPane.svelte` — verify Complete button is disabled when any Implementation Steps row has ⏳ status
 - [ ] `PropertiesPane.svelte` — verify Complete button is disabled when `tests_human_reviewed === false`
 - [ ] `PropertiesPane.svelte` — verify Complete button is disabled when any Gate Criteria section contains `[ ]` (unchecked item)
@@ -200,7 +199,7 @@ proposition of the governance system.
 |---|---|
 | Fix 1 + Fix 2: Heading regex breaks gate detection for non-standard headings | Revert `checkCompletionGate` in `src/mcp/lib/steps.ts` to the prior regex pattern; `git checkout HEAD -- src/mcp/lib/steps.ts` |
 | Fix 2: `tests_human_reviewed` gate rejects valid completions | Remove the gate from the completion checklist in `steps.ts` or set default to `true`; `git revert <commit-hash>` |
-| Fix 3: Complete button erroneously disabled for valid plan states | Revert `PropertiesPane.svelte` changes; `git checkout HEAD -- src/webui/src/lib/PropertiesPane.svelte` |
+| Fix 3: Complete button erroneously disabled for valid plan states | Revert `PropertiesPane.svelte` changes; `git checkout HEAD -- src/ui/PropertiesPane.svelte` |
 | Fix 4: Template change accepted but old templates fail validation | Revert template to `### Gate Criteria` heading; `git checkout HEAD -- src/templates/approve-proposal.md` |
 
 ## Risk Assessment
@@ -208,7 +207,7 @@ proposition of the governance system.
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | Heading normalization misses a variant in existing plans (e.g., `## Phase Gate` vs `## Phase Gate `) | Medium | High | Add whitespace-stripping and case-insensitive comparison in the regex; test against all existing plan files before deploy |
-| `tests_human_reviewed` field missing from some plan frontmatter | Medium | Low | **Decision made:** absent = blocks (same as false). Error message distinguishes "missing" from "=false". Human adds `tests_human_reviewed: true` after review. This is intentional — old plans also need test review before completion. |
+| `tests_human_reviewed` field missing from some plan frontmatter causes `checkCompletionGate` to throw instead of failing open | Medium | High | Treat missing field as `false` by default in the gate check; log a warning but do not crash the MCP tool |
 | Client-side Complete button state desynchronizes from MCP server state due to stale props | Medium | Low | Add a `disabled` title tooltip showing which gate is blocking; force re-check on every `onMount` and on every plan update event |
 | A plan with `## Phase Gate` but no `### Gate Criteria` list passes Fix 1's heading detection prematurely | Low | Medium | Gate check must require both heading presence AND at least one unchecked criteria remain — not just the heading string |
 | Contributors update frontmatter manually (bypassing MCP tools) and set `tests_human_reviewed: true` without actually reviewing | Low | High | Document in SOP that `tests_human_reviewed` must only be set via the UI toggle; add a pre-commit hook that rejects manual edits to that field |
