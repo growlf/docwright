@@ -104,22 +104,35 @@ export async function runStepSession(
 
       events.onLog('Sending prompt to AI…\n');
 
-      const msgRes = await fetch(
-        `${config.opencodeUrl}/session/${sessionId}/message?${dirParam}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
-          signal: abortCtrl.signal,
-        },
-      );
-      if (!msgRes.ok) {
-        const friendly = msgRes.status === 500
+      // Heartbeat: emit a tick every 5s while waiting so the Execute panel
+      // shows activity and humans don't assume the executor is frozen.
+      let waitSecs = 0;
+      const heartbeat = setInterval(() => {
+        waitSecs += 5;
+        events.onLog(`⏳ BigPickle thinking… ${waitSecs}s\n`);
+      }, 5000);
+
+      let msgRes: Response;
+      try {
+        msgRes = await fetch(
+          `${config.opencodeUrl}/session/${sessionId}/message?${dirParam}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
+            signal: abortCtrl.signal,
+          },
+        );
+      } finally {
+        clearInterval(heartbeat);
+      }
+      if (!msgRes!.ok) {
+        const friendly = msgRes!.status === 500
           ? 'AI unavailable — model backend not responding. Check that ollama/Olla is running.'
-          : `Message failed: ${msgRes.status}`;
+          : `Message failed: ${msgRes!.status}`;
         throw new Error(friendly);
       }
-      const data = await msgRes.json();
+      const data = await msgRes!.json();
       const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
       const fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
 
