@@ -11,8 +11,13 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   : path.resolve(process.cwd(), '../..');
 
 const OPENCODE_URL = process.env.OPENCODE_URL;
-const STEP_TIMEOUT = parseInt(process.env.DOCWRIGHT_EXECUTOR_TIMEOUT_SECONDS || '300', 10) * 1000;
-const MAX_RETRIES = parseInt(process.env.DOCWRIGHT_EXECUTOR_MAX_RETRIES || '1', 10);
+// Read at request time so .env changes take effect without a server restart
+function getStepTimeout(): number {
+  return parseInt(process.env.DOCWRIGHT_EXECUTOR_TIMEOUT_SECONDS || '900', 10) * 1000;
+}
+function getMaxRetries(): number {
+  return parseInt(process.env.DOCWRIGHT_EXECUTOR_MAX_RETRIES || '0', 10);
+}
 
 function readProjectModel(): string | undefined {
   try {
@@ -56,8 +61,8 @@ export async function POST({ request }) {
   const sessionConfig: SessionConfig = {
     opencodeUrl: OPENCODE_URL,
     repoRoot: REPO_ROOT,
-    stepTimeout: STEP_TIMEOUT,
-    maxRetries: MAX_RETRIES,
+    stepTimeout: getStepTimeout(),
+    maxRetries: getMaxRetries(),
     model: readProjectModel(),
   };
 

@@ -1,5 +1,5 @@
 ---
-title: "AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time"
+title: AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time
 author: NetYeti
 author-role: contributor
 created: 2026-06-14
@@ -13,9 +13,9 @@ tags:
   - olla
   - phase-4
 complexity: medium
-approved: false
+approved: true
 priority: high
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
@@ -24,6 +24,8 @@ related_to:
   - docs/profile-contribution-architecture.md
 depends_on: []
 blocks: []
+_path: proposals/ai-task-category-taxonomy.md
+consumed_by: plans/ai-task-category-taxonomy.md
 ---
 
 ## What Is Already Implemented
@@ -296,3 +298,12 @@ The TypeScript type extension (phase 1) is the new blocking dependency — it mu
 - [[docs/policy-atom-hooks.md]] — `judgment_dispatch_hook` contract and LiteLLM extension path
 - [[docs/ai-inference-routing-research.md]] — prior routing research and Olla stack context
 - [[docs/profile-contribution-architecture.md]] — profile/module design that benefits from per-profile category defaults
+
+
+*(AI improvement timeout — showing original body)*
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-17 | AI-improved via Improve | NetYeti |
