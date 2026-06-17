@@ -7,19 +7,31 @@
  *   (a) atom equivalence tests pass
  *   (b) the flag has been enabled in CI for at least one full run
  *
+ * Policies directory resolution (critical for Step 4 multi-vault):
+ *   DOCWRIGHT_VAULT_ROOT/policies  — the vault being managed (primary)
+ *   DOCWRIGHT_PATH/policies        — fallback (DocWright's own policies)
+ *   process.cwd()/policies         — last resort
+ *
+ * This ensures the MCP server handling a secondary vault checks THAT vault's
+ * atoms, not DocWright's own. For DocWright's own repo where
+ * DOCWRIGHT_VAULT_ROOT === DOCWRIGHT_PATH the result is identical.
+ *
  * See docs/policy-atom-scope-routing.md for the tool→scope map.
  */
 import * as path from 'node:path';
-import * as fs from 'node:fs';
 import { buildIndex } from '../../policy-atoms-core/index-builder';
 import { route } from '../../policy-atoms-core/router';
 import { resolve } from '../../policy-atoms-core/resolver';
-import { extractFrontmatterField } from '../lib/frontmatter';
+import { parseAtomYaml } from '../../policy-atoms-core/parse-yaml';
 import { logTransition } from '../lib/audit';
 
-const POLICIES_DIR = path.resolve(process.env.DOCWRIGHT_PATH ?? process.cwd(), 'policies');
+// Resolve policies dir at module load time from the correct vault root.
+const POLICIES_DIR = path.resolve(
+  process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_PATH ?? process.cwd(),
+  'policies',
+);
 
-// Cache the synopsis index for the process lifetime (rebuilt on first call)
+// Synopsis index cache — one per process (one process = one vault in DocWright's model).
 let _indexCache: ReturnType<typeof buildIndex>['index'] | null = null;
 
 function getIndex() {
@@ -56,17 +68,11 @@ export async function atomRoutingCheck(
       logTransition('ATOM_ROUTING_ERROR', `resolve errors: ${resolveErrors.map(e => e.error).join('; ')}`);
     }
 
-    // Parse frontmatter from content for check context
+    // Extract frontmatter using the shared parser (handles arrays, booleans, numbers)
     const fm: Record<string, unknown> = {};
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (fmMatch) {
-      for (const line of fmMatch[1].split('\n')) {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx < 0) continue;
-        const key = line.slice(0, colonIdx).trim();
-        const val = line.slice(colonIdx + 1).trim().replace(/^['"]|['"]$/g, '');
-        fm[key] = val;
-      }
+      Object.assign(fm, parseAtomYaml(fmMatch[1]));
     }
 
     const vaultRoot = process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_ROOT ?? process.cwd();
@@ -77,7 +83,6 @@ export async function atomRoutingCheck(
       try {
         const result = await atom.check(checkCtx);
         if (!result.pass) {
-          // Log divergence — atom flagged something the old path didn't block
           logTransition(
             'ATOM_ROUTING_DIVERGENCE',
             `[${atom.frontmatter.id}] scope=${actionScope} file=${filePath}: ${result.message}`,
@@ -88,7 +93,7 @@ export async function atomRoutingCheck(
       }
     }
   } catch (e) {
-    // Never let atom routing errors surface to the caller — old path is authoritative
+    // Never surface atom routing errors to the caller — old path is authoritative.
     logTransition('ATOM_ROUTING_ERROR', `atomRoutingCheck failed: ${e}`);
   }
 }

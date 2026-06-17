@@ -52,4 +52,8 @@ for (const dir of atomDirs) {
 }
 
 console.log(`\nbuild:atoms — ${built} compiled, ${skipped} skipped (no check.ts), ${errors.length} failed`);
+if (built > 0) {
+  console.log('  ℹ  check.js files are intentionally committed (adopted vaults have no build step).');
+  console.log('     Stage and commit the updated check.js files after running build:atoms.');
+}
 if (errors.length > 0) process.exit(1);
