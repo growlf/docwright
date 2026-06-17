@@ -1,6 +1,6 @@
 ---
 title: "Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps"
-status: in-progress
+status: approved
 author: NetYeti
 created: 2026-06-17
 tags: bug, governance, completion-gate, critical, enforcement
