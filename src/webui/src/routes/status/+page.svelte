@@ -177,6 +177,7 @@
     <div class="view-toggle">
       <button class="view-btn" class:active={viewMode === 'list'}   onclick={() => setView('list')}   title="List view">≡ List</button>
       <button class="view-btn" class:active={viewMode === 'funnel'} onclick={() => setView('funnel')} title="Funnel view">⊙ Funnel</button>
+      <a class="view-btn" href="/audit" title="Audit log">📊 Audit</a>
     </div>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
   </div>
