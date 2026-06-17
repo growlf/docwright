@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { showExecutionPanel, executingPlanName } from './pane';
+  import { showExecutionPanel, executingPlanName, executorActive, executorWaiting, executorDone } from './pane';
 
   interface Step {
     stepNumber: number;
@@ -29,12 +29,15 @@
 
   async function connect() {
     if (!$executingPlanName) return;
-    
+
     error = null;
     isDone = false;
     waitingForUser = null;
     status = 'Starting executor…';
     logs = [];
+    executorActive.set(true);
+    executorWaiting.set(false);
+    executorDone.set(false);
 
     abortController = new AbortController();
 
@@ -86,19 +89,28 @@
           } else if (event === 'waiting_for_user') {
             waitingForUser = data.message;
             currentSessionId = data.sessionId;
+            executorWaiting.set(true);
           } else if (event === 'error') {
             error = data.message;
+            executorActive.set(false);
+            executorWaiting.set(false);
             break;
           } else if (event === 'done') {
             status = data.message || 'Execution complete';
             isDone = true;
+            executorActive.set(false);
+            executorWaiting.set(false);
+            executorDone.set(true);
+            setTimeout(() => executorDone.set(false), 6000);
           }
         }
         if (error) break;
       }
     } catch (e: any) {
-      if (e.name === 'AbortError') return;
+      if (e.name === 'AbortError') { executorActive.set(false); executorWaiting.set(false); return; }
       error = e.message || 'Connection lost';
+      executorActive.set(false);
+      executorWaiting.set(false);
     }
   }
 
@@ -109,6 +121,7 @@
     userResponse = '';
     const prompt = waitingForUser;
     waitingForUser = null;
+    executorWaiting.set(false);
     
     logs = [...logs, `\n> HUMAN: ${msg}\n`];
 
@@ -134,6 +147,8 @@
 
   onDestroy(() => {
     abortController?.abort();
+    executorActive.set(false);
+    executorWaiting.set(false);
   });
 
   function close() {

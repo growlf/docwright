@@ -9,7 +9,7 @@
 import type { ImprovePhase } from '$lib/pane';
 import {
   showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
-  showExecutionPanel, executingPlanName
+  showExecutionPanel, executingPlanName, executorActive, executorWaiting, executorDone
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
   import MultiReviewPanel from '$lib/MultiReviewPanel.svelte';
@@ -650,6 +650,19 @@ import {
       {/if}
     </div>
     <!-- AI model picker -->
+    {#if $executorWaiting}
+      <button class="exec-pill exec-pill-waiting" onclick={() => { showExecutionPanel.set(true); rightTab = 'execute'; showRightPanel = true; }}
+        title="Executor waiting for your input — click to open">
+        ⚠ Input required: {$executingPlanName}
+      </button>
+    {:else if $executorActive}
+      <button class="exec-pill exec-pill-running" onclick={() => { showExecutionPanel.set(true); rightTab = 'execute'; showRightPanel = true; }}
+        title="Executor running — click to open">
+        <span class="exec-pulse"></span>⚡ Running: {$executingPlanName}
+      </button>
+    {:else if $executorDone}
+      <span class="exec-pill exec-pill-done">✓ Done: {$executingPlanName}</span>
+    {/if}
     <div class="model-picker-wrap" onclick={loadAiModels}>
       {#if aiModels.length === 0}
         <button class="model-btn" title="Select AI model" onclick={loadAiModels}>⚙ AI</button>
@@ -1121,3 +1134,47 @@ import {
 </style>
 
 <!-- Theme variables live in app.html. JS sets data-theme on <html>. -->
+<style>
+  /* Executor presence indicator — global toolbar pill */
+  .exec-pill {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 10px; white-space: nowrap; max-width: 240px;
+    overflow: hidden; text-overflow: ellipsis; cursor: default;
+    border: 1px solid transparent;
+  }
+  .exec-pill-running {
+    background: #0d2040; border-color: #2b5b84; color: #58a6ff; cursor: pointer;
+  }
+  .exec-pill-running:hover { background: #1a3a5a; }
+  .exec-pill-waiting {
+    background: #2a1800; border-color: #b87800; color: #f59e0b; cursor: pointer;
+    animation: pill-pulse-amber 1.2s ease-in-out infinite;
+  }
+  .exec-pill-waiting:hover { background: #3a2200; }
+  .exec-pill-done { background: #0a2010; border-color: #2a6a3a; color: #4caf50; }
+
+  .exec-pulse {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #58a6ff; flex-shrink: 0;
+    animation: pill-pulse-blue 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pill-pulse-blue {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+  @keyframes pill-pulse-amber {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+    50%       { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+  }
+
+  :global(html[data-theme="light"]) {
+    .exec-pill-running { background: #ddeeff; border-color: #aaccee; color: #2a6090; }
+    .exec-pill-running:hover { background: #cce0ff; }
+    .exec-pill-waiting { background: #fff8e0; border-color: #e8c060; color: #7a5000; }
+    .exec-pill-waiting:hover { background: #fff0c0; }
+    .exec-pill-done { background: #e8f5e8; border-color: #8ac88a; color: #2a6a2a; }
+    .exec-pulse { background: #2a6090; }
+  }
+</style>

@@ -39,7 +39,13 @@ export const planReviewBodyFingerprint = writable('');
 
 /** Plan execution panel state */
 export const showExecutionPanel = writable(false);
-export const executingPlanName = writable('');
+export const executingPlanName  = writable('');
+/** Executor running signal — true while executor is actively executing steps */
+export const executorActive  = writable(false);
+/** Executor waiting signal — true when executor is blocked waiting for human input */
+export const executorWaiting = writable(false);
+/** Executor done signal — true briefly after execution completes (auto-clears after 6s) */
+export const executorDone    = writable(false);
 
 /** Toggle to Multi-Review panel instead of ChatPanel */
 export const showMultiReview = writable(false);
