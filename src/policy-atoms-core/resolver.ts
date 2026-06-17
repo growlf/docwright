@@ -6,7 +6,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Atom, AtomFrontmatter, CheckFunction, AiCategory } from './schema.js';
+import { Atom, AtomFrontmatter, AtomOverride, CheckFunction, AiCategory, CheckContext } from './schema.js';
 import { parseAtomYaml } from './parse-yaml.js';
 
 export interface ResolverOptions {
@@ -25,8 +25,12 @@ export interface ResolveResult {
 /**
  * org_source_hook — Returns an org-level override for the atom if one exists.
  * Stub: always returns null. Real implementation supplied by org-bundle tier.
+ *
+ * Returns AtomOverride (a restricted subset of AtomFrontmatter) — orgs can
+ * adjust scope, synopsis, version, distributable, and tags, but cannot change
+ * an atom's id, kind, or ai_category (those would alter enforcement semantics).
  */
-export type OrgSourceHook = (atomId: string) => Promise<Partial<AtomFrontmatter> | null>;
+export type OrgSourceHook = (atomId: string) => Promise<AtomOverride | null>;
 
 /**
  * judgment_dispatch_hook — Dispatches a judgment atom evaluation to the
@@ -110,4 +114,78 @@ export async function resolve(
   }
 
   return { atoms, errors };
+}
+
+// ---------------------------------------------------------------------------
+// Judgment atom evaluation
+// ---------------------------------------------------------------------------
+
+export interface JudgmentResult {
+  atomId: string;
+  pass: boolean | null;   // null = evaluation inconclusive / model unavailable
+  response: string;       // raw model response
+  modelUsed: string;      // which model ran the evaluation (for cache key)
+  skipped: boolean;       // true if no hook was provided and no default model
+}
+
+/**
+ * Render the judgment prompt for an atom + document context.
+ * This is the payload passed to judgment_dispatch_hook.
+ */
+function renderJudgmentPrompt(atom: Atom, ctx: CheckContext): string {
+  return [
+    `Evaluate the following document against this governance rule:`,
+    ``,
+    `## Rule (atom: ${atom.frontmatter.id})`,
+    atom.frontmatter.synopsis,
+    ``,
+    atom.context ? `## Full Rule Context\n${atom.context}` : '',
+    ``,
+    `## Document (${ctx.filePath})`,
+    ctx.content.slice(0, 3000), // budget: leave room for rule context
+    ``,
+    `## Evaluation`,
+    `Does this document comply with the rule above? Answer with:`,
+    `- PASS — document complies`,
+    `- FAIL: <specific reason> — document violates the rule`,
+    `- INCONCLUSIVE: <reason> — cannot determine without more context`,
+  ].filter(Boolean).join('\n');
+}
+
+/**
+ * Evaluate a judgment atom against a document context.
+ * This is the call site for judgment_dispatch_hook.
+ *
+ * If no hook is provided (or hook returns null), the function returns
+ * skipped: true — the caller is responsible for falling back to a default model
+ * or flagging the atom as unevaluated.
+ *
+ * @param atom    A resolved judgment atom (must have kind: 'judgment')
+ * @param ctx     Document context to evaluate against
+ * @param hook    Optional dispatch hook (from JudgmentDispatchHook — routes to model per ai_category)
+ * @param modelId For cache-key purposes — which model was used
+ */
+export async function evaluateJudgmentAtom(
+  atom: Atom,
+  ctx: CheckContext,
+  hook: JudgmentDispatchHook = nullJudgmentDispatchHook,
+  modelId = 'default',
+): Promise<JudgmentResult> {
+  if (atom.frontmatter.kind !== 'judgment') {
+    throw new Error(`evaluateJudgmentAtom called on non-judgment atom: ${atom.frontmatter.id}`);
+  }
+
+  const prompt = renderJudgmentPrompt(atom, ctx);
+  const response = await hook(atom.frontmatter.ai_category, prompt);
+
+  if (response === null) {
+    return { atomId: atom.frontmatter.id, pass: null, response: '', modelUsed: modelId, skipped: true };
+  }
+
+  const upper = response.trimStart().toUpperCase();
+  const pass = upper.startsWith('PASS') ? true
+             : upper.startsWith('FAIL') ? false
+             : null; // INCONCLUSIVE or unparseable
+
+  return { atomId: atom.frontmatter.id, pass, response, modelUsed: modelId, skipped: false };
 }

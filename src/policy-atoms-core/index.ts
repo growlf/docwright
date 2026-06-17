@@ -9,5 +9,6 @@ export * from './scope.js';
 export * from './index-builder.js';
 export * from './router.js';
 export * from './resolver.js';
+// evaluateJudgmentAtom is exported from resolver.js above
 export * from './sync-checker.js';
 export * from './checks/index.js';

@@ -62,6 +62,26 @@ export interface CheckResult {
 export type CheckFunction = (ctx: CheckContext) => CheckResult | Promise<CheckResult>;
 
 // ---------------------------------------------------------------------------
+// Org-bundle override type
+// ---------------------------------------------------------------------------
+
+/**
+ * Fields an org-source hook is allowed to override on an atom.
+ * Intentionally limited — orgs cannot change an atom's id, kind, or ai_category,
+ * only its enforcement parameters (scope, synopsis, version, distributable, tags).
+ * This prevents an org bundle from silently reclassifying a deterministic check
+ * as judgment (or vice versa), which would change its enforcement semantics.
+ */
+export interface AtomOverride {
+  scope?: string[];
+  synopsis?: string;
+  version?: number;
+  distributable?: boolean;
+  tags?: string[];
+  related?: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Synopsis index types
 // ---------------------------------------------------------------------------
 
