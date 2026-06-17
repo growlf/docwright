@@ -71,6 +71,111 @@ describe('Frontmatter linter', () => {
   });
 });
 
+describe('Knowledge graph foundation — linter rules', () => {
+  it('warns on approved proposal with no related_to entries', () => {
+    const fm = {
+      title: 'T', author: 'A', created: '2026-01-01',
+      approved: true, assigned_to: 'X', created_by: 'A@host',
+      related_to: [],
+    };
+    const results = lintDocument('proposals/approved/t.md', fm, profile);
+    const warn = results.find(r => r.field === 'related_to' && r.severity === 'warn');
+    assert.ok(warn, 'should warn on approved proposal with empty related_to');
+  });
+
+  it('warns on approved proposal missing related_to field entirely', () => {
+    const fm = {
+      title: 'T', author: 'A', created: '2026-01-01',
+      approved: true, assigned_to: 'X', created_by: 'A@host',
+    };
+    const results = lintDocument('proposals/t.md', fm, profile);
+    const warn = results.find(r => r.field === 'related_to' && r.severity === 'warn');
+    assert.ok(warn, 'should warn when related_to is absent on approved proposal');
+  });
+
+  it('does not warn on approved proposal with related_to entries', () => {
+    const fm = {
+      title: 'T', author: 'A', created: '2026-01-01',
+      approved: true, assigned_to: 'X', created_by: 'A@host',
+      related_to: ['plans/some-plan.md'],
+    };
+    const results = lintDocument('proposals/approved/t.md', fm, profile);
+    const warn = results.find(r => r.field === 'related_to');
+    assert.ok(!warn, 'should not warn when related_to is populated');
+  });
+
+  it('does not warn on unapproved proposal with empty related_to', () => {
+    const fm = {
+      title: 'T', author: 'A', created: '2026-01-01',
+      approved: false, created_by: 'A@host',
+      related_to: [],
+    };
+    const results = lintDocument('proposals/t.md', fm, profile);
+    const warn = results.find(r => r.field === 'related_to');
+    assert.ok(!warn, 'should not warn on unapproved proposal');
+  });
+
+  it('warns on active plan with empty proposal_source', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'X', proposal_source: '',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source' && r.severity === 'warn');
+    assert.ok(warn, 'should warn on active plan with empty proposal_source');
+  });
+
+  it('warns on active plan missing proposal_source field', () => {
+    const fm = {
+      title: 'P', status: 'approved', author: 'A', created: '2026-01-01',
+      assigned_to: 'X',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source' && r.severity === 'warn');
+    assert.ok(warn, 'should warn on active plan missing proposal_source');
+  });
+
+  it('does not warn on plan with proposal_source set', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'X', proposal_source: 'proposals/approved/some-proposal.md',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source');
+    assert.ok(!warn, 'should not warn when proposal_source is set');
+  });
+
+  it('does not warn on canceled plan with empty proposal_source', () => {
+    const fm = {
+      title: 'P', status: 'canceled', author: 'A', created: '2026-01-01',
+      assigned_to: 'X', proposal_source: '',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source');
+    assert.ok(!warn, 'should not warn on canceled plan');
+  });
+
+  it('does not warn on completed plan with empty proposal_source', () => {
+    const fm = {
+      title: 'P', status: 'completed', author: 'A', created: '2026-01-01',
+      assigned_to: 'X', proposal_source: '',
+    };
+    const results = lintDocument('plans/completed/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source');
+    assert.ok(!warn, 'should not warn on completed plan');
+  });
+
+  it('does not warn on phase overview plan', () => {
+    const fm = {
+      title: 'Phase 4', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'X',
+    };
+    const results = lintDocument('plans/phase-4-foundations.md', fm, profile);
+    const warn = results.find(r => r.field === 'proposal_source');
+    assert.ok(!warn, 'should not warn on phase overview plan');
+  });
+});
+
 describe('Stale parent detection', () => {
   it('warns when completed sub-plan has stale parent deliverable', () => {
     const fm = {

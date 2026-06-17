@@ -10,7 +10,7 @@ tags:
   - ollama
   - ai-stack
   - infra
-proposal_source: ""
+proposal_source: none
 priority: high
 mode: guided
 assigned_to: NetYeti@phoenix

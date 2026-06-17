@@ -87,6 +87,35 @@ export function lintDocument(
     results.push({ field: 'phase', severity: 'warn', message: 'Active plan has no phase assignment — set phase: in frontmatter' });
   }
 
+  // Approved proposal should have related_to populated (Part B — knowledge graph foundation)
+  if (
+    filePath.startsWith('proposals/') &&
+    fm.approved === true &&
+    (fm.related_to === undefined || fm.related_to === null ||
+      (Array.isArray(fm.related_to) && fm.related_to.length === 0))
+  ) {
+    results.push({
+      field: 'related_to',
+      severity: 'warn',
+      message: "Approved proposal has no related_to entries — link to related proposals, plans, or research; or confirm this is intentionally standalone",
+    });
+  }
+
+  // Active plan should have proposal_source set (Part A — knowledge graph foundation)
+  if (
+    filePath.startsWith('plans/') &&
+    !filePath.startsWith('plans/completed/') &&
+    !/^phase-/.test(basename) &&
+    !['completed', 'canceled'].includes(String(fm.status ?? '')) &&
+    (fm.proposal_source === undefined || fm.proposal_source === null || fm.proposal_source === '')
+  ) {
+    results.push({
+      field: 'proposal_source',
+      severity: 'warn',
+      message: "Active plan has no proposal_source — set to the originating proposal path, or 'none' if created without a proposal",
+    });
+  }
+
   // Suggest parent_plan for Phase 2+ plan documents (non-phase-overview) that lack it
   if (
     filePath.startsWith('plans/') &&

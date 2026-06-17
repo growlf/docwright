@@ -166,9 +166,10 @@ Depends on 4b (profile engine) to know which document types to scan:
 dependency on 5a–5e — can run in parallel with all of Phase 5. Moved from Phase 3
 gate because it doesn't gate anything there.
 
-### 5g — Graph View & Executor Panel Polish
+### 5g — Graph Views & Executor Panel Polish
 
-- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel view, D3.js dependency graph
+- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel/swimlane view (D3.js); share D3 install with KG
+- `knowledge-graph-cross-document-idea-linkage.md` Part C — cross-document idea-linkage graph, 4th status tab; **needs 5b (wikilink index) + KG Parts A+B (done)**
 - `formalize-step-counter-sync.md` — auto-sync step counter validation
 - `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface current phase in status page
 - `executor-panel-live-feedback.md` — step name display + token count
@@ -242,6 +243,8 @@ by non-developer governance users in production.
 | `deferred-frontmatter-validate-assigned-to-strictness.md` | XS | False positive on `assigned_to: ""` for unapproved proposals |
 | `deferred-watcher-presence-indicator.md` | S | Show watcher presence badge during AI sessions |
 | `enforce-release-tag-script.md` | S | Pre-commit hook to block manual `git tag`, enforce `npm run release:tag` |
+| KG Foundation Part A ✅ | XS | `proposal_source:` linter warn on active plans missing the field |
+| KG Foundation Part B ✅ | XS | `related_to:` linter warn on approved proposals with empty links |
 
 ---
 
