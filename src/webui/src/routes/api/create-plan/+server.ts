@@ -215,7 +215,7 @@ export async function POST({ request }) {
       .replace(/\{\{else if[^}]*\}\}/g, '')
       .replace(/\{\{else\}\}/g, '')
       .replace(/\{\{\/if\}\}/g, '')
-      .replace(/\{\{[#\/][^}]*\}\}/g, '')
+      .replace(/\{\{[#/][^}]*\}\}/g, '')
       .replace(/\{\{VALUE:[^}]*\}\}/g, '');
     // Ensure plan status is draft (not proposal) — created plans begin as drafts
     const final = cleaned.replace(/^status:\s*proposal$/m, 'status: draft');

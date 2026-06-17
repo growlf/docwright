@@ -130,7 +130,7 @@ function buildStatus(): string {
       const s = status !== undefined ? String(status).toLowerCase() : '';
       const mark = s === 'false' ? '✗' : s === 'true' ? '✓' : s;
       lines.push(`     ${path.basename(f).padEnd(55)} approved=${mark}`);
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
   lines.push('');
   
@@ -142,7 +142,7 @@ function buildStatus(): string {
       const text = readFile(f);
       const assigned = extractFrontmatterField(text, 'assigned_to') || '—';
       lines.push(`     ${path.basename(f, '.md').padEnd(55)} assigned_to=${assigned}`);
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
   lines.push('');
   
@@ -154,7 +154,7 @@ function buildStatus(): string {
       const text = readFile(f);
       const status = extractFrontmatterField(text, 'status');
       lines.push(`     ${path.basename(f).padEnd(55)} status=${status}`);
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
   lines.push('');
   
@@ -166,7 +166,7 @@ function buildStatus(): string {
       const text = readFile(f);
       const status = extractFrontmatterField(text, 'status');
       lines.push(`     ${path.basename(f).padEnd(55)} status=${status}`);
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
 
   return lines.join('\n');

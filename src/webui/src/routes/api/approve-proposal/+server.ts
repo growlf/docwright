@@ -161,10 +161,10 @@ export async function POST({ request }) {
     let planModel: string | undefined;
     try {
       const ocJson = path.join(REPO_ROOT, 'opencode.json');
-      if (require('node:fs').existsSync(ocJson)) {
-        planModel = JSON.parse(require('node:fs').readFileSync(ocJson, 'utf-8')).model;
+      if (fs.existsSync(ocJson)) {
+        planModel = JSON.parse(fs.readFileSync(ocJson, 'utf-8')).model;
       }
-    } catch { /* use server default */ }
+    } catch (_e) { /* use server default */ }
 
     atomicSections = await generatePlanSections(proposalBody, opencodeUrl, REPO_ROOT, planModel);
   }

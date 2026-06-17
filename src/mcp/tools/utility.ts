@@ -55,7 +55,7 @@ export async function collate(threshold: number = 0.12): Promise<string> {
             tokens: tokenize(fm + '\n' + body), 
             title 
           });
-        } catch {}
+        } catch { /* intentionally empty */ }
       }
     }
     
@@ -109,7 +109,7 @@ export async function runDryRun(): Promise<string> {
         lines.push(`  Assigned to: ${fm['assigned_to']}`);
         lines.push(`  Run: transition_to_approved(name='${path.basename(p, '.md')}')`);
       }
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
 
   const plans = globFiles('plans', '*.md');
@@ -123,7 +123,7 @@ export async function runDryRun(): Promise<string> {
         lines.push(`  Title: ${title}`);
         lines.push(`  Run: transition_to_completed(name='${path.basename(p, '.md')}')`);
       }
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
 
   return lines.join('\n').trimEnd();

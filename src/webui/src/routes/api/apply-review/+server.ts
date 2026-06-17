@@ -139,7 +139,7 @@ export async function POST({ request }) {
     if (hadStepReviews || hadSectionReviews) {
       try {
         await callOlla('Reply with just "ok"', 0);
-      } catch {}
+      } catch { /* intentionally empty */ }
     }
 
     // Improve each step that has review feedback
@@ -158,7 +158,7 @@ export async function POST({ request }) {
           if (improvedAction && improvedAction.length > 5) {
             improvedBody = replaceStepAction(improvedBody, step.number, improvedAction);
           }
-        } catch {}
+        } catch { /* intentionally empty */ }
       }
     }
 
@@ -185,7 +185,7 @@ export async function POST({ request }) {
           if (improvedSection && improvedSection.length > 10) {
             improvedBody = replaceSectionBody(improvedBody, sectionName, improvedSection);
           }
-        } catch {}
+        } catch { /* intentionally empty */ }
       }
     }
 
@@ -214,7 +214,7 @@ export async function POST({ request }) {
             improvedBody += generatedTable;
           }
         }
-      } catch {}
+      } catch { /* intentionally empty */ }
     }
 
     // Phase 4: Holistic structural review — checks for missing steps, duplicates, approach gaps
@@ -244,7 +244,7 @@ export async function POST({ request }) {
         if (structuralNotes && structuralNotes.length > 20) {
           improvedBody += `\n\n## Structural Review\n\n${structuralNotes}\n`;
         }
-      } catch {}
+      } catch { /* intentionally empty */ }
     }
 
     // Append overall assessment as a section if present (deterministic, no AI)
