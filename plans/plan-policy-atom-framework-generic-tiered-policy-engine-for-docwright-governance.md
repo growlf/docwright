@@ -205,7 +205,7 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 | `hook-failure-feedback.md` | `hook-failure-feedback` | judgment | AI preamble only — no MCP wiring | `git-commit`, `session` | ✅ Step 3 | n/a |
 | `one-off-formalization.md` | `one-off-formalization` | judgment | AI preamble only — no MCP wiring | `plan`, `session` | ✅ Step 3 | n/a |
 | `ci-watch-on-tag-push.md` | `ci-watch-on-tag-push` | judgment | AI preamble only — no MCP wiring | `git-commit` | ✅ Step 3 | n/a |
-| 4 | **Manager/project separation** — independent atom sets | Add `<managed-project>/policies/` support: independent atom set per managed project, same engine, no cross-contamination with DocWright's own `policies/`. MCP router must scope queries to the active project's atom set. Verify with a real secondary vault (bms-ai-cluster or DAFO). | ⏳ Pending |
+| 4 | **Manager/project separation** — independent atom sets | Add `<managed-project>/policies/` support: independent atom set per managed project, same engine, no cross-contamination with DocWright's own `policies/`. MCP router must scope queries to the active project's atom set. Verify with a real secondary vault (bms-ai-cluster or DAFO). | ✅ Done |
 | 5 | **Org-bundle tier** — pluggable interface only | Implement the resolver's two pluggable hooks as named, typed, stub interfaces: (1) `org_source_hook(atom_id: string) => Promise<AtomOverride | null>` — returns `null` when unconfigured; (2) `judgment_dispatch_hook(ai_category: string, payload: string) => Promise<string | null>` — returns `null` to fall back to default model. Document hook location, contract, and extension path for LiteLLM integration. Do NOT build transport or trust-anchor. | ⏳ Pending |
 
 ## Testing Plan

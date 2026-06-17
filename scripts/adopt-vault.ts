@@ -387,6 +387,20 @@ function runUpgrade(dest: string, docwrightPath: string, manifest: Manifest) {
   const tempManifest: Manifest = {};
   writeLightweight(dest, path.basename(dest), 'org-operations', docwrightPath, tempManifest);
   copySkillsBridge(dest, docwrightPath, tempManifest);
+  // Seed pilot atoms — ensures vaults adopted before atom seeding receive them on upgrade
+  const atomIds = ['commit-format', 'frontmatter-validate', 'no-work-before-approval'];
+  const atomSeedFiles = ['atom.yaml', 'context.md', 'check.js'];
+  for (const atomId of atomIds) {
+    const srcDir = path.join(docwrightPath, 'policies', atomId);
+    if (!fs.existsSync(srcDir)) continue;
+    fs.mkdirSync(path.join(dest, 'policies', atomId), { recursive: true });
+    for (const f of atomSeedFiles) {
+      const src = path.join(srcDir, f);
+      if (!fs.existsSync(src)) continue;
+      const content = fs.readFileSync(src, 'utf8');
+      writeManaged(dest, `policies/${atomId}/${f}`, content, tempManifest, true);
+    }
+  }
 
   for (const [rel, newHash] of Object.entries(tempManifest)) {
     const abs = path.join(dest, rel);
