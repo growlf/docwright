@@ -1131,10 +1131,7 @@ import {
     .toast-close { color: #888; }
     #content { background: #f5f5f5; color: #1a1a1a; }
   }
-</style>
 
-<!-- Theme variables live in app.html. JS sets data-theme on <html>. -->
-<style>
   /* Executor presence indicator — global toolbar pill */
   .exec-pill {
     display: flex; align-items: center; gap: 5px;
