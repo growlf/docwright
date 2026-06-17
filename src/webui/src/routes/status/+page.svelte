@@ -71,7 +71,7 @@
   }
 
   // Collapsed state per section, persisted in sessionStorage
-  const SECTIONS = ['open-proposals', 'approved-pending', 'active-plans', 'research', 'completed', 'deferred', 'audit'];
+  const SECTIONS = ['active-plans', 'approved-pending', 'open-proposals', 'research', 'deferred', 'completed'];
   function isCollapsed(key: string): boolean {
     if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
     const val = sessionStorage.getItem('status-collapsed-' + key);
@@ -96,7 +96,6 @@
 
   onMount(() => {
     load();
-    if (!collapsed['audit']) loadAudit();
     return fileChanged.subscribe((change) => {
       if (change) load();
     });
@@ -120,13 +119,6 @@
     if (res.ok) load();
   }
 
-  // Audit log state
-  let auditFilter = $state({ doc_path: '', actor: '', actor_type: '', transition_to: '' });
-  let auditEntries = $state<any[]>([]);
-  let auditTotal = $state(0);
-  let auditLoading = $state(false);
-  let auditFindings = $state<any[]>([]);
-  let auditRunning = $state(false);
   let aiPreReviewResults = $state<Record<string, any>>({});
   let aiPreReviewLoading = $state<Record<string, boolean>>({});
 
@@ -139,33 +131,6 @@
       aiPreReviewResults = { ...aiPreReviewResults, [key]: data.result };
     }
     aiPreReviewLoading = { ...aiPreReviewLoading, [key]: false };
-  }
-
-  async function runGateAudit() {
-    auditRunning = true;
-    const res = await fetch('/api/gate-audit');
-    if (res.ok) {
-      const data = await res.json();
-      auditFindings = data.findings;
-    }
-    auditRunning = false;
-  }
-
-  async function loadAudit() {
-    auditLoading = true;
-    const params = new URLSearchParams();
-    if (auditFilter.doc_path) params.set('doc_path', auditFilter.doc_path);
-    if (auditFilter.actor) params.set('actor', auditFilter.actor);
-    if (auditFilter.actor_type) params.set('actor_type', auditFilter.actor_type);
-    if (auditFilter.transition_to) params.set('transition_to', auditFilter.transition_to);
-    params.set('limit', '100');
-    const res = await fetch('/api/audit-query?' + params.toString());
-    if (res.ok) {
-      const data = await res.json();
-      auditEntries = data.entries;
-      auditTotal = data.total;
-    }
-    auditLoading = false;
   }
 
   function statusBadgeClass(status: string): string {
@@ -230,17 +195,15 @@
       />
     {:else}
 
-    <!-- Phase gate review banner — shown when a gated phase requires review of remaining phases -->
+    <!-- Phase gate review banner -->
     {#if data.phaseReview}
     {@const allReviewed = data.phaseReview.plans.every(p => !p.needsReview)}
     {@const nextPhase = data.phaseReview.plans.find(p => p.phase === data.phaseReview!.gatedPhase + 1)}
     <div class="phase-review-banner">
-
       <div class="prb-title-row">
         <span class="prb-icon">🔍</span>
         <span class="prb-title">Phase {data.phaseReview.gatedPhase} complete — review required before Phase {data.phaseReview.gatedPhase + 1} begins</span>
       </div>
-
       <div class="prb-steps">
         <div class="prb-step" class:prb-step-done={allReviewed}>
           <span class="prb-step-num">1</span>
@@ -269,7 +232,6 @@
           </div>
         </div>
       </div>
-
       <table class="prb-table">
         <thead><tr><th>Phase</th><th>Plan</th><th>Last reviewed</th><th></th></tr></thead>
         <tbody>
@@ -279,17 +241,14 @@
               <td class="prb-plan-title">{p.title}</td>
               <td class="prb-date">{p.reviewDate || 'Not yet reviewed'}</td>
               <td class="prb-actions">
-                <button class="prb-open-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>
-                  Open plan →
-                </button>
+                <button class="prb-open-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>Open plan →</button>
                 {#if p.needsReview}
                   {#if !p.canReview}
                     <span class="prb-blocked" title="{p.activeWorkCount} plan{p.activeWorkCount === 1 ? '' : 's'} still open in this phase">
                       ⏳ {p.activeWorkCount} open plan{p.activeWorkCount === 1 ? '' : 's'}
                     </span>
                   {:else}
-                    <button class="prb-confirm-btn"
-                      disabled={phaseReviewBusy[p.path]}
+                    <button class="prb-confirm-btn" disabled={phaseReviewBusy[p.path]}
                       onclick={() => markPhaseReviewed(p.path)}>
                       {phaseReviewBusy[p.path] ? 'Saving…' : '✓ Done reviewing'}
                     </button>
@@ -302,7 +261,6 @@
           {/each}
         </tbody>
       </table>
-
       {#if allReviewed && nextPhase}
         {#if nextPhase.status === 'in-progress'}
           <div class="prb-activate-cta">
@@ -326,48 +284,6 @@
         </div>
       {/if}
     </div>
-    {/if}
-
-    <!-- Phase/roadmap card -->
-    {#if data.phasePlans.length > 0}
-    <div class="phase-card">
-      <div class="phase-card-header">
-        <span class="phase-label">Phase {data.currentPhase}</span>
-        {#if data.version}<span class="phase-version">v{data.version}</span>{/if}
-        <span class="phase-stat">{data.plans.completed_count} plans completed</span>
-      </div>
-      <div class="phase-plan-list">
-        {#each data.phasePlans as pp}
-          <a class="phase-plan-item status-{pp.status}" href="/{pp.path.replace(/\.md$/, '')}">
-            <span class="phase-plan-status-dot"></span>
-            <span class="phase-plan-title">{pp.title}</span>
-            <span class="phase-plan-badge">{pp.status}</span>
-          </a>
-        {/each}
-      </div>
-    </div>
-    {/if}
-
-    <!-- Overdue Reviews (Phase 1b — schedule triggers) -->
-    {#if data.gates.overdue.length > 0}
-    <section class="section gates-section">
-      <div class="section-header overdue-header">
-        <span class="section-title">⏰ Overdue Reviews</span>
-        <span class="badge badge-warn">{data.gates.overdue.length}</span>
-      </div>
-      <div class="gates-list">
-        {#each data.gates.overdue as g}
-          <div class="gate-item" onclick={() => goto('/' + g.path.replace(/\.md$/, ''))}>
-            <div class="gate-title">{g.title}</div>
-            <div class="gate-meta">
-              <span class="gate-badge">{g.gate_id}</span>
-              <span class="gate-reason">Next review: {g.next_review}</span>
-              <span class="gate-reviewer">{g.document_type}</span>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </section>
     {/if}
 
     <!-- Pending Gates -->
@@ -405,20 +321,21 @@
     </section>
     {/if}
 
-    <!-- Waived Gates -->
-    {#if data.gates.waived.length > 0}
+    <!-- Overdue Reviews -->
+    {#if data.gates.overdue.length > 0}
     <section class="section gates-section">
-      <div class="section-header waived-header">
-        <span class="section-title">⚡ Waived Gates (audit)</span>
-        <span class="badge badge-default">{data.gates.waived.length}</span>
+      <div class="section-header overdue-header">
+        <span class="section-title">⏰ Overdue Reviews</span>
+        <span class="badge badge-warn">{data.gates.overdue.length}</span>
       </div>
       <div class="gates-list">
-        {#each data.gates.waived as g}
+        {#each data.gates.overdue as g}
           <div class="gate-item" onclick={() => goto('/' + g.path.replace(/\.md$/, ''))}>
             <div class="gate-title">{g.title}</div>
             <div class="gate-meta">
               <span class="gate-badge">{g.gate_id}</span>
-              <span class="gate-reason">"{(g.note || 'No note')}"</span>
+              <span class="gate-reason">Next review: {g.next_review}</span>
+              <span class="gate-reviewer">{g.document_type}</span>
             </div>
           </div>
         {/each}
@@ -431,6 +348,9 @@
       <button class="section-header" onclick={() => toggleSection('active-plans')}>
         <span class="section-title">Active Plans</span>
         <span class="badge">{data.plans.active.length}</span>
+        {#if data.currentPhase}
+          <span class="phase-hint">Phase {data.currentPhase}{data.version ? ` · v${data.version}` : ''} · {data.plans.completed_count} completed</span>
+        {/if}
         <span class="chevron">{collapsed['active-plans'] ? '▸' : '▾'}</span>
       </button>
       {#if !collapsed['active-plans']}
@@ -467,62 +387,6 @@
         {/if}
       {/if}
     </section>
-
-    <!-- Research -->
-    {#if data.research}
-    <section class="section">
-      <button class="section-header" onclick={() => toggleSection('research')}>
-        <span class="section-title">Research</span>
-        <span class="badge">{data.research.active.length + data.research.recent_conclusions.length}</span>
-        <span class="chevron">{collapsed['research'] ? '▸' : '▾'}</span>
-      </button>
-      {#if !collapsed['research']}
-        {#if data.research.active.length === 0 && data.research.recent_conclusions.length === 0}
-          <div class="empty">No active research</div>
-        {:else}
-          {#if data.research.active.length > 0}
-            <div class="research-sub-head">Active investigations</div>
-            <table class="items-table">
-              <thead><tr><th>Title</th><th>Question</th><th>Created</th></tr></thead>
-              <tbody>
-                {#each data.research.active as r}
-                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
-                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
-                    <td class="research-question">{r.question}</td>
-                    <td class="item-date">{r.created}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          {/if}
-          {#if data.research.recent_conclusions.length > 0}
-            <div class="research-sub-head">Concluded (last 30 days)</div>
-            <table class="items-table">
-              <thead><tr><th>Title</th><th>Conclusion</th><th>Concluded</th></tr></thead>
-              <tbody>
-                {#each data.research.recent_conclusions as r}
-                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
-                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
-                    <td><span class="badge research-conclusion-{r.conclusion}">{r.conclusion}</span></td>
-                    <td class="item-date">{r.created}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          {/if}
-          {#if data.research.no_research_proposals.length > 0}
-            <div class="research-sub-head research-flag">⚠ Investigation skipped ({data.research.no_research_proposals.length})</div>
-            <div class="research-skipped-note">Approved proposals with no linked research doc — visible only, not enforced.</div>
-            <ul class="research-skipped-list">
-              {#each data.research.no_research_proposals as p}
-                <li><button class="link-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>{p.title}</button></li>
-              {/each}
-            </ul>
-          {/if}
-        {/if}
-      {/if}
-    </section>
-    {/if}
 
     <!-- Approved, pending plan -->
     <section class="section">
@@ -579,6 +443,53 @@
       {/if}
     </section>
 
+    <!-- Research -->
+    {#if data.research}
+    <section class="section">
+      <button class="section-header" onclick={() => toggleSection('research')}>
+        <span class="section-title">Research</span>
+        <span class="badge">{data.research.active.length + data.research.recent_conclusions.length}</span>
+        <span class="chevron">{collapsed['research'] ? '▸' : '▾'}</span>
+      </button>
+      {#if !collapsed['research']}
+        {#if data.research.active.length === 0 && data.research.recent_conclusions.length === 0}
+          <div class="empty">No active research</div>
+        {:else}
+          {#if data.research.active.length > 0}
+            <div class="research-sub-head">Active</div>
+            <table class="items-table">
+              <thead><tr><th>Title</th><th>Question</th><th>Created</th></tr></thead>
+              <tbody>
+                {#each data.research.active as r}
+                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
+                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
+                    <td class="research-question">{r.question}</td>
+                    <td class="item-date">{r.created}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+          {#if data.research.recent_conclusions.length > 0}
+            <div class="research-sub-head">Recently concluded</div>
+            <table class="items-table">
+              <thead><tr><th>Title</th><th>Conclusion</th><th>Date</th></tr></thead>
+              <tbody>
+                {#each data.research.recent_conclusions as r}
+                  <tr class="item-row" onclick={() => goto('/' + r.path.replace(/\.md$/, ''))}>
+                    <td class="item-title-cell"><span class="item-title">{r.title}</span></td>
+                    <td><span class="badge research-conclusion-{r.conclusion}">{r.conclusion}</span></td>
+                    <td class="item-date">{r.created}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
+        {/if}
+      {/if}
+    </section>
+    {/if}
+
     <!-- Deferred -->
     {#if data.proposals.deferred.length > 0}
       <section class="section">
@@ -618,82 +529,10 @@
       {/if}
     </section>
 
-    <!-- Audit Log -->
-    <section class="section">
-      <button class="section-header" onclick={() => toggleSection('audit')}>
-        <span class="section-title">Audit Log</span>
-        <span class="badge">{auditTotal}</span>
-        <span class="chevron">{collapsed['audit'] ? '▸' : '▾'}</span>
-      </button>
-      {#if !collapsed['audit']}
-        <div class="audit-controls">
-          <input type="text" placeholder="Filter by doc path…" bind:value={auditFilter.doc_path} class="audit-input" oninput={loadAudit} />
-          <input type="text" placeholder="Filter by actor…" bind:value={auditFilter.actor} class="audit-input" oninput={loadAudit} />
-          <select bind:value={auditFilter.actor_type} class="audit-select" onchange={loadAudit}>
-            <option value="">Any actor type</option>
-            <option value="human">Human</option>
-            <option value="ai">AI</option>
-          </select>
-          <select bind:value={auditFilter.transition_to} class="audit-select" onchange={loadAudit}>
-            <option value="">Any transition</option>
-            <option value="approved">→ approved</option>
-            <option value="in-progress">→ in-progress</option>
-            <option value="completed">→ completed</option>
-            <option value="canceled">→ canceled</option>
-          </select>
-        </div>
-        <div class="audit-toolbar">
-          <button class="act audit-btn" onclick={runGateAudit} disabled={auditRunning}>
-            {auditRunning ? 'Scanning…' : '🔍 Run Gate Audit'}
-          </button>
-          {#if auditFindings.length > 0}
-            <span class="badge badge-warn">{auditFindings.length} findings</span>
-          {/if}
-        </div>
-
-        {#if auditFindings.length > 0}
-        <div class="audit-findings">
-          <div class="audit-findings-header">Gate Compliance Findings</div>
-          {#each auditFindings as f}
-            <div class="audit-finding" onclick={() => goto('/' + f.path.replace(/\.md$/, ''))}>
-              <div class="finding-title">{f.title}</div>
-              <div class="finding-meta">
-                <span class="gate-badge">{f.gate_id}</span>
-                <span>{f.transition_from} → {f.transition_to}</span>
-                <span>Reviewer: {f.expected_reviewer}</span>
-                <span>Status: {f.current_gate_status}</span>
-              </div>
-            </div>
-          {/each}
-        </div>
-        {/if}
-
-        {#if auditLoading}
-          <div class="empty">Loading…</div>
-        {:else if auditEntries.length === 0}
-          <div class="empty">No audit entries match filter</div>
-        {:else}
-          <table class="items-table">
-            <thead><tr><th>Date</th><th>Document</th><th>Transition</th><th>Actor</th><th>Type</th><th>Gate</th></tr></thead>
-            <tbody>
-              {#each auditEntries as e}
-                <tr class="item-row" onclick={() => goto('/' + e.doc_path.replace(/\.md$/, ''))}>
-                  <td class="item-date">{e.ts.slice(0, 10)}</td>
-                  <td class="item-title">{e.doc_path}</td>
-                  <td>{e.transition_from} → {e.transition_to}</td>
-                  <td>{e.actor}</td>
-                  <td><span class="tag">{e.actor_type}</span></td>
-                  <td>{e.gate_id || '—'}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-          {#if auditTotal > auditEntries.length}
-            <div class="empty muted">{auditTotal} total entries — showing {auditEntries.length}</div>
-          {/if}
-        {/if}
-      {/if}
-    </section>
+    <!-- Audit log link -->
+    <div class="audit-link-row">
+      <a href="/audit" class="audit-link">📊 View audit log →</a>
+    </div>
 
     {/if} <!-- end {:else} list view -->
   {/if}
@@ -703,35 +542,6 @@
 
 <style lang="scss">
   @use '../../lib/tokens' as *;
-
-  // ── Phase card ──────────────────────────────────────────────────────────────
-  .phase-card {
-    background: linear-gradient(135deg, #1a1f3a 0%, #111 100%);
-    border: 1px solid #2a3060;
-    border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;
-  }
-  .phase-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .phase-label  { font-size: 14px; font-weight: 700; color: $accent; letter-spacing: 0.3px; }
-  .phase-version { font-size: 11px; color: $muted; font-family: monospace; background: $bg-2; border: 1px solid $border; padding: 1px 6px; border-radius: 4px; }
-  .phase-stat   { font-size: 11px; color: $muted; margin-left: auto; }
-  .phase-plan-list { display: flex; flex-direction: column; gap: 4px; }
-  .phase-plan-item {
-    display: flex; align-items: center; gap: 8px; padding: 4px 6px;
-    border-radius: 4px; text-decoration: none; transition: background 0.1s;
-    &:hover { background: $bg-hover; }
-  }
-  .phase-plan-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .status-in-progress {
-    .phase-plan-status-dot { background: #4caf50; box-shadow: 0 0 4px #4caf5088; }
-    .phase-plan-title { color: $fg; font-weight: 500; }
-    .phase-plan-badge { color: #4caf50; border-color: #4caf5044; }
-  }
-  .status-approved .phase-plan-status-dot { background: #f59e0b; }
-  .status-approved .phase-plan-badge      { color: #f59e0b; border-color: #f59e0b44; }
-  .status-draft .phase-plan-status-dot    { background: $border; }
-  .status-completed .phase-plan-status-dot { background: $muted; }
-  .phase-plan-title { font-size: 12px; color: $fg-dim; flex: 1; }
-  .phase-plan-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; color: $muted; background: $bg-2; border: 1px solid $border; }
 
   // ── Page structure ──────────────────────────────────────────────────────────
   .status-page { padding: 32px; }
@@ -908,7 +718,6 @@
   .gates-section { margin-bottom: 8px; border: 1px solid $amber-bdr; border-radius: 6px; overflow: hidden; }
   .gates-header   { background: #1e1800; }
   .overdue-header { background: #1e0e00; }
-  .waived-header  { background: #1a0e0e; }
   .gates-list { padding: 6px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
   .gate-item {
     padding: 8px 10px; background: $bg-2; border: 1px solid $border; border-radius: 4px; cursor: pointer;
@@ -929,25 +738,17 @@
   .ai-concerns { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
   .ai-concern  { color: $amber; font-size: 10px; }
 
-  // ── Audit log ───────────────────────────────────────────────────────────────
-  .audit-controls { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; background: $bg; border-bottom: 1px solid $border; }
-  .audit-toolbar  { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: $bg; border-bottom: 1px solid $border; }
-  .audit-btn { background: $blue-bg; border: 1px solid $blue-bdr; color: #7ab; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; &:hover { background: $blue-bg; } &:disabled { opacity: 0.5; cursor: default; } }
-  .audit-findings { border-bottom: 1px solid $border; }
-  .audit-findings-header { padding: 6px 16px; font-size: 11px; color: $amber; font-weight: 600; background: #1e1800; }
-  .audit-finding { padding: 8px 16px; cursor: pointer; border-bottom: 1px solid $border; &:hover { background: $bg-hover; } }
-  .finding-title { font-size: 12px; color: $fg; font-weight: 500; margin-bottom: 2px; }
-  .finding-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: $muted; }
-  .audit-input   { @include inline-input; font-size: 11px; padding: 4px 8px; flex: 1; min-width: 120px; border-radius: 4px; &:focus { border-color: $muted; } }
-  .audit-select  { background: $bg-2; border: 1px solid $border; border-radius: 4px; color: $fg-dim; font-size: 11px; padding: 4px 6px; }
+  // ── Phase hint (in Active Plans header) ─────────────────────────────────────
+  .phase-hint { font-size: 10px; color: $muted; font-family: monospace; margin-left: auto; margin-right: 4px; }
+
+  // ── Audit log link ───────────────────────────────────────────────────────────
+  .audit-link-row { padding: 12px 0 4px; text-align: center; }
+  .audit-link { font-size: 11px; color: $muted; text-decoration: none; padding: 4px 12px; border: 1px solid $border; border-radius: 4px; &:hover { color: $blue; border-color: $blue-bdr; } }
 
   // ── Light theme — scoped via :global so Svelte appends the scope hash ────────
   // Pattern: :global(html[data-theme="light"]) .scoped-class compiles to
   //   html[data-theme="light"] .scoped-class.s-hash — beats the base rule.
   :global(html[data-theme="light"]) {
-    .phase-card { background: linear-gradient(135deg, #e8eeff 0%, #f5f5f5 100%); border-color: #c0c8f0; }
-    .phase-label { color: #4a6cf7; }
-    .phase-version { background: #fff; border-color: #d0d0d0; }
     .section { border-color: #d0d0d0; }
     .section-header { background: #e8e8e8; color: #1a1a1a; &:hover { background: #ddd; } }
     .badge { background: #e0e0e0; color: #555; border-color: #ccc; }
@@ -956,20 +757,14 @@
     .item-title { color: #1a1a1a; }
     .view-toggle { background: #e8e8e8; border-color: #ccc; }
     .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d8d8d8; color: #1a1a1a; } }
-    .audit-controls, .audit-toolbar { background: #f0f0f0; border-bottom-color: #d0d0d0; }
-    .audit-btn { background: #ddeeff; border-color: #aaccee; color: #2a6090; &:hover { background: #cce0ff; } }
-    .audit-input, .audit-select { background: #fff; border-color: #ccc; color: #333; }
-    .audit-finding { border-bottom-color: #ebebeb; &:hover { background: #f5f5f5; } }
-    .audit-findings-header { background: #fff8cc; color: #7a6000; }
     .gates-section { border-color: #e8c84a; }
     .gates-header   { background: #fff8cc; }
     .overdue-header { background: #fff0e0; }
-    .waived-header  { background: #ffe8e8; }
     .gate-item { background: #fff; border-color: #d0d0d0; &:hover { background: #f5f5f5; border-color: #bbb; } }
     .gate-title { color: #1a1a1a; }
     .gate-meta { color: #666; }
     .gate-badge { background: #fff8cc; color: #7a6000; border-color: #e8c84a; }
-    .deferred-item { color: #888; &:hover { color: #555; } }
+    .audit-link { color: #888; border-color: #ccc; &:hover { color: #4a6cf7; border-color: #4a6cf7; } }
     .empty, .muted { color: #888; }
   }
 </style>

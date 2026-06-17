@@ -695,6 +695,8 @@ import {
     <button class="act-btn" class:active={leftView === 'git'}
       onclick={() => { leftView = 'git'; showSidebar = true; }}
       title="Git">⎇</button>
+    <a class="act-btn" class:active={$page.url.pathname === '/audit'}
+      href="/audit" title="Audit Log">📊</a>
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
