@@ -42,6 +42,8 @@
     "test": "npm run test:dispatch && npm run test:executor && npm run test:mcp && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration",
     "hook:install": "bash scripts/install-hooks.sh",
     "init": "npx tsx scripts/init.ts",
+    "open": "npx tsx scripts/open-vault.ts",
+    "adopt": "npx tsx scripts/adopt-vault.ts",
     "vault:migrate": "npx tsx scripts/vault-migrate.ts",
     "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
     "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
