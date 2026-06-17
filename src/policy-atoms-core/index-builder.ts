@@ -14,6 +14,7 @@ import {
   validateAtomFrontmatter,
 } from './schema.js';
 import { parseScopeExpr } from './scope.js';
+import { parseAtomYaml } from './parse-yaml.js';
 
 // Rough token estimator: ~4 chars per token (conservative for YAML)
 function estimateTokens(text: string): number {
@@ -38,53 +39,6 @@ export interface BuildIndexResult {
   index: SynopsisIndex;
   errors: Array<{ file: string; error: string }>;
   warnings: Array<{ message: string }>;
-}
-
-/**
- * Parse a YAML-style atom frontmatter from a string.
- * Minimal parser — handles the flat key: value format used in atom.yaml.
- * Does not support nested objects or multi-line values.
- */
-function parseAtomYaml(content: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const lines = content.split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i].trim();
-    if (!line || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx < 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-
-    if (rest === '') {
-      // Check for array value on next lines
-      const arr: string[] = [];
-      i++;
-      while (i < lines.length && lines[i].match(/^\s+-\s+/)) {
-        arr.push(lines[i].replace(/^\s+-\s+/, '').trim().replace(/^['"]|['"]$/g, ''));
-        i++;
-      }
-      result[key] = arr;
-      continue;
-    }
-
-    // Inline array: [a, b, c]
-    if (rest.startsWith('[')) {
-      const inner = rest.replace(/^\[|\]$/g, '');
-      result[key] = inner.split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
-    } else if (rest === 'true') {
-      result[key] = true;
-    } else if (rest === 'false') {
-      result[key] = false;
-    } else if (/^\d+$/.test(rest)) {
-      result[key] = parseInt(rest, 10);
-    } else {
-      result[key] = rest.replace(/^['"]|['"]$/g, '');
-    }
-    i++;
-  }
-  return result;
 }
 
 export function buildIndex(opts: BuildIndexOptions): BuildIndexResult {

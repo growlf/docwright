@@ -7,6 +7,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Atom, AtomFrontmatter, CheckFunction, AiCategory } from './schema.js';
+import { parseAtomYaml } from './parse-yaml.js';
 
 export interface ResolverOptions {
   policiesDir: string;
@@ -47,43 +48,6 @@ export const nullJudgmentDispatchHook: JudgmentDispatchHook = async () => null;
 // ---------------------------------------------------------------------------
 // Resolver
 // ---------------------------------------------------------------------------
-
-/**
- * Parse the yaml frontmatter from an atom.yaml file.
- * Minimal parser matching the index-builder's parser.
- */
-function parseAtomYaml(content: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const lines = content.split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i].trim();
-    if (!line || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx < 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-    if (rest === '') {
-      const arr: string[] = [];
-      i++;
-      while (i < lines.length && lines[i].match(/^\s+-\s+/)) {
-        arr.push(lines[i].replace(/^\s+-\s+/, '').trim().replace(/^['"]|['"]$/g, ''));
-        i++;
-      }
-      result[key] = arr;
-      continue;
-    }
-    if (rest.startsWith('[')) {
-      const inner = rest.replace(/^\[|\]$/g, '');
-      result[key] = inner.split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
-    } else if (rest === 'true') { result[key] = true;
-    } else if (rest === 'false') { result[key] = false;
-    } else if (/^\d+$/.test(rest)) { result[key] = parseInt(rest, 10);
-    } else { result[key] = rest.replace(/^['"]|['"]$/g, ''); }
-    i++;
-  }
-  return result;
-}
 
 export async function resolve(
   atomIds: string[],
@@ -126,17 +90,19 @@ export async function resolve(
       context = fs.readFileSync(contextFile, 'utf8');
     }
 
-    // Load check function for deterministic atoms
+    // Load check function for deterministic atoms.
+    // Only check.js is loaded — Node's import() cannot resolve raw .ts files.
+    // The sync-checker validates that check.ts (source) exists; the build step
+    // compiles it to check.js before the resolver runs. During development,
+    // compile with: npx tsx --build or esbuild policies/<id>/check.ts.
     let check: CheckFunction | undefined;
-    const checkFile = path.join(atomDir, 'check.ts');
     const checkFileJs = path.join(atomDir, 'check.js');
-    const checkTarget = fs.existsSync(checkFileJs) ? checkFileJs : undefined;
-    if (fm.kind === 'deterministic' && checkTarget) {
+    if (fm.kind === 'deterministic' && fs.existsSync(checkFileJs)) {
       try {
-        const mod = await import(checkTarget);
+        const mod = await import(checkFileJs);
         check = mod.check ?? mod.default;
       } catch (e: unknown) {
-        errors.push({ atomId: id, error: `failed to load check: ${e}` });
+        errors.push({ atomId: id, error: `failed to load check.js for ${id}: ${e}` });
       }
     }
 

@@ -21,6 +21,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { validateAtomFrontmatter, SYNOPSIS_TOKEN_HARD, SYNOPSIS_TOKEN_SOFT } from './schema.js';
 import { buildIndex } from './index-builder.js';
+import { parseAtomYaml } from './parse-yaml.js';
 
 export interface SyncCheckIssue {
   atomId: string;
@@ -35,39 +36,6 @@ export interface SyncCheckResult {
 }
 
 const REQUIRED_JUDGMENT_SECTIONS = ['## Rule', '## Rationale', '## Examples', '## Scope'];
-
-function parseAtomYaml(content: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const lines = content.split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i].trim();
-    if (!line || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx < 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-    if (rest === '') {
-      const arr: string[] = [];
-      i++;
-      while (i < lines.length && lines[i].match(/^\s+-\s+/)) {
-        arr.push(lines[i].replace(/^\s+-\s+/, '').trim().replace(/^['"]|['"]$/g, ''));
-        i++;
-      }
-      result[key] = arr;
-      continue;
-    }
-    if (rest.startsWith('[')) {
-      const inner = rest.replace(/^\[|\]$/g, '');
-      result[key] = inner.split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
-    } else if (rest === 'true') { result[key] = true;
-    } else if (rest === 'false') { result[key] = false;
-    } else if (/^\d+$/.test(rest)) { result[key] = parseInt(rest, 10);
-    } else { result[key] = rest.replace(/^['"]|['"]$/g, ''); }
-    i++;
-  }
-  return result;
-}
 
 export function syncCheck(policiesDir: string): SyncCheckResult {
   const issues: SyncCheckIssue[] = [];
