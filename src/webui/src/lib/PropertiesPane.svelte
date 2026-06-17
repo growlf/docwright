@@ -228,6 +228,32 @@
     return count;
   });
 
+  // Count unchecked gate criteria — blocks Complete button
+  // Recognises both '### Gate Criteria' (current) and '## Phase Gate' (legacy)
+  let uncheckedGateItems = $derived.by(() => {
+    if (docType !== 'plan' || !body) return 0;
+    const gateMatch = body.match(/#{2,3}\s+(?:Gate Criteria|Phase Gate)([\s\S]*?)(?=\n#{1,3}\s|\s*$)/);
+    if (!gateMatch) return 0;
+    return (gateMatch[1].match(/- \[ \]/g) || []).length;
+  });
+
+  // tests_human_reviewed must be true before completing
+  let testsNotHumanReviewed = $derived(
+    docType === 'plan' &&
+    frontmatter.status === 'in-progress' &&
+    String(frontmatter.tests_human_reviewed) !== 'true'
+  );
+
+  // Aggregate all Complete blockers into a human-readable list
+  let completeBlockers = $derived.by(() => {
+    if (docType !== 'plan') return [];
+    const b: string[] = [];
+    if (pendingSteps > 0) b.push(`${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still ⏳ Pending`);
+    if (uncheckedGateItems > 0) b.push(`${uncheckedGateItems} gate criteria unchecked`);
+    if (testsNotHumanReviewed) b.push('tests_human_reviewed not set — human must certify test plan');
+    return b;
+  });
+
   // Warn if approved with no assignee
   let approvedWithoutAssignee = $derived(
     docType === 'proposal' && frontmatter.approved === true &&
@@ -336,19 +362,19 @@
               <button class="act estimate" onclick={runTests}
                 disabled={testRunning || pendingSteps > 0}
                 title={pendingSteps > 0
-                  ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps first`
+                  ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps before running tests`
                   : 'Run the test suite — Complete button appears when all tests pass'}>
                 {testRunning ? '⏳ Running…' : '▶ Run Tests'}
               </button>
             {/if}
           {:else}
-            <!-- Tests passing — show Complete -->
+            <!-- Complete — disabled when any blocker exists -->
             <button class="act complete" onclick={() => setPlanStatus('completed')}
-              disabled={pendingSteps > 0}
-              title={pendingSteps > 0
-                ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still ⏳ Pending`
-                : 'All tests pass — complete and archive this plan'}>
-              Complete
+              disabled={completeBlockers.length > 0}
+              title={completeBlockers.length > 0
+                ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
+                : 'All checks pass — complete and archive this plan'}>
+              {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
             </button>
             <button class="act unapprove" onclick={uncertifyTests}
               title="Re-run tests — resets back to Run Tests button">
