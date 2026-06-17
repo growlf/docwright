@@ -66,9 +66,15 @@ export function replaceStepStatus(text: string, stepMatch: string, newStatus: st
 }
 
 export function checkCompletionGate(text: string, planName: string): string | null {
+  // Fix 2: enforce tests_human_reviewed in addition to tests_defined
   const testsDefined = extractFrontmatterField(text, 'tests_defined');
   if (String(testsDefined) !== 'true') {
     return `ERROR: Plan '${planName}' has tests_defined=${testsDefined}. A human reviewer must set tests_defined: true after confirming test coverage is adequate before the plan can be completed.`;
+  }
+
+  const testsReviewed = extractFrontmatterField(text, 'tests_human_reviewed');
+  if (String(testsReviewed) !== 'true') {
+    return `ERROR: Plan '${planName}' has tests_human_reviewed=false. A human must review and certify the AI-generated test plan before the plan can be completed. Set tests_human_reviewed: true in the frontmatter after review.`;
   }
 
   const lines = text.split('\n');
@@ -77,9 +83,10 @@ export function checkCompletionGate(text: string, planName: string): string | nu
   let unchecked = 0;
 
   for (const line of lines) {
-    if (line.startsWith('## ')) {
+    // Fix 1: recognize both '## Phase Gate' (legacy) and '### Gate Criteria' (current template)
+    if (line.startsWith('#')) {
       if (inGate) break;
-      inGate = line.includes('Phase Gate');
+      inGate = line.includes('Phase Gate') || line.includes('Gate Criteria');
       if (inGate) gateFound = true;
     } else if (inGate && line.includes('- [ ]')) {
       unchecked++;
@@ -87,11 +94,11 @@ export function checkCompletionGate(text: string, planName: string): string | nu
   }
 
   if (!gateFound) {
-    return `ERROR: Plan '${planName}' has no ## Phase Gate section. All plans must have a Phase Gate section that is fully signed off before completion.`;
+    return `ERROR: Plan '${planName}' has no Gate Criteria section. All plans must have a '### Gate Criteria' (or '## Phase Gate') section that is fully signed off before completion.`;
   }
 
   if (unchecked > 0) {
-    return `ERROR: Plan '${planName}' has ${unchecked} unchecked Phase Gate item${unchecked === 1 ? '' : 's'}. All Phase Gate items must be checked [x] before the plan can be completed.`;
+    return `ERROR: Plan '${planName}' has ${unchecked} unchecked gate item${unchecked === 1 ? '' : 's'}. All Gate Criteria items must be checked [x] before the plan can be completed.`;
   }
 
   return null;
