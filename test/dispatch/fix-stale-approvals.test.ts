@@ -33,7 +33,8 @@ function run(dir: string, args = ''): { out: string; code: number } {
   }
 }
 
-describe('fix-stale-approvals', () => {
+describe('fix-stale-approvals', function () {
+  this.timeout(15000); // tsx spawns are slow in CI; 2s default is too tight
   it('dry-run: lists stale file, does not move it', () => {
     const dir = makeTmpVault();
     writeProposal(dir, 'stale.md', true);

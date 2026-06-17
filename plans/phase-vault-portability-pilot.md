@@ -21,10 +21,10 @@ tests_human_reviewed: false
 depends_on:
   - phase-2-foundation
 total_steps: 11
-completed_steps: 6
+completed_steps: 8
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
 _path: plans/phase-vault-portability-pilot.md
-consumed_by: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 # Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline
 
@@ -50,7 +50,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for full design rati
 | 6 | Contribution pipeline & friction log | [[proposals/sub-plan-contribution-pipeline.md]] | ⏳ Planned |
 | 7 | MSP pilot vault (non-profit managed services) | [[proposals/sub-plan-msp-pilot-vault.md]] | ⏳ Planned |
 | 8 | Cascade STEAM early-access vault | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⏳ Planned |
-| 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ⏳ Planned |
+| 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ✅ Done |
+| 10 | `docwright adopt` — existing vault adoption tooling | [[proposals/approved/docwright-adopt-existing-vault.md]] | ✅ Done |
 
 Deliverables 1–3 are foundational and should complete first. Deliverables 4–6 can run in parallel with 1–3. Deliverables 7–8 depend on 1–3. Deliverable 9 wraps everything.
 
@@ -68,7 +69,7 @@ Deliverables 1–3 are foundational and should complete first. Deliverables 4–
 | 8 | MSP pilot vault | Create git repo for non-profit managed services. Run `docwright init`. Write policies: service-catalog, change-management, incident-response, security-baseline, onboarding. Complete at least one full proposal→plan→completed cycle entirely through DocWright. Record friction log entries throughout. Acceptance bar: full lifecycle works with no manual file edits required. | ⏳ Pending |
 | 9 | Cascade STEAM early-access vault | Using `docwright init` and the Phase 3 architecture, provision a Cascade STEAM vault on a local git repo. No Forgejo, no AI stack yet — just the vault structure, org-operations profile, and stub policies from the Drive vault seed. Gives leadership hands-on access and validates the vault seed content before Phase 5 production infrastructure begins. Acceptance bar: leadership can open the Web UI, read the vault seed, and submit their first proposal. | ⏳ Pending |
 | 10 | Friction log tooling | `log_friction(description, category)` MCP tool creates structured entry in `docs/friction-log.md`. Categories: `bug`, `feature-request`, `ux-friction`, `docs-gap`, `missing-abstraction`. Document review cadence. Wire periodic review: friction entries → `contribute_upstream` (with consent) → GitHub issues. | ⏳ Pending |
-| 11 | Architecture boundary document | Write `docs/vault-portability.md` in the DocWright repo: what the tool provides, what the vault provides, what the interface is (env vars, config.json schema, `.mcp.json` template, hook install, `MIGRATION.md` format). Becomes the canonical reference for new vault deployments, including the Phase 5 Cascade STEAM production setup. | ⏳ Pending |
+| 11 | Architecture boundary document | `docs/vault-portability.md` written covering: three adoption modes, manifest upgrade contract, js-yaml baked-path approach, moving vaults between machines, CI usage, DOCWRIGHT_ROOT vs DOCWRIGHT_VAULT_ROOT. | ✅ Done |
 
 ## Testing Plan
 
@@ -110,8 +111,8 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 
 | Gap | Severity | Current Workaround | Proposed Fix |
 |-----|---------|--------------------|--------------|
-| `init.ts` refuses non-empty directories — blocks all existing vault adoption | 🚫 Blocking | Manual file creation (15+ steps) | `scripts/adopt-vault.ts` or `--adopt` flag on `init.ts` — see [[proposals/approved/docwright-adopt-existing-vault.md]] |
-| Pre-commit hook requires `js-yaml` in vault's `node_modules` — undocumented | ⚠️ Warn | `ln -s $DOCWRIGHT_PATH/node_modules ./node_modules` | Document in `docs/vault-portability.md`; consider `NODE_PATH` injection in hook |
+| `init.ts` refuses non-empty directories | 🚫 **Resolved** | `npm run adopt` — three-mode adoption (open/lightweight/full), manifest-based upgrade contract | `scripts/adopt-vault.ts` shipped; bms-ai-cluster + DAFO validated — see [[plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md]] |
+| Pre-commit hook required `js-yaml` in vault's `node_modules` | ⚠️ **Resolved** | Baked absolute path via `sed` substitution in `install-hooks.sh` at install time | Fixed in `install-hooks.sh`; no symlink needed; documented in `docs/vault-portability.md` |
 | `.docwright/.gitignore` silently blocks `config.json` and itself from staging — confusing | ⚠️ Warn | Force-add or just don't add them (they're intentionally local) | Clarify in `docs/vault-portability.md` that only `registry.example.json` is committed |
 | Non-proposal markdown in `proposals/` (e.g. cover letters, SOW docs) must carry full proposal frontmatter or the hook rejects them | ⚠️ Warn | Added minimal frontmatter with `type: proposal` | Loosen hook to allow `type: document` or similar non-lifecycle type in `proposals/` |
 | No status migration path — existing notes using `status: pending` fail validation | ⚠️ Warn | Manual sed/python pass across all files | `adopt-vault.ts` should normalise status values during adoption |
@@ -126,9 +127,9 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 
 ### Implications for upcoming steps
 
-- **Step 8 (MSP pilot):** If the MSP vault is also an existing repo/directory, `init.ts` will refuse. Plan for manual adoption OR ship `adopt-vault.ts` first.
-- **Step 9 (Cascade STEAM early access):** Garth has indicated this is the next vault to be adopted (within the same session). Will be a direct replication test of the DAFO process.
-- **Step 11 (Architecture boundary doc):** The `node_modules` symlink requirement and `.docwright/.gitignore` behaviour must be documented explicitly — they are the two most surprising sharp edges for new adopters.
+- **Step 8 (MSP pilot):** `npm run adopt` now handles existing repos — no longer blocked by `init.ts` refusing non-empty directories. Run `npm run adopt -- --dest /path/to/msp-vault --mode full`.
+- **Step 9 (Cascade STEAM early access):** `bms-ai-cluster` was adopted as Phase 3 validation test (June 2026) using `npm run adopt`. Cascade STEAM can follow the same process.
+- **Step 11 (Architecture boundary doc):** `docs/vault-portability.md` was written as part of the adopt-vault plan — covers all three modes, manifest upgrade contract, js-yaml baked-path, CI usage. ✅ Done.
 
 ## Phase Gate
 
@@ -137,6 +138,8 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 - [x] Sub-plan #2: Vault portability foundation — path resolution + .mcp.json template
 - [x] Sub-plan #3: `docwright init` produces a working vault end-to-end
 - [x] Sub-plan #4: Profile override merge engine tested
+- [x] Sub-plan #5: Vault migration system — `MIGRATION.md` format + `vault:migrate` script
+- [x] Deliverable #10: `docwright adopt` tooling — three modes, manifest contract, 14 steps, DAFO + bms-ai-cluster validated
 - [ ] Sub-plan #6: Contribution pipeline live with consent enforcement
 - [ ] Sub-plan #7: MSP pilot vault — one complete proposal→plan→completed cycle
 - [ ] Sub-plan #8: Cascade STEAM early-access vault provisioned and accessible to leadership
@@ -159,4 +162,5 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 | 2026-06-11 | Sub-plan #4 (Profile Override Merge) approved and set in-progress. Plan populated with 5 steps. | NetYeti |
 | 2026-06-11 | Sub-plan #4 completed: mergeProfiles() in src/dispatch/profile.ts, wired into profile-config API, 13 tests passing. | NetYeti |
 | 2026-06-14 | Sub-plan #5 (Vault migration system) completed — MIGRATION.md format, vault:migrate script, first entry. Step 6 marked done. | NetYeti |
+| 2026-06-17 | Plan refreshed: `docwright adopt` tooling added as Deliverable 10 (✅ Done); DAFO gaps marked resolved; Step 11 (docs/vault-portability.md) marked done; consumed_by updated to plans/completed/; completed_steps corrected to 8; Phase Gate updated with Sub-plans 5 and adopt-vault. | NetYeti |
 | 2026-06-16 | Real-world pilot: DAFO Infrastructure Vault adopted by Garth Johnson (Cascade Steam Technology). First unplanned external vault adoption — existing Obsidian vault, non-empty directory, 6 proposals, GitHub private repo. Gaps documented in "Real-World Pilot" section above. Proposal [[proposals/approved/docwright-adopt-existing-vault.md]] created for adopt-vault tooling. | NetYeti |
