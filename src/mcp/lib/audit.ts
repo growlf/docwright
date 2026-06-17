@@ -12,7 +12,7 @@ export function logTransition(event: string, details: string): void {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     // Try to get user from env or fallback
-    let user = process.env.OPCODE_USER_NAME || process.env.USER || 'NetYeti';
+    const user = process.env.OPCODE_USER_NAME || process.env.USER || 'NetYeti';
 
     const entry = {
       ts: new Date().toISOString(),
