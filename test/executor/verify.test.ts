@@ -25,7 +25,8 @@ describe('verify', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  describe('code steps', () => {
+  describe('code steps', function () {
+    this.timeout(15000); // tsc spawns are slow; 2s default is too tight
     it('passes when expected files exist and tsc passes', async () => {
       fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
       fs.writeFileSync(path.join(tmpDir, 'src', 'foo.ts'), 'export const x = 42;\n');
