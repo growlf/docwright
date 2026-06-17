@@ -2,12 +2,18 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
 
+  let vaultName = $state('Vault');
   let auditFilter = $state({ doc_path: '', actor: '', actor_type: '', transition_to: '' });
   let auditEntries = $state<any[]>([]);
   let auditTotal = $state(0);
   let auditLoading = $state(false);
   let auditFindings = $state<any[]>([]);
   let auditRunning = $state(false);
+
+  function goToStatus(view: 'list' | 'funnel') {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('status-view', view);
+    goto('/status');
+  }
 
   async function loadAudit() {
     auditLoading = true;
@@ -36,12 +42,21 @@
     auditRunning = false;
   }
 
-  onMount(() => { loadAudit(); });
+  onMount(async () => {
+    loadAudit();
+    const res = await fetch('/api/brand');
+    if (res.ok) { const b = await res.json(); if (b.name) vaultName = b.name; }
+  });
 </script>
 
 <div class="audit-page">
   <div class="audit-header">
-    <h1>Audit Log</h1>
+    <h1>{vaultName} Status</h1>
+    <div class="view-toggle">
+      <button class="view-btn" onclick={() => goToStatus('list')}   title="List view">≡ List</button>
+      <button class="view-btn" onclick={() => goToStatus('funnel')} title="Funnel view">⊙ Funnel</button>
+      <span  class="view-btn active">📊 Audit</span>
+    </div>
     <button class="refresh-btn" onclick={loadAudit} title="Refresh">↻</button>
   </div>
 
@@ -141,6 +156,14 @@
   .audit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
   h1 { font-size: 20px; font-weight: 600; color: $fg; margin: 0; flex: 1; }
 
+  .view-toggle { display: flex; gap: 2px; background: $bg-2; border: 1px solid $border; border-radius: 6px; padding: 2px; }
+  .view-btn {
+    background: none; border: none; color: $muted; text-decoration: none;
+    font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap;
+    &:hover  { color: $fg-dim; }
+    &.active { background: $bg-3; color: $fg; cursor: default; }
+  }
+
   .refresh-btn {
     @include flat-btn;
     border: 1px solid $border; border-radius: 4px; padding: 2px 8px; font-size: 14px;
@@ -204,6 +227,8 @@
   .muted { color: $muted; }
 
   :global(html[data-theme="light"]) {
+    .view-toggle { background: #e8e8e8; border-color: #ccc; }
+    .view-btn { color: #777; &:hover { color: #333; } &.active { background: #d8d8d8; color: #1a1a1a; } }
     .audit-section { border-color: #d0d0d0; }
     .section-title-row { background: #e8e8e8; border-bottom-color: #d0d0d0; }
     .section-title { color: #1a1a1a; }
