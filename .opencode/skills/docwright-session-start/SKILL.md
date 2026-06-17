@@ -44,6 +44,21 @@ Last session: <date> — <summary>
 TODOs set from active plan state.
 ```
 
-### 4. Set up todo list
+### 4. Adoption health check
+
+If `.docwright/config.json` exists in the current repo, read `adopt_version` from it and
+compare to the current DocWright installation version (from `$DOCWRIGHT_PATH/package.json`).
+
+If they differ, emit a non-blocking advisory **before** the plan summary:
+
+```
+ℹ  This vault was adopted with DocWright <adopt_version>. Current installation is <current_version>.
+   Run `npm run adopt -- --dest . --upgrade` from $DOCWRIGHT_PATH to update hooks and skills.
+```
+
+If `.docwright/config.json` does not exist (e.g. this is the DocWright repo itself, or
+the vault has never been adopted), skip this check silently.
+
+### 5. Set up todo list
 
 Create a todo list from active plans, with the highest-progress plan first. Mark one item as `in_progress` only if there's a clear next step. Otherwise leave all `pending`.

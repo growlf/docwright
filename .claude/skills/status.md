@@ -7,6 +7,19 @@ Print a plain-text summary of the current vault workflow state.
 Run at the start of any session to orient before suggesting work.
 Also useful when the user asks "where are we?" or "what's left to do?"
 
+## Adoption health check
+
+If `.docwright/config.json` exists, read `adopt_version` and compare to the
+DocWright installation version (`$DOCWRIGHT_PATH/package.json`). If they differ,
+emit before the status summary:
+
+```
+ℹ  This vault was adopted with DocWright <adopt_version>. Current: <current>.
+   Run: npm run adopt -- --dest . --upgrade  (from $DOCWRIGHT_PATH)
+```
+
+Skip silently if `.docwright/config.json` is absent.
+
 ## How to run
 
 ```bash
