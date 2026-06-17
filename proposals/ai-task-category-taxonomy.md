@@ -1,6 +1,7 @@
 ---
 title: "AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time"
 author: NetYeti
+author-role: contributor
 created: 2026-06-14
 tags:
   - ai
@@ -11,31 +12,34 @@ tags:
   - litellm
   - olla
   - phase-4
-category:
-  - ai
-  - governance
 complexity: medium
 approved: false
 priority: high
 created_by: "NetYeti@phoenix"
-assigned_to: []
+assigned_to: NetYeti
 related_to:
   - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - docs/ai-inference-routing-research.md
+  - docs/policy-atom-model-routing.md
   - docs/profile-contribution-architecture.md
-depends_on:
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+depends_on: []
 blocks: []
 ---
 
+## What Is Already Implemented
+
+The policy atom framework plan (completed 2026-06-17) delivered:
+
+- **`AiCategory` type** in `src/policy-atoms-core/schema.ts` — `'none' | 'classification' | 'generation' | 'reasoning'` (4 values, enforced by JSON Schema validator)
+- **`ai_category` field** in every atom's `atom.yaml` — all 10 DocWright governance atoms are already categorised
+- **`judgment_dispatch_hook(ai_category, payload)` interface** — frozen per Design Decision Q5 in `src/policy-atoms-core/resolver.ts`
+- **`docs/policy-atom-model-routing.md`** — model routing reference for the 4 existing categories, grounded in validated hardware constraints (decisions-ledger F3/F6)
+
+This proposal picks up where that work stopped. It does **not** re-implement those deliverables.
+
 ## Summary
 
-Establish a stable, community-grounded taxonomy of AI task categories and embed
-category labels directly into governance atoms, plan steps, and proposals at the
-moment of authorship. DocWright emits the label; the ai-stack project and
-LiteLLM/Olla use it to route each unit of work to the most capable and
-cost-effective local or cloud model — without runtime inference about what kind
-of task it is.
+Extend the `AiCategory` taxonomy from 4 to 6 values, establish a formal `categories.yaml` registry with display metadata, embed category labels in plan steps at authorship time, and wire the ai-stack capability registry to the `judgment_dispatch_hook`. DocWright emits the label; LiteLLM/Olla uses it to route each unit of work to the most capable and cost-effective model — without runtime inference.
 
 ## Problem Statement
 
@@ -61,55 +65,51 @@ hardware; DocWright has the work. They have no shared language.
 
 ## Proposed Solution
 
-### 1. Adopt a community-standard AI task category taxonomy
+### 1. Extend the taxonomy from 4 to 6 categories — grounded in DocWright's actual task mix
 
-Ground the taxonomy in the categories empirically validated by LMSYS MT-Bench and
-corroborated by Portkey, OpenRouter, and the LLM routing research literature —
-not invented from scratch. These 11 categories cover the full space of tasks
-DocWright generates:
+The existing 4-category model (`none`, `classification`, `generation`, `reasoning`) is correct for governance atoms. The gap is **plan execution**: plan steps that generate code need a code-specialized model; plan execution orchestration needs large-context + tool-capable routing. Neither maps cleanly to `generation` or `reasoning`.
+
+**DocWright task-type audit** — what we actually generate:
+
+| Task | Example | Current category | Adequate? |
+|------|---------|-----------------|-----------|
+| Frontmatter validation | pre-commit check | `none` | ✅ |
+| Commit format check | pre-commit hook | `none` | ✅ |
+| Scope assignment | "is this plan or proposal?" | `classification` | ✅ |
+| Category suggestion | "what ai_category for this step?" | `classification` | ✅ |
+| Proposal writing | fill-proposal, improve | `generation` | ✅ |
+| Plan step generation | create-plan content | `generation` | ✅ |
+| Session note writing | endsession | `generation` | ✅ |
+| Critique / gate review | critique-plan, gate-pre-review | `reasoning` | ✅ |
+| Scope adequacy judgment | "is this step specific enough?" | `reasoning` | ✅ |
+| Overlap detection | collation | `reasoning` | ✅ |
+| **Code generation in plan steps** | install-hooks.sh fix, adopt-vault.ts | `generation` (wrong) | ❌ routes to general model, not code-specialist |
+| **Plan execution orchestration** | BigPickle running 14-step plan | `reasoning` (wrong) | ❌ needs large context + tool use, not just reasoning depth |
+
+Two new categories are warranted. The remaining LMSYS categories (`extraction`, `summarization`, `writing`, `creative`, `roleplay`, `math`) are either handled by existing categories or simply do not appear in DocWright's governance task mix.
+
+**Extended 6-category taxonomy** (additions are additive — existing 4 unchanged):
 
 | ID (immutable slug) | What it covers | Typical minimum model |
 |---------------------|---------------|----------------------|
 | `none` | Deterministic — runs as code, no LLM involved | — |
-| `extraction` | Pull structured data from text; parse tables, fields, frontmatter | Any 1b–7b |
-| `classification` | Is this a proposal? What scope? What type? | Any 1b–7b |
-| `summarization` | Condense, distill, TL;DR a document or section | 7b+ |
-| `writing` | Functional writing — documents, emails, plans, structured prose | 7b–14b |
-| `creative` | Expressive/stylistic writing, humor, voice, persona, tone | 7b–14b (Mistral excels) |
-| `roleplay` | Character embodiment, persona-sustained dialogue | 7b–14b (Mistral/Mixtral excel) |
-| `coding` | Code generation, review, debugging, refactoring | Specialized: Qwen2.5-Coder, DeepSeek-Coder |
-| `math` | Computation, numeric reasoning, proofs | Specialized: Qwen-Math, DeepSeek-Math |
-| `reasoning` | Critique, evaluation, cross-reference, logical inference, adequacy judgment | 14b+ or reasoning-specialized |
-| `agentic` | Multi-step orchestration, tool use, planning loops, executor coordination | Large context + tool-use capable |
+| `classification` | Scope assignment, category suggestion, field presence check | Any 7b |
+| `generation` | Structured prose writing — proposals, plans, session notes, templates | 7b–14b |
+| `reasoning` | Critique, evaluation, logical inference, adequacy judgment, overlap detection | 14b+ |
+| **`coding`** *(new)* | Code generation, review, debugging, refactoring in plan steps | Specialized: Qwen2.5-Coder, DeepSeek-Coder |
+| **`agentic`** *(new)* | Multi-step plan execution, tool use orchestration, executor coordination | Large context + tool-use capable (mistral-small3.2:24b or claude-sonnet) |
 
-The `knowledge` category from LMSYS (factual domain recall) is intentionally
-omitted — DocWright does not generate tasks whose primary value is knowing facts;
-it generates tasks about governance and structure where `reasoning` or `extraction`
-is the right label.
+**Schema migration:** Adding `coding` and `agentic` to `AiCategory` requires updating `schema.ts` (union type + JSON Schema enum) and `docs/policy-atom-model-routing.md` (two new routing sections). Existing atoms using `none`/`classification`/`generation`/`reasoning` are unaffected — additive change only.
 
-**Note on `creative`:** This is the natural home for tasks like "add a concise,
-engaging summary header" or "write this policy in plain language with a light tone"
-— the category where Mistral models specifically outperform. It is kept distinct
-from `writing` (functional/structured) because routing to different model families
-is the whole point.
+### 2. Category IDs are immutable; `categories.yaml` is additive metadata
 
-### 2. Make category IDs immutable; everything else mutable
+The **primary contract** is the `AiCategory` TypeScript union type in `src/policy-atoms-core/schema.ts`. That type is what the atom YAML validator, the `judgment_dispatch_hook` interface, and `docs/policy-atom-model-routing.md` all reference. It is the source of truth.
 
-Category IDs (the slugs above) are baked into atom YAML files, plan step metadata,
-and proposal frontmatter. They must never be renamed — that would require a
-refactor of every data file that references the old ID.
+`src/policy-atoms-core/categories.yaml` is additive metadata on top of the TypeScript type — display names, descriptions, and deprecation status for human-readable registries and future UI dropdowns. It does NOT define the valid values (the TypeScript type does). This distinction matters: the YAML file can be added later without blocking the TypeScript schema extension.
 
-Everything else is stored in a **category registry** (`src/policy-atoms-core/categories.yaml`
-in DocWright, mirrored in the ai-stack capability registry):
+Category IDs (slugs) are immutable once committed. Renaming requires a codebase-wide refactor of every atom YAML, plan step table, and proposal frontmatter that references the old ID. New categories are additive — append to the TypeScript union and the YAML registry simultaneously.
 
-- **Display name** — mutable, what UIs and agents see
-- **Description** — mutable, expands on what the category covers
-- **Status** — `active` or `deprecated` (deprecated: existing atoms keep working;
-  no new atoms may use this ID)
-
-New categories can be added at any time by appending to the registry. The cost of
-adding is near-zero. The cost of renaming is a codebase-wide refactor — so names
-are chosen to be stable, not perfect.
+**Deprecation policy:** A deprecated category ID remains valid indefinitely in existing atoms and plan files. New atoms may not use a deprecated ID. No forced migration — the cost of migration exceeds the cost of keeping stale IDs valid.
 
 ### 3. Embed the label at authorship time — not dispatch time
 
@@ -149,6 +149,8 @@ author confirms or overrides via the UI.
 | 2 | Implement index-builder | ... | `coding` | ⏳ Pending |
 | 3 | Critique pilot atom set | ... | `reasoning` | ⏳ Pending |
 ```
+
+**Scope note — breaking change for existing plan files:** Adding an `ai_category` column requires updates to: the plan step parser (`src/policy-atoms-core/` or `src/dispatch/`), the `create-plan` Web UI endpoint, and the step editor UI. Existing plan files without the column continue to work — the column is optional. A migration script should be provided to suggest categories for existing steps (one `classification` call per step). This is a Phase 4 / 5 Web UI deliverable, not blocking for the registry and schema extension.
 
 **Proposals:** a `ai_category` frontmatter field on the proposal itself (the
 primary task type the proposal represents). This gives the executor a default
@@ -245,51 +247,52 @@ itself.
 
 ## Resources Required
 
-**DocWright:**
-- `src/policy-atoms-core/categories.yaml` — category registry (IDs, display names,
-  descriptions, status)
-- Atom YAML schema: add `ai_category` field, derive `check_kind` from it
-- `create-plan` endpoint: add classification call for step-level category suggestion
-- Web UI: add `ai_category` dropdown to plan step editor and proposal frontmatter form
-- `judgment_dispatch_hook` interface (Step 5 of policy atom plan): specify as
-  `(ai_category: string, payload: string) => Promise<string>`
+**DocWright (remaining work — already done items noted):**
+- ✅ ~~`ai_category` field in atom YAML schema~~ — done, `AiCategory` type in `schema.ts`
+- ✅ ~~`judgment_dispatch_hook(ai_category, payload)` interface~~ — done, Step 5 of atom plan
+- ✅ ~~Model routing reference for existing 4 categories~~ — done, `docs/policy-atom-model-routing.md`
+- **New:** Extend `AiCategory` in `schema.ts` to add `'coding'` and `'agentic'`
+- **New:** Update `docs/policy-atom-model-routing.md` with routing tables for `coding` and `agentic`
+- **New:** `src/policy-atoms-core/categories.yaml` — display names, descriptions, status (additive metadata over the TypeScript type)
+- **New:** `create-plan` endpoint: classification call to suggest `ai_category` per step
+- **New:** Web UI: `ai_category` dropdown in plan step editor (optional column, Phase 4/5)
 
 **ai-stack project:**
-- `capability-registry.yaml` — maps `(ai_category)` to `(model, endpoint, node)`
-  per node in the fleet
+- `capability-registry.yaml` — maps `(ai_category)` to `(model, endpoint, node)` per fleet node
 - LiteLLM routing config wired to read from registry
 - Documentation: which models handle which categories, with benchmark references
 
 **Shared:**
-- Decision on category deprecation policy (how long deprecated IDs remain valid
-  before data migration is required — suggest: indefinitely valid, never forced
-  migration)
+- Deprecation policy: ✅ decided — deprecated IDs remain valid indefinitely; no forced migration
 
 ## Notes for Plan Generation
 
-This proposal has two largely independent workstreams that can proceed in parallel
-once the category registry is defined:
+### What's already done (do not re-implement)
 
-1. **DocWright integration** — add `ai_category` to atom schema, create-plan
-   endpoint, plan step editor, proposal frontmatter. No ai-stack dependency except
-   the registry definition.
+Steps 2 and 3 from the original phasing are complete. The plan generated from this proposal should start at step 4:
 
-2. **ai-stack integration** — capability registry, LiteLLM routing config, node
-   capability documentation. No DocWright code dependency except the registry
-   definition and hook interface.
+| Original step | Status | Notes |
+|--------------|--------|-------|
+| 1. Define `categories.yaml` / shared contract | 🔄 Partial | TypeScript type exists; YAML registry still needed |
+| 2. Add `ai_category` to atom YAML schema | ✅ Done | 4 values in `schema.ts` |
+| 3. Wire `judgment_dispatch_hook` interface | ✅ Done | Step 5 of atom plan |
+| 4. Build capability registry and LiteLLM routing (ai-stack) | ⏳ Pending | |
+| 5. Extend taxonomy to 6 categories | ⏳ Pending | Add `coding` + `agentic` |
+| 6. Add creation-time category suggestion (create-plan + UI) | ⏳ Pending | Phase 4/5 Web UI |
 
-The registry definition (the `categories.yaml` file with the 11 IDs) is the
-single blocking dependency for both workstreams and should be the first deliverable.
+### Suggested plan phases
 
-Suggest phasing as:
-1. Define and commit `categories.yaml` (DocWright) — the shared contract
-2. Add `ai_category` to atom YAML schema and sync-checker (DocWright)
-3. Wire `judgment_dispatch_hook` interface with `ai_category` parameter (DocWright)
-4. Build capability registry and LiteLLM routing (ai-stack, parallel to step 3)
-5. Add creation-time category suggestion to create-plan and UI (DocWright)
+1. **Extend schema** — add `'coding'` and `'agentic'` to `AiCategory` in `schema.ts`, update JSON Schema validator, extend `docs/policy-atom-model-routing.md` with routing tables for the two new categories
+2. **`categories.yaml` registry** — create `src/policy-atoms-core/categories.yaml` with display names, descriptions, status for all 6 categories (additive over the TypeScript type)
+3. **ai-stack integration** — `capability-registry.yaml` mapping `(ai_category)` to `(model, endpoint, node)`, LiteLLM routing config, node documentation (parallel to phases 1–2, independent workstream)
+4. **Creation-time suggestion** — `create-plan` endpoint classification call for step-level category suggestion; Web UI dropdown (Phase 4/5, not blocking phases 1–3)
+
+The TypeScript type extension (phase 1) is the new blocking dependency — it must land before the `categories.yaml` YAML file can be complete.
 
 ## Related Documents
 
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — the atom schema and dispatch hook this proposal extends
+- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — completed prerequisite; atom schema and dispatch hook already implemented
+- [[docs/policy-atom-model-routing.md]] — existing routing reference for 4 categories; will be extended in phase 1
+- [[docs/policy-atom-hooks.md]] — `judgment_dispatch_hook` contract and LiteLLM extension path
 - [[docs/ai-inference-routing-research.md]] — prior routing research and Olla stack context
 - [[docs/profile-contribution-architecture.md]] — profile/module design that benefits from per-profile category defaults
