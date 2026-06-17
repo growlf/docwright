@@ -3,6 +3,7 @@ import * as os from 'node:os';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fieldRequired } from '../../../src/policy-atoms-core/checks/field-required.js';
+import { fieldRequiredWhen } from '../../../src/policy-atoms-core/checks/field-required-when.js';
 import { statusTransitionAllowed } from '../../../src/policy-atoms-core/checks/status-transition-allowed.js';
 import { regexMatch } from '../../../src/policy-atoms-core/checks/regex-match.js';
 import { linkedArtifactExists } from '../../../src/policy-atoms-core/checks/linked-artifact-exists.js';
@@ -63,6 +64,35 @@ describe('policy-atoms-core / checks / statusTransitionAllowed', () => {
     assert.strictEqual((pass as { pass: boolean }).pass, true);
     const fail = check(ctx({ frontmatter: { status: 'completed', prior_status: 'draft' } }));
     assert.strictEqual((fail as { pass: boolean }).pass, false);
+  });
+});
+
+describe('policy-atoms-core / checks / fieldRequiredWhen', () => {
+  const check = fieldRequiredWhen('assigned_to', 'status', ['approved', 'in-progress']);
+
+  it('passes when condition not triggered', () => {
+    const r = check(ctx({ frontmatter: { status: 'draft', assigned_to: '' } }));
+    assert.strictEqual((r as { pass: boolean }).pass, true);
+  });
+  it('fails when condition triggered and field empty', () => {
+    const r = check(ctx({ frontmatter: { status: 'approved', assigned_to: '' } }));
+    assert.strictEqual((r as { pass: boolean }).pass, false);
+  });
+  it('fails when condition triggered and field is None', () => {
+    const r = check(ctx({ frontmatter: { status: 'in-progress', assigned_to: 'None' } }));
+    assert.strictEqual((r as { pass: boolean }).pass, false);
+  });
+  it('passes when condition triggered and field present', () => {
+    const r = check(ctx({ frontmatter: { status: 'approved', assigned_to: 'NetYeti' } }));
+    assert.strictEqual((r as { pass: boolean }).pass, true);
+  });
+  it('passes when condition triggered and field is array with value', () => {
+    const r = check(ctx({ frontmatter: { status: 'in-progress', assigned_to: ['NetYeti'] } }));
+    assert.strictEqual((r as { pass: boolean }).pass, true);
+  });
+  it('fails when condition triggered and field is empty array first element', () => {
+    const r = check(ctx({ frontmatter: { status: 'approved', assigned_to: [''] } }));
+    assert.strictEqual((r as { pass: boolean }).pass, false);
   });
 });
 

@@ -226,7 +226,9 @@ function main() {
 
   // Seed pilot policy atoms from DocWright installation
   const atomIds = ['commit-format', 'frontmatter-validate', 'no-work-before-approval'];
-  const atomSeedFiles = ['atom.yaml', 'context.md', 'check.ts', 'check.js'];
+  // check.ts is not seeded — it imports from src/policy-atoms-core/ which won't
+  // exist in the vault. check.js (esbuild bundle, self-contained) is seeded instead.
+  const atomSeedFiles = ['atom.yaml', 'context.md', 'check.js'];
   let atomsSeeded = 0;
   for (const atomId of atomIds) {
     const srcDir = path.join(docwrightPath, 'policies', atomId);

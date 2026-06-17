@@ -1,24 +1,28 @@
-// no-work-before-approval check — compiled artifact (mirrors check.ts).
-const ACTIVE_STATUSES = ['approved', 'in-progress'];
-
-export function check(ctx) {
-  const status   = ctx.frontmatter['status'];
-  const assigned = ctx.frontmatter['assigned_to'];
-
-  if (!status || !ACTIVE_STATUSES.includes(status)) {
-    return { pass: true, message: `status '${status ?? 'missing'}' does not require assigned_to`, atom_id: 'no-work-before-approval' };
-  }
-
-  const assignedVal = Array.isArray(assigned) ? assigned[0] : assigned;
-  const isEmpty = !assignedVal || String(assignedVal).trim() === '' || String(assignedVal).trim().toLowerCase() === 'none';
-
-  if (isEmpty) {
+// Generated from check.ts by npm run build:atoms — do not edit manually.
+// src/policy-atoms-core/checks/field-required-when.ts
+function fieldRequiredWhen(field, conditionField, triggerValues) {
+  return (ctx) => {
+    const condVal = String(ctx.frontmatter[conditionField] ?? "");
+    if (!triggerValues.includes(condVal)) {
+      return { pass: true, message: `${conditionField}='${condVal}' \u2014 '${field}' not required`, atom_id: "" };
+    }
+    const val = ctx.frontmatter[field];
+    const valStr = Array.isArray(val) ? val[0] : val;
+    const missing = valStr === void 0 || valStr === null || String(valStr).trim() === "" || String(valStr).trim().toLowerCase() === "none";
     return {
-      pass: false,
-      message: `plan has status '${status}' but assigned_to is empty — active plans must have an assignee`,
-      atom_id: 'no-work-before-approval',
+      pass: !missing,
+      message: missing ? `'${field}' is required when ${conditionField}='${condVal}' but is missing or empty` : `'${field}' present as required when ${conditionField}='${condVal}'`,
+      atom_id: ""
     };
-  }
-
-  return { pass: true, message: `plan status '${status}' with assignee '${assignedVal}' — valid`, atom_id: 'no-work-before-approval' };
+  };
 }
+
+// policies/no-work-before-approval/check.ts
+var requireAssignee = fieldRequiredWhen("assigned_to", "status", ["approved", "in-progress"]);
+function check(ctx) {
+  const result = requireAssignee(ctx);
+  return { ...result, atom_id: "no-work-before-approval" };
+}
+export {
+  check
+};

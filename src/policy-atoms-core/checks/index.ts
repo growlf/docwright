@@ -4,6 +4,7 @@
  * ISOLATION INVARIANT: import only from node: builtins and src/policy-atoms-core/.
  */
 export { fieldRequired } from './field-required.js';
+export { fieldRequiredWhen } from './field-required-when.js';
 export { statusTransitionAllowed } from './status-transition-allowed.js';
 export { regexMatch } from './regex-match.js';
 export { linkedArtifactExists } from './linked-artifact-exists.js';

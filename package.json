@@ -32,6 +32,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "sync:skills": "tsx scripts/sync-claude-skills.ts",
+    "build:atoms": "npx tsx scripts/build-atoms.ts",
     "test:atoms": "mocha --require tsx/cjs 'test/policy-atoms-core/**/*.test.ts'",
     "atoms:isolation": "npx tsx scripts/check-atom-isolation.ts",
     "test:dispatch": "mocha --require tsx/cjs 'test/dispatch/**/*.test.ts'",
