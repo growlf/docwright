@@ -16,11 +16,11 @@ mode: autonomous
 scenario_synthesis: Policy atom decomposition — build policy-atoms-core library in isolation, pilot with 2-3 live rules, migrate remaining governance checks, add manager/project isolation; no IDE-specific steps
 assigned_to: NetYeti
 proposal_source: proposals/policy-atom-framework.md
-depends_on:
-  - plans/completed/enforce-lifecycle-compliance.md
+depends_on: []
 related_to:
   - docs/profile-contribution-architecture.md
   - plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
+  - plans/completed/enforce-lifecycle-compliance.md
 tests_defined: true
 tests_human_reviewed: false
 total_steps: 5
@@ -276,7 +276,7 @@ fallback chain, offline stack, and special settings. Summary:
 ## Related Documents
 
 *   \[\[docs/policy-atom-framework-concept.md\]\] — full design reference (schema, two-pass model, enforcement tiers, open questions)
-*   \[\[plans/completed/enforce-lifecycle-compliance.md\]\] — current governance baseline this framework generalizes
+*   \[\[plans/completed/enforce-lifecycle-compliance.md\]\] — predecessor that defined the monolithic enforcement baseline this framework decomposes and replaces (Step 3). Not a dependency — the atom framework can begin regardless of whether enforce-lifecycle-compliance's code tasks were implemented; it supersedes them.
 *   \[\[docs/profile-contribution-architecture.md\]\] — profile/module contribution design that benefits from per-project atom sets
 *   \[\[PROJECT.md\]\] §8 Profile System, §14 Phase 4 — manager/ACL context this framework supports
 
@@ -288,4 +288,4 @@ fallback chain, offline stack, and special settings. Summary:
 | 2026-06-14 | Design expanded — canonical source direction, synopsis format, scope inheritance, sync-checker scope, LiteLLM future direction, multi-AI surface table, Design Decisions Required section | NetYeti |
 | 2026-06-14 | Plan rewritten — steps from Notes section, duplicates removed, frontmatter corrected | NetYeti |
 | 2026-06-12 | Initial draft created | NetYeti |
-| 2026-06-17 | Critique + improvement pass: `automated:full`→`mode:autonomous`; `check_kind`→`kind` (canonical); RLM integration note added; execution mode interaction for judgment atoms defined; scope grammar made Step 1 deliverable; AI category taxonomy dependency noted; pilot candidates pre-selected (commit-format, frontmatter-validate, no-work-before-approval); CI isolation mechanism specified (depcheck/import-scan); coexistence flag (`DOCWRIGHT_ATOM_ROUTING`) added to Step 3; `policies/` seeding added to Step 2; side-by-side equivalence test moved from Risk into testing plan; testing section deduplicated and updated. | NetYeti |
+| 2026-06-17 | Critique + improvement pass: `automated:full`→`mode:autonomous`; `check_kind`→`kind` (canonical); RLM integration note added; execution mode interaction for judgment atoms defined; scope grammar made Step 1 deliverable; AI category taxonomy dependency noted; pilot candidates pre-selected (commit-format, frontmatter-validate, no-work-before-approval); CI isolation mechanism specified (depcheck/import-scan); coexistence flag (`DOCWRIGHT_ATOM_ROUTING`) added to Step 3; `policies/` seeding added to Step 2; side-by-side equivalence test moved from Risk into testing plan; testing section deduplicated and updated. Model Routing Reference section added (→ docs/policy-atom-model-routing.md). `depends_on: enforce-lifecycle-compliance` corrected to `related_to` — relationship is predecessor/superseded, not blocking dependency. | NetYeti |
