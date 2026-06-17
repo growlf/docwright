@@ -430,6 +430,15 @@ function main() {
 
   if (mode === 'full') {
     writeFull(dest, vaultName, profile, docwrightPath, manifest);
+    // Update adopt_mode to reflect actual mode used
+    const cfgPath = path.join(dest, '.docwright', 'config.json');
+    try {
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      cfg.adopt_mode = 'full';
+      const cfgContent = JSON.stringify(cfg, null, 2) + '\n';
+      fs.writeFileSync(cfgPath, cfgContent, 'utf8');
+      manifest['.docwright/config.json'] = sha256(cfgContent);
+    } catch { /* ignore */ }
   }
 
   writeManifest(dest, manifest);
