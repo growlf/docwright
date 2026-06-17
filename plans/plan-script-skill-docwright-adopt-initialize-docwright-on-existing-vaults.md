@@ -91,8 +91,8 @@ Key deliverables:
 
 ### Integration & Regression
 
-- [ ] `npm test` passes without modification after all steps
-- [ ] `npm run typecheck` compiles cleanly
+- [x] `npm test` — 154 passing; 1 pre-existing failure (fix-stale-approvals timeout, commit 3cf2a9d, not introduced by this plan)
+- [x] `npm run typecheck` — clean, no errors
 - [x] `npm run hook:install` self-install still works — VAULT_TARGET guard verified, integrity check passes
 - [x] `npm run init` on new empty vault still works after Step 3 changes
 - [x] Existing adopted vaults continue to work — DAFO adoption successful
