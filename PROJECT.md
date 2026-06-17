@@ -946,258 +946,99 @@ Docker deployment guide in Phase 4 documentation.
 
 ## 14. Phased Delivery
 
-> **Note on phase numbering.** The original plan was extension-first; reality went
-> Web UI-first. The phases below reflect the actual build order and the forward
-> trajectory from where we are today. No content has been removed — all deliverables
-> have been redistributed to the phase where they belong.
+> **Detailed sequencing, current status, and priorities live in [[docs/roadmap.md]].**
+> This section states the *goal* of each phase. The roadmap owns the *when*, *what
+> order*, and *why now*. Consult the roadmap before starting any new work.
 
 ---
 
 ### Phase 0 — Spike ✅ Complete
 
-**Goal:** Validate `opencode serve` HTTP API feasibility before committing to the
-Web UI path.
-
-- [x] Confirm `opencode serve` HTTP API is stable and documented
-- [x] Confirm JS SDK covers required endpoints
-- [x] Build minimal SPA embed proof-of-concept
-- [x] **Decision:** go with Web UI as primary client; VSCodium extension deliberately
-      deferred until after alpha validation by real users
+**Goal:** Validate the `opencode serve` HTTP API before committing to the Web UI path.
+Confirmed API stability, JS SDK coverage, and SPA embed feasibility. **Decision:** Web UI
+as primary client; VSCodium extension deferred until after alpha validation.
 
 ---
 
 ### Phase 1 — Web UI Prototype ✅ Complete (v0.2.x)
 
-**Goal:** Functional SvelteKit Web UI with full lifecycle management, AI integration,
-governance enforcement, and containerized deployment. The VSCodium extension was
-deliberately deferred here in favour of validating the Web UI first.
+**Goal:** Functional SvelteKit Web UI with full lifecycle management, AI integration
+(Improve + Plan Review), governance enforcement (pre-commit hook, MCP server),
+collation engine, git controls, and containerized deployment. VSCodium extension
+deliberately deferred in favour of validating the Web UI first.
 
-**Key pivot from original plan:** Phase 0 confirmed the Web UI should be the primary
-client. Phase 1 built it end-to-end rather than starting with the VSCodium extension.
-
-- [x] SvelteKit scaffold — dark theme layout, collapsible file tree sidebar
-- [x] Markdown rendering (markdown-it) with TOC anchors, wikilinks
-      (`[[path]]`, `[[path#section]]`, `[[path|alias]]`)
-- [x] 3-mode editor: preview / WYSIWYG / source (turndown + contenteditable)
-- [x] CRUD + rename + delete with toast notifications and git undo
-- [x] SSE live reload (`/api/watch`) — auto-refresh tree + page on file change
-- [x] Proposal templating system (sidebar + UI button)
-- [x] Document properties pane (frontmatter form, action buttons, mode-aware)
-- [x] Sidebar polish: docs/all-files toggle, hidden archived dirs, context-aware +
-- [x] Vault status page (`/status`) with SSE refresh — default home page
-- [x] Smart 404: moved-document redirect + not-found inline state
-- [x] Collation: multi-signal relationship engine (Jaccard + tag + phase + author +
-      wikilink co-occurrence), related-proposals panel, relationship types
-- [x] Lifecycle compliance: pre-commit gate, MCP server, Claude Code hook
-- [x] Project registry + vault switching (multi-vault support)
-- [x] Git controls panel (stage, commit, undo)
-- [x] Containerization (Docker compose; DOCWRIGHT_ROOT env var)
-- [x] OpenCode chat panel (direct + proxy modes; SSE streaming)
-- [x] Dispatch module (surface-agnostic TypeScript; no VS Code API)
-- [x] Plan critique skill (`scripts/critique-plan.js` + `.claude/skills/critique-plan.md`)
-- [x] Plan step enforcement (⏳/✅ tracking, tests_defined gate, ▶ Run Tests button)
-- [x] Lifecycle gates (phase sign-off, AI pre-review, multi-reviewer quorum, time-based;
-      gate_reviewer, gate_status, gate_note frontmatter)
-- [x] Proposal relationship engine and Plan → button (collation-to-plan flow)
-- [x] Rename document (inline rename in file tree)
-- [x] Session shutdown automation (endsession skill)
-- [x] Cross-tool compatibility (Claude Code + OpenCode skills, governance parity,
-      sync-claude-skills.ts, agent role contract)
-- [x] Isolate MCP instances per project (DOCWRIGHT_ROOT scoping)
-- [x] Mobile-friendly and responsive layout
-- [x] AI proposal improvement (fillProposal, critiqueDocument, ✨ Improve button,
-      ImprovementPanel, on-save trigger for new proposals)
-- [x] AI plan review (⚡ Review button on draft plans, PlanReviewPanel, adversarial
-      critique via OpenCode session API, Write to Plan)
-- [x] Phase 2 UI Polish Bundle: full-text vault search, tag browser + tag index,
-      keyboard shortcuts, theme picker foundation, navigation improvements
-- [x] GitHub Actions CI: lint + typecheck + unit tests, Docker build + health check
-      (ci.yml; triggered on v0.x.x tags and workflow_dispatch per versioning policy)
-- [x] Git push + tagging UI: annotated tag creation, push, CI watch panel (SSE),
-      `npm run release:tag` script; v0.x.x policy enforced at API layer
-- [x] CI/CD build monitoring: PostToolUse hook (Claude Code), behavioral rule
-      (OpenCode), `/api/git/ci-watch` SSE endpoint streaming live run status
+See [[SESSION-LOG.md]] for delivered features. Roadmap: [[docs/roadmap.md]].
 
 ---
 
 ### Phase 2 — Foundation & Methodology ✅ Complete (v0.3.x)
 
-**Goal:** Establish the research-stage methodology, engineering foundation (TypeScript
-MCP, CI, FOSS hygiene), profile engine runtime, and inbox capture.
+**Goal:** Research-stage methodology, TypeScript MCP server, CI pipeline, FOSS
+hygiene, profile engine runtime, policy atom framework, vault adoption tooling,
+and governance enforcement improvements.
 
-- [x] Research stage (`research/` directory, schema, lifecycle states, collation `informed-by`)
-- [x] TypeScript MCP server (replaced Python `mcp-server.py`)
-- [x] GitHub Actions CI (ci.yml; v0.x.x tags + workflow_dispatch)
-- [x] FOSS hygiene (`CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`, `AGENTS.md`, `.github/` templates)
-- [x] Dispatch module CI (zero VS Code API symbols verified)
-- [x] Profile engine runtime: load/validation, `profile.json` override merge
-- [x] **Policy Atom Framework** — `policy-atoms-core` library, 10 governance atoms,
-      `DOCWRIGHT_ATOM_ROUTING` coexistence shim, manager/project separation, hook stubs
-      (`OrgSourceHook`, `JudgmentDispatchHook`), `npm run atoms:check`, isolation CI gate
-- [x] **AI Task Category Taxonomy** Steps 1–2 — `AiCategory` extended to 6 values
-      (`coding`, `agentic`), `categories.yaml` registry, routing tables
-- [x] **Plan completion gate enforcement** — `checkCompletionGate` recognizes
-      `### Gate Criteria`; `tests_human_reviewed` gates completion; Complete button
-      shows blockers client-side
-- [x] **Vault adoption tooling** — `npm run adopt` (lightweight/full/upgrade), `npm run open`,
-      three-surface skills bridge (Claude Code, OpenCode, Gemini CLI), `npm run build:atoms`,
-      `npm run migrate:mode-field`, `npm run atoms:check`
-- [x] Executor heartbeat events (no more silent Execute panel during BigPickle sessions)
-- [x] Atomic plan generation at approval (`approve-proposal/plan-generator.ts`)
-- [x] `mode:` field accepted by linter/pre-commit (`mentor/guided/autonomous`); all 58 plans migrated
+See [[SESSION-LOG.md]] for delivered features. Roadmap: [[docs/roadmap.md]].
 
 ---
 
-### Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (Current — 6/11 done)
+### Phase 3 — Vault Portability & Real-World Pilot (Current)
 
-**Goal:** Deploy DocWright against an external vault (non-profit MSP pilot), establish
-the clean tool/vault separation architecture, and create a structured feedback pipeline
-so real-world usage drives DocWright's evolution. See [[plans/phase-vault-portability-pilot.md]].
+**Goal:** Prove DocWright works on real external vaults via a non-profit MSP pilot
+and Cascade STEAM early-access. Establish clean tool/vault separation. Create a
+structured upstream contribution pipeline so real-world usage drives evolution.
 
-**Gate to close Phase 3:** MSP pilot vault (step 8) and Cascade STEAM early-access
-(step 9) are the real-world validation milestones. Both sub-plan proposals are unapproved —
-approving them is the immediate next action. See [[docs/roadmap.md]].
+**Gate:** MSP pilot vault + Cascade STEAM early-access, each completing one full
+proposal→plan→completed cycle with no manual file edits required.
 
-- [x] TypeScript MCP server with `--mode` flag (vault / upstream)
-- [x] Vault portability foundation (no hardcoded paths, `DOCWRIGHT_PATH` env var)
-- [x] `docwright init` scaffold (`npm run init`)
-- [x] Profile override merge engine
-- [x] Vault migration system (`MIGRATION.md` + `npm run vault:migrate`)
-- [x] `docwright adopt` (lightweight/full/upgrade modes) — DAFO + bms-ai-cluster validated
-- [ ] Contribution pipeline & friction log (`sub-plan-contribution-pipeline` — in-progress)
-- [ ] MSP pilot vault — real-world non-profit governance test (**next: approve sub-plan-msp-pilot-vault**)
-- [ ] Cascade STEAM early-access vault (**next: approve sub-plan-cascade-steam-early-access**)
-- [ ] Friction log tooling (MCP tool `log_friction`)
-- [ ] Architecture boundary document (substantially covered by `docs/vault-portability.md`)
+For sequencing and current status, see [[docs/roadmap.md]] and
+[[plans/phase-vault-portability-pilot.md]].
 
 ---
 
-### Phase 4 — Profile Engine, ACL & Research AI Tooling
+### Phase 4 — Execution Enforcement, Profile Runtime & Governance Maturity
 
-**Goal:** Full profile system runtime, Forgejo ACL integration, vault-wide wikilink
-index, AI-native research tooling, and governance atom integration.
+**Goal:** Full execution mode enforcement (Web UI write intercept per mentor/guided/
+autonomous mode), profile engine full runtime, Lifecycle Gates Phase 2 (AI-assisted
+gates, quorum, scheduled triggers), Forgejo ACL integration, vault-wide wikilink
+index, and AI-native research tooling.
 
-**Note on AI:** Core AI features (✨ Improve, ⚡ Plan Review, chat panel, fillProposal,
-critiqueDocument) shipped in Phase 1. Phase 4 AI work is governance atom integration,
-routing, and research-stage tooling.
-
-**Already delivered in Phase 4 (during Phase 3 close-out):**
-- [x] Policy Atom Framework — complete (moved forward from Phase 4 to unblock governance work)
-- [x] AI Task Category Taxonomy Steps 1–2 — `AiCategory` 6 values + `categories.yaml`
-- [x] Plan completion gate enforcement — `checkCompletionGate`, `tests_human_reviewed`, client-side Complete button blockers
-- [x] `mode:` field canonical — linter + pre-commit, all 58 plans migrated
-
-**Remaining Phase 4 work:**
-
-#### Profile & ACL
-- [ ] Profile engine: full runtime load/validation, schema migration, template resolution,
-      profile switching via UI
-- [ ] Forgejo team membership API → ACL enforcement (`author-role:` field as audit record;
-      Forgejo membership as enforcement source)
-- [ ] OpenCode instructions per profile (`opencode-instructions.md`) — system prompt
-      injected on session start; embeds core philosophy.
-      (`org-operations` already has this; pending for `doc-lifecycle`, `knowledge-base`,
-      `infra-topology`)
-
-#### Vault-Wide Index
-- [ ] Vault-wide backlink index (`_backlinks.json`) — rebuilt on document changes
-- [ ] Wikilink back-reference updating on rename (atomic git commit)
-- [ ] Contributor name autocomplete in properties pane (Forgejo team membership source)
-- [ ] Related docs UX improvements: score threshold, explicit `related_to` shown first,
-      acknowledgement state, "Why related?" keyword explanation, suppress on
-      frontmatter-only saves
-
-#### Research Stage Phase 4 Tooling
-- [ ] AI-assisted research sessions: opening research doc injects `question` + findings
-      as chat context; "Save findings" action writes back to document body
-- [ ] Research → proposal generation: "Create Proposal" from concluded research doc,
-      pre-fills from `question`, findings, `conclusion`; sets `related_to`
-- [ ] Multi-perspective research: parallel model review applied to research questions
-- [ ] ✨ Improve button for research documents (synthesis of scattered notes)
-
-#### Additional
-- [ ] Graph view: lifecycle graph (proposals → plans → completed) + tag-filter mode
-- [ ] `qmd` integration: auto-detect, threshold-based backend switch (≥200 docs),
-      MCP + CLI modes
-- [ ] Triage Inbox: AI-assisted prior-decision search, policy area suggestion
+**Sequencing note:** Phase 4 has a strict internal ordering — execution mode
+enforcement must land before AI-assisted work, which must land before ACL, which
+must land before production deployment. See [[docs/roadmap.md]] for the dependency
+chain.
 
 ---
 
-### Phase 5 — Advanced Features & Feature Bundles
+### Phase 5 — Cascade STEAM Production & Feature Bundles
 
-**Goal:** Deliver the major feature bundles approved during Phases 1–3 and deferred
-for Phase 4+ foundations.
+**Goal:** Cascade STEAM vault on production infrastructure (Forgejo, AI stack, ACL
+enforcement). Deliver major approved feature bundles: Chat/Session Panel Phase 2,
+AI Capabilities Bundle, full `org-operations` and `knowledge-base` profile
+implementations.
 
-- [ ] **Lifecycle Gates Phase 2** — AI-assisted gate preparation, multi-reviewer
-      quorum, retroactive audit, time-based/scheduled triggers, governance audit log
-      (`audit/lifecycle.jsonl`). See [[proposals/bundle-lifecycle-gates-phase-2.md]]
-- [ ] **Chat & Session Panel Phase 2** — full session management, @-mention context
-      injection, model/provider picker, vault-scoped session history, diff/review
-      panel. See [[proposals/bundle-chat-session-panel.md]]
-- [ ] **AI Capabilities Bundle** — AI-powered complexity estimation, parallel
-      multi-model review, automated test lifecycle, perspective synthesis (with
-      human-preserving design). See [[proposals/bundle-ai-capabilities.md]]
-- [ ] **Phase 4 UI Polish Bundle** — keyboard shortcuts, resizable panels, in-app
-      theme picker, policies navigation button, wikilink backref updating (builds on
-      Phase 4 vault-wide index), drag-and-drop reorganization, contributor autocomplete.
-      See [[proposals/bundle-phase-3-ui-polish.md]]
-- [ ] `org-operations` profile: full implementation — Issue, Decision, Policy
-      scaffolding; Inbox Adapters (web form, email-to-inbox, chat webhook); full
-      OpenCode instructions embedding core philosophy
-- [ ] `knowledge-base` profile: full implementation — Ingest, Lint, Save-to-Wiki
-      operations; all page types; LLM Wiki engine
-- [ ] Typed wikilinks — `[[link|type:contains]]` syntax (knowledge-base profile first)
-- [ ] Entity deduplication in Lint
+**Gate:** Phase 4 must close first. Cascade STEAM going live on the public internet
+requires execution mode enforcement, lifecycle gates, and ACL all complete.
 
 ---
 
-### Phase 6 — Enterprise, Distribution & Cascade STEAM
+### Phase 6 — Enterprise, Distribution & Public Release
 
-**Goal:** Enterprise tier for Cascade STEAM reference deployment; public distribution;
-VSCodium extension (after alpha validated by real users).
+**Goal:** Enterprise tier (server-side AI, CI/CD webhooks, email intake, scheduled
+compliance), Cascade STEAM reference deployment as public showcase, VSCodium
+extension, user documentation, public release readiness.
 
-#### Enterprise Tier
-- [ ] **Enterprise Tier Bundle** — server-side AI (system service, shared API key/
-      local LLM), CI/CD webhook integration (Forgejo), email intake to inbox (IMAP/SMTP),
-      scheduled compliance scans + gate reminders.
-      See [[proposals/bundle-enterprise-tier.md]]
-- [ ] Kubernetes / Helm deployment
-- [ ] Remote registry sync (multi-vault coordination)
-- [ ] Federation model — cross-vault Issue/Proposal submission
-
-#### Cascade STEAM Reference Deployment
-- [ ] Vault seed finalised: `vision.md` + `governance.md` completed by leadership
-- [ ] Forgejo as git server (self-hosted; recommended for STEAM)
-- [ ] AI stack integration: growlf/ai-stack (i9 Ultra + Xe iGPU) + growlf/meshy
-- [ ] Full governance loop: human contributors + server AI + Forgejo enforcement +
-      scheduled compliance
-
-#### Distribution
-- [ ] VSCodium extension skeleton (after Web UI alpha validated by real users)
-- [ ] Publish to Open VSX marketplace
-- [ ] User documentation site
-- [ ] Demo GIFs in README (one per bundled profile)
-- [ ] Partner org fork templates (seed a new org's vault from Cascade STEAM policies)
-- [ ] Windows + macOS CI validation matrix
-- [ ] Accessibility audit
-- [ ] Profile authoring guide
-- [ ] Second maintainer onboarded — required gate before public release
+**Gate:** Web UI validated by real non-developer governance users in Phase 5.
 
 ---
 
 ### Phase B — Shared Team Daemon (post-Phase 6)
 
-- [ ] Standalone Node process wrapping the dispatch module
-- [ ] Git integration: clone/pull, watch, commit AI results under daemon identity
-- [ ] `docwright/ai-suggestions` branch → PR workflow
-- [ ] REST/MCP endpoint exposing the dispatch contract
-- [ ] OCC two-layer implementation for all background AI writes
-- [ ] qmd MCP server integration for daemon search
-- [ ] Federation model (cross-vault Issue/Proposal submission)
+Standalone dispatch module process, git integration, AI suggestions → PR workflow,
+federation model. Not on near-term roadmap.
 
 ### Phase C — Live Co-Editing (aspirational)
 
-Y.js CRDT sync server. Not on near-term roadmap. Revisit after Phase B.
+Y.js CRDT sync server. Revisit after Phase B.
 
 ---
 

@@ -1,145 +1,240 @@
 # DocWright Roadmap
 
-Living prioritization of open plans and proposals. Updated as phases close and work
-advances. The critical path is: **Phase 3 close → Phase 4 start → Phase 5 start**.
+Authoritative sequencing of all open work. For project goals and architecture,
+see [[PROJECT.md]]. This document owns the *when* and *why now*.
 
-Last reviewed: 2026-06-17
+**Critical path:** Phase 3 close → Phase 4 → Phase 5 → Phase 6
 
----
-
-## Phase 3 — Vault Portability & Real-World Pilot (In-Progress)
-
-**Plan:** [[plans/phase-vault-portability-pilot.md]] | 6/11 steps done
-
-Phase 3 is the current blocking dependency. Phases 4 and 5 do not start until
-Phase 3 closes its gate. The four remaining deliverables are:
-
-| # | Deliverable | Sub-Plan | Status |
-|---|-------------|---------|--------|
-| 6 | Contribution pipeline & friction log | [[proposals/sub-plan-contribution-pipeline.md]] | 🔄 In-progress |
-| 7 | MSP pilot vault (non-profit real-world) | [[proposals/sub-plan-msp-pilot-vault.md]] | ⏳ Proposal unapproved |
-| 8 | Cascade STEAM early-access vault | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⏳ Proposal unapproved |
-| 11 | Architecture boundary doc | [[proposals/sub-plan-architecture-boundary-doc.md]] | ⬜ Low priority — `docs/vault-portability.md` covers this |
-
-**Gate to close Phase 3:** Deliverables 7 and 8 are the real-world validation milestones. The MSP pilot proves the governance model works on an unfamiliar external vault. Cascade STEAM early-access gives leadership hands-on use before Phase 5 production infrastructure exists.
-
-**Immediate next actions:**
-1. Approve `sub-plan-msp-pilot-vault.md` → generate plan → execute
-2. Approve `sub-plan-cascade-steam-early-access.md` → generate plan → execute
+Last reviewed: 2026-06-17 (v0.3.6)
 
 ---
 
-## Structural Work (Phase-Independent)
+## How to read this document
 
-These improve the system regardless of which phase is active. Do alongside Phase 3
-close-out or between phases — not gated on anything.
-
-| Work | State | Effort | What it fixes |
-|------|-------|--------|--------------|
-| `plan-execution-mode-rename.md` | 🔄 Partial — linter done, migration done | M | Web UI mode badge + write intercept layers + AGENTS.md + profile templates |
-| `new-proposals-should-check-before-actual-creation.md` | ⏳ Unapproved | S | Deduplication check before proposal file creation |
-| `new-proposal-ux-description-priority-and-immediate-view.md` | ⏳ Unapproved (depends on above) | S | AI-generated title + immediate navigation after creation |
-| `formalize-step-counter-sync.md` | 📋 Draft plan | XS | Auto-sync total_steps/completed_steps with table rows |
-| `plan-steps-structured-frontmatter.md` | ⏳ Unapproved | M | YAML `steps:` as source of truth; markdown table becomes rendered view |
-| `deferred-frontmatter-validate-assigned-to-strictness.md` | 📝 Deferred proposal | XS | Fix false positive: atom rejects `assigned_to: ""` on unapproved proposals |
-| `executor-panel-live-feedback.md` | 🔄 Partial — heartbeat done | S | Fixes 2+3 still pending: step name display + token count live update |
-| `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` | ⏳ Unapproved | XS | Surface current phase in status page header |
-| `deferred-watcher-presence-indicator.md` | 📝 Deferred proposal | S | Show "👁 Claude Code is watching" badge in execution panel |
+Work is ordered within each phase by **structural dependency** — earlier items
+unlock later ones. "Phase-independent" items in previous versions of this
+document were often incorrect; nearly everything has a dependency on something.
+Items marked ⚡ are blockers: downstream work cannot start without them.
 
 ---
 
-## Phase 4 — Profile Engine, ACL & AI Integration
+## Phase 3 — Vault Portability & Real-World Pilot (Current)
 
-**Plan:** [[plans/phase-4-profile-acl-ai.md]] | Draft, no steps started
+**Plan:** [[plans/phase-vault-portability-pilot.md]] · 8/11 steps done
+
+**Gate:** Phase 3 closes when the **two real-world pilot vaults** succeed. The
+contribution pipeline is independent and moves to Phase 4 — it does not gate
+Phase 3.
+
+| # | Work | Proposal | Status |
+|---|------|---------|--------|
+| 1 | Approve + execute MSP pilot vault | [[proposals/sub-plan-msp-pilot-vault.md]] | ⚡ Unapproved — **approve first** |
+| 2 | Approve + execute Cascade STEAM early-access | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⚡ Unapproved — **approve second** |
+
+Both pilots must complete one full proposal→plan→completed cycle through DocWright
+with no manual file edits. That is the Phase 3 acceptance bar.
+
+**Note on contribution pipeline:** `sub-plan-contribution-pipeline` (the
+`contribute_upstream` MCP tool) is in-progress but does **not** gate Phase 3.
+It moves to Phase 4 as infrastructure work. It unblocks nobody in Phase 3.
+
+---
+
+## Phase 4 — Execution Enforcement, Profile Runtime & Governance Maturity
 
 **Gate:** Phase 3 must close before Phase 4 begins.
 
-| Work | State | What it delivers |
-|------|-------|-----------------|
-| Phase 4 plan execution | 📋 Draft | Profile engine runtime, Forgejo ACL enforcement, wikilink index, AI research tooling |
-| `profile-opencode-system-prompt.md` | ⏳ Unapproved | Per-profile governance system prompt injection into OpenCode sessions |
-| `plan-ui-lifecycle-graph-view.md` | 📋 Draft plan | Lifecycle funnel view with swimlanes and D3.js dependency graph |
-| `ai-task-category-taxonomy.md` Step 4 | 🔄 In-progress (Steps 1–2 done) | `ai_category` dropdown in plan step editor; creation-time suggestion via classify call |
-| `deferred-judgment-atom-mode-interaction.md` | 📝 Deferred proposal | Needs MCP gate call sites (Phase 4 deliverable) before this is buildable |
-| Remaining `plan-execution-mode-rename.md` | 🔄 Partial | Web UI mode badge + write intercept layers land here |
+Phase 4 has a strict internal ordering. Items marked ⚡ unlock the work below
+them — do not start later work until its prerequisite is done.
 
-**Phase 4 also consumes:**
-- Policy atom framework (completed Phase 4 prerequisite ✅)
-- AI Task Category Taxonomy Steps 1–2 (completed ✅)
+### 4a — Execution Mode Enforcement ⚡ (must land first)
+
+`plan-execution-mode-rename.md` (partial — linter done, migration done)
+
+**Why first:** Execution mode enforcement (write intercept in the Web UI,
+AI preamble injection per mode) is the foundation that ALL Phase 4 AI-assisted
+work depends on. Judgment atom evaluation, research AI sessions, and ACL
+gate prep all assume modes work. Without enforcement, `mode: autonomous` is
+just a label.
+
+Remaining work:
+- Web UI mode badge (visible indicator in properties pane + document header)
+- Write intercept layer (mentor → staging panel; guided → review queue; autonomous → direct write + `ai-last-action:` stamp)
+- AI preamble injection per mode on plan open
+- Update `AGENTS.md` and all profile templates
+
+### 4b — Profile Engine Full Runtime ⚡ (unlocks 4c–4e)
+
+Phase 4 plan, step 1.
+
+**Why second:** Profile-aware features (deduplication check, per-profile AI
+prompts, ACL enforcement) cannot work without the full profile engine runtime.
+The override merge engine ships in Phase 3; full runtime (schema migration,
+template resolution, UI switching) comes here.
+
+### 4c — Lifecycle Gates Phase 2 ⚡ (moved up from Phase 5)
+
+[[plans/bundle-lifecycle-gates-phase-2.md]]
+
+**Why here, not Phase 5:** Its dependency (`lifecycle-gates-extension-bundle`)
+is already completed. Cascade STEAM going live in Phase 5 *requires* proper
+gate enforcement — AI-assisted gate prep, multi-reviewer quorum, and scheduled
+triggers are governance maturity prerequisites for a production deployment.
+Shipping Cascade STEAM without this is the governance equivalent of deploying
+without auth.
+
+Delivers: AI-assisted gate preparation, multi-reviewer quorum, retroactive
+audit, time-based/scheduled triggers, governance audit JSONL log.
+
+### 4d — Judgment Atom Mode Interaction (now unblocked)
+
+[[proposals/deferred-judgment-atom-mode-interaction.md]]
+
+**Why here:** Deferred because "MCP gate call sites don't exist yet." Lifecycle
+Gates Phase 2 (4c) creates those call sites. This item moves from deferred to
+Phase 4 once 4c lands — not Phase 5.
+
+Makes `evaluateJudgmentAtom()` results advisory/staged/blocking based on plan
+`mode:` value.
+
+### 4e — Vault-Wide Wikilink Index
+
+Phase 4 plan, step 2. Needed before contributor autocomplete, related-docs
+UX improvements, and wikilink backref updating on rename.
+
+### 4f — Forgejo ACL Integration
+
+Phase 4 plan, step 3. Needs profile engine runtime (4b) for `author-role:`
+field resolution against Forgejo team membership.
+
+### 4g — Research AI Tooling
+
+Phase 4 plan, steps 4–7. Needs profile engine (4b) for context injection and
+research → proposal generation.
+
+- AI-assisted research sessions (question + findings injected into chat context)
+- Research → proposal generation from concluded research docs
+- Multi-perspective research (parallel model review)
+- ✨ Improve button for research documents
+
+### 4h — New Proposal UX & Structural Improvements
+
+These need profile engine runtime (4b) to know which document types to scan:
+
+- `new-proposals-should-check-before-actual-creation.md` — deduplication check before file creation
+- `new-proposal-ux-description-priority-and-immediate-view.md` — description+priority first, AI generates title
+
+### 4i — Contribution Pipeline
+
+`sub-plan-contribution-pipeline.md` (moved from Phase 3 gate)
+
+`contribute_upstream()` MCP tool, `log_friction()`, `list_docwright_issues`.
+No phase dependency — can run in parallel with 4a–4h. Moved here because it
+doesn't gate Phase 3 and doesn't depend on anything else in Phase 4.
+
+### 4j — Graph View, UI Polish
+
+- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel view, D3.js dependency graph
+- `formalize-step-counter-sync.md` — auto-sync step counter validation
+- `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface current phase in status page
+- `executor-panel-live-feedback.md` — Fixes 2+3: step name display + token count (heartbeat already shipped)
 
 ---
 
-## Phase 5 — Cascade STEAM Production + Governance Maturity
+## Phase 5 — Cascade STEAM Production & Feature Bundles
 
-**Plan:** [[plans/phase-5-cascade-steam.md]] | Draft
+**Gate:** Phase 4 must close before Phase 5 begins. Cascade STEAM going live
+on the public internet requires mode enforcement (4a), lifecycle gates (4c),
+and ACL integration (4f) all complete.
 
-**Gate:** Phase 4 must close before Phase 5 begins.
+| Work | Plan/Proposal | Priority |
+|------|-------------|---------|
+| Phase 5 plan execution | [[plans/phase-5-cascade-steam.md]] | High |
+| Chat & Session Panel Phase 2 | [[plans/bundle-chat-session-panel.md]] | High (in-progress) |
+| AI Capabilities Bundle | [[proposals/bundle-ai-capabilities.md]] | Medium |
+| `org-operations` profile full implementation | Phase 5 plan | High |
+| `knowledge-base` profile full implementation | Phase 5 plan | Medium |
+| AI Task Category Taxonomy Steps 3–4 | [[plans/ai-task-category-taxonomy.md]] | Medium |
+| Enterprise Tier Bundle | [[proposals/bundle-enterprise-tier.md]] | Medium |
+| UI Polish Bundle (Phase 4 polish) | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low |
 
-| Work | State | What it delivers |
-|------|-------|-----------------|
-| Phase 5 plan execution | 📋 Draft | Forgejo server, ACL enforcement, AI stack, Web UI deployment for Cascade STEAM |
-| `bundle-lifecycle-gates-phase-2.md` | 📋 Draft plan — **HIGH** | AI-assisted gate prep, multi-reviewer quorum, scheduled triggers, retroactive audit, governance log |
-| `bundle-chat-session-panel.md` | 🔄 **In-progress** | OpenCode adapter, session sidebar, @-mention, model picker, diff review, terminal (17 steps) |
-| `bundle-enterprise-tier.md` | ⏳ Unapproved | Server-side AI, CI/CD webhooks, email intake, scheduled compliance (foundation for all four) |
-| `ai-task-category-taxonomy.md` Step 3 | ⏳ ai-stack workstream | `capability-registry.yaml` + LiteLLM routing wired to `judgment_dispatch_hook` |
-
-**`bundle-lifecycle-gates-phase-2.md` is the highest-priority Phase 5 item.** It is the
-governance maturity layer that makes DocWright trustworthy at scale: scheduled gates,
-retroactive audit, AI-assisted preparation, multi-reviewer quorum. Without it, Phase 5
-governance is manual and fragile.
+**Note on `plan-steps-structured-frontmatter.md`:** YAML steps as source of
+truth is a structural change that affects every plan. This must be carefully
+timed — either early Phase 4 (before anything builds on current step format)
+or explicitly deferred to Phase 5. Do not start it mid-phase.
 
 ---
 
-## Post-Alpha (After Web UI Validated by Real Users)
+## Phase 6 — Enterprise, Distribution & Public Release
 
-These are well-scoped and genuinely useful but deliberately deferred. Do not start
-until the Web UI has been validated by non-developer governance users in production.
+| Work | Notes |
+|------|-------|
+| Kubernetes/Helm deployment | Docker compose sufficient until scale demands it |
+| Remote registry sync | Privacy/trust design complexity; post-v1 |
+| VSCodium extension | After Web UI validated by real users in Phase 5 |
+| Distribution, documentation site, demo GIFs | After alpha validated |
+| Second maintainer onboarded | Required gate before public release |
+| Windows + macOS CI validation | After alpha |
+
+---
+
+## Post-Alpha (Deliberately Deferred)
+
+These are well-scoped and genuinely useful but do not start until the Web UI
+has been validated by non-developer governance users in production.
 
 | Work | Why deferred |
 |------|-------------|
-| `phase-vscodium-extension.md` | Explicitly deferred until Web UI alpha is validated — IDE layer follows, not leads |
-| `remote-registry-sync.md` | Privacy and trust-anchor design complexity; post-v1 |
-| `gantt-view-dependencies.md` | Awaiting wider adoption of `depends_on` + `estimated_effort` fields |
-| `offline-pwa-support.md` | Edit conflict resolution with git is non-trivial; deferred |
+| `offline-pwa-support.md` | Edit conflict resolution with git is non-trivial |
+| `gantt-view-dependencies.md` | Awaiting wider `depends_on` + `estimated_effort` adoption |
+| `mobile-wysiwyg-editing.md` | iOS contenteditable reliability |
 | `kubernetes-deployment.md` | Docker compose sufficient until scale demands it |
-| `mobile-wysiwyg-editing.md` | iOS contenteditable reliability; deferred |
 | `ui-white-label-brand-settings.md` | Needs settings panel architecture first |
+| `remote-registry-sync.md` | Privacy/trust design complexity |
+| Phase B — Shared Team Daemon | After Phase 6 |
+| Phase C — Live Co-Editing | Aspirational; Y.js CRDT; revisit after Phase B |
 
 ---
 
-## Dependency Graph (simplified)
+## Small Fixes (Do Whenever — No Phase Gate)
+
+| Work | Effort | What it fixes |
+|------|--------|--------------|
+| `deferred-frontmatter-validate-assigned-to-strictness.md` | XS | False positive on `assigned_to: ""` for unapproved proposals |
+| `deferred-watcher-presence-indicator.md` | S | Show watcher presence badge during AI sessions |
+| `enforce-release-tag-script.md` | S | Pre-commit hook to block manual `git tag`, enforce `npm run release:tag` |
+
+---
+
+## What Is Complete
+
+| Work | Version | Notes |
+|------|---------|-------|
+| Phase 0 — Spike | v0.1.x | `opencode serve` HTTP API validated |
+| Phase 1 — Web UI Prototype | v0.2.x | Full lifecycle, AI integration, containerization |
+| Phase 2 — Foundation | v0.3.x | TS MCP, research stage, policy atoms, adoption tooling, mode migration |
+| Policy Atom Framework (5 steps) | v0.3.3 | Moved forward from Phase 4 |
+| Plan Completion Gate Bug (4 gaps) | v0.3.3 | `checkCompletionGate` fixed, client-side blocker |
+| Phase 3 partial (8/11 steps) | v0.3.x | Vault portability, init, adopt, profile merge, migration |
+
+---
+
+## Dependency Graph
 
 ```
-Phase 1 (complete) ──→ Phase 2 (complete) ──→ Phase 3 (in-progress)
-                                                      │
-                              ┌───────────────────────┘
-                              ▼
-                         Phase 4 ──→ Phase 5 ──→ Post-Alpha
-                              │
-                    (structural work runs throughout)
+Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6
+                                          │
+                           4a (mode enforcement)
+                                │
+                           4b (profile engine)
+                                │
+                     ┌──────────┤
+                     │          │
+                  4c (lifecycle  4e (wikilink index)
+                   gates Ph2)        │
+                     │          4f (ACL)
+                  4d (judgment       │
+                   atom mode)   4g (research AI)
 ```
 
-**Structural work** (execution mode rename, proposal UX, step counters, atom calibration)
-runs in parallel with any phase. It does not gate phases and phases do not gate it.
-
----
-
-## What Is Completed
-
-| Plan | Completed |
-|------|----------|
-| Policy Atom Framework | ✅ 2026-06-17 |
-| Plan Completion Gate Enforcement Bug | ✅ 2026-06-17 |
-| Adopt-Vault (docwright-adopt) | ✅ 2026-06-17 |
-| All Phase 1 plans | ✅ Phase 1 closed |
-| Phase 2 plans (TypeScript MCP, init scaffold, vault portability foundation, profile merge, migration system) | ✅ Phase 2 complete |
-
----
-
-## Related Documents
-
-- [[PROJECT.md]] — full architecture spec and phase definitions
-- [[SESSION-LOG.md]] — session index with completed work
-- [[docs/policy-atom-scope-routing.md]] — MCP tool → atom scope map
-- [[docs/policy-atom-model-routing.md]] — ai_category → model routing reference
-- [[docs/vault-portability.md]] — vault portability architecture boundary
+Small fixes and contribution pipeline (4i) have no phase dependencies.
