@@ -12,7 +12,7 @@ tags:
   - phase-4
 priority: critical
 complexity: high
-automated: full
+mode: autonomous
 scenario_synthesis: Policy atom decomposition — build policy-atoms-core library in isolation, pilot with 2-3 live rules, migrate remaining governance checks, add manager/project isolation; no IDE-specific steps
 assigned_to: NetYeti
 proposal_source: proposals/policy-atom-framework.md
@@ -33,7 +33,13 @@ _path: plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwrig
 
 Decomposes DocWright's governance from a monolithic rule-set into small, standalone, individually-enforceable units ("atoms"). Each atom has three synchronized representations sized for different consumers. A generic `policy-atoms-core` library provides the index- builder, router, resolver, and sync-checker — reusable by any project DocWright manages, and by any AI surface (OpenCode, Claude, Gemini, local LLMs via Olla/LiteLLM).
 
-Full design (atom schema, two-pass consumption model, `check_kind` split, three-tier enforcement resolution, open questions) is in \[\[docs/policy-atom-framework-concept.md\]\]. The design is considered done; this plan executes it. See **Design Decisions Required** for the five questions that must be answered before Step 1 begins.
+Full design (atom schema, two-pass consumption model, `kind` split, three-tier enforcement resolution, open questions) is in \[\[docs/policy-atom-framework-concept.md\]\]. The design is considered done; this plan executes it. See **Design Decisions Required** for the five questions that must be answered before Step 1 begins.
+
+**Naming note:** The atom type field is `kind` throughout this plan (matching the YAML schema examples). `kind` appears in some early notes and design decisions — treat it as a synonym; `kind` is canonical.
+
+**RLM integration note (from [[research/rlm-recursive-language-models.md]]):** Multi-atom cross-reference analysis (the router querying across 20+ atoms) should use RLM-style decomposition: recursive index scan + targeted fetch, rather than loading all atom contexts into a single window. The atom frontmatter (`tags:`, `scope:`, `related:`) is the navigation index an RLM needs. This is not in scope for this plan (RLM pre-requisites: GPU fix + Python microservice); apply the pattern manually in prompts until then — scan the synopsis index first, fetch only relevant atom contexts. When RLM pre-requisites are met, create the deferred proposal: "RLM Python microservice for multi-document AI analysis."
+
+**Execution mode interaction for judgment atoms:** When a plan is in `mode: mentor`, `evaluate_at_gate()` still fires but its output is advisory-only — the judgment result is surfaced as a suggestion, not a blocking gate. In `mode: guided`, results are staged for human review before becoming blocking. In `mode: autonomous`, results block as written. The Web UI write-intercept layer (per [[research/plan-execution-mode-enforcement.md]]) enforces this — judgment atom evaluation itself is mode-unaware; the caller's mode context determines how the result is treated.
 
 ## Problem
 
@@ -53,7 +59,7 @@ Introduce a **Policy Atom Framework**: decompose governance rules into atoms, ea
 | **Context** | Judgment atoms | Full rule, rationale, examples | Loaded on-demand when the router routes a query to this atom |
 | **Code** | Deterministic atoms | Executable check function | Run by MCP server or pre-commit hook with zero AI cost |
 
-**The canonical source direction is not symmetric.** For `deterministic` atoms the code is the ground truth — the prose describes what the code does, and if they diverge the code wins. For `judgment` atoms there is no code — the context prose is the canonical source, and the synopsis must accurately summarize it. The sync-checker enforces the correct direction per `check_kind`, not a generic "all three must match" rule.
+**The canonical source direction is not symmetric.** For `deterministic` atoms the code is the ground truth — the prose describes what the code does, and if they diverge the code wins. For `judgment` atoms there is no code — the context prose is the canonical source, and the synopsis must accurately summarize it. The sync-checker enforces the correct direction per `kind`, not a generic "all three must match" rule.
 
 ### Synopsis format and the `scope` field
 
@@ -79,7 +85,7 @@ atoms:
 
 **Scope expressions support inheritance.** A rule scoped to `plan` applies to all plans. A rule scoped to `plan.approved` applies only during the approval transition. A rule scoped to `plan.*` matches any plan sub-scope. This avoids atom explosion (one per edge case) and coarse over-loading (everything applies everywhere). Scope expression syntax is defined in the atom schema and enforced by the sync-checker.
 
-### `check_kind` — the decision is permanent-ish
+### `kind` — the decision is permanent-ish
 
 Classifying a rule as `deterministic` means committing to maintaining its code check in sync with its prose for the life of the rule. A `judgment` rule is cheaper to write but permanently dependent on a capable LLM. Get the classification right early.
 
@@ -104,7 +110,7 @@ The sync-checker validates **structure, not semantics**:
 *   **Index-builder** — scans `policies/` and produces the synopsis index YAML
 *   **Router** — pass-1: given an action context (commit, plan write, proposal approval), returns the list of atom IDs whose scope matches
 *   **Resolver** — pass-2: loads full context for a given atom ID list only
-*   **Sync-checker** — validates structure and canonical-source direction per `check_kind`
+*   **Sync-checker** — validates structure and canonical-source direction per `kind`
 *   **Check-type library** — reusable deterministic check functions: `field_required`, `status_transition_allowed`, `regex_match`, `linked_artifact_exists`, `section_present`, `enum_value`
 
 ### Two-pass consumption model
@@ -124,7 +130,7 @@ This model works across all AI surfaces because the synopsis index is the only t
 
 ### Future direction: LiteLLM as atom dispatch layer
 
-Not in scope for this plan, but the natural next step: LiteLLM sits between DocWright's MCP server and AI backends. The atom router communicates `check_kind` to LiteLLM so it can route `deterministic` atoms to code execution (zero LLM), and `judgment` atoms to the cheapest capable model for the complexity. The org-source hook interface (Step 5) is the natural sibling to the LiteLLM routing hook — design the interface with this extension point in mind. Evaluation caching (keyed on `atom_id + document_hash + atom_version`) belongs at this layer too.
+Not in scope for this plan, but the natural next step: LiteLLM sits between DocWright's MCP server and AI backends. The atom router communicates `kind` to LiteLLM so it can route `deterministic` atoms to code execution (zero LLM), and `judgment` atoms to the cheapest capable model for the complexity. The org-source hook interface (Step 5) is the natural sibling to the LiteLLM routing hook — design the interface with this extension point in mind. Evaluation caching (keyed on `atom_id + document_hash + atom_version`) belongs at this layer too.
 
 ### Multi-AI surface compatibility
 
@@ -151,7 +157,7 @@ These five questions must be answered before Step 1 begins. Answers here become 
 
 > **Decision:** Ship a bundled default `policies/` with DocWright, seeded by `docwright init` the same way profiles are seeded. DocWright's own governance atoms are the reference implementation and first thing any adopter sees. Vaults can override or extend; they do not start from nothing.
 
-**Q3 — MCP router invocation pattern** The answer differs by `check_kind` — the two atom types have different invocation needs:
+**Q3 — MCP router invocation pattern** The answer differs by `kind` — the two atom types have different invocation needs:
 
 *   **`none` (deterministic) atoms** already run automatically today through pre-commit hooks and MCP validation logic. The migration for these atoms is _how_ they run (monolithic rule file → atom code check), not _when_. Auto-wiring into existing MCP tools (Option B) is correct here — low risk, fast checks, no circular dependency.
     
@@ -175,58 +181,53 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 
 > **Decision:** Step 5 defines both hooks as named, typed, stub interfaces. The `judgment_dispatch_hook` signature is `(ai_category: string, payload: string) => Promise<string | null>`. Actual LiteLLM routing implementation is a separate later plan that fulfills this interface. No routing logic built here.
 
+> **Dependency note:** `ai_category` label values come from the AI Task Category Taxonomy proposal, which is explicitly coupled to this plan. If that proposal is not yet approved when Step 1 begins, define a minimal inline taxonomy (e.g., `none`, `classification`, `generation`, `reasoning`) sufficient to type the hook interface. The full taxonomy can extend these values later without breaking the interface — the hook signature is `string`, not an enum.
+
 ## Implementation Steps
 
 | Step | Action | Details | Status |
 | --- | --- | --- | --- |
-| 1 | **Spike** — build `policy-atoms-core` in complete isolation | Define atom YAML schema and JSON Schema validator. Implement index-builder, router, resolver, and sync-checker as a standalone TypeScript package under `src/policy-atoms-core/`. Include the deterministic check-type library: `field_required`, `status_transition_allowed`, `regex_match`, `linked_artifact_exists`. No DocWright integration — pure library. Full unit test coverage before moving to Step 2. | ⏳ Pending |
-| 2 | **Pilot** — decompose 2–3 real rules into atoms | Choose 2–3 plan-lifecycle rules from `.opencode/rules/*` or `pre-commit.sh` (e.g., `commit-format`, `frontmatter-validate`, one lifecycle-gate rule). Express each as a policy atom under a new `policies/` top-level directory. Wire DocWright's MCP server to consult the atom router for those rules **alongside** (not replacing) existing checks. All existing tests must still pass; add atom-specific tests. | ⏳ Pending |
-| 3 | **Migration** — replace old enforcement paths | Migrate remaining `.opencode/rules/*` and pre-commit deterministic checks into atoms. Retire old-path checks incrementally — only after the atom-backed equivalent passes the full test suite. Update MCP tools to route all governance queries through the atom router. | ⏳ Pending |
-| 4 | **Manager/project separation** — independent atom sets | Add `<managed-project>/policies/` support: independent atom set per managed project, same engine, no cross-contamination with DocWright's own `policies/`. MCP router must scope queries to the active project's atom set. Verify with a real secondary vault. | ⏳ Pending |
-| 5 | **Org-bundle tier** — pluggable interface only | Implement the resolver's pluggable `org-source` hook as an interface: function signature, documented contract, stub implementation that returns `null`. Do NOT build transport or trust-anchor. Document the hook location and expected signature for future implementors. | ⏳ Pending |
+| 1 | **Spike** — build `policy-atoms-core` in complete isolation | Define atom YAML schema and JSON Schema validator. **Freeze the scope expression grammar** (`plan`, `plan.*`, `plan.approved`, `proposal`, `git-commit`) as a named deliverable — grammar must be defined before any atoms are written. Implement index-builder, router, resolver, and sync-checker as a standalone TypeScript package under `src/policy-atoms-core/`. Include the deterministic check-type library: `field_required`, `status_transition_allowed`, `regex_match`, `linked_artifact_exists`. **Add CI isolation check:** a `depcheck` or import-scan script that fails if any `src/policy-atoms-core/` file imports from outside the package — run as a pre-commit gate and a CI step. No DocWright integration — pure library. Full unit test coverage before moving to Step 2. | ⏳ Pending |
+| 2 | **Pilot** — decompose 3 named rules into atoms + seed `policies/` | Pilot candidates (pre-selected): (1) `commit-format` — deterministic, scope `[git-commit]`, `regex_match` check; (2) `frontmatter-validate` — deterministic, scope `[proposal, plan]`, `field_required` checks; (3) `no-work-before-approval` — deterministic, scope `[plan]`, `status_transition_allowed` check. Express each as a policy atom under `policies/`. Wire DocWright's MCP server to consult the atom router for those three rules **alongside** (not replacing) existing checks — both paths run; output compared before any retirement. Add atom-specific tests. **Run side-by-side equivalence test:** for each pilot atom, feed the same document to the old-path check and the atom check; assert identical pass/fail decision. **Seed `policies/` in `docwright init` and `adopt-vault.ts`:** once pilot atoms pass, add `policies/` directory + pilot atom files to the `init.ts` and `adopt-vault.ts` file-creation lists and update their manifests. | ⏳ Pending |
+| 3 | **Migration** — replace old enforcement paths with coexistence shim | Migrate remaining `.opencode/rules/*` and pre-commit deterministic checks into atoms. **Coexistence mechanism:** add a feature flag `DOCWRIGHT_ATOM_ROUTING=1` env var; when set, MCP tools route through the atom router instead of the old-path check functions. When unset, old paths run. Retire each old-path check only after: (a) its atom equivalent passes the full test suite, (b) the side-by-side equivalence test passes for all known inputs, (c) the flag has been enabled in CI for at least one full test run. **Migration audit table** (to be completed as rules migrate): one row per rule, columns: rule name, atom ID, equivalence tested, old-path retired. Update MCP tools to route all governance queries through the atom router once all rules have been migrated and the audit table is complete. | ⏳ Pending |
+| 4 | **Manager/project separation** — independent atom sets | Add `<managed-project>/policies/` support: independent atom set per managed project, same engine, no cross-contamination with DocWright's own `policies/`. MCP router must scope queries to the active project's atom set. Verify with a real secondary vault (bms-ai-cluster or DAFO). | ⏳ Pending |
+| 5 | **Org-bundle tier** — pluggable interface only | Implement the resolver's two pluggable hooks as named, typed, stub interfaces: (1) `org_source_hook(atom_id: string) => Promise<AtomOverride | null>` — returns `null` when unconfigured; (2) `judgment_dispatch_hook(ai_category: string, payload: string) => Promise<string | null>` — returns `null` to fall back to default model. Document hook location, contract, and extension path for LiteLLM integration. Do NOT build transport or trust-anchor. | ⏳ Pending |
 
 ## Testing Plan
 
 ### Step Verification
-- [ ] Step 1: Spike — build `policy-atoms-core` in complete isolation
-- [ ] Step 2: Pilot — decompose 2–3 real rules into atoms
-- [ ] Step 3: Migration — replace old enforcement paths
-- [ ] Step 4: Manager/project separation — independent atom sets
-- [ ] Step 5: Org-bundle tier — pluggable interface only
 
-*    Step 1: Spike — build `policy-atoms-core` in complete isolation
-    
-*    Step 2: Pilot — decompose 2–3 real rules into atoms
-    
-*    Step 3: Migration — replace old enforcement paths
-    
-*    Step 4: Manager/project separation — independent atom sets
-    
-*    Step 5: Org-bundle tier — pluggable interface only
-    
-*    Step 1: `policy-atoms-core` unit tests pass in complete isolation (`npm test` from `src/policy-atoms-core/`)
-    
-*    Step 2: 2–3 pilot atoms enforce correctly; all existing pre-commit and MCP tests still pass
-    
-*    Step 3: Full migration — `npm test` passes with atom routing active; old-path files removed
-    
-*    Step 4: Secondary vault uses independent atom set; no bleed from DocWright's own `policies/`
-    
-*    Step 5: Org-source hook present and documented; returns `null` gracefully when not configured
-    
+- [ ] Step 1: `policy-atoms-core` unit tests pass in complete isolation (`npm test` from `src/policy-atoms-core/`)
+- [ ] Step 1: `depcheck`/import-scan CI gate confirms zero DocWright-specific imports; gate runs in pre-commit and CI
+- [ ] Step 1: Scope expression grammar frozen and documented; parser tests cover `plan`, `plan.*`, `plan.approved`, `git-commit`, `proposal`
+- [ ] Step 1: Synopsis index size enforced by sync-checker; hard limit 1,500 tokens, soft warning at 1,200
+- [ ] Step 2: Three pilot atoms (`commit-format`, `frontmatter-validate`, `no-work-before-approval`) enforce correctly
+- [ ] Step 2: Side-by-side equivalence test — atom check and old-path check produce identical pass/fail for same documents; assert in test suite
+- [ ] Step 2: All existing pre-commit and MCP tests still pass with both paths running
+- [ ] Step 2: `policies/` directory seeded in `docwright init` and `adopt-vault.ts`; manifest updated
+- [ ] Step 3: `DOCWRIGHT_ATOM_ROUTING=1` flag routes all governance checks through atom router; full test suite passes
+- [ ] Step 3: Migration audit table complete — every rule has: atom ID, equivalence tested, old-path retired
+- [ ] Step 3: No governance rules unintentionally dropped (audit table review)
+- [ ] Step 4: Secondary vault uses independent atom set; no bleed from DocWright's own `policies/`
+- [ ] Step 5: `org_source_hook` and `judgment_dispatch_hook` present, typed, documented, return `null` gracefully when not configured
+- [ ] Step 5: `judgment_dispatch_hook` signature matches Q5 decision: `(ai_category: string, payload: string) => Promise<string | null>`
 
 ### Integration & Regression
 
-*    Existing tests pass without modification at every step (`npm test`)
-*    TypeScript compiles cleanly at every step (`npm run typecheck`)
-*    Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs
-*    Synopsis index size stays under a documented size budget (to be set in Step 1)
+- [ ] Existing tests pass without modification at every step (`npm test`)
+- [ ] TypeScript compiles cleanly at every step (`npm run typecheck`)
+- [ ] Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs (enforced by Step 2 side-by-side test; regression check at Step 3)
+- [ ] Synopsis index stays under 1,500-token hard limit throughout Steps 2–5 (sync-checker enforces)
+- [ ] `npm run init` seeds `policies/` correctly after Step 2; `npm run adopt` seeds it in adopted vaults
+- [ ] Judgment atom `evaluate_at_gate()` output is advisory-only in `mode: mentor`, staged in `mode: guided`, blocking in `mode: autonomous` (per [[research/plan-execution-mode-enforcement.md]])
 
 ### Gate Criteria
 
-*    Human reviewer has verified step outcomes above
-*    No governance rules are unintentionally dropped during migration (Step 3 audit)
-*    `policy-atoms-core` has zero DocWright-specific imports (verified by CI check added in Step 1)
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No governance rules unintentionally dropped — Step 3 migration audit table complete with every rule accounted for
+- [ ] `policy-atoms-core` has zero DocWright-specific imports — CI isolation gate added in Step 1 and still passing
+- [ ] `judgment_dispatch_hook` signature matches Q5 decision: `(ai_category: string, payload: string) => Promise<string | null>`
+- [ ] Scope expression grammar frozen in Step 1 and not modified in Steps 2–5 (grammar changes require a new plan revision)
 
 ## Risk Assessment
 
@@ -254,7 +255,7 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 ## Resources Required
 
 *   New `src/policy-atoms-core/` package (TypeScript) — design, implement, test in isolation first.
-*   Migration pass over `.opencode/rules/*`, `pre-commit.sh`, and lifecycle-gate logic to map each check to an atom `check_kind`.
+*   Migration pass over `.opencode/rules/*`, `pre-commit.sh`, and lifecycle-gate logic to map each check to an atom `kind`.
 *   New `policies/` top-level directory + 2–3 initial atoms as pilot before full migration.
 *   No new external dependencies for the deterministic check library; judgment atoms reuse existing OpenCode/AI session plumbing.
 
@@ -273,3 +274,4 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 | 2026-06-14 | Design expanded — canonical source direction, synopsis format, scope inheritance, sync-checker scope, LiteLLM future direction, multi-AI surface table, Design Decisions Required section | NetYeti |
 | 2026-06-14 | Plan rewritten — steps from Notes section, duplicates removed, frontmatter corrected | NetYeti |
 | 2026-06-12 | Initial draft created | NetYeti |
+| 2026-06-17 | Critique + improvement pass: `automated:full`→`mode:autonomous`; `check_kind`→`kind` (canonical); RLM integration note added; execution mode interaction for judgment atoms defined; scope grammar made Step 1 deliverable; AI category taxonomy dependency noted; pilot candidates pre-selected (commit-format, frontmatter-validate, no-work-before-approval); CI isolation mechanism specified (depcheck/import-scan); coexistence flag (`DOCWRIGHT_ATOM_ROUTING`) added to Step 3; `policies/` seeding added to Step 2; side-by-side equivalence test moved from Risk into testing plan; testing section deduplicated and updated. | NetYeti |
