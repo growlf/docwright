@@ -530,3 +530,19 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Documented next-session start commands
 
 **Session note:** `docs/session-notes/session_note_202606152209.md`
+
+---
+
+## Session: 2026-06-17 — Policy Atom Framework + Completion Gate + AI Taxonomy
+
+**Focus:** Complete policy-atom-framework (Steps 1–5), AI task category taxonomy (Steps 0–2), completion gate enforcement bug, executor UX
+
+**Completed:**
+- [x] Policy Atom Framework plan — all 5 steps done, 27/27 checkboxes, certified, moved to completed/
+- [x] Plan Completion Gate Enforcement Bug — 4 gaps closed (heading normalization, tests_human_reviewed gate, client-side button blocker, terminology); plan completed
+- [x] AiCategory extended to 6 values: `coding` + `agentic` with routing tables and categories.yaml
+- [x] Atomic plan generator (`approve-proposal/plan-generator.ts`) — polling-based, replaces naive template parser
+- [x] Executor panel heartbeat — 5s tick during BigPickle session, no more silent Execute panel
+- [x] AI task category taxonomy Steps 0–2 done; Steps 3–5 deferred (ai-stack + UI sprint)
+
+**Session note:** `docs/session-notes/session_note_202606172200.md`
