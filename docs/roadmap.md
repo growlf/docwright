@@ -3,7 +3,7 @@
 Authoritative sequencing of all open work. For project goals and architecture,
 see [[PROJECT.md]]. This document owns the *when* and *why now*.
 
-**Critical path:** Phase 3 close → Phase 4 → Phase 5 → Phase 6
+**Critical path:** Phase 3 close → Phase 4 → Phase 5 → Phase 6 → Phase 7
 
 Last reviewed: 2026-06-17 (v0.3.6)
 
@@ -12,9 +12,9 @@ Last reviewed: 2026-06-17 (v0.3.6)
 ## How to read this document
 
 Work is ordered within each phase by **structural dependency** — earlier items
-unlock later ones. "Phase-independent" items in previous versions of this
-document were often incorrect; nearly everything has a dependency on something.
-Items marked ⚡ are blockers: downstream work cannot start without them.
+unlock later ones. Items marked ⚡ are blockers: downstream work cannot start
+without them. Items marked 🔀 run as **parallel tracks** independent of the
+current phase gate.
 
 ---
 
@@ -22,166 +22,205 @@ Items marked ⚡ are blockers: downstream work cannot start without them.
 
 **Plan:** [[plans/phase-vault-portability-pilot.md]] · 8/11 steps done
 
-**Gate:** Phase 3 closes when the **two real-world pilot vaults** succeed. The
-contribution pipeline is independent and moves to Phase 4 — it does not gate
-Phase 3.
+**Thesis:** DocWright can be adopted by a real organization on an existing vault
+with no manual file edits required.
 
-| # | Work | Proposal | Status |
-|---|------|---------|--------|
-| 1 | Approve + execute MSP pilot vault | [[proposals/sub-plan-msp-pilot-vault.md]] | ⚡ Unapproved — **approve first** |
-| 2 | Approve + execute Cascade STEAM early-access | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⚡ Unapproved — **approve second** |
+**Gate:** Phase 3 closes when **both pilot vaults** complete a full
+proposal→plan→completed cycle unassisted, AND a dogfooding cycle surfaces and
+captures any friction found.
+
+### 3a — MSP Pilot Vault ⚡
+
+[[proposals/sub-plan-msp-pilot-vault.md]] — **unapproved, approve first**
+
+### 3b — Cascade STEAM Early-Access Pilot ⚡
+
+[[proposals/sub-plan-cascade-steam-early-access.md]] — **unapproved, approve second**
 
 Both pilots must complete one full proposal→plan→completed cycle through DocWright
 with no manual file edits. That is the Phase 3 acceptance bar.
 
-**Note on contribution pipeline:** `sub-plan-contribution-pipeline` (the
-`contribute_upstream` MCP tool) is in-progress but does **not** gate Phase 3.
-It moves to Phase 4 as infrastructure work. It unblocks nobody in Phase 3.
+### 3c — Dogfooding Cycle
+
+Use DocWright to manage DocWright's own Phase 3 closure work — specifically, use
+the Web UI and MCP tools to close Phase 3 itself. Capture any friction encountered
+via `log_friction()` and file proposals before Phase 4 starts. This is the only
+reliable way to surface missing features before they become blockers for external
+adopters.
 
 ---
 
-## Phase 4 — Execution Enforcement, Profile Runtime & Governance Maturity
+### 🔀 Cascade STEAM Production Deployment (parallel track, starts when Phase 3 closes)
+
+This is Cascade STEAM org work running in parallel with DocWright's Phase 4 — it
+is not gated by Phase 4 completion. The one DocWright feature it waits for is ACL
+integration (Phase 5, step 5c), which unlocks proper Forgejo team membership
+enforcement.
+
+Cascade STEAM production = Forgejo server, DNS/TLS, AI stack wired up, governance
+loop running with real users. This is the reference implementation.
+
+---
+
+## Phase 4 — Governance Enforcement Foundations
 
 **Gate:** Phase 3 must close before Phase 4 begins.
 
-Phase 4 has a strict internal ordering. Items marked ⚡ unlock the work below
-them — do not start later work until its prerequisite is done.
+**Thesis:** All governance rules are mechanically enforced, not just documented.
+After Phase 4, an AI agent operating on any vault is constrained by its plan's
+`mode:`, knows which rules apply via profile scope routing, and cannot bypass
+lifecycle gates.
+
+Phase 4 has exactly **three items in strict order**. Each unlocks the next.
 
 ### 4a — Execution Mode Enforcement ⚡ (must land first)
 
 `plan-execution-mode-rename.md` (partial — linter done, migration done)
 
-**Why first:** Execution mode enforcement (write intercept in the Web UI,
-AI preamble injection per mode) is the foundation that ALL Phase 4 AI-assisted
-work depends on. Judgment atom evaluation, research AI sessions, and ACL
-gate prep all assume modes work. Without enforcement, `mode: autonomous` is
-just a label.
+**Why first:** Without write intercept in the Web UI, `mode: autonomous` is a
+label with no enforcement. Everything in Phase 5 that involves AI doing work
+assumes modes are real constraints, not suggestions.
 
 Remaining work:
-- Web UI mode badge (visible indicator in properties pane + document header)
-- Write intercept layer (mentor → staging panel; guided → review queue; autonomous → direct write + `ai-last-action:` stamp)
+- Web UI mode badge (properties pane + document header)
+- Write intercept layer: mentor → staging panel; guided → review queue; autonomous → direct write + `ai-last-action:` stamp
 - AI preamble injection per mode on plan open
 - Update `AGENTS.md` and all profile templates
 
-### 4b — Profile Engine Full Runtime ⚡ (unlocks 4c–4e)
+### 4b — Profile Engine Full Runtime ⚡ (unlocks 4c, and all of Phase 5)
 
 Phase 4 plan, step 1.
 
-**Why second:** Profile-aware features (deduplication check, per-profile AI
-prompts, ACL enforcement) cannot work without the full profile engine runtime.
-The override merge engine ships in Phase 3; full runtime (schema migration,
-template resolution, UI switching) comes here.
+**Why second:** Profile-aware features — deduplication check, per-profile AI prompts,
+ACL enforcement, research context injection — cannot work without the full profile
+engine runtime. Schema migration, template resolution, and UI switching ship here.
+The override merge engine was Phase 3; full runtime is here.
 
-### 4c — Lifecycle Gates Phase 2 ⚡ (moved up from Phase 5)
+### 4c — Lifecycle Gates Phase 2 ⚡
 
 [[plans/bundle-lifecycle-gates-phase-2.md]]
 
-**Why here, not Phase 5:** Its dependency (`lifecycle-gates-extension-bundle`)
-is already completed. Cascade STEAM going live in Phase 5 *requires* proper
-gate enforcement — AI-assisted gate prep, multi-reviewer quorum, and scheduled
-triggers are governance maturity prerequisites for a production deployment.
-Shipping Cascade STEAM without this is the governance equivalent of deploying
-without auth.
+**Why third:** Its dependency (`lifecycle-gates-extension-bundle`) is already complete.
+Cascade STEAM going production requires proper gate enforcement — AI-assisted gate prep,
+multi-reviewer quorum, and scheduled compliance triggers are governance maturity
+prerequisites, not polish. Shipping without this is the governance equivalent of
+deploying without auth.
 
-Delivers: AI-assisted gate preparation, multi-reviewer quorum, retroactive
-audit, time-based/scheduled triggers, governance audit JSONL log.
+Delivers: AI-assisted gate preparation, multi-reviewer quorum, retroactive audit,
+time-based/scheduled triggers, governance audit JSONL log.
 
-### 4d — Judgment Atom Mode Interaction (now unblocked)
+---
+
+## Phase 5 — Profile-Aware Features
+
+**Gate:** Phase 4 (all three items) must close before Phase 5 begins.
+
+**Thesis:** The enforcement infrastructure built in Phase 4 is used to deliver
+features that know which profile they're operating in. These items have structural
+dependencies on Phase 4 but are largely parallel to each other.
+
+### 5a — Judgment Atom Mode Interaction
 
 [[proposals/deferred-judgment-atom-mode-interaction.md]]
 
-**Why here:** Deferred because "MCP gate call sites don't exist yet." Lifecycle
-Gates Phase 2 (4c) creates those call sites. This item moves from deferred to
-Phase 4 once 4c lands — not Phase 5.
+Depends on 4c (lifecycle gates Phase 2 creates the MCP gate call sites this needs).
+Makes `evaluateJudgmentAtom()` results advisory/staged/blocking based on plan `mode:`.
 
-Makes `evaluateJudgmentAtom()` results advisory/staged/blocking based on plan
-`mode:` value.
+### 5b — Vault-Wide Wikilink Index
 
-### 4e — Vault-Wide Wikilink Index
+Phase 5 plan, step 2. Required before contributor autocomplete, related-docs UX
+improvements, and wikilink backref updating on rename.
 
-Phase 4 plan, step 2. Needed before contributor autocomplete, related-docs
-UX improvements, and wikilink backref updating on rename.
+### 5c — Forgejo ACL Integration
 
-### 4f — Forgejo ACL Integration
+Phase 5 plan, step 3. Depends on 4b (profile engine) for `author-role:` field
+resolution against Forgejo team membership. When this lands, the Cascade STEAM
+production parallel track can fully close.
 
-Phase 4 plan, step 3. Needs profile engine runtime (4b) for `author-role:`
-field resolution against Forgejo team membership.
+### 5d — Research AI Tooling + RLM Microservice
 
-### 4g — Research AI Tooling
-
-Phase 4 plan, steps 4–7. Needs profile engine (4b) for context injection and
-research → proposal generation.
+Phase 5 plan, steps 4–7. Depends on 4b (profile engine) for context injection.
 
 - AI-assisted research sessions (question + findings injected into chat context)
 - Research → proposal generation from concluded research docs
 - Multi-perspective research (parallel model review)
-- ✨ Improve button for research documents
+- **RLM Python microservice** [[proposals/deferred-rlm-python-microservice.md]] —
+  the correct implementation for all multi-document AI tasks (collation, policy atom
+  cross-reference, knowledge-base ingest). ~50-line Python service wrapping `rlms`,
+  OpenAI-compatible endpoint. **Pending ai-stack GPU fix** (external dependency:
+  `qwen2.5-coder:14b` minimum; Phoenix Arc cannot run it; remote NVIDIA GPU currently
+  broken). Ships in this step when that fix lands. Until then: apply the RLM pattern
+  manually in prompts (scan index first, fetch targeted docs, then analyze).
 
-### 4h — New Proposal UX & Structural Improvements
+### 5e — New Proposal UX & Structural Improvements
 
-These need profile engine runtime (4b) to know which document types to scan:
-
+Depends on 4b (profile engine) to know which document types to scan:
 - `new-proposals-should-check-before-actual-creation.md` — deduplication check before file creation
 - `new-proposal-ux-description-priority-and-immediate-view.md` — description+priority first, AI generates title
 
-### 4i — Contribution Pipeline
+### 5f — Contribution Pipeline
 
-`sub-plan-contribution-pipeline.md` (moved from Phase 3 gate)
+`sub-plan-contribution-pipeline.md`
 
-`contribute_upstream()` MCP tool, `log_friction()`, `list_docwright_issues`.
-No phase dependency — can run in parallel with 4a–4h. Moved here because it
-doesn't gate Phase 3 and doesn't depend on anything else in Phase 4.
+`contribute_upstream()` MCP tool, `log_friction()`, `list_docwright_issues`. No
+dependency on 5a–5e — can run in parallel with all of Phase 5. Moved from Phase 3
+gate because it doesn't gate anything there.
 
-### 4j — Graph View, UI Polish
+### 5g — Graph View & Executor Panel Polish
 
 - `plan-ui-lifecycle-graph-view.md` — lifecycle funnel view, D3.js dependency graph
 - `formalize-step-counter-sync.md` — auto-sync step counter validation
 - `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface current phase in status page
-- `executor-panel-live-feedback.md` — Fixes 2+3: step name display + token count (heartbeat already shipped)
+- `executor-panel-live-feedback.md` — step name display + token count
+
+### 🔀 Chat & Session Panel Phase 2 (parallel track)
+
+[[plans/bundle-chat-session-panel.md]] — in progress, no phase dependency.
+
+Completes when it's done. Does not gate Phase 5 start and is not gated by it.
+Assign to Phase 6 close for planning purposes only.
 
 ---
 
-## Phase 5 — Cascade STEAM Production & Feature Bundles
+## Phase 6 — Feature Bundles & UI Polish
 
-**Gate:** Phase 4 must close before Phase 5 begins. Cascade STEAM going live
-on the public internet requires mode enforcement (4a), lifecycle gates (4c),
-and ACL integration (4f) all complete.
+**Gate:** Phase 5 must close; Cascade STEAM production must be live.
+
+**Thesis:** The system works and is deployed. Now improve it based on real usage
+feedback from non-developer governance users.
 
 | Work | Plan/Proposal | Priority |
 |------|-------------|---------|
-| Phase 5 plan execution | [[plans/phase-5-cascade-steam.md]] | High |
-| Chat & Session Panel Phase 2 | [[plans/bundle-chat-session-panel.md]] | High (in-progress) |
 | AI Capabilities Bundle | [[proposals/bundle-ai-capabilities.md]] | Medium |
-| `org-operations` profile full implementation | Phase 5 plan | High |
-| `knowledge-base` profile full implementation | Phase 5 plan | Medium |
+| `org-operations` profile full implementation | Phase 6 plan | High |
+| `knowledge-base` profile full implementation | Phase 6 plan | Medium |
 | AI Task Category Taxonomy Steps 3–4 | [[plans/ai-task-category-taxonomy.md]] | Medium |
 | Enterprise Tier Bundle | [[proposals/bundle-enterprise-tier.md]] | Medium |
-| UI Polish Bundle (Phase 4 polish) | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low |
+| UI Polish cycle | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low — needs real user feedback first |
 
-**Note on `plan-steps-structured-frontmatter.md`:** YAML steps as source of
-truth is a structural change that affects every plan. This must be carefully
-timed — either early Phase 4 (before anything builds on current step format)
-or explicitly deferred to Phase 5. Do not start it mid-phase.
+**Decision required before Phase 6 starts — `plan-steps-structured-frontmatter.md`:**
+YAML steps as source of truth rewrites every plan file and is a breaking structural
+change. Either land it early Phase 5 (before anything builds on current step format)
+or defer it explicitly to Phase 6. **This must be a decision, not a note.**
 
 ---
 
-## Phase 6 — Enterprise, Distribution & Public Release
+## Phase 7 — Public Release
 
 | Work | Notes |
 |------|-------|
-| Kubernetes/Helm deployment | Docker compose sufficient until scale demands it |
-| Remote registry sync | Privacy/trust design complexity; post-v1 |
-| VSCodium extension | After Web UI validated by real users in Phase 5 |
+| VSCodium extension | After Web UI validated by real users in Phase 6 |
 | Distribution, documentation site, demo GIFs | After alpha validated |
 | Second maintainer onboarded | Required gate before public release |
 | Windows + macOS CI validation | After alpha |
+| Kubernetes/Helm deployment | Docker compose sufficient until scale demands it |
 
 ---
 
 ## Post-Alpha (Deliberately Deferred)
 
-These are well-scoped and genuinely useful but do not start until the Web UI
-has been validated by non-developer governance users in production.
+Well-scoped and genuinely useful but do not start until the Web UI has been validated
+by non-developer governance users in production.
 
 | Work | Why deferred |
 |------|-------------|
@@ -191,7 +230,7 @@ has been validated by non-developer governance users in production.
 | `kubernetes-deployment.md` | Docker compose sufficient until scale demands it |
 | `ui-white-label-brand-settings.md` | Needs settings panel architecture first |
 | `remote-registry-sync.md` | Privacy/trust design complexity |
-| Phase B — Shared Team Daemon | After Phase 6 |
+| Phase B — Shared Team Daemon | After Phase 7 |
 | Phase C — Live Co-Editing | Aspirational; Y.js CRDT; revisit after Phase B |
 
 ---
@@ -222,19 +261,30 @@ has been validated by non-developer governance users in production.
 ## Dependency Graph
 
 ```
-Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6
-                                          │
-                           4a (mode enforcement)
-                                │
-                           4b (profile engine)
-                                │
-                     ┌──────────┤
-                     │          │
-                  4c (lifecycle  4e (wikilink index)
-                   gates Ph2)        │
-                     │          4f (ACL)
-                  4d (judgment       │
-                   atom mode)   4g (research AI)
+Phase 3 (pilots + dogfooding)
+    │
+    ├──→ 🔀 Cascade STEAM production (parallel — waits for 5c ACL to fully close)
+    │
+Phase 4 (enforcement foundations — strictly ordered)
+    4a (mode enforcement) → 4b (profile engine) → 4c (lifecycle gates)
+    │
+Phase 5 (profile-aware features — largely parallel after Phase 4)
+    ├── 5a (judgment atom mode)    [needs 4c]
+    ├── 5b (wikilink index)        [needs 4b]
+    ├── 5c (Forgejo ACL)           [needs 4b] → closes Cascade STEAM production track
+    ├── 5d (research AI + RLM*)    [needs 4b + ai-stack GPU fix]
+    ├── 5e (proposal UX)           [needs 4b]
+    ├── 5f (contribution pipeline) [truly independent]
+    └── 5g (graph view + polish)   [needs 4b]
+    │
+    🔀 Chat & Session Panel Ph2    [no phase dependency — closes here]
+    │
+Phase 6 (feature bundles — needs real user feedback)
+    │
+Phase 7 (public release)
+
+* RLM microservice: [[proposals/deferred-rlm-python-microservice.md]]
+  Pending ai-stack GPU fix. Policy atom pre-condition already met (v0.3.x).
 ```
 
-Small fixes and contribution pipeline (4i) have no phase dependencies.
+Small fixes and 5f (contribution pipeline) have no phase dependencies.

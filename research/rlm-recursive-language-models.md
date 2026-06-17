@@ -14,7 +14,8 @@ tags:
   - context-window
   - token-burn
   - python
-linked_proposals: []
+linked_proposals:
+  - proposals/deferred-rlm-python-microservice.md
 related_research: []
 ---
 
