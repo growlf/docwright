@@ -6,7 +6,7 @@ created: 2026-06-09
 tags: tooling-gap, governance, lifecycle
 proposal_source: proposals/approved/formalize-step-counter-sync.md
 priority: medium
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false

@@ -9,7 +9,7 @@ tags:
   - lifecycle
 proposal_source: proposals/approved/session-shutdown-automation.md
 priority: medium
-automated: guided
+mode: guided
 scenario_synthesis: Skill definition and session note automation; no infrastructure changes; output is a markdown skill file and SESSION-LOG update
 assigned_to: NetYeti@phoenix
 tests_defined: true

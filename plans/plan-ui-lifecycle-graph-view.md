@@ -7,7 +7,7 @@ created_by: "NetYeti@phoenix"
 tags: [ui, graph, lifecycle, visualization]
 proposal_source: "proposals/approved/ui-lifecycle-graph-view"
 priority: medium
-automated: guided
+mode: guided
 assigned_to: ["NetYeti"]
 related_to:
   - proposals/gantt-view-dependencies.md

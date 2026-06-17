@@ -11,7 +11,7 @@ proposal_source: proposals/approved/docwright-adopt-existing-vault
 priority: high
 phase: 3
 parent_plan: phase-vault-portability-pilot.md
-automated: full
+mode: autonomous
 waiting_reason: ""
 assigned_to: ["NetYeti"]
 related_to:

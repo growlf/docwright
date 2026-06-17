@@ -12,7 +12,7 @@ tags:
   - contribution-pipeline
 proposal_source: proposals/approved/phase-vault-portability-pilot.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti
 gate_reviewer: NetYeti
 gate_status: reviewed

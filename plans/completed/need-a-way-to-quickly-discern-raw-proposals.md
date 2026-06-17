@@ -8,7 +8,7 @@ created: 2026-06-08
 tags: 
 proposal_source: proposals/approved/need-a-way-to-quickly-discern-raw-proposals.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false

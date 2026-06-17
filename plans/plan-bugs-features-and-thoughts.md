@@ -7,7 +7,7 @@ created_by: NetYeti@phoenix
 tags: [planning]
 proposal_source: proposals/bugs-features-and-thoughts.md
 priority: medium
-automated: off
+mode: mentor
 waiting_reason:
 assigned_to: NetYeti
 related_to:

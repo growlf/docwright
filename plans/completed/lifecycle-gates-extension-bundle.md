@@ -7,7 +7,7 @@ created: 2026-06-06
 tags: governance, gates, audit, scheduling, bundle
 proposal_source: proposals/approved/lifecycle-gates-extension-bundle.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 tests_defined: true
 total_steps: 15

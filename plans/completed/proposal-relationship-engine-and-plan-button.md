@@ -13,7 +13,7 @@ tags:
   - proposals
 proposal_source: proposals/approved/proposal-relationship-engine-and-plan-button.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 total_steps: 12
 completed_steps: 12

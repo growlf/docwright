@@ -11,7 +11,7 @@ tags:
 proposal_source:
   - proposals/approved/ux-cant-rename-a-doc.md
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts or deployment steps"
 ---

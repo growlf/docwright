@@ -11,7 +11,7 @@ tags:
   - layout
 proposal_source: proposals/approved/mobile-friendly.md
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — pure CSS and Svelte state; no shell commands or deployment steps"
 ---

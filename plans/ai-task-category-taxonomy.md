@@ -9,7 +9,7 @@ tags: [planning, ai, routing, policy-atoms, litellm, olla, phase-4]
 proposal_source: proposals/approved/ai-task-category-taxonomy.md
 priority: high
 phase: 4
-automated: guided
+mode: guided
 assigned_to: NetYeti
 scenario_synthesis: Extend AiCategory TypeScript union and JSON Schema to 6 values, create categories.yaml registry, add routing docs for coding and agentic; no VS Code API, no database; ai-stack integration is an independent workstream
 tests_defined: true

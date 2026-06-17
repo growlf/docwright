@@ -12,7 +12,7 @@ tags:
   - plan-modes
 proposal_source: proposals/approved/research-plan-execution-modes.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti
 parent_plan: phase-2-foundation.md
 parent_deliverable: "10"

@@ -11,7 +11,7 @@ tags:
   - phase-2
 proposal_source: proposals/approved/dispatch-module.md
 priority: high
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: Pure TypeScript module with filesystem and OpenCode SDK calls; no shell or deployment steps in plan tasks
 depends_on:

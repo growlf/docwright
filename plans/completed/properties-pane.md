@@ -14,7 +14,7 @@ proposal_source:
   - proposals/approved/ux-new-proposal.md
   - proposals/approved/core-classifying-proposals-when-created-or-updating.md
 priority: high
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts, shell commands, or deployment steps in this plan"
 ---

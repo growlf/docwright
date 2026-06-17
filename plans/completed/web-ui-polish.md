@@ -11,7 +11,7 @@ tags:
   - crud
 proposal_source: proposals/approved/web-ui-polish.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti
 ---
 

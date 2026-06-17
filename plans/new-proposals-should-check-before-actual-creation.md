@@ -7,7 +7,7 @@ created_by: "NetYeti@phoenix"
 tags: [workflow, proposals, duplication, collation, ai]
 proposal_source: "proposals/approved/new-proposals-should-check-before-actual-creation"
 priority: medium
-automated: guided
+mode: guided
 assigned_to: netyeti
 related_to:
   - proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md

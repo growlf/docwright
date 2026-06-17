@@ -11,7 +11,7 @@ gate_note: "Waived retroactively — completed before strict gate enforcement; N
 proposal_source:
   - proposals/skill-plan-critique.md
 priority: critical
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: Node.js script + Claude Code skill file; no deployment or infrastructure steps
 tags:

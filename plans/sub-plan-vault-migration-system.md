@@ -11,7 +11,7 @@ tags:
 proposal_source: proposals/approved/sub-plan-vault-migration-system.md
 priority: medium
 complexity: medium
-automated: guided
+mode: guided
 scenario_synthesis: Vault migration system; npm scripts, MIGRATION.md parsing, config.json versioning; no VS Code or IDE-specific steps
 assigned_to: NetYeti
 parent_plan: phase-vault-portability-pilot.md

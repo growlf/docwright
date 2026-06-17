@@ -12,7 +12,7 @@ tags:
   - tooling-gap
 proposal_source: proposals/approved/session-start-automation.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti@phoenix
 tests_defined: true
 total_steps: 4

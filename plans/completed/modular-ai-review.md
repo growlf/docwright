@@ -7,7 +7,7 @@ created: 2026-06-12
 tags: ""
 proposal_source: proposals/approved/modular-ai-review.md
 priority: medium
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false

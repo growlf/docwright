@@ -7,7 +7,7 @@ created: 2026-06-17
 tags: bug, governance, completion-gate, critical, enforcement
 proposal_source: proposals/approved/plan-completion-gate-enforcement-bug.md
 priority: medium
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 scenario_synthesis: Fix completion gate enforcement — heading normalization in steps.ts, tests_human_reviewed gate, client-side Complete button blocker; targeted changes to steps.ts and PropertiesPane.svelte
 tests_defined: true

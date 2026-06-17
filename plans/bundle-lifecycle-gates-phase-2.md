@@ -7,7 +7,7 @@ created_by: "NetYeti@phoenix"
 tags: [governance, gates, audit, ai, lifecycle]
 proposal_source: "proposals/approved/bundle-lifecycle-gates-phase-2"
 priority: high
-automated: guided
+mode: guided
 assigned_to: netyeti
 related_to:
   - plans/completed/lifecycle-gates-extension-bundle.md

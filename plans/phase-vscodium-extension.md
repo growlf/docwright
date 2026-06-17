@@ -11,7 +11,7 @@ tags:
   - extension
   - ide
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 depends_on:
   - phase-2-foundation

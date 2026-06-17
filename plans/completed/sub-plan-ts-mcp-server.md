@@ -13,7 +13,7 @@ proposal_source: proposals/approved/sub-plan-ts-mcp-server.md
 priority: high
 complexity: high
 phase: 3
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 parent_plan: phase-vault-portability-pilot.md
 parent_deliverable: 1

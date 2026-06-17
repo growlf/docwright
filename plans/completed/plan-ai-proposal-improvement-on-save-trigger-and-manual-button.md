@@ -8,7 +8,7 @@ created_by: NetYeti@phoenix
 tags: [planning]
 proposal_source: proposals/approved/ai-proposal-improve-on-save
 priority: medium
-automated: off
+mode: mentor
 waiting_reason: ""
 assigned_to: ["NetYeti"]
 related_to: []

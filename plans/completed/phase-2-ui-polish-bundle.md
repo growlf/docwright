@@ -11,7 +11,7 @@ tags:
   - polish
 proposal_source: proposals/approved/phase-2-ui-polish-bundle.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 tests_defined: true
 gate_status: waived

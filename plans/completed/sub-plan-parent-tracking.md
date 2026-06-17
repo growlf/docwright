@@ -11,7 +11,7 @@ tags:
   - governance
 proposal_source: proposals/approved/sub-plan-parent-tracking.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 tests_defined: true
 phase: 3

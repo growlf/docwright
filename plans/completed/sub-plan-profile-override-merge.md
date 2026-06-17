@@ -10,7 +10,7 @@ tags:
   - merge
 proposal_source: proposals/approved/sub-plan-profile-override-merge.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: netyeti
 tests_defined: true
 tests_human_reviewed: false

@@ -13,7 +13,7 @@ tags:
   - phase-2
 proposal_source: proposals/approved/research-stage-methodology.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: Netyeti
 parent_plan: phase-2-foundation.md
 parent_deliverable: "9"

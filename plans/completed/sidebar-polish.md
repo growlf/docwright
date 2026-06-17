@@ -13,7 +13,7 @@ proposal_source:
   - proposals/approved/ux-hide-old-cycle-docs.md
   - proposals/approved/context-of-new.md
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts, shell commands, or deployment steps in this plan"
 ---

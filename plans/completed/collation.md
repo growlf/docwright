@@ -12,7 +12,7 @@ tags:
 proposal_source:
   - proposals/approved/ux-collating-proposals-into-apropriate-plans.md
 priority: high
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: UI prototype only — AI calls are stubbed with keyword similarity; no shell commands or deployment steps
 depends_on:

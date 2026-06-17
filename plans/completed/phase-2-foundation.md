@@ -14,7 +14,7 @@ tags:
   - ci
   - foss
 priority: high
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 proposal_source:

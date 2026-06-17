@@ -15,7 +15,7 @@ proposal_source:
   - proposals/ui-immutable-title-h1.md
   - proposals/ui-document-title-in-toolbar.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti
 depends_on:
   - phase-1-opencode-embed

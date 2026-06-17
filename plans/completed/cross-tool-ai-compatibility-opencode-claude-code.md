@@ -13,7 +13,7 @@ tags:
   - compatibility
 proposal_source: proposals/cross-tool-ai-compatibility-opencode-claude-code.md
 priority: 4
-automated: false
+mode: mentor
 assigned_to: NetYeti
 tests_defined: true
 total_steps: 0

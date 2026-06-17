@@ -12,7 +12,7 @@ tags:
   - infra
 proposal_source: ""
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti@phoenix
 reviewed_by: NetYeti
 reviewed_date: 2026-06-14

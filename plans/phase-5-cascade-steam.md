@@ -10,7 +10,7 @@ tags:
   - ai-stack
   - infrastructure
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 depends_on:
   - phase-4-profile-acl-ai

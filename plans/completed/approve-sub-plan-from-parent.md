@@ -11,7 +11,7 @@ tags:
   - webui
 proposal_source: proposals/approved/approve-sub-plan-from-parent.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: netyeti
 tests_defined: true
 tests_human_reviewed: false

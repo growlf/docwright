@@ -10,7 +10,7 @@ tags:
   - ai
   - dispatch
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 depends_on:
   - phase-3-vault-portability-pilot

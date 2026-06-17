@@ -7,7 +7,7 @@ created_by: "NetYeti@phoenix"
 tags: [ux, proposals, workflow, ai]
 proposal_source: "proposals/approved/new-proposal-ux-description-priority-and-immediate-view"
 priority: medium
-automated: guided
+mode: guided
 assigned_to: netyeti
 related_to:
   - proposals/new-proposals-should-check-before-actual-creation.md

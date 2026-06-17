@@ -11,7 +11,7 @@ tags:
 proposal_source:
   - proposals/approved/ui-git-controlls.md
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts or deployment steps in plan tasks; git operations are the subject of the feature, not the build process"
 ---

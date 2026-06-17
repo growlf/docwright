@@ -11,7 +11,7 @@ tags:
   - automation
 proposal_source: proposals/approved/plan-content-from-proposal-body.md
 priority: medium
-automated: guided
+mode: guided
 assigned_to: netyeti
 tests_defined: true
 tests_human_reviewed: true

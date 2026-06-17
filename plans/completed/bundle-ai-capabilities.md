@@ -12,7 +12,7 @@ tags:
   - dispatch
 proposal_source: proposals/approved/bundle-ai-capabilities.md
 priority: medium
-automated: guided
+mode: guided
 scenario_synthesis: Dispatch + MCP + web UI changes; AI test generation and perspective synthesis; no infrastructure or deployment steps
 assigned_to: NetYeti
 tests_defined: true

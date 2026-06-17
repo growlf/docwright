@@ -11,7 +11,7 @@ gate_status: waived
 proposal_source:
   - proposals/plan-steps-structured-frontmatter.md
 priority: high
-automated: off
+mode: mentor
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish

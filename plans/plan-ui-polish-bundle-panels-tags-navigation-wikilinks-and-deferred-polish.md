@@ -7,7 +7,7 @@ created_by: "NetYeti@phoenix"
 tags: [planning]
 proposal_source: "proposals/bundle-phase-3-ui-polish"
 priority: medium
-automated: guided
+mode: guided
 waiting_reason:  # Populated when status = waiting-for-user
 assigned_to: ["NetYeti"]
 related_to: []

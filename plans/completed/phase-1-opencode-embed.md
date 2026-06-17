@@ -11,7 +11,7 @@ tags:
   - ai-integration
 proposal_source: proposals/approved/phase-0-spike-decision.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: NetYeti
 scenario_synthesis: AI integration stubbed with keyword similarity for prototyping; no shell or deploy steps
 ---

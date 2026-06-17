@@ -12,7 +12,7 @@ tags:
   - tooling
 proposal_source: proposals/mcp-tool-batch-fix-stale-approvals
 priority: medium
-automated: guided
+mode: guided
 assigned_to: NetYeti
 parent_plan: phase-2-foundation.md
 parent_deliverable: "11"

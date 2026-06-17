@@ -11,7 +11,7 @@ tags:
   - tooling
 proposal_source: proposals/approved/phase-closeout-procedure.md
 priority: high
-automated: guided
+mode: guided
 assigned_to: netyeti
 tests_defined: true
 tests_human_reviewed: true

@@ -6,7 +6,7 @@ created: 2026-06-14
 tags: ""
 proposal_source: proposals/approved/sub-plan-contribution-pipeline.md
 priority: medium
-automated: full
+mode: autonomous
 scenario_synthesis: Contribution pipeline and friction log; MCP tools, structured logging, GitHub issue/URL generation; no VS Code or IDE-specific steps
 assigned_to: NetYeti
 tests_defined: true

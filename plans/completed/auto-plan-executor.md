@@ -7,7 +7,7 @@ created: 2026-06-09
 tags: ""
 proposal_source: proposals/approved/auto-plan-executor.md
 priority: medium
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false

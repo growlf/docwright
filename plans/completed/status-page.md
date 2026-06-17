@@ -1,6 +1,6 @@
 ---
 title: "Status page — vault workflow dashboard"
-status: approved
+status: completed
 author: NetYeti
 created: 2026-06-02
 tags:
@@ -11,7 +11,7 @@ proposal_source:
   - proposals/approved/ui-need-a-status-page-view-and-tool-skill.md
   - proposals/approved/404-redirect-to-status-page.md
 priority: high
-automated: off
+mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts or deployment steps"
 ---

@@ -11,7 +11,7 @@ tags:
   - multi-repo
 proposal_source: proposals/approved/project-registry.md
 priority: highest
-automated: guided
+mode: guided
 assigned_to: NetYeti
 ---
 

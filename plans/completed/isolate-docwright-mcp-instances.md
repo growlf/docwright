@@ -11,7 +11,7 @@ tags:
   - governance
 proposal_source: proposals/approved/isolate-docwright-mcp-instances.md
 priority: high
-automated: full
+mode: autonomous
 assigned_to: NetYeti
 ---
 

@@ -12,7 +12,7 @@ tags:
 proposal_source: proposals/approved/assign-plans-to-phases.md
 priority: medium
 phase: 2
-automated: guided
+mode: guided
 assigned_to: NetYeti
 parent_plan: phase-2-foundation.md
 parent_deliverable: "12"

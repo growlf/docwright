@@ -10,7 +10,7 @@ gate_status: waived
 proposal_source:
   - proposals/containerization.md
 priority: medium
-automated: off
+mode: mentor
 assigned_to: NetYeti
 depends_on:
   - phase-1-ui-polish
