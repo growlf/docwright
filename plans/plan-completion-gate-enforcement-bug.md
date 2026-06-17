@@ -199,7 +199,7 @@ proposition of the governance system.
 |---|---|
 | Fix 1 + Fix 2: Heading regex breaks gate detection for non-standard headings | Revert `checkCompletionGate` in `src/mcp/lib/steps.ts` to the prior regex pattern; `git checkout HEAD -- src/mcp/lib/steps.ts` |
 | Fix 2: `tests_human_reviewed` gate rejects valid completions | Remove the gate from the completion checklist in `steps.ts` or set default to `true`; `git revert <commit-hash>` |
-| Fix 3: Complete button erroneously disabled for valid plan states | Revert `PropertiesPane.svelte` changes; `git checkout HEAD -- src/ui/PropertiesPane.svelte` |
+| Fix 3: Complete button erroneously disabled for valid plan states | Revert `PropertiesPane.svelte` changes; `git checkout HEAD -- src/webui/src/lib/PropertiesPane.svelte` |
 | Fix 4: Template change accepted but old templates fail validation | Revert template to `### Gate Criteria` heading; `git checkout HEAD -- src/templates/approve-proposal.md` |
 
 ## Risk Assessment
