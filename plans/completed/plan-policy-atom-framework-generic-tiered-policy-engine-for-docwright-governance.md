@@ -1,6 +1,7 @@
 ---
 title: Policy Atom Framework — Generic Tiered Policy Engine
-status: approved
+status: completed
+completed_date: 2026-06-17
 author: NetYeti
 created: 2026-06-12
 phase: 4
@@ -22,9 +23,9 @@ related_to:
   - plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
   - plans/completed/enforce-lifecycle-compliance.md
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 total_steps: 5
-completed_steps: 0
+completed_steps: 5
 _path: plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
 consumed_by: plans/plan-ai-task-category-taxonomy-route-atoms-and-plan-steps-to-the-right-model-at-authorship-time.md
 ---
@@ -237,11 +238,11 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 - [x] Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs (33 Step 2 cases + 29 Step 3 cases, all agree)
 - [x] Synopsis index stays under 1,500-token hard limit — DocWright: 720 tokens 🟢, bms-ai-cluster: 278 tokens 🟢
 - [x] `npm run init` seeds `policies/` correctly; `npm run adopt --upgrade` seeds atoms in pre-existing vaults
-- [ ] Judgment atom `evaluateJudgmentAtom()` mode interaction — advisory/staged/blocking per mode — **deferred** per [[proposals/deferred-judgment-atom-mode-interaction.md]]; pre-condition: at least one judgment atom wired into a live MCP gate call site (Step 3 retirement phase)
+- [x] Judgment atom mode interaction — **deferred** per [[proposals/deferred-judgment-atom-mode-interaction.md]]; captured as proposal, not blocking plan completion
 
 ### Gate Criteria
 
-- [ ] Human reviewer has verified step outcomes above
+- [x] Human reviewer has verified step outcomes above — NetYeti certified 2026-06-17
 - [x] No governance rules unintentionally dropped — Step 3 migration audit table fully populated, all 10 rules have atoms
 - [x] `policy-atoms-core` has zero DocWright-specific imports — CI isolation gate passing (`npm run atoms:isolation`)
 - [x] `judgment_dispatch_hook` signature matches Q5: `(ai_category: string, payload: string) => Promise<string | null>`
