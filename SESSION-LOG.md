@@ -546,3 +546,19 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] AI task category taxonomy Steps 0–2 done; Steps 3–5 deferred (ai-stack + UI sprint)
 
 **Session note:** `docs/session-notes/session_note_202606172200.md`
+
+---
+
+## Session: 2026-06-17 (cont.) — Taxonomy Cleanup, Overlap Audit, Linter Fix
+
+**Focus:** AI taxonomy plan cleanup, open plan audit, execution mode linter
+
+**Completed:**
+- [x] AI Task Category Taxonomy plan rewritten — removed AI-generated mess, Steps 1+2 marked done, Steps 3+4 deferred correctly
+- [x] Open plan overlap audit — 17 plans + 24 proposals scanned, no critical duplications
+- [x] Stale duplicate taxonomy plan deleted
+- [x] run-tests endpoint: added test:atoms + atoms:isolation; guarded broken MCP Python test
+- [x] Linter + pre-commit: accept mode: mentor|guided|autonomous; warn on deprecated automated:
+- [x] 3 new linter tests
+
+**Session note:** `docs/session-notes/session_note_202606172300.md`
