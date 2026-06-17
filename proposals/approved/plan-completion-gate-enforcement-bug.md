@@ -11,13 +11,15 @@ tags:
   - enforcement
 complexity: medium
 estimated_effort: S
-approved: false
+approved: true
 priority: critical
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - plans/ai-task-category-taxonomy.md
+_path: proposals/plan-completion-gate-enforcement-bug.md
+consumed_by: plans/plan-completion-gate-enforcement-bug.md
 ---
 
 ## Problem
@@ -145,3 +147,12 @@ proposition of the governance system.
 - [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — this plan itself has unchecked gate criteria that the current enforcement cannot block
 - `src/mcp/lib/steps.ts` — `checkCompletionGate()` and `hasPendingSteps()`
 - `src/webui/src/lib/PropertiesPane.svelte` — Complete button visibility logic
+
+
+*(AI improvement timeout — showing original body)*
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-17 | AI-improved via Improve | NetYeti |

@@ -72,9 +72,13 @@ export function checkCompletionGate(text: string, planName: string): string | nu
     return `ERROR: Plan '${planName}' has tests_defined=${testsDefined}. A human reviewer must set tests_defined: true after confirming test coverage is adequate before the plan can be completed.`;
   }
 
+  // Absent field is treated the same as false — requires human review before completing.
+  // All plan templates include tests_human_reviewed: false explicitly; absent means
+  // a pre-template plan that still needs review. Set to true in frontmatter after review.
   const testsReviewed = extractFrontmatterField(text, 'tests_human_reviewed');
   if (String(testsReviewed) !== 'true') {
-    return `ERROR: Plan '${planName}' has tests_human_reviewed=false. A human must review and certify the AI-generated test plan before the plan can be completed. Set tests_human_reviewed: true in the frontmatter after review.`;
+    const current = testsReviewed === null ? 'missing' : `=${testsReviewed}`;
+    return `ERROR: Plan '${planName}' has tests_human_reviewed ${current}. A human must review and certify the test plan before the plan can be completed. Set tests_human_reviewed: true in the frontmatter after review.`;
   }
 
   const lines = text.split('\n');

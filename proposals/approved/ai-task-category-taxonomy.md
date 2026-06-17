@@ -13,7 +13,7 @@ tags:
   - olla
   - phase-4
 complexity: medium
-approved: false
+approved: true
 priority: high
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
@@ -24,6 +24,8 @@ related_to:
   - docs/profile-contribution-architecture.md
 depends_on: []
 blocks: []
+_path: proposals/ai-task-category-taxonomy.md
+consumed_by: plans/ai-task-category-taxonomy.md
 ---
 
 ## What Is Already Implemented
