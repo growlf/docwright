@@ -234,10 +234,10 @@
     (!frontmatter.assigned_to || String(frontmatter.assigned_to).trim() === '')
   );
 
-  // Proposal must be improved/reviewed before it can be approved
-  let canApproveProposal = $derived(
-    docType !== 'proposal' || frontmatter.approved || ($improveResult?.improved && $improveResult?.critique)
-  );
+  // Approve is always available — atom validation runs server-side at approval time.
+  // Removing the Improve gate: humans may review proposals by other means (critique cycle,
+  // code review, session discussion) without needing the AI Improve panel to have run.
+  let canApproveProposal = $derived(docType !== 'proposal' || !frontmatter.approved);
 
   // Detect unapproved sub-plan proposals referenced in plan body as wikilinks
   let subPlansToApprove = $derived.by(() => {
@@ -283,8 +283,8 @@
     <div class="pane-actions">
       {#if docType === 'proposal'}
         {#if !frontmatter.approved}
-          <button class="act approve" onclick={approve} disabled={!canApproveProposal}
-            title={canApproveProposal ? 'Set approved: true and save — marks this proposal as approved for planning' : 'Run ✨ Improve first — AI must review the proposal before it can be approved'}>Approve</button>
+          <button class="act approve" onclick={approve}
+            title="Set approved: true — atom validation runs server-side; fix any errors reported before the plan is created">Approve</button>
         {:else}
           <button class="act unapprove" onclick={unapprove}
             title="Revoke approval — sets approved: false">Unapprove</button>

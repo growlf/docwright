@@ -2,10 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
+import { buildIndex } from '../../../../../policy-atoms-core/index-builder';
+import { route } from '../../../../../policy-atoms-core/router';
+import { resolve } from '../../../../../policy-atoms-core/resolver';
+import { parseAtomYaml } from '../../../../../policy-atoms-core/parse-yaml';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
+
+const POLICIES_DIR = path.join(REPO_ROOT, 'policies');
+
+// Cache the synopsis index — rebuilt once per server process
+let _indexCache: ReturnType<typeof buildIndex>['index'] | null = null;
+function getIndex() {
+  if (!_indexCache) _indexCache = buildIndex({ policiesDir: POLICIES_DIR }).index;
+  return _indexCache;
+}
 
 const AUDIT_LOG = path.join(REPO_ROOT, '.docwright', 'audit.jsonl');
 
@@ -55,6 +68,40 @@ export async function POST({ request }) {
   if (!assigned) {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
+
+  // --- Atom validation at approval time ---
+  // Run deterministic atoms scoped to 'proposal.approving' before committing the approval.
+  // This is a non-blocking best-effort check — if the policies dir doesn't exist or the
+  // atom engine throws, we log and continue (the existing field checks above are the hard gate).
+  try {
+    const index = getIndex();
+    const { atomIds } = route(index, 'proposal.approving', { kind: 'deterministic' });
+    if (atomIds.length > 0) {
+      const fmForAtom: Record<string, unknown> = {};
+      const fmMatch2 = raw.match(/^---\n([\s\S]*?)\n---/);
+      if (fmMatch2) Object.assign(fmForAtom, parseAtomYaml(fmMatch2[1]));
+      const { atoms } = await resolve(atomIds, { policiesDir: POLICIES_DIR });
+      for (const atom of atoms) {
+        if (!atom.check) continue;
+        const result = await atom.check({
+          filePath: `proposals/${norm}`,
+          frontmatter: fmForAtom,
+          content: raw,
+          vaultRoot: REPO_ROOT,
+        });
+        if (!result.pass) {
+          return json({
+            error: `Atom validation failed [${atom.frontmatter.id}]: ${result.message}`,
+            atom_id: atom.frontmatter.id,
+          }, { status: 422 });
+        }
+      }
+    }
+  } catch (atomErr) {
+    // Atom engine failure is non-fatal — log and continue
+    logAudit('ATOM_CHECK_ERROR', `approve-proposal atom check failed: ${atomErr}`);
+  }
+  // --- End atom validation ---
 
   const title = fm.title || norm.replace('.md', '');
   const author = fm.author || 'NetYeti';
