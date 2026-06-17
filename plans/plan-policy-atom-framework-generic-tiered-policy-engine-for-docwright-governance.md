@@ -259,6 +259,20 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 *   New `policies/` top-level directory + 2–3 initial atoms as pilot before full migration.
 *   No new external dependencies for the deterministic check library; judgment atoms reuse existing OpenCode/AI session plumbing.
 
+## Model Routing Reference
+
+See [[docs/policy-atom-model-routing.md]] for the full per-category model table,
+fallback chain, offline stack, and special settings. Summary:
+
+| `ai_category` | Primary | Fallback | Settings |
+|---------------|---------|---------|---------|
+| `none` | — (code only) | — | no LLM |
+| `classification` | `cluster-nvidia/qwen2.5:14b` | `opencode/big-pickle` | temp=0, max_tokens=100 |
+| `generation` | `cluster-nvidia/mistral-small3.2:24b` | `anthropic/claude-sonnet-4-6` | temp=0.2, max_tokens=2000 |
+| `reasoning` | `cluster-nvidia/mistral-small3.2:24b` | `anthropic/claude-sonnet-4-6` | temp=0.5, max_tokens=800 |
+
+`qwen3.5:27b` is available for pure-text reasoning (no tool calls) but tool support is unproven — do not use for gate evaluations that call MCP tools. `llama3.1:8b` cannot handle DocWright's instruction payload (decisions-ledger F3). Do not run 14b+ models directly on Phoenix Arc (F6).
+
 ## Related Documents
 
 *   \[\[docs/policy-atom-framework-concept.md\]\] — full design reference (schema, two-pass model, enforcement tiers, open questions)
