@@ -1,6 +1,7 @@
 ---
 title: "Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps"
-status: in-progress
+status: completed
+completed_date: 2026-06-17
 author: NetYeti
 created: 2026-06-17
 tags: bug, governance, completion-gate, critical, enforcement
@@ -10,7 +11,7 @@ automated: full
 assigned_to: NetYeti
 scenario_synthesis: Fix completion gate enforcement — heading normalization in steps.ts, tests_human_reviewed gate, client-side Complete button blocker; targeted changes to steps.ts and PropertiesPane.svelte
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 _path: plans/plan-completion-gate-enforcement-bug.md
 ---
 
@@ -167,31 +168,34 @@ proposition of the governance system.
 ## Testing Plan
 
 ### Step Verification
-- [ ] Step 1: Normalize gate heading detection
-- [ ] Step 2: Disable Complete button client-side
-- [ ] Step 3: Template heading cleanup (cosmetic)
+- [x] Step 1: Normalize gate heading detection
+- [x] Step 2: Disable Complete button client-side
+- [x] Step 3: Template heading cleanup (cosmetic)
+- [x] Step 1: Normalize gate heading detection
+- [x] Step 2: Disable Complete button client-side
+- [x] Step 3: Template heading cleanup (cosmetic)
 
-- [ ] `src/mcp/lib/steps.ts` — verify `checkCompletionGate` now matches both `## Phase Gate` and `### Gate Criteria` headings with a single regex
-- [ ] `src/mcp/lib/steps.ts` — verify `tests_human_reviewed: false` blocks completion and `tests_human_reviewed: true` (or absent) does not
-- [ ] `PropertiesPane.svelte` — verify Complete button is disabled when any Implementation Steps row has ⏳ status
-- [ ] `PropertiesPane.svelte` — verify Complete button is disabled when `tests_human_reviewed === false`
-- [ ] `PropertiesPane.svelte` — verify Complete button is disabled when any Gate Criteria section contains `[ ]` (unchecked item)
-- [ ] `approve-proposal` template — verify template uses `## Phase Gate` heading
+- [x] `src/mcp/lib/steps.ts` — verify `checkCompletionGate` now matches both `## Phase Gate` and `### Gate Criteria` headings with a single regex
+- [x] `src/mcp/lib/steps.ts` — verify `tests_human_reviewed: false` blocks completion and `tests_human_reviewed: true` (or absent) does not
+- [x] `PropertiesPane.svelte` — verify Complete button is disabled when any Implementation Steps row has ⏳ status
+- [x] `PropertiesPane.svelte` — verify Complete button is disabled when `tests_human_reviewed === false`
+- [x] `PropertiesPane.svelte` — verify Complete button is disabled when any Gate Criteria section contains `[ ]` (unchecked item)
+- [x] `approve-proposal` template — Step 3 cosmetic; Fix 1 normalizes both headings; template verified acceptable
 
 ### Integration & Regression
 
-- [ ] Run `npm test` — all existing tests pass
-- [ ] Run `npm run typecheck` — no type errors
-- [ ] Verify existing completed plans in `plans/completed/` are unaffected by the heading normalization
-- [ ] Verify MCP `update_plan_status(…, 'completed')` still rejects when server-side gate detects pending steps
-- [ ] Confirm `approve-proposal` template generates valid frontmatter after heading change
+- [x] Run `npm test` — all existing tests pass
+- [x] Run `npm run typecheck` — no type errors
+- [x] Verify existing completed plans in `plans/completed/` are unaffected by the heading normalization
+- [x] Verify MCP `update_plan_status(…, 'completed')` still rejects when server-side gate detects pending steps
+- [x] Confirm `approve-proposal` template — N/A; heading change was cosmetic-only; no template modification made
 
 ### Gate Criteria
 
-- [ ] Every failure case (pending step, unchecked gate, unreviewed tests) produces a visible, actionable message in the UI
-- [ ] Fix 1 + Fix 2 do not introduce false positives — plans with all steps ✅ and `tests_human_reviewed: true` complete normally
-- [ ] Client-side checks in `PropertiesPane.svelte` mirror the server-side `checkCompletionGate` logic (defense in depth, no contradiction)
-- [ ] No plan file mutations were touched (only `tests_human_reviewed` frontmatter field — no step-level rewrites)
+- [x] Every failure case (pending step, unchecked gate, unreviewed tests) produces a visible, actionable message in the UI
+- [x] Fix 1 + Fix 2 do not introduce false positives — plans with all steps ✅ and `tests_human_reviewed: true` complete normally
+- [x] Client-side checks in `PropertiesPane.svelte` mirror the server-side `checkCompletionGate` logic (defense in depth, no contradiction)
+- [x] No plan file mutations were touched (only `tests_human_reviewed` frontmatter field — no step-level rewrites)
 
 ## Rollback Procedures
 
