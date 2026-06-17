@@ -236,7 +236,7 @@ The `ai_category` parameter is the concrete output of the AI Task Category Taxon
 - [x] Atom-backed deterministic rules produce identical decisions to old-path checks for all known inputs (33 Step 2 cases + 29 Step 3 cases, all agree)
 - [x] Synopsis index stays under 1,500-token hard limit — DocWright: 720 tokens 🟢, bms-ai-cluster: 278 tokens 🟢
 - [x] `npm run init` seeds `policies/` correctly; `npm run adopt --upgrade` seeds atoms in pre-existing vaults
-- [ ] Judgment atom `evaluateJudgmentAtom()` mode interaction — advisory/staged/blocking per mode — deferred to when judgment atoms are wired into MCP gate points (Step 3 retirement phase)
+- [ ] Judgment atom `evaluateJudgmentAtom()` mode interaction — advisory/staged/blocking per mode — **deferred** per [[proposals/deferred-judgment-atom-mode-interaction.md]]; pre-condition: at least one judgment atom wired into a live MCP gate call site (Step 3 retirement phase)
 
 ### Gate Criteria
 
