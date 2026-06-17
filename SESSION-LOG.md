@@ -575,3 +575,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Drafted Roadmap Sequencing Enforcement proposal — identified tooling-gap, defined mechanical enforcement strategy
 
 **Session note:** `docs/session-notes/session_note_202606171605.md`
+
+---
+
+## Session: 2026-06-17 — Roadmap Restructure, Vault Foundation, UI Fixes
+
+**Focus:** Roadmap restructure, vault write API & KG foundation, UI cleanup, bug fixes
+
+**Completed:**
+- [x] Roadmap restructured: vault write API (3a), vault document index (3b), knowledge graph (3c) all moved to Phase 3 — perception and referential integrity before pilots
+- [x] Phase 4 simplified to 3 serial items; Phase 5 renumbered around the new Phase 3 foundations
+- [x] KG foundation Parts A+B: `proposal_source:` linter warn + `related_to:` linter warn + data fixes
+- [x] 3 new Phase 3 proposals created: vault write API, vault document index, knowledge graph
+- [x] All proposals/plans re-audited and realigned to new roadmap (10 files fixed)
+- [x] Status page cleanup: audit moved to `/audit` route with matching header/navigation
+- [x] fix: walkDeps must not follow `related_to` — 9 docs repaired from spurious `consumed_by`
+- [x] fix: improve API strips AI code-fence wrappers before writing to disk
+- [x] feat: executor presence indicator — toolbar pill (amber/blue/green) with pulsing animation
+- [x] Phase 3 plan updated: title, total_steps 11→14, deliverables 11-13, phase gate
+
+**Session note:** `docs/session-notes/session_note_202606172350.md`
