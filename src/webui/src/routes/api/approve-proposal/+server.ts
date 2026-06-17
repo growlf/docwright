@@ -6,6 +6,7 @@ import { buildIndex } from '../../../../../policy-atoms-core/index-builder';
 import { route } from '../../../../../policy-atoms-core/router';
 import { resolve } from '../../../../../policy-atoms-core/resolver';
 import { parseAtomYaml } from '../../../../../policy-atoms-core/parse-yaml';
+import { generatePlanSections } from './plan-generator';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -150,8 +151,30 @@ export async function POST({ request }) {
     }
   }
 
+  // --- Atomic plan generation (Step 0 of AI Task Category Taxonomy plan) ---
+  // Try generating plan sections via sequential OpenCode calls (classification +
+  // generation + reasoning). Falls back to the template parser below on failure.
+  const opencodeUrl = process.env.OPENCODE_URL;
+  let atomicSections: { steps: string; testingPlan: string; rollback: string; riskAssessment: string } | null = null;
+  if (opencodeUrl) {
+    // Read the configured model from opencode.json so routing is respected
+    let planModel: string | undefined;
+    try {
+      const ocJson = path.join(REPO_ROOT, 'opencode.json');
+      if (require('node:fs').existsSync(ocJson)) {
+        planModel = JSON.parse(require('node:fs').readFileSync(ocJson, 'utf-8')).model;
+      }
+    } catch { /* use server default */ }
+
+    atomicSections = await generatePlanSections(proposalBody, opencodeUrl, REPO_ROOT, planModel);
+  }
+  // --- End atomic generation ---
+
+  // Template fallback (used when atomic generation is unavailable or fails)
   let stepsBody = '';
-  if (mapped['implementation steps']) {
+  if (atomicSections) {
+    stepsBody = atomicSections.steps;
+  } else if (mapped['implementation steps']) {
     stepsBody = mapped['implementation steps'].content;
   } else if (mapped['proposed solution']) {
     const items: string[] = [];
@@ -181,9 +204,12 @@ export async function POST({ request }) {
     if (s.content) contextBody += `\n### ${s.name}\n\n${s.content}\n`;
   }
 
-  const testingBody = mapped['testing plan'] ? mapped['testing plan'].content : '_Testing plan TBD_';
-  const rollbackBody = mapped['rollback procedures'] ? mapped['rollback procedures'].content : '_Rollback procedures TBD_';
-  const riskBody = mapped['risk assessment'] ? mapped['risk assessment'].content : '_Risk assessment TBD_';
+  const testingBody = atomicSections?.testingPlan
+    ?? (mapped['testing plan'] ? mapped['testing plan'].content : '_Testing plan TBD_');
+  const rollbackBody = atomicSections?.rollback
+    ?? (mapped['rollback procedures'] ? mapped['rollback procedures'].content : '_Rollback procedures TBD_');
+  const riskBody = atomicSections?.riskAssessment
+    ?? (mapped['risk assessment'] ? mapped['risk assessment'].content : '_Risk assessment TBD_');
 
   const planContent = `---
 title: ${title}
