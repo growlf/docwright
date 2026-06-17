@@ -17,7 +17,7 @@ depends_on:
 blocks: []
 tests_defined: true
 total_steps: 6
-completed_steps: 0
+completed_steps: 3
 phase: 3
 ---
 
@@ -31,11 +31,11 @@ Replace the title-first creation flow with a description + priority dialog. AI g
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Replace creation dialog with description + priority | Remove title field. Add description textarea (1-3 sentences) and priority selector (0-5 scale with semantic labels). No file created yet. | ⏳ Pending |
+| 1 | Replace creation dialog with description + priority | Remove title field. Add description textarea (1-3 sentences) and priority selector (0-5 scale with semantic labels). No file created yet. | ✅ Done |
 | 2 | AI generates title and full structure from description | On submit, AI generates: kebab-case title, filename, expanded ## Problem / ## Proposed Solution sections, appropriate tags from vault set. File written only after AI completes. | ⏳ Pending |
-| 3 | Navigate immediately to new proposal | After file creation, UI navigates directly to the new proposal page in preview mode. No file tree or status page intermediate. | ⏳ Pending |
+| 3 | Navigate immediately to new proposal | After file creation, UI navigates directly to the new proposal page in preview mode. No file tree or status page intermediate. | ✅ Done |
 | 4 | Approve button triggers related check | When clicking Approve, auto-run the collation check and offer to add related_to links before finalizing the approval. | ⏳ Pending |
-| 5 | Fix Find Related not showing results | Debug and fix the related proposal search — currently returns empty results when matches exist. | ⏳ Pending |
+| 5 | Fix Find Related not showing results | Debug and fix the related proposal search — currently returns empty results when matches exist. | ✅ Done |
 | 6 | AI review button for pre-approval critique | Add a button that runs AI critique on the proposal body. Disable if no changes since last review. Available until proposal is approved. | ⏳ Pending |
 
 ## Testing Plan

@@ -53,6 +53,10 @@ import {
     showToast(`Model set to ${m} — takes effect on next AI call`, 4000);
   }
   let showNewMenu  = $state(false);
+  let showNewProposalDialog = $state(false);
+  let newProposalDesc     = $state('');
+  let newProposalPriority = $state('medium');
+  const PRIORITY_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
   let leftView       = $state<'files' | 'search' | 'policies' | 'tags' | 'settings' | 'git'>('files');
@@ -490,9 +494,17 @@ import {
 
   function newProposal() {
     showNewMenu = false;
-    let title = prompt('Proposal title:');
-    if (!title) return;
-    const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') + '.md';
+    newProposalDesc = '';
+    newProposalPriority = 'medium';
+    showNewProposalDialog = true;
+  }
+
+  async function submitNewProposal() {
+    const desc = newProposalDesc.trim();
+    if (!desc) return;
+    showNewProposalDialog = false;
+    const slug = desc.split(/\s+/).slice(0, 8).join('-').toLowerCase().replace(/[^\w-]+/g, '').replace(/^-+|-+$/g, '') + '.md';
+    const title = desc.length > 80 ? desc.slice(0, 77) + '…' : desc;
     const date = new Date().toISOString().slice(0, 10);
     const user = 'NetYeti';
     const host = 'phoenix';
@@ -500,24 +512,22 @@ import {
       `title: "${title}"\n` +
       `author: ${user}\n` +
       `created: ${date}\n` +
+      `priority: ${newProposalPriority}\n` +
       'tags: []\n' +
-      'category: []\n' +
-      'complexity: ""\n' +
-      'estimated_effort: ""\n' +
       'depends_on: []\n' +
       `approved: false\n` +
       `created_by: "${user}@${host}"\n` +
       'assigned_to: ""\n' +
-      '---\n' +
-      '\n## Problem\n\n' +
-      '\n## Proposed Solution\n\n';
-    fetch('/api/write?path=proposals/' + slug, {
+      '---\n\n' +
+      '## Problem\n\n' +
+      desc + '\n\n' +
+      '## Proposed Solution\n\n';
+    const r = await fetch('/api/write?path=proposals/' + slug, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
-    }).then(r => {
-      if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, '') + '?new=1');
     });
+    if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, ''));
   }
 
   function newResearch() {
@@ -910,6 +920,34 @@ import {
   {$showChatPanel ? '✕ Chat' : '⚡ Chat'}
 </button>
 
+{#if showNewProposalDialog}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div class="dialog-overlay" role="dialog" aria-modal="true" onkeydown={(e) => { if (e.key === 'Escape') showNewProposalDialog = false; }}>
+    <div class="dialog-box" onclick={(e) => e.stopPropagation()}>
+      <div class="dialog-header">New Proposal</div>
+      <label class="dialog-label" for="new-proposal-desc">Describe the problem or idea</label>
+      <textarea
+        id="new-proposal-desc"
+        class="dialog-textarea"
+        placeholder="1–3 sentences: what's the problem, and roughly what would fix it?"
+        rows="4"
+        bind:value={newProposalDesc}
+        onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitNewProposal(); }}
+      ></textarea>
+      <label class="dialog-label" for="new-proposal-priority">Priority</label>
+      <select id="new-proposal-priority" class="dialog-select" bind:value={newProposalPriority}>
+        {#each Object.entries(PRIORITY_LABELS) as [val, label]}
+          <option value={val}>{label}</option>
+        {/each}
+      </select>
+      <div class="dialog-actions">
+        <button class="dialog-cancel" onclick={() => showNewProposalDialog = false}>Cancel</button>
+        <button class="dialog-submit" onclick={submitNewProposal} disabled={!newProposalDesc.trim()}>Create Proposal</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <footer class="app-footer">
   <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
     DocWright
@@ -1173,5 +1211,50 @@ import {
     .exec-pill-waiting:hover { background: #fff0c0; }
     .exec-pill-done { background: #e8f5e8; border-color: #8ac88a; color: #2a6a2a; }
     .exec-pulse { background: #2a6090; }
+  }
+
+  /* New proposal dialog */
+  .dialog-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dialog-box {
+    background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px;
+    padding: 24px; width: min(480px, 92vw); display: flex; flex-direction: column; gap: 10px;
+  }
+  .dialog-header { font-size: 15px; font-weight: 700; color: #e0e0f0; margin-bottom: 4px; }
+  .dialog-label  { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dialog-textarea {
+    background: #111128; border: 1px solid #2a2a4a; border-radius: 6px;
+    color: #e0e0f0; font-size: 13px; padding: 10px 12px; resize: vertical;
+    font-family: inherit; line-height: 1.5;
+    &:focus { outline: none; border-color: #4a6aba; }
+  }
+  .dialog-select {
+    background: #111128; border: 1px solid #2a2a4a; border-radius: 6px;
+    color: #e0e0f0; font-size: 13px; padding: 6px 10px;
+    &:focus { outline: none; border-color: #4a6aba; }
+  }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .dialog-cancel  {
+    background: none; border: 1px solid #2a2a4a; border-radius: 6px;
+    color: #888; font-size: 13px; padding: 7px 16px; cursor: pointer;
+    &:hover { border-color: #4a4a6a; color: #aaa; }
+  }
+  .dialog-submit  {
+    background: #1e3a6e; border: 1px solid #2a5aba; border-radius: 6px;
+    color: #7ab0ff; font-size: 13px; font-weight: 600; padding: 7px 18px; cursor: pointer;
+    &:hover:not(:disabled) { background: #253e7e; }
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+
+  :global(html[data-theme="light"]) {
+    .dialog-box { background: #fff; border-color: #d0d0e8; }
+    .dialog-header { color: #1a1a2e; }
+    .dialog-textarea { background: #f5f5ff; border-color: #c0c0e0; color: #1a1a2e; }
+    .dialog-select   { background: #f5f5ff; border-color: #c0c0e0; color: #1a1a2e; }
+    .dialog-cancel   { border-color: #c0c0e0; color: #555; &:hover { border-color: #8888aa; } }
+    .dialog-submit   { background: #ddeeff; border-color: #6699cc; color: #1a4080; }
   }
 </style>
