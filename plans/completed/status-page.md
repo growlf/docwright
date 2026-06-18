@@ -14,7 +14,7 @@ priority: high
 mode: mentor
 assigned_to: NetYeti
 scenario_synthesis: "UI prototype only — no automation scripts or deployment steps"
-consumed_by: plans/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
+consumed_by: plans/completed/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
 ---
 
 ## Overview

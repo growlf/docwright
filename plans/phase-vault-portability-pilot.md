@@ -28,7 +28,7 @@ related_to:
   - proposals/sub-plan-msp-pilot-vault.md
   - proposals/sub-plan-cascade-steam-early-access.md
 total_steps: 14
-completed_steps: 8
+completed_steps: 11
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
 _path: plans/phase-vault-portability-pilot.md
 consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
@@ -156,9 +156,9 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 - [x] Sub-plan #5: Vault migration system — `MIGRATION.md` format + `vault:migrate` script
 - [x] Deliverable #9: `docs/vault-portability.md` written and accurate
 - [x] Deliverable #10: `docwright adopt` tooling — three modes, manifest contract, DAFO + bms-ai-cluster validated
-- [ ] Deliverable #11: Vault Write API — `moveDocument`, `renameDocument`, `setField` canonical write path
-- [ ] Deliverable #12: Vault Document Index — unified frontmatter + wikilink index, `/api/graph` live
-- [ ] Deliverable #13: Knowledge Graph — D3 force-directed, 4th status tab, gap detection overlays visible
+- [x] Deliverable #11: Vault Write API — `moveDocument`, `renameDocument`, `setField` canonical write path
+- [x] Deliverable #12: Vault Document Index — unified frontmatter + wikilink index, `/api/graph` live
+- [x] Deliverable #13: Knowledge Graph — D3 force-directed, 4th status tab, gap detection overlays visible
 - [ ] Sub-plan #7: MSP pilot vault approved and executed — one complete proposal→plan→completed cycle
 - [ ] Sub-plan #8: Cascade STEAM early-access vault approved, provisioned, accessible to leadership
 - [ ] Dogfooding cycle complete — friction captured, proposals filed

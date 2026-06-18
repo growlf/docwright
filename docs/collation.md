@@ -9,7 +9,7 @@ tags:
   - ux
   - ai
   - planning
-consumed_by: plans/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
+consumed_by: plans/completed/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
 ---
 
 ## Summary

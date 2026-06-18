@@ -17,7 +17,7 @@ assigned_to: NetYeti
 scenario_synthesis: UI prototype only — AI calls are stubbed with keyword similarity; no shell commands or deployment steps
 depends_on:
   - properties-pane
-consumed_by: plans/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
+consumed_by: plans/completed/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
 ---
 
 ## Overview

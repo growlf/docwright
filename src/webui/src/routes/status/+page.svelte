@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { fileChanged } from '$lib/fileChanges';
   import FunnelView from '$lib/FunnelView.svelte';
+  import KnowledgeGraph from '$lib/KnowledgeGraph.svelte';
 
   interface DocEntry {
     path: string; title: string; created: string;
@@ -59,7 +60,7 @@
   let data = $state<StatusData | null>(null);
   let loading = $state(true);
 
-  type ViewMode = 'list' | 'funnel';
+  type ViewMode = 'list' | 'funnel' | 'graph';
   function getViewMode(): ViewMode {
     if (typeof sessionStorage === 'undefined') return 'list';
     return (sessionStorage.getItem('status-view') as ViewMode) ?? 'list';
@@ -177,6 +178,7 @@
     <div class="view-toggle">
       <button class="view-btn" class:active={viewMode === 'list'}   onclick={() => setView('list')}   title="List view">≡ List</button>
       <button class="view-btn" class:active={viewMode === 'funnel'} onclick={() => setView('funnel')} title="Funnel view">⊙ Funnel</button>
+      <button class="view-btn" class:active={viewMode === 'graph'}  onclick={() => setView('graph')}  title="Knowledge graph">⬡ Graph</button>
       <a class="view-btn" href="/audit" title="Audit log">📊 Audit</a>
     </div>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
@@ -186,7 +188,11 @@
     <div class="loading">Scanning vault…</div>
   {:else if data}
 
-    {#if viewMode === 'funnel'}
+    {#if viewMode === 'graph'}
+      <div class="graph-view">
+        <KnowledgeGraph />
+      </div>
+    {:else if viewMode === 'funnel'}
       <FunnelView
         deferred={data.proposals.deferred}
         open={data.proposals.open}
@@ -553,6 +559,13 @@
     @include flat-btn;
     border: 1px solid $border; border-radius: 4px; padding: 2px 8px; font-size: 14px;
     &:hover { border-color: $muted; }
+  }
+
+  // ── Graph view ──────────────────────────────────────────────────────────────
+  .graph-view {
+    height: calc(100vh - 120px);
+    margin: -32px -32px 0;
+    overflow: hidden;
   }
 
   // ── List/Funnel toggle ──────────────────────────────────────────────────────

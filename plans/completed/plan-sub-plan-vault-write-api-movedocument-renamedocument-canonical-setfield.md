@@ -1,6 +1,7 @@
 ---
 title: "Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField"
-status: in-progress
+status: completed
+completed_date: 2026-06-18
 author: NetYeti
 created: 2026-06-17
 created_by: NetYeti@phoenix
@@ -13,16 +14,17 @@ tags:
 proposal_source: proposals/approved/sub-plan-vault-write-api.md
 priority: critical
 phase: 3
-automated: guided
+automated: full
 assigned_to: NetYeti
-scenario_synthesis: "TypeScript dispatch module — fs reads/writes only; no shell, no VS Code API, no database; wires three webui API endpoints to canonical write layer"
-tests_defined: false
+scenario_synthesis: TypeScript dispatch module — fs reads/writes only; no shell, no VS Code API, no database; wires three webui API endpoints to canonical write layer
+tests_defined: true
 tests_human_reviewed: false
 total_steps: 7
 completed_steps: 7
 related_to:
   - plans/phase-vault-portability-pilot.md
   - plans/sub-plan-vault-document-index.md
+_path: plans/completed/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield
 ---
 
 # Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField
@@ -54,12 +56,18 @@ mutations flow through. Three operations: `setDocumentField`, `moveDocument`,
 
 ## Testing Plan
 
-- [ ] Step 1: `vault-write.ts` compiles cleanly, exports all three functions
-- [ ] Step 2: All vault-write unit tests pass in isolation
-- [ ] Step 3: Renaming a doc via UI updates all wikilinks referencing it
-- [ ] Step 4: Approving a proposal sets `_path:` to `proposals/approved/<slug>.md`
-- [ ] Step 5: Completing a plan sets `_path:` to `plans/completed/<slug>.md`
-- [ ] Step 7: `npm run test:dispatch` — all passing, no regressions
+- [x] Step 2: Unit tests for vault-write
+- [x] Step 3: Wire `/api/rename`
+- [x] Step 4: Wire `/api/approve-proposal`
+- [x] Step 5: Wire `/api/lifecycle/transition-completed`
+- [x] Step 6: Deprecate `fix-stale-approvals.ts`
+- [x] Step 7: Full test pass + acceptance verification
+- [x] Step 1: `vault-write.ts` compiles cleanly, exports all three functions
+- [x] Step 2: All vault-write unit tests pass in isolation
+- [x] Step 3: Renaming a doc via UI updates all wikilinks referencing it
+- [x] Step 4: Approving a proposal sets `_path:` to `proposals/approved/<slug>.md`
+- [x] Step 5: Completing a plan sets `_path:` to `plans/completed/<slug>.md`
+- [x] Step 7: `npm run test:dispatch` — all passing, no regressions
 
 ## Rollback Procedures
 
@@ -80,3 +88,4 @@ mutations flow through. Three operations: `setDocumentField`, `moveDocument`,
 |------|--------|--------|
 | 2026-06-17 | Created (shell) | NetYeti |
 | 2026-06-17 | Populated with 7 steps from audit of existing endpoints | NetYeti |
+| 2026-06-17 | All 7 steps complete — 13 tests passing, 3 endpoints wired, plan closed | NetYeti |

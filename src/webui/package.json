@@ -19,6 +19,7 @@
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "@types/turndown": "^5.0.6",
+    "d3": "^7.9.0",
     "gray-matter": "^4.0.3",
     "markdown-it": "^14.0.0",
     "markdown-it-anchor": "^9.2.0",
