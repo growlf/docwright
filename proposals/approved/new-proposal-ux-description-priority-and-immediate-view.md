@@ -12,8 +12,8 @@ estimated_effort: M
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
-_path: proposals/new-proposal-ux-description-priority-and-immediate-view.md
-consumed_by: plans/new-proposal-ux-description-priority-and-immediate-view.md
+_path: proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md
+consumed_by: plans/completed/new-proposal-ux-description-priority-and-immediate-view.md
 ---
 ## Problem
 

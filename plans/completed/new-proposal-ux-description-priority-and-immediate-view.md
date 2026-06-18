@@ -1,24 +1,25 @@
 ---
 title: "New Proposal UX: Ask for Description + Priority, Then Navigate Immediately"
-status: draft
+status: completed
+completed_date: 2026-06-18
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
 tags: [ux, proposals, workflow, ai]
-proposal_source: "proposals/approved/new-proposal-ux-description-priority-and-immediate-view"
+proposal_source: "proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md"
 priority: medium
 mode: guided
 assigned_to: netyeti
 related_to:
-  - proposals/new-proposals-should-check-before-actual-creation.md
-  - proposals/approved/ux-new-proposal.md
-depends_on:
-  - proposals/new-proposals-should-check-before-actual-creation.md
+  - proposals/approved/new-proposals-should-check-before-actual-creation.md
+  - plans/new-proposals-should-check-before-actual-creation.md
+depends_on: []
 blocks: []
 tests_defined: true
 total_steps: 6
 completed_steps: 6
 phase: 3
+_path: plans/completed/new-proposal-ux-description-priority-and-immediate-view
 ---
 
 # New Proposal UX: Ask for Description + Priority, Then Navigate Immediately
