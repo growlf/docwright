@@ -8,7 +8,6 @@
     id: string; title: string; docType: string; status: string;
     phase: string; tags: string[]; author: string;
     approved?: boolean; contentHash: string;
-    // d3 simulation adds these
     x?: number; y?: number; vx?: number; vy?: number; fx?: number | null; fy?: number | null;
   }
 
@@ -17,39 +16,39 @@
   }
 
   interface GapSet {
-    orphanedPlans:      Set<string>;
-    deadEndResearch:    Set<string>;
-    approvedNoResearch: Set<string>;
-    blockedPlans:       Set<string>;
-    thematicOrphans:    Set<string>;
-    phaseOrphans:       Set<string>;
+    orphanedPlans: Set<string>; deadEndResearch: Set<string>;
+    approvedNoResearch: Set<string>; blockedPlans: Set<string>;
+    thematicOrphans: Set<string>; phaseOrphans: Set<string>;
   }
 
-  // ── Props / state ──────────────────────────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────────────
 
+  let canvasEl: HTMLDivElement;
   let svgEl: SVGSVGElement;
   let simulation: d3.Simulation<GraphNode, GraphEdge> | null = null;
+  let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+  let ro: ResizeObserver | null = null;
+  let svgWidth = 900;
+  let svgHeight = 600;
 
   let nodes: GraphNode[] = $state([]);
   let edges: GraphEdge[] = $state([]);
   let loading = $state(true);
   let error = $state('');
+  let ready = $state(false);  // true once SVG has real dimensions
 
-  // Filter state
   let showTypes = $state(new Set(['proposal','plan','doc','policy','research']));
   let showEdgeTypes = $state(new Set(['wikilink','related_to','depends_on','blocks','consumed_by','proposal_source']));
   let showCompleted = $state(false);
   let showGaps = $state(true);
   let phaseFilter = $state<string>('');
 
-  // Gap detection results
   let gaps = $state<GapSet>({
     orphanedPlans: new Set(), deadEndResearch: new Set(),
     approvedNoResearch: new Set(), blockedPlans: new Set(),
     thematicOrphans: new Set(), phaseOrphans: new Set(),
   });
 
-  // Hover tooltip
   let tooltip = $state<{ x: number; y: number; node: GraphNode } | null>(null);
 
   // ── Colors ────────────────────────────────────────────────────────────────
@@ -63,10 +62,13 @@
     blocks: '#c0392b', consumed_by: '#9b59b6', proposal_source: '#8e44ad',
     absorbs: '#27ae60', subsumed_by: '#7f8c8d',
   };
+  // Cluster angles by docType — spread nodes by type so they don't pile up
+  const TYPE_ANGLE: Record<string, number> = {
+    proposal: 0, plan: Math.PI * 0.4, doc: Math.PI * 0.8,
+    policy: Math.PI * 1.2, research: Math.PI * 1.6,
+  };
 
-  function nodeColor(n: GraphNode): string {
-    return TYPE_COLOR[n.docType] ?? TYPE_COLOR.unknown;
-  }
+  function nodeColor(n: GraphNode): string { return TYPE_COLOR[n.docType] ?? TYPE_COLOR.unknown; }
   function nodeRadius(n: GraphNode): number {
     if (n.status === 'completed' || n.status === 'canceled') return 5;
     if (n.approved === true) return 10;
@@ -94,79 +96,63 @@
       edgeMap.get(s)!.push({ source: s, target: t, type: e.type });
     }
     const byId = new Map(ns.map(n => [n.id, n]));
-    const outEdges = (id: string) => edgeMap.get(id) ?? [];
+    const out = (id: string) => edgeMap.get(id) ?? [];
 
-    // 1. Orphaned plans — active plans with no proposal_source and no related_to→proposal
     const orphanedPlans = new Set<string>();
     for (const n of ns) {
-      if (n.docType !== 'plan') continue;
-      if (n.status === 'completed' || n.status === 'canceled') continue;
-      const out = outEdges(n.id);
-      const hasProposalLink = out.some(e =>
+      if (n.docType !== 'plan' || n.status === 'completed' || n.status === 'canceled') continue;
+      const hasProposalLink = out(n.id).some(e =>
         e.type === 'proposal_source' || (e.type === 'related_to' && byId.get(e.target)?.docType === 'proposal')
       );
       if (!hasProposalLink) orphanedPlans.add(n.id);
     }
 
-    // 2. Dead-end research — concluded research with no linked proposals
     const deadEndResearch = new Set<string>();
     for (const n of ns) {
       if (n.docType !== 'research') continue;
       if (n.status !== 'concluded' && n.status !== 'completed') continue;
-      const hasProposalLink = outEdges(n.id).some(e => byId.get(e.target)?.docType === 'proposal');
-      if (!hasProposalLink) deadEndResearch.add(n.id);
+      if (!out(n.id).some(e => byId.get(e.target)?.docType === 'proposal')) deadEndResearch.add(n.id);
     }
 
-    // 3. Approved proposals with no linked research
     const approvedNoResearch = new Set<string>();
     for (const n of ns) {
       if (n.docType !== 'proposal' || n.approved !== true) continue;
-      const hasResearchLink = outEdges(n.id).some(e => byId.get(e.target)?.docType === 'research');
-      if (!hasResearchLink) approvedNoResearch.add(n.id);
+      if (!out(n.id).some(e => byId.get(e.target)?.docType === 'research')) approvedNoResearch.add(n.id);
     }
 
-    // 4. Dependency roadblocks — plans depending on canceled/deferred plans
     const blockedPlans = new Set<string>();
     for (const n of ns) {
       if (n.docType !== 'plan') continue;
-      for (const e of outEdges(n.id)) {
+      for (const e of out(n.id)) {
         if (e.type !== 'depends_on') continue;
         const dep = byId.get(e.target);
-        if (dep && (dep.status === 'canceled' || dep.fm?.priority === 'deferred')) {
-          blockedPlans.add(n.id);
-        }
+        // Use status field only (fm not available in graph nodes)
+        if (dep && (dep.status === 'canceled' || dep.status === 'deferred')) blockedPlans.add(n.id);
       }
     }
 
-    // 5. Thematic orphans — proposals sharing 2+ tags but no related_to between them
     const thematicOrphans = new Set<string>();
     const proposals = ns.filter(n => n.docType === 'proposal');
     for (let i = 0; i < proposals.length; i++) {
       for (let j = i + 1; j < proposals.length; j++) {
         const a = proposals[i], b = proposals[j];
-        const sharedTags = a.tags.filter(t => b.tags.includes(t));
-        if (sharedTags.length < 2) continue;
-        const aLinksB = outEdges(a.id).some(e => e.target === b.id);
-        const bLinksA = outEdges(b.id).some(e => e.target === a.id);
-        if (!aLinksB && !bLinksA) {
-          thematicOrphans.add(a.id);
-          thematicOrphans.add(b.id);
+        if (a.tags.filter(t => b.tags.includes(t)).length < 2) continue;
+        if (!out(a.id).some(e => e.target === b.id) && !out(b.id).some(e => e.target === a.id)) {
+          thematicOrphans.add(a.id); thematicOrphans.add(b.id);
         }
       }
     }
 
-    // 6. Phase orphans — in-progress plans with no phase field
     const phaseOrphans = new Set<string>();
     for (const n of ns) {
-      if (n.docType !== 'plan') continue;
-      if (n.status !== 'in-progress') continue;
+      if (n.docType !== 'plan' || n.status !== 'in-progress') continue;
       if (!n.phase || n.phase === '' || n.phase === 'null') phaseOrphans.add(n.id);
     }
 
     return { orphanedPlans, deadEndResearch, approvedNoResearch, blockedPlans, thematicOrphans, phaseOrphans };
   }
 
-  // ── Filtered views ────────────────────────────────────────────────────────
+  // ── Filtered sets ─────────────────────────────────────────────────────────
 
   function filteredNodes(): GraphNode[] {
     return nodes.filter(n => {
@@ -187,128 +173,115 @@
 
   // ── D3 rendering ──────────────────────────────────────────────────────────
 
-  function buildGraph(allNodes: GraphNode[], allEdges: GraphEdge[]) {
-    if (!svgEl) return;
+  function buildGraph() {
+    if (!svgEl || !ready) return;
 
     const fns = filteredNodes();
     const visIds = new Set(fns.map(n => n.id));
     const fes = filteredEdges(visIds);
+    const w = svgWidth, h = svgHeight;
 
-    const width = svgEl.clientWidth || 900;
-    const height = svgEl.clientHeight || 600;
+    // Spread initial positions by type cluster to avoid all-at-origin pile-up
+    const typeCount = new Map<string, number>();
+    for (const n of fns) {
+      if (n.x !== undefined && n.y !== undefined) continue; // keep existing positions on re-render
+      const count = typeCount.get(n.docType) ?? 0;
+      typeCount.set(n.docType, count + 1);
+      const angle = (TYPE_ANGLE[n.docType] ?? 0) + (count * 0.4);
+      const r = 120 + count * 15;
+      n.x = w / 2 + Math.cos(angle) * r;
+      n.y = h / 2 + Math.sin(angle) * r;
+    }
 
     d3.select(svgEl).selectAll('*').remove();
-
     const svg = d3.select(svgEl);
 
-    // Defs: arrowhead marker
     const defs = svg.append('defs');
-    defs.append('marker')
-      .attr('id', 'arrowhead')
-      .attr('viewBox', '-0 -5 10 10')
-      .attr('refX', 15)
-      .attr('refY', 0)
-      .attr('orient', 'auto')
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .append('path')
-      .attr('d', 'M 0,-5 L 10,0 L 0,5')
-      .attr('fill', '#555')
-      .style('stroke', 'none');
+    defs.append('marker').attr('id', 'arr').attr('viewBox','-0 -5 10 10')
+      .attr('refX', 16).attr('refY', 0).attr('orient','auto')
+      .attr('markerWidth', 6).attr('markerHeight', 6)
+      .append('path').attr('d','M 0,-5 L 10,0 L 0,5').attr('fill','#666').style('stroke','none');
 
-    // Root group for zoom/pan
-    const g = svg.append('g');
+    const g = svg.append('g').attr('class', 'root');
 
-    // Zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on('zoom', (event) => g.attr('transform', event.transform));
-    svg.call(zoom);
+    zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.05, 6])
+      .on('zoom', ev => g.attr('transform', ev.transform));
+    svg.call(zoomBehavior).on('dblclick.zoom', null);
 
-    // Simulation
     if (simulation) simulation.stop();
     simulation = d3.forceSimulation<GraphNode>(fns)
-      .force('link', d3.forceLink<GraphNode, GraphEdge>(fes)
-        .id(d => d.id)
-        .distance(d => d.type === 'wikilink' ? 60 : 100)
-        .strength(0.3))
-      .force('charge', d3.forceManyBody().strength(-200))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide(18));
+      .force('link', d3.forceLink<GraphNode, GraphEdge>(fes).id(d => d.id)
+        .distance(d => d.type === 'wikilink' ? 70 : 120).strength(0.4))
+      .force('charge', d3.forceManyBody().strength(-250).distanceMax(400))
+      .force('center', d3.forceCenter(w / 2, h / 2).strength(0.05))
+      .force('collide', d3.forceCollide(20));
 
-    // Edges
-    const link = g.append('g').attr('class', 'links').selectAll('line')
-      .data(fes).enter().append('line')
+    const link = g.append('g').selectAll('line').data(fes).enter().append('line')
       .attr('stroke', (d: GraphEdge) => EDGE_COLOR[d.type] ?? '#555')
       .attr('stroke-width', (d: GraphEdge) => d.type === 'wikilink' ? 1 : 1.5)
-      .attr('stroke-opacity', (d: GraphEdge) => d.type === 'wikilink' ? 0.3 : 0.6)
-      .attr('marker-end', (d: GraphEdge) => d.type !== 'wikilink' ? 'url(#arrowhead)' : null);
+      .attr('stroke-opacity', (d: GraphEdge) => d.type === 'wikilink' ? 0.25 : 0.55)
+      .attr('marker-end', (d: GraphEdge) => d.type !== 'wikilink' ? 'url(#arr)' : null);
 
-    // Nodes
-    const node = g.append('g').attr('class', 'nodes').selectAll('g')
-      .data(fns).enter().append('g')
-      .attr('class', 'node')
+    const node = g.append('g').selectAll<SVGGElement, GraphNode>('g').data(fns).enter().append('g')
       .style('cursor', 'pointer')
       .call(d3.drag<SVGGElement, GraphNode>()
-        .on('start', (event, d) => {
-          if (!event.active) simulation?.alphaTarget(0.3).restart();
-          d.fx = d.x; d.fy = d.y;
-        })
-        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d) => {
-          if (!event.active) simulation?.alphaTarget(0);
-          d.fx = null; d.fy = null;
-        }));
+        .on('start', (ev, d) => { if (!ev.active) simulation?.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag',  (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+        .on('end',   (ev, d) => { if (!ev.active) simulation?.alphaTarget(0); d.fx = null; d.fy = null; }));
 
-    // Node circles — gap ring + fill
+    // Gap ring
     node.append('circle')
-      .attr('r', (d: GraphNode) => showGaps && gapColor(d.id) ? nodeRadius(d) + 3 : 0)
+      .attr('r', (d: GraphNode) => showGaps && gapColor(d.id) ? nodeRadius(d) + 4 : 0)
       .attr('fill', 'none')
       .attr('stroke', (d: GraphNode) => gapColor(d.id) ?? 'none')
-      .attr('stroke-width', 2)
-      .attr('stroke-dasharray', '3 2');
+      .attr('stroke-width', 2).attr('stroke-dasharray', '3 2');
 
+    // Main circle
     node.append('circle')
       .attr('r', (d: GraphNode) => nodeRadius(d))
       .attr('fill', (d: GraphNode) => nodeColor(d))
-      .attr('stroke', '#1a1a2e')
-      .attr('stroke-width', 1.5)
-      .attr('opacity', (d: GraphNode) => (d.status === 'completed' || d.status === 'canceled') ? 0.4 : 1);
+      .attr('stroke', '#0d0d1e').attr('stroke-width', 1.5)
+      .attr('opacity', (d: GraphNode) => (d.status === 'completed' || d.status === 'canceled') ? 0.35 : 1);
 
-    // Node labels (short)
+    // Labels
     node.append('text')
-      .attr('dy', (d: GraphNode) => nodeRadius(d) + 11)
+      .attr('dy', (d: GraphNode) => nodeRadius(d) + 12)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '9px')
-      .attr('fill', '#bbb')
+      .attr('font-size', '9px').attr('fill', '#aaa')
       .attr('pointer-events', 'none')
-      .text((d: GraphNode) => {
-        const t = d.title.length > 22 ? d.title.slice(0, 20) + '…' : d.title;
-        return t;
-      });
+      .text((d: GraphNode) => d.title.length > 24 ? d.title.slice(0, 22) + '…' : d.title);
 
-    // Hover & click
     node
-      .on('mouseover', (event: MouseEvent, d: GraphNode) => {
-        tooltip = { x: event.clientX + 12, y: event.clientY - 8, node: d };
-      })
-      .on('mousemove', (event: MouseEvent) => {
-        if (tooltip) tooltip = { ...tooltip, x: event.clientX + 12, y: event.clientY - 8 };
-      })
+      .on('mouseover', (ev: MouseEvent, d: GraphNode) => { tooltip = { x: ev.clientX + 14, y: ev.clientY - 10, node: d }; })
+      .on('mousemove', (ev: MouseEvent) => { if (tooltip) tooltip = { ...tooltip, x: ev.clientX + 14, y: ev.clientY - 10 }; })
       .on('mouseout', () => { tooltip = null; })
-      .on('click', (_: MouseEvent, d: GraphNode) => {
-        window.location.href = '/' + d.id.replace(/\.md$/, '');
-      });
+      .on('click', (_: MouseEvent, d: GraphNode) => { window.location.href = '/' + d.id.replace(/\.md$/, ''); });
 
-    // Tick
     simulation.on('tick', () => {
-      link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
-      node.attr('transform', (d: GraphNode) => `translate(${d.x ?? 0},${d.y ?? 0})`);
+      link.attr('x1', (d: any) => d.source.x).attr('y1', (d: any) => d.source.y)
+          .attr('x2', (d: any) => d.target.x).attr('y2', (d: any) => d.target.y);
+      node.attr('transform', (d: GraphNode) => `translate(${d.x ?? w/2},${d.y ?? h/2})`);
     });
+  }
+
+  function fitGraph() {
+    if (!svgEl || !zoomBehavior) return;
+    const g = d3.select(svgEl).select<SVGGElement>('g.root');
+    if (g.empty()) return;
+    const bb = (g.node() as SVGGElement).getBBox();
+    if (!bb.width || !bb.height) return;
+    const pad = 40;
+    const scale = Math.min((svgWidth - pad * 2) / bb.width, (svgHeight - pad * 2) / bb.height, 2);
+    const tx = svgWidth / 2 - scale * (bb.x + bb.width / 2);
+    const ty = svgHeight / 2 - scale * (bb.y + bb.height / 2);
+    d3.select(svgEl).transition().duration(500)
+      .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+  }
+
+  function zoomBy(factor: number) {
+    if (!svgEl || !zoomBehavior) return;
+    d3.select(svgEl).transition().duration(200).call(zoomBehavior.scaleBy, factor);
   }
 
   // ── Data fetching ─────────────────────────────────────────────────────────
@@ -332,34 +305,44 @@
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   $effect(() => {
-    // Re-render whenever filter state or data changes
-    if (!loading && nodes.length) buildGraph(nodes, edges);
+    // Rebuild when filters, data, or ready-state change
+    if (ready && !loading && nodes.length) buildGraph();
   });
 
   onMount(async () => {
+    // Use ResizeObserver so we get real pixel dimensions before building
+    ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          svgWidth = width;
+          svgHeight = height;
+          if (!ready) {
+            ready = true;  // trigger first build now that we have dimensions
+          } else {
+            buildGraph();  // resize: rebuild with new dimensions
+          }
+        }
+      }
+    });
+    ro.observe(canvasEl);
     await load();
   });
 
-  onDestroy(() => { simulation?.stop(); });
+  onDestroy(() => { simulation?.stop(); ro?.disconnect(); });
 
-  // ── Gap legend ─────────────────────────────────────────────────────────────
+  // ── Sidebar helpers ────────────────────────────────────────────────────────
 
-  function gapCount(): number {
+  function gapCount() {
     return gaps.orphanedPlans.size + gaps.deadEndResearch.size +
            gaps.approvedNoResearch.size + gaps.blockedPlans.size +
            gaps.thematicOrphans.size + gaps.phaseOrphans.size;
   }
-
   function toggleType(t: string) {
-    const next = new Set(showTypes);
-    next.has(t) ? next.delete(t) : next.add(t);
-    showTypes = next;
+    const s = new Set(showTypes); s.has(t) ? s.delete(t) : s.add(t); showTypes = s;
   }
-
   function toggleEdgeType(t: string) {
-    const next = new Set(showEdgeTypes);
-    next.has(t) ? next.delete(t) : next.add(t);
-    showEdgeTypes = next;
+    const s = new Set(showEdgeTypes); s.has(t) ? s.delete(t) : s.add(t); showEdgeTypes = s;
   }
 
   const phases = $derived([...new Set(nodes.map(n => n.phase).filter(Boolean))].sort());
@@ -396,9 +379,7 @@
       <div class="kg-section-title">Phase</div>
       <select class="kg-select" bind:value={phaseFilter}>
         <option value="">All phases</option>
-        {#each phases as p}
-          <option value={p}>{p}</option>
-        {/each}
+        {#each phases as p}<option value={p}>{p}</option>{/each}
       </select>
     </div>
 
@@ -415,7 +396,7 @@
 
     {#if showGaps && gapCount() > 0}
       <div class="kg-section kg-gaps">
-        <div class="kg-section-title">Gap Detection — {gapCount()} issues</div>
+        <div class="kg-section-title">Gaps — {gapCount()}</div>
         {#if gaps.orphanedPlans.size}
           <div class="kg-gap-row" style="color:#f39c12">⚠ {gaps.orphanedPlans.size} orphaned plan{gaps.orphanedPlans.size > 1 ? 's' : ''}</div>
         {/if}
@@ -423,7 +404,7 @@
           <div class="kg-gap-row" style="color:#e74c3c">⚠ {gaps.deadEndResearch.size} dead-end research</div>
         {/if}
         {#if gaps.approvedNoResearch.size}
-          <div class="kg-gap-row" style="color:#e67e22">⚠ {gaps.approvedNoResearch.size} approved without research</div>
+          <div class="kg-gap-row" style="color:#e67e22">⚠ {gaps.approvedNoResearch.size} approved, no research</div>
         {/if}
         {#if gaps.blockedPlans.size}
           <div class="kg-gap-row" style="color:#c0392b">⚠ {gaps.blockedPlans.size} blocked by canceled dep</div>
@@ -432,42 +413,45 @@
           <div class="kg-gap-row" style="color:#8e44ad">⚠ {gaps.thematicOrphans.size} thematic orphan{gaps.thematicOrphans.size > 1 ? 's' : ''}</div>
         {/if}
         {#if gaps.phaseOrphans.size}
-          <div class="kg-gap-row" style="color:#f39c12">⚠ {gaps.phaseOrphans.size} active plan{gaps.phaseOrphans.size > 1 ? 's' : ''} without phase</div>
+          <div class="kg-gap-row" style="color:#f39c12">⚠ {gaps.phaseOrphans.size} plan{gaps.phaseOrphans.size > 1 ? 's' : ''} without phase</div>
         {/if}
       </div>
     {/if}
 
     <div class="kg-section kg-stats">
-      <div class="kg-stat">{nodes.filter(n => filteredNodes().includes(n)).length} nodes</div>
-      <div class="kg-stat">{edges.length} total edges</div>
+      <div class="kg-stat">{filteredNodes().length} / {nodes.length} nodes visible</div>
     </div>
 
     <button class="kg-reload" onclick={load}>↻ Refresh</button>
   </div>
 
   <!-- Graph canvas -->
-  <div class="kg-canvas">
+  <div class="kg-canvas" bind:this={canvasEl}>
     {#if loading}
-      <div class="kg-loading">Building graph…</div>
+      <div class="kg-overlay">Building graph…</div>
     {:else if error}
-      <div class="kg-error">{error}</div>
+      <div class="kg-overlay kg-error">{error}</div>
     {:else if nodes.length === 0}
-      <div class="kg-empty">No documents indexed yet.</div>
+      <div class="kg-overlay">No documents indexed yet.</div>
     {:else}
-      <svg bind:this={svgEl} class="kg-svg"></svg>
+      <svg bind:this={svgEl} class="kg-svg" width={svgWidth} height={svgHeight}></svg>
+      <!-- Zoom controls -->
+      <div class="kg-zoom-btns">
+        <button onclick={() => zoomBy(1.3)} title="Zoom in">+</button>
+        <button onclick={fitGraph} title="Fit all nodes">⊡</button>
+        <button onclick={() => zoomBy(0.77)} title="Zoom out">−</button>
+      </div>
     {/if}
   </div>
 
-  <!-- Hover tooltip -->
+  <!-- Tooltip -->
   {#if tooltip}
     <div class="kg-tooltip" style="left:{tooltip.x}px; top:{tooltip.y}px">
       <div class="kg-tt-title">{tooltip.node.title}</div>
       <div class="kg-tt-meta">
         <span class="kg-tt-type" style="color:{TYPE_COLOR[tooltip.node.docType] ?? '#aaa'}">{tooltip.node.docType}</span>
         <span class="kg-tt-status">{tooltip.node.status}</span>
-        {#if tooltip.node.phase}
-          <span class="kg-tt-phase">Phase {tooltip.node.phase}</span>
-        {/if}
+        {#if tooltip.node.phase}<span class="kg-tt-phase">Phase {tooltip.node.phase}</span>{/if}
       </div>
       {#if tooltip.node.tags.length}
         <div class="kg-tt-tags">{tooltip.node.tags.join(', ')}</div>
@@ -478,7 +462,7 @@
           {#if gaps.deadEndResearch.has(tooltip.node.id)}⚠ Dead-end — no linked proposals{/if}
           {#if gaps.approvedNoResearch.has(tooltip.node.id)}⚠ Approved without research{/if}
           {#if gaps.blockedPlans.has(tooltip.node.id)}⚠ Blocked by canceled dependency{/if}
-          {#if gaps.thematicOrphans.has(tooltip.node.id)}⚠ Thematic orphan — shared tags, no link{/if}
+          {#if gaps.thematicOrphans.has(tooltip.node.id)}⚠ Thematic orphan{/if}
           {#if gaps.phaseOrphans.has(tooltip.node.id)}⚠ Active plan without phase{/if}
         </div>
       {/if}
@@ -488,54 +472,72 @@
 </div>
 
 <style>
-  .kg-root { display: flex; height: 100%; overflow: hidden; position: relative; }
+  .kg-root   { display: flex; height: 100%; overflow: hidden; position: relative; background: #0d0d1e; }
 
   .kg-sidebar {
-    width: 200px; flex-shrink: 0; overflow-y: auto;
+    width: 190px; flex-shrink: 0; overflow-y: auto;
     background: #111128; border-right: 1px solid #2a2a4a;
-    padding: 12px 10px; display: flex; flex-direction: column; gap: 4px;
+    padding: 12px 10px; display: flex; flex-direction: column; gap: 2px;
   }
-  .kg-section { margin-bottom: 10px; }
-  .kg-section-title { font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-  .kg-filter-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #bbb; cursor: pointer; padding: 1px 0; }
-  .kg-filter-row input { cursor: pointer; width: 12px; height: 12px; accent-color: #4a90d9; }
+  .kg-section       { margin-bottom: 10px; }
+  .kg-section-title { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+  .kg-filter-row    { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #bbb; cursor: pointer; padding: 1px 0; }
+  .kg-filter-row input { cursor: pointer; width: 12px; height: 12px; accent-color: #4a90d9; flex-shrink: 0; }
   .kg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .kg-line { width: 14px; height: 2px; flex-shrink: 0; }
+  .kg-line { width: 14px; height: 2px; flex-shrink: 0; border-radius: 1px; }
   .kg-label { font-size: 11px; }
   .kg-select { background: #0d0d1e; border: 1px solid #2a2a4a; color: #bbb; font-size: 11px; padding: 3px 6px; border-radius: 4px; width: 100%; }
-  .kg-gaps { border-top: 1px solid #2a2a4a; padding-top: 8px; }
-  .kg-gap-row { font-size: 10px; padding: 1px 0; }
-  .kg-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid #2a2a4a; }
-  .kg-stat  { font-size: 10px; color: #666; }
-  .kg-reload { margin-top: 8px; background: none; border: 1px solid #2a2a4a; color: #666; font-size: 10px; padding: 4px 8px; border-radius: 4px; cursor: pointer; width: 100%; &:hover { border-color: #4a6aba; color: #aaa; } }
+  .kg-gaps { border-top: 1px solid #1e1e3a; padding-top: 8px; }
+  .kg-gap-row { font-size: 10px; padding: 1px 0; line-height: 1.4; }
+  .kg-stats  { margin-top: auto; padding-top: 8px; border-top: 1px solid #1e1e3a; }
+  .kg-stat   { font-size: 10px; color: #555; }
+  .kg-reload { margin-top: 6px; background: none; border: 1px solid #2a2a4a; color: #555;
+               font-size: 10px; padding: 4px 8px; border-radius: 4px; cursor: pointer; width: 100%;
+               &:hover { border-color: #4a6aba; color: #aaa; } }
 
-  .kg-canvas { flex: 1; position: relative; overflow: hidden; }
-  .kg-svg    { width: 100%; height: 100%; background: #0d0d1e; }
-  .kg-loading, .kg-error, .kg-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 13px; }
-  .kg-error  { color: #e74c3c; }
+  .kg-canvas   { flex: 1; position: relative; overflow: hidden; }
+  .kg-svg      { display: block; }
+  .kg-overlay  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+                  color: #555; font-size: 13px; }
+  .kg-error    { color: #e74c3c; }
+
+  .kg-zoom-btns {
+    position: absolute; bottom: 16px; right: 16px;
+    display: flex; flex-direction: column; gap: 4px;
+    button {
+      background: #111128; border: 1px solid #2a2a4a; color: #aaa;
+      font-size: 15px; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; line-height: 1;
+      &:hover { border-color: #4a6aba; color: #fff; }
+    }
+  }
 
   .kg-tooltip {
     position: fixed; z-index: 1000; pointer-events: none;
     background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 6px;
-    padding: 8px 10px; min-width: 180px; max-width: 280px; font-size: 11px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    padding: 8px 10px; min-width: 180px; max-width: 280px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
   }
-  .kg-tt-title { font-weight: 600; color: #e0e0f0; margin-bottom: 4px; line-height: 1.3; }
-  .kg-tt-meta  { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
-  .kg-tt-type, .kg-tt-status, .kg-tt-phase { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 8px; background: #0d0d1e; border: 1px solid #2a2a4a; }
-  .kg-tt-tags  { color: #888; font-size: 10px; }
-  .kg-tt-gap   { font-size: 10px; margin-top: 4px; font-weight: 600; }
-  .kg-tt-path  { color: #444; font-size: 9px; margin-top: 4px; font-family: monospace; }
+  .kg-tt-title  { font-size: 11px; font-weight: 600; color: #e0e0f0; margin-bottom: 4px; line-height: 1.3; }
+  .kg-tt-meta   { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 3px; }
+  .kg-tt-type, .kg-tt-status, .kg-tt-phase {
+    font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 8px;
+    background: #0d0d1e; border: 1px solid #2a2a4a;
+  }
+  .kg-tt-tags   { color: #666; font-size: 10px; }
+  .kg-tt-gap    { font-size: 10px; margin-top: 4px; font-weight: 600; }
+  .kg-tt-path   { color: #333; font-size: 9px; margin-top: 4px; font-family: monospace; }
 
   :global(html[data-theme="light"]) {
-    .kg-sidebar  { background: #f0f0f8; border-color: #d0d0e0; }
+    .kg-root    { background: #f0f2fa; }
+    .kg-sidebar { background: #e8eaf6; border-color: #c8cae6; }
     .kg-section-title { color: #999; }
     .kg-filter-row { color: #333; }
-    .kg-select { background: #fff; border-color: #c0c0e0; color: #333; }
-    .kg-reload { border-color: #c0c0e0; color: #999; &:hover { border-color: #4a6aba; color: #333; } }
-    .kg-svg { background: #f5f5ff; }
-    .kg-tooltip { background: #fff; border-color: #d0d0e0; }
+    .kg-select  { background: #fff; border-color: #c0c0e0; color: #333; }
+    .kg-reload  { border-color: #c0c0e0; color: #aaa; &:hover { color: #333; } }
+    .kg-zoom-btns button { background: #e8eaf6; border-color: #c8cae6; color: #555; }
+    .kg-tooltip { background: #fff; border-color: #c0c0e0; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
     .kg-tt-title { color: #1a1a2e; }
-    .kg-tt-path  { color: #aaa; }
+    .kg-tt-path  { color: #bbb; }
+    .kg-tt-type, .kg-tt-status, .kg-tt-phase { background: #f0f2fa; border-color: #c8cae6; }
   }
 </style>
