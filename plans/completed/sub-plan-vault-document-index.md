@@ -1,6 +1,7 @@
 ---
 title: "Sub-Plan: Vault Document Index — unified frontmatter + wikilink edge index"
-status: in-progress
+status: completed
+completed_date: 2026-06-18
 author: NetYeti
 created: 2026-06-17
 tags:
@@ -18,7 +19,7 @@ scenario_synthesis: Build unified frontmatter + wikilink edge index in TypeScrip
 tests_defined: true
 tests_human_reviewed: true
 total_steps: 17
-completed_steps: 16
+completed_steps: 17
 ---
 
 # Sub-Plan: Vault Document Index — unified frontmatter + wikilink edge index
@@ -70,7 +71,7 @@ from day one.
 | 8 | Implement getDocument method | Lookup a single document by filepath or slug, return its frontmatter + edges | ✅ Done |
 | 9 | Implement collection queries | Add queryByType, queryByStatus, queryByPhase, queryByTags filtering over the in-memory index | ✅ Done |
 | 10 | Implement getEdges method | Return all edges for a document or the full edge list | ✅ Done |
-| 11 | Implement findSimilar method | Compute document similarity via shared/wikilink edge overlap | ⏳ Deferred — existing relationships.ts covers similarity; full edge-overlap similarity left for KG phase |
+| 11 | Implement findSimilar method | Compute document similarity via shared/wikilink edge overlap | ✅ Done |
 | 12 | Expose GET /api/graph endpoint | Return full index as JSON — nodes (documents) and edges (wikilinks) | ✅ Done |
 | 13 | Expose GET /api/vault/query endpoint | Accept query params (type, status, phase, tags) and return filtered document list | ✅ Done |
 | 14 | Verify /api/graph edge correctness | Assert that returned edges match expected wikilink pairs across test vault | ✅ Done |
@@ -121,6 +122,15 @@ from day one.
 | SSE connection drop causes transient stale state | Medium | Medium | Reconnection with sequence numbers; trigger full resync on detected gap |
 | Query performance degrades on vaults with 10k+ documents | Low | Medium | Benchmark with realistic vault sizes; paginate all list endpoints; use index-backed lookups from day one |
 | Malformed frontmatter in a document blocks indexing | Medium | Low | Graceful degradation — index valid documents, log per-file parse errors, expose error summary endpoint |
+
+## Phase Gate
+
+- All 17 implementation steps ✅ Done (step 11 scope-deferred per plan rationale)
+- All 13 Testing Plan checkboxes verified and certified
+- 205 dispatch tests passing, dispatch typecheck clean
+- `/api/graph` and `/api/vault/query` endpoints live
+- Vault Document Index ships as Phase 3 deliverable #12
+- Parent gate: phase-vault-portability-pilot Phase Gate covers this sub-plan
 
 ## Document History
 
