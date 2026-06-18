@@ -40,6 +40,7 @@
   let showTypes = $state(new Set(['proposal','plan','doc','policy','research']));
   let showEdgeTypes = $state(new Set(['wikilink','related_to','depends_on','blocks','consumed_by','proposal_source']));
   let showCompleted = $state(false);
+  let showConsumed  = $state(false); // hide proposals already converted to plans
   let showGaps = $state(true);
   let phaseFilter = $state<string>('');
 
@@ -154,10 +155,23 @@
 
   // ── Filtered sets ─────────────────────────────────────────────────────────
 
+  // IDs of proposals that have a consumed_by edge (they became a plan)
+  function consumedProposalIds(): Set<string> {
+    const ids = new Set<string>();
+    for (const e of edges) {
+      if (e.type !== 'consumed_by') continue;
+      const src = typeof e.source === 'string' ? e.source : (e.source as GraphNode).id;
+      ids.add(src);
+    }
+    return ids;
+  }
+
   function filteredNodes(): GraphNode[] {
+    const consumed = showConsumed ? new Set<string>() : consumedProposalIds();
     return nodes.filter(n => {
       if (!showTypes.has(n.docType)) return false;
       if (!showCompleted && (n.status === 'completed' || n.status === 'canceled')) return false;
+      if (!showConsumed && consumed.has(n.id)) return false;
       if (phaseFilter && n.phase !== phaseFilter) return false;
       return true;
     });
@@ -348,9 +362,16 @@
     const s = new Set(showEdgeTypes); s.has(t) ? s.delete(t) : s.add(t); showEdgeTypes = s;
     buildGraph();
   }
-  function toggleCompleted(v: boolean) { showCompleted = v; buildGraph(); }
+  function toggleCompleted(v: boolean) { showCompleted = v; buildAndFit(); }
+  function toggleConsumed(v: boolean)  { showConsumed  = v; buildAndFit(); }
   function toggleGaps(v: boolean) { showGaps = v; buildGraph(); }
-  function changePhase(v: string) { phaseFilter = v; buildGraph(); }
+  function changePhase(v: string) { phaseFilter = v; buildAndFit(); }
+
+  // Rebuild then auto-fit after a short delay (let simulation spread before fitting)
+  function buildAndFit() {
+    buildGraph();
+    setTimeout(fitGraph, 1800);
+  }
 
   const phases = $derived([...new Set(nodes.map(n => n.phase).filter(Boolean))].sort());
 </script>
@@ -394,6 +415,12 @@
       <label class="kg-filter-row">
         <input type="checkbox" checked={showCompleted} onchange={e => toggleCompleted((e.target as HTMLInputElement).checked)} />
         <span class="kg-label">Show completed</span>
+        <span class="kg-count">{nodes.filter(n => n.status === 'completed' || n.status === 'canceled').length}</span>
+      </label>
+      <label class="kg-filter-row">
+        <input type="checkbox" checked={showConsumed} onchange={e => toggleConsumed((e.target as HTMLInputElement).checked)} />
+        <span class="kg-label">Show consumed proposals</span>
+        <span class="kg-count">{consumedProposalIds().size}</span>
       </label>
       <label class="kg-filter-row">
         <input type="checkbox" checked={showGaps} onchange={e => toggleGaps((e.target as HTMLInputElement).checked)} />
@@ -426,7 +453,7 @@
     {/if}
 
     <div class="kg-section kg-stats">
-      <div class="kg-stat">{filteredNodes().length} / {nodes.length} nodes visible</div>
+      <div class="kg-stat">{filteredNodes().length} visible / {nodes.length} total</div>
     </div>
 
     <button class="kg-reload" onclick={load}>↻ Refresh</button>
@@ -494,7 +521,8 @@
   .kg-filter-row input { cursor: pointer; width: 12px; height: 12px; accent-color: #4a90d9; flex-shrink: 0; }
   .kg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .kg-line { width: 14px; height: 2px; flex-shrink: 0; border-radius: 1px; }
-  .kg-label { font-size: 11px; }
+  .kg-label { font-size: 11px; flex: 1; }
+  .kg-count { font-size: 9px; color: #444; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 0 5px; flex-shrink: 0; }
   .kg-select { background: #0d0d1e; border: 1px solid #2a2a4a; color: #bbb; font-size: 11px; padding: 3px 6px; border-radius: 4px; width: 100%; }
   .kg-gaps { border-top: 1px solid #1e1e3a; padding-top: 8px; }
   .kg-gap-row { font-size: 10px; padding: 1px 0; line-height: 1.4; }
