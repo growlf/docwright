@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import * as d3 from 'd3';
 
   // ── Types ──────────────────────────────────────────────────────────────────
@@ -298,36 +298,32 @@
       const res = await fetch('/api/graph');
       if (!res.ok) throw new Error(`/api/graph ${res.status}`);
       const data = await res.json();
+      // Set all state together before building the graph
       nodes = data.nodes ?? [];
       edges = data.edges ?? [];
       gaps = detectGaps(nodes, edges);
+      loading = false;
+      await tick(); // wait for DOM to render the SVG
+      buildGraph();
     } catch (e: any) {
       error = e.message;
-    } finally {
       loading = false;
     }
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
-
-  $effect(() => {
-    // Rebuild when filters, data, or ready-state change
-    if (ready && !loading && nodes.length) buildGraph();
-  });
+  // NOTE: No $effect for graph rendering — $effect fires multiple times as
+  // nodes/edges/gaps update separately, restarting the simulation before nodes
+  // spread. Instead: explicit buildGraph() after load() + filter changes.
 
   onMount(async () => {
-    // Use ResizeObserver so we get real pixel dimensions before building
     ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
         if (width > 0 && height > 0) {
-          svgWidth = width;
-          svgHeight = height;
-          if (!ready) {
-            ready = true;  // trigger first build now that we have dimensions
-          } else {
-            buildGraph();  // resize: rebuild with new dimensions
-          }
+          svgWidth = width; svgHeight = height;
+          if (!ready) { ready = true; }
+          else { buildGraph(); }  // resize
         }
       }
     });
@@ -346,10 +342,15 @@
   }
   function toggleType(t: string) {
     const s = new Set(showTypes); s.has(t) ? s.delete(t) : s.add(t); showTypes = s;
+    buildGraph();
   }
   function toggleEdgeType(t: string) {
     const s = new Set(showEdgeTypes); s.has(t) ? s.delete(t) : s.add(t); showEdgeTypes = s;
+    buildGraph();
   }
+  function toggleCompleted(v: boolean) { showCompleted = v; buildGraph(); }
+  function toggleGaps(v: boolean) { showGaps = v; buildGraph(); }
+  function changePhase(v: string) { phaseFilter = v; buildGraph(); }
 
   const phases = $derived([...new Set(nodes.map(n => n.phase).filter(Boolean))].sort());
 </script>
@@ -383,7 +384,7 @@
 
     <div class="kg-section">
       <div class="kg-section-title">Phase</div>
-      <select class="kg-select" bind:value={phaseFilter}>
+      <select class="kg-select" value={phaseFilter} onchange={e => changePhase((e.target as HTMLSelectElement).value)}>
         <option value="">All phases</option>
         {#each phases as p}<option value={p}>{p}</option>{/each}
       </select>
@@ -391,11 +392,11 @@
 
     <div class="kg-section">
       <label class="kg-filter-row">
-        <input type="checkbox" bind:checked={showCompleted} />
+        <input type="checkbox" checked={showCompleted} onchange={e => toggleCompleted((e.target as HTMLInputElement).checked)} />
         <span class="kg-label">Show completed</span>
       </label>
       <label class="kg-filter-row">
-        <input type="checkbox" bind:checked={showGaps} />
+        <input type="checkbox" checked={showGaps} onchange={e => toggleGaps((e.target as HTMLInputElement).checked)} />
         <span class="kg-label">Highlight gaps</span>
       </label>
     </div>
