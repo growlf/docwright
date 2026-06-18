@@ -13,8 +13,8 @@ estimated_effort: M
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
-_path: proposals/new-proposals-should-check-before-actual-creation.md
-consumed_by: plans/new-proposals-should-check-before-actual-creation.md
+_path: proposals/approved/new-proposals-should-check-before-actual-creation.md
+consumed_by: plans/completed/new-proposals-should-check-before-actual-creation.md
 ---
 
 ## Problem

@@ -12,7 +12,7 @@ mode: guided
 assigned_to: netyeti
 related_to:
   - proposals/approved/new-proposals-should-check-before-actual-creation.md
-  - plans/new-proposals-should-check-before-actual-creation.md
+  - plans/completed/new-proposals-should-check-before-actual-creation.md
 depends_on: []
 blocks: []
 tests_defined: true

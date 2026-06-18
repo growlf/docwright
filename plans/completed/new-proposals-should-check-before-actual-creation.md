@@ -1,6 +1,7 @@
 ---
 title: "New Proposals Should Check Relevance Before Creating the File"
-status: in-progress
+status: completed
+completed_date: 2026-06-18
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
@@ -11,14 +12,15 @@ mode: guided
 assigned_to: netyeti
 scenario_synthesis: SvelteKit dialog flow + new API endpoint; keyword scoring in TypeScript; no shell scripts, no VS Code API, no external services
 related_to:
-  - proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md
-  - proposals/approved/ux-new-proposal.md
+  - proposals/approved/new-proposals-should-check-before-actual-creation.md
+  - plans/completed/new-proposal-ux-description-priority-and-immediate-view.md
 depends_on: []
 blocks: []
 tests_defined: true
 total_steps: 5
 completed_steps: 5
 phase: 3
+_path: plans/completed/new-proposals-should-check-before-actual-creation
 ---
 
 # New Proposals Should Check Relevance Before Creating the File
