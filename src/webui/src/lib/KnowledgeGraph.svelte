@@ -175,11 +175,15 @@
 
   function buildGraph() {
     if (!svgEl || !ready) return;
+    // Read live pixel dimensions from the SVG element itself
+    const rect = svgEl.getBoundingClientRect();
+    const w = rect.width || svgWidth || 900;
+    const h = rect.height || svgHeight || 600;
+    if (w < 10 || h < 10) return; // not laid out yet — ResizeObserver will retry
 
     const fns = filteredNodes();
     const visIds = new Set(fns.map(n => n.id));
     const fes = filteredEdges(visIds);
-    const w = svgWidth, h = svgHeight;
 
     // Spread initial positions by type cluster to avoid all-at-origin pile-up
     const typeCount = new Map<string, number>();
@@ -271,10 +275,12 @@
     if (g.empty()) return;
     const bb = (g.node() as SVGGElement).getBBox();
     if (!bb.width || !bb.height) return;
+    const rect = svgEl.getBoundingClientRect();
+    const cw = rect.width || svgWidth, ch = rect.height || svgHeight;
     const pad = 40;
-    const scale = Math.min((svgWidth - pad * 2) / bb.width, (svgHeight - pad * 2) / bb.height, 2);
-    const tx = svgWidth / 2 - scale * (bb.x + bb.width / 2);
-    const ty = svgHeight / 2 - scale * (bb.y + bb.height / 2);
+    const scale = Math.min((cw - pad * 2) / bb.width, (ch - pad * 2) / bb.height, 2);
+    const tx = cw / 2 - scale * (bb.x + bb.width / 2);
+    const ty = ch / 2 - scale * (bb.y + bb.height / 2);
     d3.select(svgEl).transition().duration(500)
       .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }
@@ -425,7 +431,7 @@
     <button class="kg-reload" onclick={load}>↻ Refresh</button>
   </div>
 
-  <!-- Graph canvas -->
+  <!-- Graph canvas — SVG is always in DOM so svgEl binding is stable -->
   <div class="kg-canvas" bind:this={canvasEl}>
     {#if loading}
       <div class="kg-overlay">Building graph…</div>
@@ -433,9 +439,11 @@
       <div class="kg-overlay kg-error">{error}</div>
     {:else if nodes.length === 0}
       <div class="kg-overlay">No documents indexed yet.</div>
-    {:else}
-      <svg bind:this={svgEl} class="kg-svg" width={svgWidth} height={svgHeight}></svg>
-      <!-- Zoom controls -->
+    {/if}
+    <!-- SVG always rendered; D3 populates it once dimensions are known -->
+    <svg bind:this={svgEl} class="kg-svg"
+         style="visibility:{(!loading && !error && nodes.length) ? 'visible' : 'hidden'}"></svg>
+    {#if !loading && !error && nodes.length}
       <div class="kg-zoom-btns">
         <button onclick={() => zoomBy(1.3)} title="Zoom in">+</button>
         <button onclick={fitGraph} title="Fit all nodes">⊡</button>
@@ -496,7 +504,7 @@
                &:hover { border-color: #4a6aba; color: #aaa; } }
 
   .kg-canvas   { flex: 1; position: relative; overflow: hidden; }
-  .kg-svg      { display: block; }
+  .kg-svg      { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
   .kg-overlay  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
                   color: #555; font-size: 13px; }
   .kg-error    { color: #e74c3c; }
