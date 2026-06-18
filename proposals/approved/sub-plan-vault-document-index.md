@@ -3,7 +3,7 @@ title: "Sub-Plan: Vault Document Index — unified frontmatter + wikilink edge i
 author: NetYeti
 author-role: contributor
 created: 2026-06-17
-created_by: "NetYeti@phoenix"
+created_by: NetYeti@phoenix
 tags:
   - phase-3
   - vault
@@ -13,16 +13,18 @@ tags:
   - query
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 priority: critical
 phase: 3
-assigned_to: ""
+assigned_to: NetYeti
 related_to:
   - plans/phase-vault-portability-pilot.md
   - proposals/sub-plan-vault-write-api.md
   - proposals/knowledge-graph-cross-document-idea-linkage.md
 depends_on:
   - proposals/sub-plan-vault-write-api.md
+_path: proposals/sub-plan-vault-document-index.md
+consumed_by: plans/sub-plan-vault-document-index.md
 ---
 
 ## Problem
