@@ -1,6 +1,7 @@
 ---
 title: "Sub-Plan: Vault Migration System"
-status: approved
+status: completed
+completed_date: 2026-06-18
 author: NetYeti
 created: 2026-06-11
 tags:
@@ -18,7 +19,7 @@ parent_plan: phase-vault-portability-pilot.md
 parent_deliverable: 5
 tests_defined: true
 phase: 3
-_path: plans/sub-plan-vault-migration-system.md
+_path: plans/completed/sub-plan-vault-migration-system
 total_steps: 3
 completed_steps: 3
 ---
@@ -58,8 +59,8 @@ Automated migration on `docwright init --upgrade`. A `MIGRATION.md` linter that 
 
 ## Testing Plan
 
-- [ ] Step 2: `npm run vault:migrate -- --vault /path --from X --to Y` — Reads `MIGRATION.md`, applies steps in the version range, updates `.docwright/config.json`, never touches vault content (proposals, plans, docs).
-- [ ] Step 3: First entry — Write the initial `MIGRATION.md` entry documenting the Phase 3 vault-portable schema changes.
+- [x] Step 2: `npm run vault:migrate -- --vault /path --from X --to Y` — Reads `MIGRATION.md`, applies steps in the version range, updates `.docwright/config.json`, never touches vault content (proposals, plans, docs).
+- [x] Step 3: First entry — Write the initial `MIGRATION.md` entry documenting the Phase 3 vault-portable schema changes.
 _Testing plan TBD_
 
 ## Rollback Procedures
