@@ -12,7 +12,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { setFrontmatterField, parseFrontmatter } from './frontmatter';
-import { buildIndex } from './vault-index';
+import { buildIndex, writeIndex } from './vault-index';
 import type { VaultIndex } from './vault-index';
 import { updateWikilinks } from './wikilinks';
 
@@ -237,6 +237,9 @@ export function moveDocument(
     }
     throw e;
   }
+
+  // Persist the updated index so subsequent queries see the new path immediately
+  try { writeIndex(vaultRoot, buildIndex(vaultRoot)); } catch { /* non-fatal */ }
 
   // Step 7: audit log
   appendAudit(vaultRoot, {

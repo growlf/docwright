@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { rebuildIfStale } from '../../../../../dispatch/vault-index';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -9,6 +10,7 @@ const REPO_ROOT = (() => {
 export function GET({ request }) {
   let watcher: fs.FSWatcher | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
+  let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
   let closed = false;
 
   const stream = new ReadableStream({
@@ -31,11 +33,17 @@ export function GET({ request }) {
       };
 
       try {
+        // Debounce index rebuilds — file saves often fire multiple rapid events
         watcher = fs.watch(REPO_ROOT, { recursive: true }, (eventType, filename) => {
           if (!filename) return;
           const name = String(filename);
           if (!name.endsWith('.md') && eventType !== 'rename') return;
           send('filechange', { event: eventType, path: name.replace(/\\/g, '/') });
+          // Rebuild and persist the index 500ms after the last change in the burst
+          if (rebuildTimer) clearTimeout(rebuildTimer);
+          rebuildTimer = setTimeout(() => {
+            try { rebuildIfStale(REPO_ROOT); } catch { /* non-fatal */ }
+          }, 500);
         });
       } catch (err) {
         send('error', { message: 'watch not supported on this platform' });
@@ -50,6 +58,7 @@ export function GET({ request }) {
         closed = true;
         if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
         if (watcher) { watcher.close(); watcher = null; }
+        if (rebuildTimer) { clearTimeout(rebuildTimer); rebuildTimer = null; }
       };
 
       request.signal.addEventListener('abort', cleanup);

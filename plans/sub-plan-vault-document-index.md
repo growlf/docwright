@@ -1,6 +1,6 @@
 ---
 title: "Sub-Plan: Vault Document Index — unified frontmatter + wikilink edge index"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-17
 tags:
@@ -15,7 +15,7 @@ priority: medium
 automated: guided
 assigned_to: NetYeti
 scenario_synthesis: Build unified frontmatter + wikilink edge index in TypeScript; filesystem reads and JSON writes only; no shell scripts, deployment, or VS Code API steps
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 ---
 
@@ -58,23 +58,23 @@ from day one.
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Define in-memory index types | Create TypeScript interfaces for DocumentIndex (frontmatter, content hash, filepath) and EdgeIndex (source, target, type) | ⏳ Pending |
-| 2 | Implement frontmatter parser | Extract title, type, status, phase, tags, author-role from Markdown frontmatter into structured DocumentIndex entries | ⏳ Pending |
-| 3 | Build wikilink edge detector | Walk document body for `[[wikilink]]` patterns and populate EdgeIndex with source→target edges | ⏳ Pending |
-| 4 | Add content-hash dedup field | Store md5/sha256 of file content in DocumentIndex to detect changes without filesystem re-reads | ⏳ Pending |
-| 5 | Implement startup vault scan | On server boot, walk all `*.md` files, parse frontmatter + wikilinks, populate both indexes | ⏳ Pending |
-| 6 | Add SSE incremental refresh | Subscribe to filesystem watcher events (add/change/delete), re-index only affected files, emit delta events | ⏳ Pending |
-| 7 | Handle move/rename consistency | Detect moved files via content-hash match, update filepath in DocumentIndex, preserve edges | ⏳ Pending |
-| 8 | Implement getDocument method | Lookup a single document by filepath or slug, return its frontmatter + edges | ⏳ Pending |
-| 9 | Implement collection queries | Add queryByType, queryByStatus, queryByPhase, queryByTags filtering over the in-memory index | ⏳ Pending |
-| 10 | Implement getEdges method | Return all edges for a document or the full edge list | ⏳ Pending |
-| 11 | Implement findSimilar method | Compute document similarity via shared/wikilink edge overlap | ⏳ Pending |
-| 12 | Expose GET /api/graph endpoint | Return full index as JSON — nodes (documents) and edges (wikilinks) | ⏳ Pending |
-| 13 | Expose GET /api/vault/query endpoint | Accept query params (type, status, phase, tags) and return filtered document list | ⏳ Pending |
-| 14 | Verify /api/graph edge correctness | Assert that returned edges match expected wikilink pairs across test vault | ⏳ Pending |
-| 15 | Verify SSE wikilink freshness | Add a wikilink, confirm it appears in the index within one SSE event cycle | ⏳ Pending |
-| 16 | Verify dedup query avoids fs scan | Index 100+ documents, run repeated queries, confirm zero filesystem reads via spy/profiling | ⏳ Pending |
-| 17 | Verify move/rename index survival | Move/rename a file with wikilinks, confirm edges remain intact and filepath updated | ⏳ Pending |
+| 1 | Define in-memory index types | Create TypeScript interfaces for DocumentIndex (frontmatter, content hash, filepath) and EdgeIndex (source, target, type) | ✅ Done |
+| 2 | Implement frontmatter parser | Extract title, type, status, phase, tags, author-role from Markdown frontmatter into structured DocumentIndex entries | ✅ Done |
+| 3 | Build wikilink edge detector | Walk document body for `[[wikilink]]` patterns and populate EdgeIndex with source→target edges | ✅ Done |
+| 4 | Add content-hash dedup field | Store md5/sha256 of file content in DocumentIndex to detect changes without filesystem re-reads | ✅ Done |
+| 5 | Implement startup vault scan | On server boot, walk all `*.md` files, parse frontmatter + wikilinks, populate both indexes | ✅ Done |
+| 6 | Add SSE incremental refresh | Subscribe to filesystem watcher events (add/change/delete), re-index only affected files, emit delta events | ✅ Done |
+| 7 | Handle move/rename consistency | Detect moved files via content-hash match, update filepath in DocumentIndex, preserve edges | ✅ Done |
+| 8 | Implement getDocument method | Lookup a single document by filepath or slug, return its frontmatter + edges | ✅ Done |
+| 9 | Implement collection queries | Add queryByType, queryByStatus, queryByPhase, queryByTags filtering over the in-memory index | ✅ Done |
+| 10 | Implement getEdges method | Return all edges for a document or the full edge list | ✅ Done |
+| 11 | Implement findSimilar method | Compute document similarity via shared/wikilink edge overlap | ⏳ Deferred — existing relationships.ts covers similarity; full edge-overlap similarity left for KG phase |
+| 12 | Expose GET /api/graph endpoint | Return full index as JSON — nodes (documents) and edges (wikilinks) | ✅ Done |
+| 13 | Expose GET /api/vault/query endpoint | Accept query params (type, status, phase, tags) and return filtered document list | ✅ Done |
+| 14 | Verify /api/graph edge correctness | Assert that returned edges match expected wikilink pairs across test vault | ✅ Done |
+| 15 | Verify SSE wikilink freshness | Add a wikilink, confirm it appears in the index within one SSE event cycle | ✅ Done |
+| 16 | Verify dedup query avoids fs scan | Index 100+ documents, run repeated queries, confirm zero filesystem reads via spy/profiling | ✅ Done |
+| 17 | Verify move/rename index survival | Move/rename a file with wikilinks, confirm edges remain intact and filepath updated | ✅ Done |
 
 ## Testing Plan
 
