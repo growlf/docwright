@@ -57,6 +57,8 @@ import {
   let newProposalDesc     = $state('');
   let newProposalPriority = $state('medium');
   const PRIORITY_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
+  let improveIsCritiqueOnly = $state(false);
+  let critiqueBodyFingerprint = $state('');
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
   let leftView       = $state<'files' | 'search' | 'policies' | 'tags' | 'settings' | 'git'>('files');
@@ -133,6 +135,7 @@ import {
     improveLoading.set(false);
     improvePhase.set('improve-thinking');
     improveStatus.set('');
+    improveIsCritiqueOnly = false;
     // untrack: rightTab reads/writes must not become effect dependencies —
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
@@ -285,9 +288,71 @@ import {
     }
   });
 
+  async function handleCritique() {
+    const fp = $currentDoc.filePath;
+    if (!fp) return;
+    improveIsCritiqueOnly = true;
+    critiqueBodyFingerprint = $currentDoc.body
+      ? $currentDoc.body.length + ':' + $currentDoc.body.slice(0, 100) : '';
+    rightTab = 'improve';
+    showRightPanel = true;
+    improveResult.set(null);
+    improveLoading.set(true);
+    improvePhase.set('critique-thinking');
+    improveStatus.set('');
+    showToast('Reviewing proposal — AI may take a moment…', 6000);
+    try {
+      const res = await fetch('/api/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: fp, mode: 'critique' }),
+      });
+      const reader = res.body?.getReader();
+      if (!reader) { showToast('No response stream', 4000); return; }
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let critiqueAccum = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for (const part of parts) {
+          const lines = part.split('\n');
+          const eventLine = lines.find(l => l.startsWith('event: '));
+          const dataLine = lines.find(l => l.startsWith('data: '));
+          if (!dataLine) continue;
+          const event = eventLine ? eventLine.slice(7).trim() : '';
+          try {
+            const data = JSON.parse(dataLine.slice(6));
+            if (event === 'token' && data.phase === 'critique') {
+              critiqueAccum += data.text;
+              improveResult.set({ improved: '', critique: critiqueAccum });
+            } else if (event === 'stage') {
+              improvePhase.set(data.phase);
+              improveStatus.set('');
+            } else if (event === 'status') {
+              improveStatus.set(data.message);
+            } else if (event === 'done') {
+              improveResult.set({ improved: '', critique: data.critique || critiqueAccum });
+              improvePhase.set('done');
+            }
+          } catch { /* skip */ }
+        }
+      }
+    } catch (e: any) {
+      showToast(`Review error: ${e}`, 4000);
+      rightTab = 'properties';
+    } finally {
+      improveLoading.set(false);
+    }
+  }
+
   async function handleImprove() {
     const fp = $currentDoc.filePath;
     if (!fp) return;
+    improveIsCritiqueOnly = false;
     rightTab = 'improve';
     showRightPanel = true;
     improveResult.set(null);
@@ -527,7 +592,7 @@ import {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
-    if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, ''));
+    if (r.ok) goto('/proposals/' + slug.replace(/\.md$/, '') + '?new=1');
   }
 
   function newResearch() {
@@ -848,6 +913,8 @@ import {
             onfindrelated={() => { rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onplan={() => { showToast('Scanning for related proposals…', 3000); rightTab = 'related'; findRelated($currentDoc.filePath); }}
             onimprove={handleImprove}
+            onreview={handleCritique}
+            canReview={!critiqueBodyFingerprint || critiqueBodyFingerprint !== ($currentDoc.body ? $currentDoc.body.length + ':' + $currentDoc.body.slice(0, 100) : '')}
           />
         {:else}
           <div class="right-empty">Open a document to see its properties</div>
@@ -860,9 +927,10 @@ import {
         loading={il}
         phase={ip}
         status={ist}
+        critiqueOnly={improveIsCritiqueOnly}
         onaccept={handleAcceptImprove}
-        ondismiss={() => { rightTab = 'properties'; improveResult.set(null); }}
-        onrerun={handleImprove}
+        ondismiss={() => { rightTab = 'properties'; improveResult.set(null); improveIsCritiqueOnly = false; }}
+        onrerun={improveIsCritiqueOnly ? handleCritique : handleImprove}
       />
     {:else if rightTab === 'review'}
       <PlanReviewPanel

@@ -51,6 +51,8 @@
   let lastBodyLen = $state(0);
   // Set in onMount when ?from=proposal is detected; cleared after loadFile triggers improve
   let pendingAutoImprove = false;
+  // Track whether we already ran the related-check before approving
+  let approvalRelatedChecked = false;
 
   let docType = $derived(
     filePath().startsWith('proposals/') ? 'proposal'
@@ -135,6 +137,8 @@
     if ($page.url.searchParams.get('new') === '1') {
       mode = 'edit';
       showProps = true;
+      // Auto-trigger improve for new proposals so AI fleshes out the description
+      if (docType === 'proposal') pendingAutoImprove = true;
       goto($page.url.pathname, { replaceState: true, noScroll: true });
     }
     // Plan just created from an approved proposal — auto-trigger AI improve
@@ -150,6 +154,7 @@
   });
 
   async function loadFile() {
+    approvalRelatedChecked = false;
     const res = await fetch('/api/read?path=' + encodeURIComponent(filePath()));
     if (!res.ok) {
       if (res.status === 404) {
@@ -437,6 +442,33 @@
   async function handleApprove(fm?: Record<string, any>) {
     if (fm) frontmatter = { ...fm };
     if (!frontmatter) return;
+
+    // First click: scan for unlinked related proposals and surface them before approving
+    if (!approvalRelatedChecked) {
+      approvalRelatedChecked = true;
+      const fp = filePath();
+      const res = await fetch('/api/overlap?path=' + encodeURIComponent(fp));
+      if (res.ok) {
+        const { matches } = await res.json();
+        const currentRelated: string[] = Array.isArray(frontmatter.related_to) ? frontmatter.related_to : [];
+        const unlinked = (matches as Array<{ path: string }>).filter(
+          m => !currentRelated.some(r => r === m.path || r.replace(/\.md$/, '') === m.path.replace(/\.md$/, ''))
+        );
+        if (unlinked.length > 0) {
+          collationMatches.set(matches);
+          collationRelationships.set([]);
+          showPropsPane.set(true);
+          showRelatedTab.set(true);
+          showToast(
+            `${unlinked.length} related proposal${unlinked.length === 1 ? '' : 's'} found — review, then click Approve again`,
+            8000,
+            { label: 'Approve anyway', onclick: () => handleApprove() }
+          );
+          return;
+        }
+      }
+    }
+
     if (!frontmatter.assigned_to || String(frontmatter.assigned_to).trim() === '') {
       const who = prompt('Assign to:');
       if (who) frontmatter = { ...frontmatter, assigned_to: who };

@@ -123,7 +123,7 @@ async function callAndSendSession(
 }
 
 export async function POST({ request }) {
-  const { path: filePath } = await request.json();
+  const { path: filePath, mode = 'full' } = await request.json();
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, filePath);
@@ -145,7 +145,7 @@ export async function POST({ request }) {
       if (!opencodeUrl) {
         send('done', {
           original: body,
-          improved: body + '\n\n*(AI fill-in unavailable — OPENCODE_URL not configured)*',
+          improved: mode === 'critique' ? '' : body + '\n\n*(AI fill-in unavailable — OPENCODE_URL not configured)*',
           critique: '*(Critique unavailable — OPENCODE_URL not configured)*',
         });
         controller.close();
@@ -164,18 +164,20 @@ export async function POST({ request }) {
         const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
         const withTimeout = <T>(p: Promise<T>, ms: number) => Promise.race([p, timeout(ms)]);
 
-        // Phase 1: Improve proposal
-        send('stage', { phase: 'improve-thinking' });
-        let improved: string;
-        try {
-          const raw = await withTimeout(
-            callAI(buildPrompt(fm, body), 'improve', 'improve-streaming', abortCtrl.signal),
-            AI_TIMEOUT,
-          );
-          improved = stripAIWrapper(raw);
-        } catch (err: any) {
-          improved = body + `\n\n*(AI improvement ${err.message === 'Message failed: 500' ? 'model backend not responding. Check that ollama/Olla is running.' : err.message} — showing original body)*`;
-          send('token', { phase: 'improve', text: improved });
+        // Phase 1: Improve proposal (skipped in critique-only mode)
+        let improved = '';
+        if (mode !== 'critique') {
+          send('stage', { phase: 'improve-thinking' });
+          try {
+            const raw = await withTimeout(
+              callAI(buildPrompt(fm, body), 'improve', 'improve-streaming', abortCtrl.signal),
+              AI_TIMEOUT,
+            );
+            improved = stripAIWrapper(raw);
+          } catch (err: any) {
+            improved = body + `\n\n*(AI improvement ${err.message === 'Message failed: 500' ? 'model backend not responding. Check that ollama/Olla is running.' : err.message} — showing original body)*`;
+            send('token', { phase: 'improve', text: improved });
+          }
         }
 
         // Phase 2: Critique document — fresh abort controller so phase 1 timeout doesn't bleed over

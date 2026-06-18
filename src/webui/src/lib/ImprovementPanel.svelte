@@ -8,6 +8,7 @@
     loading = false,
     phase = 'improve-thinking',
     status = '',
+    critiqueOnly = false,
     onaccept,
     ondismiss,
     onrerun,
@@ -17,6 +18,7 @@
     loading?: boolean;
     phase?: ImprovePhase;
     status?: string;
+    critiqueOnly?: boolean;
     onaccept?: (improved: string) => void;
     ondismiss?: () => void;
     onrerun?: () => void;
@@ -24,6 +26,7 @@
 
   let showCritique = $state(false);
   $effect(() => {
+    if (critiqueOnly) { showCritique = true; return; }
     if (phase === 'critique-streaming' || phase === 'critique-thinking') showCritique = true;
     else if (phase === 'improve-streaming' || phase === 'improve-thinking') showCritique = false;
   });
@@ -135,12 +138,14 @@
   <!-- Content available — show tabs -->
   {:else}
     <div class="tabs">
-      <button class="tab" class:active={!showCritique} onclick={() => showCritique = false}
-        disabled={phase === 'critique-streaming' && critique.length === 0}>
-        Improved
-      </button>
-      <button class="tab" class:active={showCritique} onclick={() => showCritique = true}
-        disabled={phase === 'improve-thinking' || phase === 'improve-streaming'}>
+      {#if !critiqueOnly}
+        <button class="tab" class:active={!showCritique} onclick={() => showCritique = false}
+          disabled={phase === 'critique-streaming' && critique.length === 0}>
+          Improved
+        </button>
+      {/if}
+      <button class="tab" class:active={showCritique || critiqueOnly} onclick={() => showCritique = true}
+        disabled={!critiqueOnly && (phase === 'improve-thinking' || phase === 'improve-streaming')}>
         Critique
       </button>
     </div>
@@ -169,10 +174,12 @@
 
   {#if isDone}
     <div class="panel-footer">
-      <button class="accept-btn" onclick={() => onaccept?.(improved)}
-        title="Replace proposal body with the improved version and save">
-        Accept
-      </button>
+      {#if !critiqueOnly}
+        <button class="accept-btn" onclick={() => onaccept?.(improved)}
+          title="Replace proposal body with the improved version and save">
+          Accept
+        </button>
+      {/if}
       <button class="dismiss-btn" onclick={ondismiss}>Dismiss</button>
     </div>
   {/if}

@@ -9,6 +9,8 @@
     onsave,
     onapprove,
     onfindrelated,
+    onreview,
+    canReview = true,
     onplan,
     onimprove,
   }: {
@@ -19,6 +21,8 @@
     onsave?: (fm: Record<string, any>) => void;
     onapprove?: (fm: Record<string, any>) => void;
     onfindrelated?: () => void;
+    onreview?: () => void;
+    canReview?: boolean;
     onplan?: () => void;
     onreview?: () => void;
     onimprove?: () => void;
@@ -324,6 +328,13 @@
         {/if}
         <button class="act improve" onclick={() => onimprove?.()}
           title="Ask AI to improve this proposal — shows suggestions you can accept or dismiss">✨ Improve</button>
+        {#if !frontmatter.approved}
+          <button class="act review" onclick={() => onreview?.()}
+            disabled={!canReview}
+            title={canReview ? 'AI critique of this proposal — no rewrite, feedback only' : 'No changes since last review'}>
+            🔍 Review
+          </button>
+        {/if}
         <button class="act related" onclick={() => onfindrelated?.()}
           title="Scan vault for proposals with similar content using keyword matching">Find Related</button>
         <button class="act estimate" onclick={estimateComplexity} disabled={estimating}
