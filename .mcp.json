@@ -1,12 +1,38 @@
 {
   "mcpServers": {
-    "dw-mcp": {
+    "erpnext": {
+      "type": "stdio",
+      "command": "/home/netyeti/Projects/bms-ai-cluster/scripts/erpnext-mcp-run.sh",
+      "args": []
+    },
+    "technitium": {
+      "type": "stdio",
+      "command": "/home/netyeti/Projects/bms-ai-cluster/scripts/technitium-mcp-run.sh",
+      "args": []
+    },
+    "dw-vault": {
       "type": "stdio",
       "command": "node",
-      "args": ["${DOCWRIGHT_PATH}/dist/mcp/server.js", "--mode", "vault"],
+      "args": [
+        "${DOCWRIGHT_PATH}/dist/mcp/server.js",
+        "--mode",
+        "vault"
+      ],
       "env": {
         "DOCWRIGHT_PATH": "${DOCWRIGHT_PATH}",
         "DOCWRIGHT_VAULT_ROOT": "${DOCWRIGHT_VAULT_ROOT}"
+      }
+    },
+    "dw-upstream": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${DOCWRIGHT_PATH}/dist/mcp/server.js",
+        "--mode",
+        "upstream"
+      ],
+      "env": {
+        "DOCWRIGHT_PATH": "${DOCWRIGHT_PATH}"
       }
     }
   }
