@@ -1,7 +1,7 @@
-import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
+import fs from 'node:fs';
 import { json } from '@sveltejs/kit';
+import { moveDocument } from '../../../../../dispatch/vault-write';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -27,14 +27,14 @@ export async function POST({ request }) {
   if (fs.existsSync(absTo))
     return json({ error: 'conflict — file already exists' }, { status: 409 });
 
-  fs.mkdirSync(path.dirname(absTo), { recursive: true });
-
-  // Use git mv to preserve history; fall back to fs.rename for untracked files
-  const result = spawnSync('git', ['mv', absFrom, absTo], { cwd: REPO_ROOT });
-  if (result.status !== 0) {
-    try { fs.renameSync(absFrom, absTo); }
-    catch (e: any) { return json({ error: e.message }, { status: 500 }); }
+  try {
+    const result = moveDocument(REPO_ROOT, from, to);
+    return json({
+      path: to,
+      updatedWikilinks: result.updatedWikilinks,
+      updatedCrossRefs: result.updatedCrossRefs,
+    });
+  } catch (e: any) {
+    return json({ error: e.message }, { status: 500 });
   }
-
-  return json({ path: to });
 }

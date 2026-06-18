@@ -1,5 +1,11 @@
 #!/usr/bin/env tsx
 /**
+ * @deprecated Superseded by src/dispatch/vault-write.ts (moveDocument).
+ * The /api/approve-proposal and /api/rename endpoints now use the canonical
+ * vault-write API which handles _path: updates, wikilink cascading, and
+ * cross-ref field updates atomically. This script is retained for emergency
+ * manual repair only. Do not add new logic here.
+ *
  * Fix stale approved proposals not yet moved to proposals/approved/.
  *
  * Finds proposals/*.md files with `approved: true` that are still in the

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
+import { moveDocument, setDocumentField } from '../../../../../dispatch/vault-write';
 import { buildIndex } from '../../../../../policy-atoms-core/index-builder';
 import { route } from '../../../../../policy-atoms-core/router';
 import { resolve } from '../../../../../policy-atoms-core/resolver';
@@ -265,25 +266,12 @@ ${riskBody}
     if (updated !== planRaw) fs.writeFileSync(planPath, updated);
   }
 
-  // Move proposal to proposals/approved/ (only after plan is safely on disk)
-  const dstDir = path.join(REPO_ROOT, 'proposals', 'approved');
-  if (!fs.existsSync(dstDir)) fs.mkdirSync(dstDir, { recursive: true });
-  const dst = path.join(dstDir, norm);
-  fs.renameSync(src, dst);
+  // Move proposal to proposals/approved/ using canonical vault-write API.
+  // This updates _path:, cascades wikilinks, and updates cross-refs atomically.
+  moveDocument(REPO_ROOT, `proposals/${norm}`, approvedRel);
 
-  // Write consumed_by back into the approved proposal so the UI can link to the plan
-  const approvedRaw = fs.readFileSync(dst, 'utf-8');
-  const fmMatch = approvedRaw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (fmMatch) {
-    let fmContent = fmMatch[1];
-    const body = fmMatch[2];
-    if (fmContent.includes('consumed_by:')) {
-      fmContent = fmContent.replace(/^consumed_by:.*$/m, `consumed_by: ${planRel}`);
-    } else {
-      fmContent += `\nconsumed_by: ${planRel}`;
-    }
-    fs.writeFileSync(dst, `---\n${fmContent}\n---\n${body}`);
-  }
+  // Set consumed_by to link back to the newly created plan
+  setDocumentField(REPO_ROOT, approvedRel, 'consumed_by', planRel);
 
   logAudit('APPROVED', `proposal/${norm} → proposals/approved/ + plan created`);
 

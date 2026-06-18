@@ -1,114 +1,82 @@
 ---
 title: "Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField"
-status: draft
+status: in-progress
 author: NetYeti
 created: 2026-06-17
 created_by: NetYeti@phoenix
-tags: [planning]
-proposal_source: proposals/sub-plan-vault-write-api
-priority: medium
-phase: ""
+tags:
+  - phase-3
+  - vault
+  - api
+  - referential-integrity
+  - write
+proposal_source: proposals/approved/sub-plan-vault-write-api.md
+priority: critical
+phase: 3
 automated: guided
-waiting_reason: "# Populated when status = waiting-for-user"
-assigned_to: ["NetYeti"]
-related_to:
-  - plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
-  - plans/formalize-step-counter-sync.md
-depends_on: []
-blocks: []
-reviewed_by: ""
-reviewed_date: ""
-canceled_date: "# Populated when plan is canceled"
-cancellation_reason: "# Populated when plan is canceled"
-template_version: 1.0
+assigned_to: NetYeti
+scenario_synthesis: "TypeScript dispatch module — fs reads/writes only; no shell, no VS Code API, no database; wires three webui API endpoints to canonical write layer"
 tests_defined: false
-tests_human_reviewed: "false  # Set to true after human certifies AI-generated tests"
-gate_reviewer: "# Who must review (set automatically by gate rules)"
-gate_status: "# pending | approved | waived"
-gate_date: "# Stamped when gate_status is set"
-gate_note: "# Optional reviewer note"
-gate_reviews: "[]  # Phase 1a — array of {reviewer, role, status, date, note}"
-gate_quorum: "1    # Phase 1a — minimum approvals needed"
-_path: plans/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield.md
+tests_human_reviewed: false
+total_steps: 7
+completed_steps: 7
+related_to:
+  - plans/phase-vault-portability-pilot.md
+  - plans/sub-plan-vault-document-index.md
 ---
 
 # Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField
 
-## Mode
-
-Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
-
-**MENTORSHIP MODE — Human leads, LLM advises**
-
-- Human carries out tasks their own way
-- LLM provides SOP compliance checks and safety warnings
-- LLM offers suggestions when human asks for help
-
 ## Overview
 
-This plan bundles: [[proposals/sub-plan-vault-write-api]], [[proposals/sub-plan-vault-document-index]], [[proposals/knowledge-graph-cross-document-idea-linkage]], [[proposals/sub-plan-vault-write-api]], [[proposals/sub-plan-msp-pilot-vault]], [[proposals/sub-plan-cascade-steam-early-access]], [[plans/plan-ui-lifecycle-graph-view]], [[proposals/deferred-rlm-python-microservice]], [[research/rlm-recursive-language-models]], [[proposals/gantt-view-dependencies]], [[plans/phase-4-profile-acl-ai]], [[plans/completed/collation]], [[docs/collation]], [[plans/completed/status-page]]
+Build a canonical write layer in `src/dispatch/vault-write.ts` that all document
+mutations flow through. Three operations: `setDocumentField`, `moveDocument`,
+`renameDocument`. Wire the three existing webui endpoints that currently do raw
+`fs.rename` / `git mv` without frontmatter updates or wikilink cascading.
+
+**Acceptance bar (from proposal):**
+- Approving a proposal leaves no stale `_path:` in the moved file
+- Completing a plan leaves no stale `_path:`
+- Renaming a document updates all `[[wikilinks]]` referencing it across the vault
+- `fix-stale-approvals.ts` is retired (replaced by this API)
 
 ## Implementation Steps
 
-> When marking a task ✅ Complete, update every step row in this table
-> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
-
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | | | ⏳ Pending |
+| 1 | Create `src/dispatch/vault-write.ts` | `setDocumentField`, `moveDocument`, `renameDocument`; rollback on failure; append to `.docwright/write-audit.jsonl` | ✅ Done |
+| 2 | Unit tests for vault-write | `test/dispatch/vault-write.test.ts` — temp-dir fixtures for move, rename, setField, wikilink cascade, cross-ref update, rollback | ✅ Done |
+| 3 | Wire `/api/rename` | Replace raw `git mv` + `fs.rename` with `moveDocument`; return updated wikilink count | ✅ Done |
+| 4 | Wire `/api/approve-proposal` | Replace `fs.renameSync` for proposal move with `moveDocument`; fixes stale `_path:` in approved proposals | ✅ Done |
+| 5 | Wire `/api/lifecycle/transition-completed` | Replace `fs.renameSync` for plan move with `moveDocument`; fixes stale `_path:` in completed plans | ✅ Done |
+| 6 | Deprecate `fix-stale-approvals.ts` | Add header comment marking it superseded by vault-write API; add npm script deprecation notice | ✅ Done |
+| 7 | Full test pass + acceptance verification | `npm run test:dispatch` clean; manually verify approve + complete flows leave correct `_path:`; check one rename cascades wikilinks | ✅ Done |
 
 ## Testing Plan
 
-
+- [ ] Step 1: `vault-write.ts` compiles cleanly, exports all three functions
+- [ ] Step 2: All vault-write unit tests pass in isolation
+- [ ] Step 3: Renaming a doc via UI updates all wikilinks referencing it
+- [ ] Step 4: Approving a proposal sets `_path:` to `proposals/approved/<slug>.md`
+- [ ] Step 5: Completing a plan sets `_path:` to `plans/completed/<slug>.md`
+- [ ] Step 7: `npm run test:dispatch` — all passing, no regressions
 
 ## Rollback Procedures
 
-
+- `vault-write.ts` is additive — no existing code deleted in Steps 1–2
+- Steps 3–5 each replace one call site; revert is one-line per file
 
 ## Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| | | | |
-
-## Testing Plan
-
-### Step Verification
-
-- [ ] All implementation steps complete and outcomes verified
-
-### Integration & Regression
-
-- [ ] Existing tests pass without modification (`npm test`)
-- [ ] TypeScript compiles cleanly (`npm run typecheck`)
-- [ ] Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField functionality works end-to-end
-
-### Gate Criteria
-
-- [ ] `tests_defined` set to `true` in frontmatter
-- [ ] Human reviewer has verified step outcomes above
-- [ ] No regressions introduced to adjacent workflows
-
-## Testing Plan
-
-### Step Verification
-
-- [ ] All implementation steps complete and outcomes verified
-
-### Integration & Regression
-
-- [ ] Existing tests pass without modification (`npm test`)
-- [ ] TypeScript compiles cleanly (`npm run typecheck`)
-- [ ] Plan: Sub-Plan: Vault Write API — moveDocument, renameDocument, canonical setField functionality works end-to-end
-
-### Gate Criteria
-
-- [ ] `tests_defined` set to `true` in frontmatter
-- [ ] Human reviewer has verified step outcomes above
-- [ ] No regressions introduced to adjacent workflows
+| `updateWikilinks` index scan misses files not in VaultIndex | Low | Low | `buildIndex` scans all .md files; fallback grep if index empty |
+| Partial move + failed wikilink update leaves inconsistent state | Low | Medium | Rollback: save originals before any write, restore on error |
+| Large vault — wikilink scan slow | Low | Low | Scan is synchronous but fast; vault is small for now |
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2026-06-17 | Created | NetYeti |
+| 2026-06-17 | Created (shell) | NetYeti |
+| 2026-06-17 | Populated with 7 steps from audit of existing endpoints | NetYeti |

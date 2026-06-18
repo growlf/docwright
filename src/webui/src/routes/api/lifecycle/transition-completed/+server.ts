@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import fs from 'node:fs';
 import path from 'node:path';
+import { moveDocument } from '../../../../../../dispatch/vault-write';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 
@@ -104,9 +105,9 @@ export async function POST({ request }) {
     fs.writeFileSync(planPath, text, 'utf-8');
   }
 
-  // Move plan → completed
-  fs.mkdirSync(path.dirname(destPath), { recursive: true });
-  fs.renameSync(planPath, destPath);
+  // Move plan → completed using canonical vault-write API.
+  // Updates _path:, cascades wikilinks, and updates cross-refs atomically.
+  moveDocument(REPO, `plans/${safe}`, `plans/completed/${safe}`);
 
   // Generate doc
   fs.mkdirSync(path.dirname(docPath), { recursive: true });
