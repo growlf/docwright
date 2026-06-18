@@ -4,6 +4,10 @@
 
 ## Available skills
 
+**Claude Code:** Check `.claude/skills/<name>.md` first — these are Claude Code-native
+versions that use bash tools directly instead of MCP. Fall back to the OpenCode skill
+(table below) only if no `.claude/skills/` version exists.
+
 <!-- skills-table-start -->
 
 DocWright ships workflow skills under `.opencode/skills/`. Each directory
