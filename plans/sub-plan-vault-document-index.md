@@ -16,7 +16,9 @@ automated: guided
 assigned_to: NetYeti
 scenario_synthesis: Build unified frontmatter + wikilink edge index in TypeScript; filesystem reads and JSON writes only; no shell scripts, deployment, or VS Code API steps
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
+total_steps: 17
+completed_steps: 16
 ---
 
 # Sub-Plan: Vault Document Index — unified frontmatter + wikilink edge index
@@ -80,25 +82,25 @@ from day one.
 
 ### Step Verification
 
-- [ ] **Step 1** — Index loads with at least one frontmatter relationship and one wikilink edge; `getEdges` returns both types
-- [ ] **Step 2** — Full vault scan populates index on cold start; SSE-triggered refresh adds a new document's edges within one cycle; moving a file updates edges without stale references
-- [ ] **Step 3** — `queryByType`, `queryByStatus`, `queryByPhase`, `queryByTags`, `getDocument`, `getEdges`, and `findSimilar` each return correct results from the index; `GET /api/graph` returns valid edge JSON; `GET /api/vault/query?type=X` filters correctly
-- [ ] **Step 4** — `/api/graph` output matches known frontmatter+wikilink edges; a newly linked document appears after one SSE event; repeated tagged queries return cached index data (no filesystem `readdir`); renaming a file updates its edges in-index
+- [x] **Step 1** — Index loads with at least one frontmatter relationship and one wikilink edge; `getEdges` returns both types
+- [x] **Step 2** — Full vault scan populates index on cold start; SSE-triggered refresh adds a new document's edges within one cycle; moving a file updates edges without stale references
+- [x] **Step 3** — `queryByType`, `queryByStatus`, `queryByPhase`, `queryByTags`, `getDocument`, `getEdges`, and `findSimilar` each return correct results from the index; `GET /api/graph` returns valid edge JSON; `GET /api/vault/query?type=X` filters correctly
+- [x] **Step 4** — `/api/graph` output matches known frontmatter+wikilink edges; a newly linked document appears after one SSE event; repeated tagged queries return cached index data (no filesystem `readdir`); renaming a file updates its edges in-index
 
 ### Integration & Regression
 
-- [ ] `npm test` passes with no regressions in existing index, lifecycle, or endpoint tests
-- [ ] `npm run typecheck` passes in `src/` and `src/dispatch/` (zero VS Code API leaks)
-- [ ] No existing `queryBy` call sites break — all method signatures remain backwards compatible
-- [ ] SSE event flow order is preserved: existing watcher tests still pass after incremental-refresh wiring
+- [x] `npm test` passes with no regressions in existing index, lifecycle, or endpoint tests
+- [x] `npm run typecheck` passes in `src/` and `src/dispatch/` (zero VS Code API leaks)
+- [x] No existing `queryBy` call sites break — all method signatures remain backwards compatible
+- [x] SSE event flow order is preserved: existing watcher tests still pass after incremental-refresh wiring
 
 ### Gate Criteria
 
-- [ ] All Step Verification checks pass in CI
-- [ ] Two wikilink edges verified from separate documents appear in the same `/api/graph` response
-- [ ] Index survives a full vault sync (startup scan → live edits → file rename → shutdown) with no orphaned edges
-- [ ] `docwright-lifecycle` plan-completion routine confirmed as non-impacted (no plan file writes bypassed)
-- [ ] Test coverage diff ≥ +5% for index + query + endpoint modules combined
+- [x] All Step Verification checks pass in CI
+- [x] Two wikilink edges verified from separate documents appear in the same `/api/graph` response
+- [x] Index survives a full vault sync (startup scan → live edits → file rename → shutdown) with no orphaned edges
+- [x] `docwright-lifecycle` plan-completion routine confirmed as non-impacted (no plan file writes bypassed)
+- [x] Test coverage diff ≥ +5% for index + query + endpoint modules combined
 
 ## Rollback Procedures
 
