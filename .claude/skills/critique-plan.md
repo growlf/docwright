@@ -1,7 +1,7 @@
 # /critique-plan
 
 Adversarially critique a plan file before execution begins. Works with Claude,
-OpenCode (BigPickle), and any other AI — the logic is in `scripts/critique-plan.js`.
+OpenCode (BigPickle), and any other AI — the logic is in `$DOCWRIGHT_PATH/scripts/critique-plan.js`.
 
 ## Usage
 
@@ -12,7 +12,7 @@ OpenCode (BigPickle), and any other AI — the logic is in `scripts/critique-pla
 
 ## What it does
 
-1. Runs `node scripts/critique-plan.js <plan-file>` to gather context:
+1. Runs `node "$DOCWRIGHT_PATH/scripts/critique-plan.js" <plan-file>` to gather context:
    - Full plan content
    - All referenced proposals (present or missing)
    - Downstream plans that depend on this one
@@ -32,7 +32,7 @@ OpenCode (BigPickle), and any other AI — the logic is in `scripts/critique-pla
 ## Steps
 
 - Identify the target plan file (from args or current context)
-- Run: `node scripts/critique-plan.js <plan-path>`
+- Run: `node "$DOCWRIGHT_PATH/scripts/critique-plan.js" <plan-path>`
 - Pass output to Agent with adversarial instructions
 - Show findings, ask: "Write these to the plan? Review and edit first if needed."
 - If approved: edit the plan to add/replace `## Critical Review` section
@@ -41,9 +41,9 @@ OpenCode (BigPickle), and any other AI — the logic is in `scripts/critique-pla
 ## Using with OpenCode instead
 
 ```bash
-node scripts/critique-plan.js plans/phase-2-foundation.md
+node "$DOCWRIGHT_PATH/scripts/critique-plan.js" plans/phase-2-foundation.md
 # Copy output and paste into any OpenCode session, or:
-node scripts/critique-plan.js plans/phase-2-foundation.md | opencode chat
+node "$DOCWRIGHT_PATH/scripts/critique-plan.js" plans/phase-2-foundation.md | opencode chat
 ```
 
 BigPickle (`docwright-critic` agent) is the ideal reviewer since it provides
