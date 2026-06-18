@@ -18,15 +18,25 @@ const path = require('path');
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const REPO_ROOT = (() => {
-  // Walk up from script location to find repo root (has plans/ and proposals/)
-  let dir = __dirname;
-  while (dir !== path.dirname(dir)) {
-    if (fs.existsSync(path.join(dir, 'plans')) && fs.existsSync(path.join(dir, 'proposals'))) {
-      return dir;
+  function findRoot(startDir) {
+    let dir = startDir;
+    while (dir !== path.dirname(dir)) {
+      if (fs.existsSync(path.join(dir, 'plans')) && fs.existsSync(path.join(dir, 'proposals'))) {
+        return dir;
+      }
+      dir = path.dirname(dir);
     }
-    dir = path.dirname(dir);
+    return null;
   }
-  return process.cwd();
+  // If a file arg is provided, prefer its repo over the script's repo.
+  // This lets the script be installed in DocWright but run against any vault.
+  const fileArg = process.argv[2];
+  if (fileArg) {
+    const absArg = path.isAbsolute(fileArg) ? fileArg : path.join(process.cwd(), fileArg);
+    const fromFile = findRoot(path.dirname(absArg));
+    if (fromFile) return fromFile;
+  }
+  return findRoot(__dirname) || process.cwd();
 })();
 
 const POLICIES_DIR = path.join(REPO_ROOT, 'policies', 'core');
