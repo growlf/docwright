@@ -57,6 +57,9 @@ import {
   let newProposalDesc     = $state('');
   let newProposalPriority = $state('medium');
   const PRIORITY_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
+  type ProposalDialogStep = 'form' | 'checking' | 'matches';
+  let newProposalStep = $state<ProposalDialogStep>('form');
+  let newProposalMatches = $state<Array<{path:string;title:string;score:number;type:string;reason:string}>>([]);
   let improveIsCritiqueOnly = $state(false);
   let critiqueBodyFingerprint = $state('');
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -561,7 +564,31 @@ import {
     showNewMenu = false;
     newProposalDesc = '';
     newProposalPriority = 'medium';
+    newProposalStep = 'form';
+    newProposalMatches = [];
     showNewProposalDialog = true;
+  }
+
+  async function checkAndSubmitProposal() {
+    const desc = newProposalDesc.trim();
+    if (!desc) return;
+    newProposalStep = 'checking';
+    try {
+      const res = await fetch('/api/overlap/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.matches?.length > 0) {
+          newProposalMatches = data.matches;
+          newProposalStep = 'matches';
+          return;
+        }
+      }
+    } catch { /* non-fatal — proceed with creation */ }
+    await submitNewProposal();
   }
 
   async function submitNewProposal() {
@@ -990,28 +1017,65 @@ import {
 
 {#if showNewProposalDialog}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-  <div class="dialog-overlay" role="dialog" aria-modal="true" onkeydown={(e) => { if (e.key === 'Escape') showNewProposalDialog = false; }}>
+  <div class="dialog-overlay" role="dialog" aria-modal="true"
+       onkeydown={(e) => { if (e.key === 'Escape' && newProposalStep !== 'checking') showNewProposalDialog = false; }}>
     <div class="dialog-box" onclick={(e) => e.stopPropagation()}>
-      <div class="dialog-header">New Proposal</div>
-      <label class="dialog-label" for="new-proposal-desc">Describe the problem or idea</label>
-      <textarea
-        id="new-proposal-desc"
-        class="dialog-textarea"
-        placeholder="1–3 sentences: what's the problem, and roughly what would fix it?"
-        rows="4"
-        bind:value={newProposalDesc}
-        onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitNewProposal(); }}
-      ></textarea>
-      <label class="dialog-label" for="new-proposal-priority">Priority</label>
-      <select id="new-proposal-priority" class="dialog-select" bind:value={newProposalPriority}>
-        {#each Object.entries(PRIORITY_LABELS) as [val, label]}
-          <option value={val}>{label}</option>
-        {/each}
-      </select>
-      <div class="dialog-actions">
-        <button class="dialog-cancel" onclick={() => showNewProposalDialog = false}>Cancel</button>
-        <button class="dialog-submit" onclick={submitNewProposal} disabled={!newProposalDesc.trim()}>Create Proposal</button>
-      </div>
+
+      {#if newProposalStep === 'form'}
+        <div class="dialog-header">New Proposal</div>
+        <label class="dialog-label" for="new-proposal-desc">Describe the problem or idea</label>
+        <textarea
+          id="new-proposal-desc"
+          class="dialog-textarea"
+          placeholder="1–3 sentences: what's the problem, and roughly what would fix it?"
+          rows="4"
+          bind:value={newProposalDesc}
+          onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) checkAndSubmitProposal(); }}
+        ></textarea>
+        <label class="dialog-label" for="new-proposal-priority">Priority</label>
+        <select id="new-proposal-priority" class="dialog-select" bind:value={newProposalPriority}>
+          {#each Object.entries(PRIORITY_LABELS) as [val, label]}
+            <option value={val}>{label}</option>
+          {/each}
+        </select>
+        <div class="dialog-actions">
+          <button class="dialog-cancel" onclick={() => showNewProposalDialog = false}>Cancel</button>
+          <button class="dialog-submit" onclick={checkAndSubmitProposal} disabled={!newProposalDesc.trim()}>
+            Create Proposal
+          </button>
+        </div>
+
+      {:else if newProposalStep === 'checking'}
+        <div class="dialog-header">New Proposal</div>
+        <div class="dialog-checking">
+          <span class="dialog-spinner">⟳</span>
+          Checking for similar proposals…
+        </div>
+
+      {:else if newProposalStep === 'matches'}
+        <div class="dialog-header">Similar proposals found</div>
+        <div class="dialog-matches-hint">
+          These existing documents may cover the same ground. Review before creating.
+        </div>
+        <div class="dialog-matches">
+          {#each newProposalMatches as m}
+            <a class="dialog-match" href="/{m.path.replace(/\.md$/, '')}" target="_blank" rel="noopener"
+               onclick={() => { showNewProposalDialog = false; }}>
+              <span class="dialog-match-body">
+                <span class="dialog-match-title">{m.title}</span>
+                {#if m.reason}<span class="dialog-match-reason">{m.reason}</span>{/if}
+              </span>
+              <span class="dialog-match-score">{Math.round(m.score * 100)}%</span>
+              <span class="dialog-match-type">{m.type}</span>
+            </a>
+          {/each}
+        </div>
+        <div class="dialog-actions">
+          <button class="dialog-cancel" onclick={() => { newProposalStep = 'form'; }}>← Edit description</button>
+          <button class="dialog-submit" onclick={submitNewProposal}>Create Anyway</button>
+        </div>
+      {/if}
+
     </div>
   </div>
 {/if}
@@ -1316,6 +1380,25 @@ import {
     &:hover:not(:disabled) { background: #253e7e; }
     &:disabled { opacity: 0.4; cursor: default; }
   }
+  .dialog-checking {
+    padding: 20px 0 12px; color: #888; font-size: 13px; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .dialog-spinner { animation: spin 1s linear infinite; display: inline-block; font-size: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dialog-matches-hint { font-size: 11px; color: #666; margin-bottom: 8px; }
+  .dialog-matches { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; margin-bottom: 4px; }
+  .dialog-match {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    background: #0d0d1e; border: 1px solid #2a2a4a; border-radius: 5px;
+    text-decoration: none; color: inherit;
+    &:hover { border-color: #4a6aba; background: #111128; }
+  }
+  .dialog-match-body  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .dialog-match-title { font-size: 12px; color: #d0d0e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dialog-match-reason { font-size: 10px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dialog-match-score { font-size: 10px; font-weight: 700; color: #f39c12; background: #2a1a00; border: 1px solid #7a5000; border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
+  .dialog-match-type  { font-size: 9px; color: #666; background: #111128; border: 1px solid #2a2a4a; border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
 
   :global(html[data-theme="light"]) {
     .dialog-box { background: #fff; border-color: #d0d0e8; }

@@ -1,23 +1,23 @@
 ---
 title: "New Proposals Should Check Relevance Before Creating the File"
-status: draft
+status: in-progress
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
 tags: [workflow, proposals, duplication, collation, ai]
-proposal_source: "proposals/approved/new-proposals-should-check-before-actual-creation"
+proposal_source: "proposals/approved/new-proposals-should-check-before-actual-creation.md"
 priority: medium
 mode: guided
 assigned_to: netyeti
+scenario_synthesis: SvelteKit dialog flow + new API endpoint; keyword scoring in TypeScript; no shell scripts, no VS Code API, no external services
 related_to:
   - proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md
   - proposals/approved/ux-new-proposal.md
 depends_on: []
-blocks:
-  - proposals/approved/new-proposal-ux-description-priority-and-immediate-view.md
+blocks: []
 tests_defined: true
 total_steps: 5
-completed_steps: 0
+completed_steps: 5
 phase: 3
 ---
 
@@ -31,11 +31,11 @@ Before writing a new proposal file, check across existing proposals, plans, and 
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Description-first creation flow | Initial dialog asks only for brief description (1-3 sentences). AI generates title from description. No file created until check passes. | ⏳ Pending |
-| 2 | Relevance and duplication check engine | Before writing, scan existing proposals, plans, and completed plans for keyword similarity and semantic overlap with the description. Use existing collation similarity scoring. | ⏳ Pending |
-| 3 | Overlap result presentation | Show results: no conflicts → proceed; possible overlap → summary with similarity % and links to existing documents, with options (open existing, view comparison, continue creating); already addressed → message with link to completed plan. | ⏳ Pending |
-| 4 | Assisted title generation | AI generates draft title from description using kebab-case convention. User can accept, edit, or replace before file creation. | ⏳ Pending |
-| 5 | File creation after check passes | Proposal file written to disk only after check passes or user explicitly continues. Pre-populated with frontmatter, description expanded into ## Problem and ## Proposed Solution stubs. | ⏳ Pending |
+| 1 | Description-first creation flow | Initial dialog asks only for brief description (1-3 sentences). AI generates title from description. No file created until check passes. | ✅ Done (New Proposal UX plan) |
+| 2 | Relevance and duplication check engine | Before writing, scan existing proposals, plans, and completed plans for keyword similarity and semantic overlap with the description. Use existing collation similarity scoring. | ✅ Done — POST /api/overlap/preview, keyword coverage scoring |
+| 3 | Overlap result presentation | Show results: no conflicts → proceed; possible overlap → summary with similarity % and links to existing documents, with options (open existing, view comparison, continue creating); already addressed → message with link to completed plan. | ✅ Done — dialog shows matches with reason + Open link + Create Anyway |
+| 4 | Assisted title generation | AI generates draft title from description using kebab-case convention. User can accept, edit, or replace before file creation. | ✅ Done (New Proposal UX plan) |
+| 5 | File creation after check passes | Proposal file written to disk only after check passes or user explicitly continues. Pre-populated with frontmatter, description expanded into ## Problem and ## Proposed Solution stubs. | ✅ Done (New Proposal UX plan) |
 
 ## Testing Plan
 
