@@ -612,3 +612,16 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Various bug fixes: duplicate <style> block, esbuild bump, Find Related explicit refs
 
 **Session note:** `docs/session-notes/session_note_202606180200.md`
+
+---
+
+## Session: 2026-06-19 — Session start skill + vault index certification
+
+**Focus:** Claude Code session-start skill, vault index sub-plan certification
+
+**Completed:**
+- [x] Added `.claude/skills/docwright-session-start.md` — Claude Code-native skill using vault-status.js + git + TaskCreate (no MCP dependency)
+- [x] Updated CLAUDE.md — instructs Claude Code to check `.claude/skills/` before OpenCode skill table
+- [x] Certified `sub-plan-vault-document-index` — all 13 testing plan checkboxes verified, tests_human_reviewed: true
+
+**Session note:** `docs/session-notes/session_note_202606190000.md`
