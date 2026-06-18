@@ -595,3 +595,20 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Phase 3 plan updated: title, total_steps 11→14, deliverables 11-13, phase gate
 
 **Session note:** `docs/session-notes/session_note_202606172350.md`
+
+---
+
+## Session: 2026-06-18 — Phase 3 Foundation Complete + Knowledge Graph
+
+**Focus:** Phase 3 deliverables #11–13, knowledge graph, vault hygiene
+
+**Completed:**
+- [x] Vault Write API (Phase 3 #11) — moveDocument/renameDocument/setDocumentField; rollback, wikilink cascade, cross-ref update, audit log; all file-move endpoints wired; 13 new tests
+- [x] Vault Document Index (Phase 3 #12) — VaultEntry gains edges[]+contentHash; /api/graph + /api/vault/query live; SSE-triggered rebuild; 24 new tests (205 total)
+- [x] Knowledge Graph (Phase 3 #13) — D3 force-directed 4th status tab; 6 gap-detection categories; filter sidebar with count badges; zoom/fit controls; consumed proposals hidden by default
+- [x] New Proposal UX plan — all 6 steps; description dialog, AI improve on creation, Approve triggers related check, AI Review button, pre-creation duplicate check
+- [x] POST /api/overlap/preview — keyword-coverage engine for pre-creation duplicate detection
+- [x] Graph-surfaced vault hygiene: 4 stale plans closed out (New Proposal UX, new-proposals-check, vault migration system, vault-document-index approval); stale _path and proposal_source .md fixes
+- [x] Various bug fixes: duplicate <style> block, esbuild bump, Find Related explicit refs
+
+**Session note:** `docs/session-notes/session_note_202606180200.md`
