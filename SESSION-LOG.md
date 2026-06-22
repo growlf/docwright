@@ -625,3 +625,19 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Certified `sub-plan-vault-document-index` — all 13 testing plan checkboxes verified, tests_human_reviewed: true
 
 **Session note:** `docs/session-notes/session_note_202606190000.md`
+
+---
+
+## Session: 2026-06-21 — Launcher Portability, MCP Vault Fix, Security Patches
+
+**Focus:** Launcher vault-awareness, OpenCode MCP wiring, Dependabot fixes
+
+**Completed:**
+- [x] `DocWright` launcher — uses `$PWD` as vault root; exports `DOCWRIGHT_VAULT_ROOT` so OpenCode MCP targets correct vault
+- [x] Removed hardcoded CascadeSTEAM path from global OpenCode config; removed stale `dw-mcp` SSE entry
+- [x] Idempotent adopt/upgrade on every launcher startup (manifest hash baseline)
+- [x] Launcher moved to `scripts/DocWright` in repo; symlinked from `~/.local/bin`
+- [x] All managed vaults upgraded and pushed: csdocs, bms-ai-cluster, DAFO
+- [x] Dependabot vulnerabilities resolved via npm overrides (0 remaining locally); v0.3.7 tagged and pushed
+
+**Session note:** `docs/session-notes/session_note_202606212300.md`
