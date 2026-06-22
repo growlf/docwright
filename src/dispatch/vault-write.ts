@@ -177,15 +177,15 @@ export function moveDocument(
     } catch { return false; }
   });
   for (const rel of wlAffected) {
-    try { snapshot.set(rel, fs.readFileSync(path.join(vaultRoot, rel), 'utf-8')); } catch {}
+    try { snapshot.set(rel, fs.readFileSync(path.join(vaultRoot, rel), 'utf-8')); } catch { /* ignore unreadable */ }
   }
 
   function rollback(reason: string): never {
     if (fileMoved) {
-      try { fs.renameSync(absTo, absFrom); } catch {}
+      try { fs.renameSync(absTo, absFrom); } catch { /* ignore rollback failure */ }
     }
     for (const [rel, orig] of snapshot) {
-      try { fs.writeFileSync(path.join(vaultRoot, rel), orig); } catch {}
+      try { fs.writeFileSync(path.join(vaultRoot, rel), orig); } catch { /* ignore rollback failure */ }
     }
     appendAudit(vaultRoot, {
       ts: new Date().toISOString(), op: 'moveDocument', actor,

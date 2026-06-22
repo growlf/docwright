@@ -18,7 +18,7 @@ function scan(dir: string, base: string, all: boolean): any[] {
       if (stat.isDirectory()) {
         const children = scan(full, rel, all);
         if (children.length > 0) entries.push({ name, path: rel, type: 'dir', children });
-      } else if (all || name.endsWith('.md')) {
+      } else if (all || name.endsWith('.md') || name.endsWith('.base')) {
         entries.push({ name, path: rel, type: 'file' });
       }
     }

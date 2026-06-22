@@ -8,12 +8,14 @@
   let { item, currentPath }: { item: TreeItem; currentPath: string } = $props();
 
   const isDoc  = item.name.endsWith('.md');
-  const stem   = item.name.replace(/\.md$/, '');
-  const ext    = isDoc ? '.md' : '';
-  const href   = isDoc
-    ? '/' + item.path.replace(/\.md$/, '')
-    : '/api/read?path=' + encodeURIComponent(item.path);
-  const isActive = isDoc && ('/' + item.path.replace(/\.md$/, '')) === currentPath;
+  const isBase = item.name.endsWith('.base');
+  const stem   = item.name.replace(/\.(md|base)$/, '');
+  const ext    = isDoc ? '.md' : isBase ? '.base' : '';
+  const href   = isDoc  ? '/' + item.path.replace(/\.md$/, '')
+               : isBase ? '/' + item.path   // keep .base in URL so the route knows
+               : '/api/read?path=' + encodeURIComponent(item.path);
+  const isActive = (isDoc  && ('/' + item.path.replace(/\.md$/, '')) === currentPath)
+                || (isBase && ('/' + item.path) === currentPath);
 
   // Rename state
   let renaming = $state(false);

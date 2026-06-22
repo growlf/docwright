@@ -28,7 +28,16 @@
   let createType = $state<'file' | 'folder'>('file');
   let newName = $state('');
 
-  function toggle() { if (!creating) collapsed = !collapsed; }
+  // If the folder contains index.base, clicking navigates to the base view
+  // instead of expanding/collapsing the directory.
+  let indexBase = $derived(
+    (item.children ?? []).find(c => c.type === 'file' && c.name === 'index.base') ?? null
+  );
+
+  function toggle() {
+    if (indexBase) { goto('/' + indexBase.path); return; }
+    if (!creating) collapsed = !collapsed;
+  }
 
   function handleContext(e: MouseEvent) {
     e.preventDefault();
@@ -139,11 +148,12 @@
     }
   }
 
-  // Filter children based on view mode and archived state
+  // Filter children based on view mode and archived state.
+  // When a folder has index.base, hide all its children — the folder click IS the view.
   let visibleChildren = $derived(
-    (item.children ?? []).filter(child => {
+    indexBase ? [] : (item.children ?? []).filter(child => {
       if (sidebar.viewMode === 'all') return true;
-      if (child.type === 'file' && !child.name.endsWith('.md')) return false;
+      if (child.type === 'file' && !child.name.endsWith('.md') && !child.name.endsWith('.base')) return false;
       if (child.type === 'dir' && !sidebar.showArchived && sidebar.hiddenDirs.includes(child.path)) return false;
       return true;
     })

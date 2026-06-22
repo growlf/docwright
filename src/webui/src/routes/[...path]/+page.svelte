@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
   import PropertiesPane from '$lib/PropertiesPane.svelte';
+  import BaseView from '$lib/BaseView.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
   import { showToast, dismissToast } from '$lib/toast';
@@ -130,7 +131,7 @@
   // ---------------------------------------------------------------------------
   // File loading
   // ---------------------------------------------------------------------------
-  $effect(() => { loadFile(); });
+  $effect(() => { if (!isBase) loadFile(); });
 
   onMount(() => {
     // Open in edit mode with pane expanded when navigating to a newly created proposal
@@ -204,9 +205,12 @@
 
   function filePath(): string {
     let p = $page.params.path;
+    if (p.endsWith('.base')) return p;
     if (!p.endsWith('.md')) p += '.md';
     return p;
   }
+
+  let isBase = $derived(filePath().endsWith('.base'));
 
   // ---------------------------------------------------------------------------
   // Editor
@@ -510,6 +514,10 @@
 </script>
 
 <div class="page-wrap">
+  <!-- Base view — rendered directly, no toolbar/editor chrome -->
+  {#if isBase}
+    <BaseView path={filePath()} />
+  {:else}
   <!-- Main content -->
   <div class="page-body">
     <div class="toolbar">
@@ -588,6 +596,7 @@
       </div>
     {/if}
   </div>
+  {/if}
 
 </div>
 
