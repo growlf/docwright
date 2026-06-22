@@ -1,0 +1,8 @@
+# OpenCode runtime state — per-machine, never shared
+node_modules
+bun.lock
+session-name
+session-id
+
+# package.json and package-lock.json are intentionally tracked —
+# they define the plugin version needed to replicate this environment.
