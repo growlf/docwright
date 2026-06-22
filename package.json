@@ -75,5 +75,9 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@opencode-ai/sdk": "^1.15.13",
     "js-yaml": "^4.2.0"
+  },
+  "overrides": {
+    "minimatch": ">=9.0.7",
+    "serialize-javascript": ">=7.0.5"
   }
 }
