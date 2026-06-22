@@ -2,7 +2,7 @@
   "name": "docwright",
   "displayName": "docwright",
   "description": "Organizational operating system for policy-driven teams",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "publisher": "growlf",
   "repository": {
@@ -55,7 +55,8 @@
     "phase:close": "npx tsx scripts/phase-close.ts",
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
-    "vscode:prepublish": "npm run compile"
+    "vscode:prepublish": "npm run compile",
+    "test:webui": "mocha --require tsx/cjs test/webui/**/*.test.ts"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
