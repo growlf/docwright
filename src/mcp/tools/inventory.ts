@@ -34,8 +34,8 @@ function runScript(scriptArgs: string[], timeoutMs = 30_000): { ok: boolean; tex
   }
 }
 
-export function syncDeviceInventory(environment: string, mode: string): string {
-  const { ok, text } = runScript(['--env', environment, '--mode', mode]);
+export function syncDeviceInventory(environment: string, mode: string, source = 'yaml'): string {
+  const { ok, text } = runScript(['--env', environment, '--mode', mode, '--source', source]);
   return ok ? text : `Error running sync:\n${text}`;
 }
 

@@ -20,15 +20,18 @@ export const inventoryTools: McpTool[] = [
     name: 'sync_device_inventory',
     description: `Generate or refresh Obsidian base view device notes for a network environment.
 
-Reads YAML device files from inventory/datasets/{env}/devices/, applies changes to
-docs/reference/{env}-devices/*.md, and regenerates index.base from base-view.yml.
+Sources:
+  yaml       Read from inventory/datasets/{env}/devices/*.yml  (default, no network needed)
+  technitium Pull live DHCP leases from Technitium DNS (requires TECHNITIUM_*_PASS in .env)
+  all        Run yaml first, then technitium (YAML provides rich detail; DHCP refreshes ip/mac/arp)
 
 Modes:
   diff   — preview what would change without writing anything (always start here)
-  update — patch YAML-derived fields in existing notes; manually-set fields are preserved
-  create — write notes only for devices that have no existing note
+  update — patch fields from source; manually-set fields are preserved
+  create — write notes only for devices with no existing note
 
-The index.base is always regenerated from base-view.yml when mode is create or update.`,
+Technitium adds discovery notes for devices seen on the network but not yet in YAML.
+Run diff first, then update once satisfied.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -43,6 +46,11 @@ The index.base is always regenerated from base-view.yml when mode is create or u
           enum: ['diff', 'update', 'create'],
           description: 'Sync mode — default: diff',
         },
+        source: {
+          type: 'string',
+          enum: ['yaml', 'technitium', 'all'],
+          description: 'Data source — default: yaml',
+        },
       },
       required: ['environment'],
     },
@@ -52,6 +60,7 @@ The index.base is always regenerated from base-view.yml when mode is create or u
         text: syncDeviceInventory(
           String(args.environment ?? ''),
           String(args.mode ?? 'diff'),
+          String(args.source ?? 'yaml'),
         ),
       }],
     }),
