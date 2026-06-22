@@ -4,7 +4,7 @@
 #   DocWright           run native Vite + OpenCode + MCP (dev, hot reload)
 #   DocWright --docker  run via docker compose (uses .env in repo root)
 
-REPO="$(cd "$(dirname "$0")/.." && pwd)"
+REPO="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
 WEBUI="$REPO/src/webui"
 VITE_PORT=5173
 OC_PORT=4096
