@@ -12,6 +12,11 @@ on:
   push:
     tags:
       - 'v0.*.*'
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
