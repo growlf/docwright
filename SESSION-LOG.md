@@ -641,3 +641,25 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Dependabot vulnerabilities resolved via npm overrides (0 remaining locally); v0.3.7 tagged and pushed
 
 **Session note:** `docs/session-notes/session_note_202606212300.md`
+
+---
+
+## Session: 2026-06-22 — Asset Discovery & SSH Config Rules
+
+**Focus:** Asset discovery toolset, BMS hardware audit, SSH config fixes
+
+**Completed:**
+- [x] Created `docs/SOPs/asset-discovery.md` — layered validation framework
+- [x] Created unified Ansible playbook `gather-device-inventory.yml` (bms-ai-cluster)
+- [x] Created `sync-device-from-discovery.py` with drift detection + ARP cross-ref
+- [x] Created `docwright-discovery` skill + web UI notification store
+- [x] Created `asset-management` profile (external plugin prototype)
+- [x] Added live methodology capture to `one-off-formalization.md`
+- [x] Created rule `ssh-config-only.md` — all SSH via ~/.ssh/config aliases
+- [x] Created rule `password-manager-first.md` — update BW before continuing after cred changes
+- [x] Fixed SSH aliases for `frank`, `crash`, `router.bms`
+- [x] Physical discovery: pve1 (HP DL360p Gen8), pve2 (Dell R630), crash (HP DL360 Gen9), frank (custom)
+- [x] Identified router access loss — BW password stale, needs recovery from BMS
+
+**Session note:** `docs/session-notes/session_note_202606221500.md`
+**Discovery data:** `docs/session-notes/BMS_DISCOVERY_DATA.md`
