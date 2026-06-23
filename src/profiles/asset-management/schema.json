@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Asset Management — Device",
+  "type": "object",
+  "properties": {
+    "title": {"type": "string", "description": "Device hostname or display name"},
+    "type": {
+      "type": "string",
+      "enum": ["device", "bmc", "network-segment", "vlan", "ipam", "service", "connection", "rack"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["discovered", "provisioning", "active", "maintenance", "decommissioned", "retired"]
+    },
+    "hostname": {"type": "string", "description": "Short hostname (e.g. pve2)"},
+    "ip": {"type": "string", "description": "Primary IPv4 address"},
+    "mac": {"type": "string", "description": "Primary MAC address (uppercase, colon-separated)"},
+    "author-role": {"type": "string", "default": "contributor"},
+    "manufacturer": {"type": "string"},
+    "model": {"type": "string"},
+    "serial": {"type": "string"},
+    "os": {"type": "string"},
+    "parent": {"type": "string", "description": "Hostname of parent/container device"},
+    "manages": {"type": "string", "description": "Hostname of managed device (BMC→server)"},
+    "peers": {"type": "array", "items": {"type": "string"}, "description": "Peer device hostnames"},
+    "member_of": {"type": "array", "items": {"type": "string"}, "description": "Group/cluster memberships"},
+    "provides": {"type": "array", "items": {"type": "string"}, "description": "Service exports"},
+    "last_host": {"type": "string", "description": "Last known hosting server"},
+    "_provenance": {
+      "type": "object",
+      "properties": {
+        "scanned": {"type": "string", "format": "date-time"},
+        "source": {"type": "string", "enum": ["manual", "hardware-audit", "ansible-facts", "arp-table", "dhcp-leases"]},
+        "corroborations": {"type": "array", "items": {"type": "string"}},
+        "maturity": {"type": "string", "enum": ["L1", "L2", "L3"]}
+      }
+    }
+  },
+  "required": ["title", "type", "status", "hostname", "author-role"],
+  "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "bmc"}}},
+      "then": {"required": ["mac", "parent"]}
+    },
+    {
+      "if": {"properties": {"type": {"const": "device"}}},
+      "then": {"required": ["ip", "mac"]}
+    }
+  ]
+}

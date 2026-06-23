@@ -1,0 +1,73 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "asset-management",
+  "displayName": "Asset & Network Management",
+  "description": "Hardware/software inventory, network topology, asset lifecycle. Designed as an external-plugin prototype — inventory tooling lives in a companion repo (bms-ai-cluster) and feeds structured YAML into DocWright for visualization.",
+  "principles": [
+    "Discovery is the single source of truth",
+    "Every fact corroborated by 2+ independent sources",
+    "Drift is detected, not ignored",
+    "Provenance is preserved with every scan"
+  ],
+  "version": "0.1.0",
+  "documentTypes": [
+    "device",
+    "bmc",
+    "network-segment",
+    "vlan",
+    "ipam",
+    "service",
+    "connection",
+    "rack"
+  ],
+  "states": {
+    "default": ["discovered", "provisioning", "active", "maintenance", "decommissioned", "retired"]
+  },
+  "requiredFrontmatter": [
+    "title",
+    "type",
+    "status",
+    "hostname",
+    "ip",
+    "mac",
+    "author-role"
+  ],
+  "features": {
+    "wikilinks": true,
+    "graph": true,
+    "naming": true,
+    "llmWiki": false
+  },
+  "externalPlugins": [
+    {
+      "name": "bms-ai-cluster-discovery",
+      "repo": "./bms-ai-cluster",
+      "description": "Unified Ansible playbook + sync scripts for hardware/network discovery",
+      "playbook": "ansible/playbooks/gather-device-inventory.yml",
+      "syncScript": "scripts/sync-device-from-discovery.py",
+      "triggers": ["discover", "scan", "inventory", "drift-check"]
+    }
+  ],
+  "relationshipFields": [
+    {"name": "parent", "edgeLabel": "hosted-on", "target": "hostname"},
+    {"name": "manages", "edgeLabel": "manages", "target": "hostname"},
+    {"name": "peers", "edgeLabel": "connected-to", "target": "hostname", "multiple": true},
+    {"name": "member_of", "edgeLabel": "member-of", "target": "hostname", "multiple": true},
+    {"name": "provides", "edgeLabel": "provides", "target": "hostname", "multiple": true},
+    {"name": "last_host", "edgeLabel": "last-seen-on", "target": "hostname"}
+  ],
+  "viewDefaults": {
+    "graphMode": "explore",
+    "nodeLabel": "hostname",
+    "nodeGroupBy": "type",
+    "nodeColorBy": "status"
+  },
+  "layeredDiscovery": [
+    {"layer": 1, "source": "Router ARP/DHCP", "tool": "MikroMCP", "facts": ["MAC↔IP", "switch port"]},
+    {"layer": 2, "source": "Ansible system facts", "tool": "gather-device-inventory.yml", "facts": ["OS", "CPU", "RAM", "product name"]},
+    {"layer": 3, "source": "SSH dmidecode", "tool": "gather-device-inventory.yml", "facts": ["manufacturer", "model", "serial", "UUID"]},
+    {"layer": 4, "source": "SSH ipmitool", "tool": "gather-device-inventory.yml", "facts": ["BMC MAC", "IP", "firmware", "FRU"]},
+    {"layer": 5, "source": "SSH component scan", "tool": "gather-device-inventory.yml", "facts": ["storage", "PCI", "memory"]}
+  ],
+  "notes": "This profile is a prototype for external plugin architecture. The discovery tooling lives in bms-ai-cluster (separate repo, separate lifecycle). DocWright receives the structured YAML output and renders enhanced graph/table views. Future: migrate discovery tooling into a DocWright-managed plugin registry."
+}
