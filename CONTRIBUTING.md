@@ -24,6 +24,39 @@ discussion happens in `proposals/` before it happens in pull requests.
 
 ---
 
+## Branching and release workflow
+
+DocWright uses a **feature-branch → develop → release → main** workflow:
+
+```
+feature/plan branch  ──PR──→  develop  ──PR──→  release/v*.*.*  ──PR──→  main
+```
+
+**Feature / plan branches** — branched from `develop`, named by convention:
+- `feat/<short-description>` — new features
+- `plan/<plan-name>` — work tracked under a DocWright plan
+- `fix/<short-description>` — bug fixes
+- `chore/<short-description>` — maintenance
+
+**`develop`** — integration branch. All feature branches merge here via PR.
+Protected: requires 1 approving review, CI passing, and code owner sign-off.
+
+**`release/v*.*.*`** — branched from `develop` when a milestone is ready.
+Version bumps and changelog updates happen here. PR goes to `main`.
+
+**`main`** — release branch. Only accepts PRs from release branches.
+Protected: requires 1 approving review, CI passing, code owner review,
+and linear history. Tags on `main` trigger Docker deployment to ghcr.io.
+
+### Quick start
+
+```bash
+git checkout develop          # start from develop
+git checkout -b feat/my-thing # create feature branch
+# ... work, commit, push ...
+gh pr create --base develop   # PR back to develop
+```
+
 ## Development setup
 
 ```bash
