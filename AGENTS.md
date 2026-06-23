@@ -19,6 +19,8 @@ or declare an explicit exception in the plan. See `policies/core/bugs-before-fea
 
 **No active work before plan approval.** Gathering data and evaluating feasibility is fine from a proposal. Implementation code, infrastructure changes, or any system state mutation is STRICTLY FORBIDDEN until a plan has `status: approved` or `status: in-progress` and non-empty `assigned_to`. See `.opencode/rules/no-work-before-approval.md`.
 
+**Offer choices, don't guess.** When there are multiple valid paths forward, present options for the human to choose from. Guessing instead of asking upsets them.
+
 **Multi-system operation.** This repo may operate from many machines. NEVER assume any specific host. Check connectivity before infrastructure operations.
 
 **User identity & accountability.** The `.env` file (gitignored) supplies the HUMAN identity. The MACHINE identity is ALWAYS `$(hostname)`. Agents MUST use `OPCODE_USER_NAME@$(hostname)` for `created_by` in proposals/plans. See `.env.example`.
@@ -85,7 +87,10 @@ Never write `status: completed` directly to the file. Never skip step 2.
 - `frontmatter-validate.md` — Required fields per document type
 - `no-work-before-approval.md` — No implementation before plan approval
 - `bugs-before-features.md` — Resolve known bugs before starting feature work
+- `ui-test-before-submit.md` — Visual verification required before plan sign-off
 - `hook-failure-feedback.md` — Pre-commit hook failures must automatically trigger systemic fix proposals
+- `ssh-config-only.md` — All SSH connections via `~/.ssh/config` aliases, never raw IPs
+- `password-manager-first.md` — Update Bitwarden before continuing after any credential create/modify
 
 ## Getting Started
 
@@ -136,7 +141,9 @@ accidental data corruption, and confused session context (as of 2026-06-02 fix).
    include `author-role:` with default value `contributor`. This is non-negotiable.
    See CONTRIBUTING.md.
 
-6. **Never write directly to plan files. All plan mutations go through MCP tools.**
+6. **All SSH connections via `~/.ssh/config` aliases, never raw IPs.** See `.opencode/rules/ssh-config-only.md`.
+
+7. **Never write directly to plan files. All plan mutations go through MCP tools.**
    This means never using the Write tool, the Edit tool, Bash commands, Python
    scripts, `cat >`, `tee`, or any other method that writes to `plans/*.md` directly.
    The PreToolUse hook only covers Write/Edit tools — Bash and Python writes bypass

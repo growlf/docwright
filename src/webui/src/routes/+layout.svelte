@@ -6,6 +6,7 @@
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
+  import { notifications, notificationCounts } from '$lib/notifications';
 import type { ImprovePhase } from '$lib/pane';
 import {
   showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
@@ -887,6 +888,24 @@ import {
   <!-- Main content + chat at bottom -->
   <main id="content">
     <div id="page-slot">
+      {#if $notifications.length > 0}
+        <div class="notification-area">
+          {#each $notifications as n (n.id)}
+            <div class="notification notification-{n.type}">
+              <div class="notification-content">
+                <span class="notification-title">{n.title}</span>
+                <span class="notification-message">{n.message}</span>
+              </div>
+              <div class="notification-actions">
+                {#if n.action}
+                  <button class="notification-btn" onclick={n.action.onclick}>{n.action.label}</button>
+                {/if}
+                <button class="notification-close" onclick={() => notifications.dismiss(n.id)}>✕</button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
       <slot />
     </div>
     <!-- AI chat — springs up from bottom of main pane -->
@@ -1202,6 +1221,24 @@ import {
   .new-menu-item:hover { background: #2b5b84; color: #fff; }
   #content { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg, #1a1a1a); color: var(--fg, #e0e0e0); overflow: hidden; }
   #page-slot { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+
+  /* Notification area in page-slot */
+  .notification-area { display: flex; flex-direction: column; gap: 1px; border-bottom: 1px solid #2a2a2a; }
+  .notification { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 13px; gap: 8px; }
+  .notification-content { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .notification-title { font-weight: 600; margin-bottom: 2px; }
+  .notification-message { font-size: 12px; opacity: 0.8; }
+  .notification-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .notification-btn { background: #2b5b84; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  .notification-btn:hover { background: #3b7bb4; }
+  .notification-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 2px; line-height: 1; }
+  .notification-close:hover { color: #ccc; }
+  .notification-info    { background: rgba(88, 166, 255, 0.08); border-left: 3px solid #58a6ff; }
+  .notification-warning { background: rgba(210, 153, 34, 0.08); border-left: 3px solid #d29922; }
+  .notification-error   { background: rgba(218, 54, 51, 0.08); border-left: 3px solid #da3633; }
+  .notification-success { background: rgba(63, 185, 80, 0.08); border-left: 3px solid #3fb950; }
+  .notification-drift   { background: rgba(210, 153, 34, 0.12); border-left: 3px solid #d29922; }
+  .notification-drift .notification-title::before { content: "⚠ "; }
   #chat-bottom { flex-shrink: 0; height: 420px; border-top: 1px solid #2a2a2a; position: relative; }
   #chat-bottom :global(.chat-panel) { position: absolute; inset: 0; height: 100% !important; bottom: 0 !important; }
 

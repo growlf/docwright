@@ -14,13 +14,13 @@ proposal_source: proposals/approved/bundle-chat-session-panel.md
 priority: medium
 mode: guided
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 phase: 5
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps
 total_steps: 17
-completed_steps: 0
+completed_steps: 8
 _path: plans/bundle-chat-session-panel.md
 ---
 
@@ -51,14 +51,14 @@ specifications and the rationale for bundling.
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | `dispatch/opencode.ts` adapter | Thin adapter wrapping all OpenCode HTTP calls: `createSession`, `sendMessage`, `forkSession`, `summarizeSession`, `shareSession`, `deleteSession`, `listProviders`, `listModels`. Absorbs API-shape changes in one place. All existing `ChatPanel.svelte` fetches migrate to use this module. | ⏳ Pending |
-| 2 | Session list sidebar | New `SessionSidebar.svelte` component, collapsible, inside `ChatPanel.svelte`. Fetches `GET /session` on mount; groups rows by today / yesterday / older (compare `session.time` to `Date.now()`). Each row: title (truncated), relative timestamp, token count badge. Active session highlighted. | ⏳ Pending |
-| 3 | Session CRUD actions | Per-row actions via a `⋯` menu: Fork → `POST /session/:id/fork`, Summarize → `POST /session/:id/summarize` (compacts context), Share → `POST /session/:id/share` (returns URL, copies to clipboard), Delete → confirm dialog then `DELETE /session/:id`. In-flight stream abort button in chat header: calls `AbortController` on the fetch, sends `POST /session/:id/abort` if available. | ⏳ Pending |
-| 4 | Token + cost tracking | Parse `usage` object from OpenCode SSE event stream (`event: message` → `data.usage.inputTokens`, `outputTokens`, `cost`). Accumulate per-session in a `Map<sessionId, Usage>` store. Display in session row (compact: `4.2k`) and chat header (full: `↑ 1.2k ↓ 3.0k  $0.02`). | ⏳ Pending |
-| 5 | @-mention context injection | Trigger: `@` typed in chat input. Autocomplete dropdown populated from the file tree store (already loaded — no new fetch). Filter by title + path as user types; cap at 50 results; debounce 120ms. Selecting a file: (a) appends a chip to the input area showing the doc title, (b) adds `\n\n[Context: path]\n<frontmatter summary>` to the prompt on send. Chips are individually removable. State: `let mentions = $state<string[]>([])`. | ⏳ Pending |
-| 6 | Model / provider picker | Dropdown in chat panel header. On panel mount: `GET /v2/provider` → list providers, `GET /v2/model` → list models per provider. Active session's current model shown as selected. On change: `PATCH /session/:id` with `{ modelId }` or re-create session with new model (whichever the OpenCode API supports). Default model readable/writable in `opencode.json` under `chat.defaultModel`. | ⏳ Pending |
-| 7 | Vault-scoped session history | Session created by DocWright: title auto-set to `[vault-name] <doc-title or "New Chat"> YYYY-MM-DD` via a `POST /session` body field or immediate rename. Session list: filter to current vault by matching title prefix `[vault-name]` by default. Toggle "Show all sessions" stores preference in `localStorage`. | ⏳ Pending |
-| 8 | Tests — Tier 1 | `test/dispatch/opencode.test.ts`: adapter unit tests (mock fetch, verify correct URL shapes + payloads). `test/webui/chat-session.test.ts`: @-mention parsing (trigger, filter, chip add/remove), session grouping (today/yesterday/older buckets), token accumulation arithmetic. Integration: create → fork → delete flow against `opencode.mock.ts`. | ⏳ Pending |
+| 1 | `dispatch/opencode.ts` adapter | Thin adapter wrapping all OpenCode HTTP calls: `createSession`, `sendMessage`, `forkSession`, `summarizeSession`, `shareSession`, `deleteSession`, `listProviders`, `listModels`. Absorbs API-shape changes in one place. All existing `ChatPanel.svelte` fetches migrate to use this module. | ✅ Done |
+| 2 | Session list sidebar | New `SessionSidebar.svelte` component, collapsible, inside `ChatPanel.svelte`. Fetches `GET /session` on mount; groups rows by today / yesterday / older (compare `session.time` to `Date.now()`). Each row: title (truncated), relative timestamp, token count badge. Active session highlighted. | ✅ Done |
+| 3 | Session CRUD actions | Per-row actions via a `⋯` menu: Fork → `POST /session/:id/fork`, Summarize → `POST /session/:id/summarize` (compacts context), Share → `POST /session/:id/share` (returns URL, copies to clipboard), Delete → confirm dialog then `DELETE /session/:id`. In-flight stream abort button in chat header: calls `AbortController` on the fetch, sends `POST /session/:id/abort` if available. | ✅ Done |
+| 4 | Token + cost tracking | Parse `usage` object from OpenCode SSE event stream (`event: message` → `data.usage.inputTokens`, `outputTokens`, `cost`). Accumulate per-session in a `Map<sessionId, Usage>` store. Display in session row (compact: `4.2k`) and chat header (full: `↑ 1.2k ↓ 3.0k  $0.02`). | ✅ Done |
+| 5 | @-mention context injection | Trigger: `@` typed in chat input. Autocomplete dropdown populated from the file tree store (already loaded — no new fetch). Filter by title + path as user types; cap at 50 results; debounce 120ms. Selecting a file: (a) appends a chip to the input area showing the doc title, (b) adds `\n\n[Context: path]\n<frontmatter summary>` to the prompt on send. Chips are individually removable. State: `let mentions = $state<string[]>([])`. | ✅ Done |
+| 6 | Model / provider picker | Dropdown in chat panel header. On panel mount: `GET /v2/provider` → list providers, `GET /v2/model` → list models per provider. Active session's current model shown as selected. On change: `PATCH /session/:id` with `{ modelId }` or re-create session with new model (whichever the OpenCode API supports). Default model readable/writable in `opencode.json` under `chat.defaultModel`. | ✅ Done |
+| 7 | Vault-scoped session history | Session created by DocWright: title auto-set to `[vault-name] <doc-title or "New Chat"> YYYY-MM-DD` via a `POST /session` body field or immediate rename. Session list: filter to current vault by matching title prefix `[vault-name]` by default. Toggle "Show all sessions" stores preference in `localStorage`. | ✅ Done |
+| 8 | Tests — Tier 1 | `test/dispatch/opencode.test.ts`: adapter unit tests (mock fetch, verify correct URL shapes + payloads). `test/webui/chat-session.test.ts`: @-mention parsing (trigger, filter, chip add/remove), session grouping (today/yesterday/older buckets), token accumulation arithmetic. Integration: create → fork → delete flow against `opencode.mock.ts`. | ✅ Done |
 
 ### Tier 2 — Diff / Review Panel (gate: dispatch lifecycle awareness)
 
@@ -143,3 +143,11 @@ resets to single-endpoint mode.
 | 2026-06-08 | Created from approved proposal | NetYeti |
 | 2026-06-08 | Filled in from proposal spec — 4 tiers, 16 steps | NetYeti |
 | 2026-06-08 | Improved — adapter step added, technical detail expanded, 17 steps | NetYeti |
+| 2026-06-22 | Step 1 complete: dispatch/opencode.ts adapter — typed functions for createSession, sendMessage, forkSession, summariseSession, shareSession, deleteSession, listProviders, listModels, checkHealth, listSessions, getSessionMessages, abortSession. Response-shape normalisation, directory query param, 244 tests passing, typecheck clean. | NetYeti |
+| 2026-06-22 | Step 2 complete: SessionSidebar.svelte — collapsible session list grouped by today/yesterday/older, relative timestamps, token count badges, active session highlight, integrated into ChatPanel.svelte replacing flat select dropdown. | NetYeti |
+| 2026-06-22 | Step 3 complete: Per-row ⋮ menu with Fork (POST /session/:id/fork), Summarise (POST /session/:id/summarise), Share (POST /session/:id/share → clipboard), Delete (confirm dialog → DELETE /session/:id). Abort button in chat header during in-flight messages. Action feedback messages with fade-out. | NetYeti |
+| 2026-06-22 | Step 4 complete: Per-session usage tracking (inputTokens, outputTokens, cost) captured from SSE events and POST responses. Usage Map accumulates per sessionId. Compact token badge in sidebar rows (e.g. 4.2k). Full display in chat header (e.g. ↑ 1.2k ↓ 3.0k $0.02) with tooltip for raw values. | NetYeti |
+| 2026-06-22 | Step 5 complete: @-mention context injection — autocomplete dropdown on @ trigger, file tree flattening (GET /api/list), 120ms debounce, up to 50 filtered results, frontmatter caching, removable chips, context injected on send. | NetYeti |
+| 2026-06-22 | Step 6 complete: Model / provider picker — dropdown in chat header listing providers grouped by models from GET /api/provider + GET /api/model. PATCH session on change; fallback to new session with modelID/providerID. | NetYeti |
+| 2026-06-22 | Step 7 complete: Vault-scoped session history — session titles auto-prefixed with [vault-name], session list filtered to vault by default, toggle button (showAll) persisted to localStorage. | NetYeti |
+| 2026-06-22 | Step 8 complete: Tests — Tier 1 — extracted chat-utils.ts with pure functions (flattenTree, relativeTime, dayGroup, detectMention, filterMention, accumulateUsage, truncate). 36 tests passing. npm run test:webui added. | NetYeti |

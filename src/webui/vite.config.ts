@@ -4,5 +4,8 @@ export default {
   plugins: [sveltekit()],
   server: {
     port: 5173,
+    fs: {
+      allow: ['..'],
+    },
   },
 };

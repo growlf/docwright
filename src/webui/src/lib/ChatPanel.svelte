@@ -12,12 +12,14 @@
 
   import { onMount, onDestroy } from 'svelte';
   import { showChatPanel, showMultiReview } from './pane';
+  import SessionSidebar from './SessionSidebar.svelte';
+  import { flattenTree, detectMention, filterMention } from './chat-utils';
 
   // ── Types ────────────────────────────────────────────────────────────────
 
   interface MessagePart { type: string; text?: string; }
   interface Message { id: string; role: 'user' | 'assistant'; parts: MessagePart[]; }
-  interface Session { id: string; title?: string; }
+  interface Session { id: string; title?: string; time?: string; tokenCount?: number; }
   type ConnMode = 'direct' | 'proxy';
   type ProcStatus = 'stopped' | 'starting' | 'running-ours' | 'running-external';
 
@@ -89,6 +91,75 @@
     return ct.includes('json') ? res.json() : res.text();
   }
 
+  // ── Model / provider state ─────────────────────────────────────────────────
+
+  interface ModelOption { id: string; providerID: string; name: string; }
+  interface ProviderOption { id: string; name: string; }
+  let providers = $state<ProviderOption[]>([]);
+  let models = $state<ModelOption[]>([]);
+  let selectedModelID = $state('');
+  let modelPickerOpen = $state(false);
+
+  async function loadModels() {
+    try {
+      const [pData, mData] = await Promise.all([
+        api('GET', 'api/provider'),
+        api('GET', 'api/model'),
+      ]);
+      providers = Array.isArray(pData) ? pData : (pData.data ?? pData.providers ?? []);
+      const rawModels = Array.isArray(mData) ? mData : (mData.data ?? []);
+      models = rawModels.map((m: any) => ({ id: m.id, providerID: m.providerID, name: m.name ?? m.id }));
+    } catch { /* models not critical */ }
+  }
+
+  async function changeModel(modelID: string, providerID: string) {
+    selectedModelID = modelID;
+    modelPickerOpen = false;
+    if (!currentID) return;
+    // Try PATCH first; fall back to new session
+    try {
+      const res = await ocFetch('PATCH', `session/${currentID}`, { modelID, providerID });
+      if (!res.ok) throw new Error(`PATCH ${res.status}`);
+      return;
+    } catch {
+      // PATCH not supported — create new session with selected model
+      try {
+        const s = await api('POST', 'session', { modelID, providerID });
+        const id: string = s?.id ?? s?.sessionID ?? s?.session?.id ?? s?.session?.sessionID;
+        if (id) {
+          sessions = [{ id, title: s?.title }, ...sessions];
+          await selectSession(id);
+        }
+      } catch { /* fallback failed */ }
+    }
+  }
+
+  let groupedModels = $derived(() => {
+    const g = new Map<string, ModelOption[]>();
+    for (const m of models) {
+      const pName = providers.find(p => p.id === m.providerID)?.name ?? m.providerID;
+      if (!g.has(pName)) g.set(pName, []);
+      g.get(pName)!.push(m);
+    }
+    return g;
+  });
+
+  // ── Token / cost tracking ──────────────────────────────────────────────────
+
+  interface UsageInfo { inputTokens: number; outputTokens: number; cost: number; }
+  let usageMap = $state(new Map<string, UsageInfo>());
+
+  let currentUsage = $derived(currentID ? usageMap.get(currentID) : undefined);
+
+  let sessionsWithUsage = $derived(
+    vaultSessions.map(s => ({
+      ...s,
+      tokenCount: usageMap.has(s.id)
+        ? usageMap.get(s.id)!.inputTokens + usageMap.get(s.id)!.outputTokens
+        : s.tokenCount,
+    }))
+  );
+
   // ── UI state ─────────────────────────────────────────────────────────────
 
   let connected     = $state(false);
@@ -115,6 +186,97 @@
   let sseRetries    = 0;
   let thinkingTimer: ReturnType<typeof setInterval> | null = null;
 
+  // ── Vault-scoped sessions ──────────────────────────────────────────────────
+
+  let vaultName = $derived(vaultPath ? vaultPath.split('/').filter(Boolean).pop() ?? vaultPath : '');
+  let showAllSessions = $state(typeof localStorage !== 'undefined'
+    ? localStorage.getItem('oc-show-all') === 'true'
+    : false
+  );
+
+  function toggleShowAll() {
+    showAllSessions = !showAllSessions;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('oc-show-all', String(showAllSessions));
+  }
+
+  let vaultSessions = $derived(
+    showAllSessions || !vaultName
+      ? sessions
+      : sessions.filter(s => s.title?.startsWith(`[${vaultName}]`))
+  );
+
+  // ── @-mention state ───────────────────────────────────────────────────────
+
+  interface FileItem { name: string; path: string; }
+  interface Mention { path: string; name: string; context: string; }
+  let allFiles = $state<FileItem[]>([]);
+  let mentions = $state<Mention[]>([]);
+  let mentionOpen = $state(false);
+  let mentionQuery = $state('');
+  let mentionIdx = $state(0);
+  let mentionTriggerPos = $state(-1); // index of '@' in input while typing
+  let mentionDebounce: ReturnType<typeof setTimeout> | null = null;
+  let textareaEl: HTMLTextAreaElement | undefined = $state(undefined);
+
+  let mentionFiltered = $derived(
+    mentionQuery
+      ? allFiles.filter(f =>
+          f.name.toLowerCase().includes(mentionQuery.toLowerCase()) ||
+          f.path.toLowerCase().includes(mentionQuery.toLowerCase())
+        ).slice(0, 50)
+      : allFiles.slice(0, 50)
+  );
+
+  async function fetchFileTree() {
+    try {
+      const res = await fetch('/api/list');
+      if (res.ok) allFiles = flattenTree(await res.json());
+    } catch { /* file tree not critical */ }
+  }
+
+  async function fetchFrontmatter(path: string): Promise<string> {
+    try {
+      const res = await fetch(`/api/document?path=${encodeURIComponent(path)}`);
+      if (!res.ok) return '';
+      const data = await res.json();
+      const body: string = data.body ?? data.content ?? '';
+      const fmMatch = body.match(/^---\n([\s\S]*?)\n---/);
+      if (!fmMatch) return path;
+      const lines = fmMatch[1].split('\n').filter(l => l.includes(':'));
+      return lines.slice(0, 8).join('\n');
+    } catch { return path; }
+  }
+
+  function openMention(cursorPos: number) {
+    mentionTriggerPos = cursorPos - 1; // position of '@'
+    mentionQuery = '';
+    mentionIdx = 0;
+    mentionOpen = true;
+  }
+
+  function closeMention() {
+    mentionOpen = false;
+    mentionTriggerPos = -1;
+    mentionQuery = '';
+  }
+
+  function selectMention(file: FileItem) {
+    if (mentionTriggerPos < 0) return;
+    // Remove '@query' from input
+    const queryLen = mentionQuery.length + 1; // '@' + query
+    input = input.slice(0, mentionTriggerPos) + input.slice(mentionTriggerPos + queryLen);
+    closeMention();
+    // Add chip if not already present
+    if (mentions.some(m => m.path === file.path)) return;
+    fetchFrontmatter(file.path).then(ctx => {
+      mentions = [...mentions, { path: file.path, name: file.name, context: ctx }];
+    });
+  }
+
+  function removeMention(path: string) {
+    mentions = mentions.filter(m => m.path !== path);
+  }
+
   // The correct opencode serve command for this browser's origin
   let serveCmd = $derived(
     typeof window !== 'undefined'
@@ -139,6 +301,7 @@
     if (connected) {
       openEventStream();
       await loadSessions();
+      await loadModels();
       if (sessions.length > 0) await selectSession(sessions[0].id);
       else await newSession();
     }
@@ -172,7 +335,7 @@
     procStatus = 'stopped';
     connected = false;
     es?.close(); es = null;
-    messages = []; sessions = []; currentID = null;
+    messages = []; sessions = []; currentID = null; usageMap = new Map();
   }
 
   // ── SSE event stream ─────────────────────────────────────────────────────
@@ -220,6 +383,16 @@
   function handleEvent(ev: { type: string; properties?: Record<string, any>; sessionID?: string }) {
     const p = ev.properties ?? {};
     const sessionID = p.sessionID ?? ev.sessionID;
+
+    // Capture usage from any SSE event that carries it
+    const usageRaw = ev.usage ?? p.usage ?? p.message?.usage;
+    if (usageRaw && sessionID && (usageRaw.inputTokens || usageRaw.outputTokens)) {
+      usageMap = new Map(usageMap).set(sessionID, {
+        inputTokens: usageRaw.inputTokens ?? 0,
+        outputTokens: usageRaw.outputTokens ?? 0,
+        cost: usageRaw.cost ?? 0,
+      });
+    }
 
     if (ev.type === 'session.status' && sessionID === currentID) {
       statusText = p.status ?? '';
@@ -290,7 +463,9 @@
 
   async function newSession() {
     try {
-      const s = await api('POST', 'session', {});
+      const today = new Date().toISOString().slice(0, 10);
+      const title = vaultName ? `[${vaultName}] New Chat ${today}` : `New Chat ${today}`;
+      const s = await api('POST', 'session', { title });
       // OpenCode may return { id } or { sessionID } or nested { session: { id } }
       const id: string = s?.id ?? s?.sessionID ?? s?.session?.id ?? s?.session?.sessionID;
       if (!id) {
@@ -299,7 +474,7 @@
         return;
       }
       console.debug('[DocWright chat] Created session:', id);
-      sessions = [{ id, title: s?.title }, ...sessions];
+      sessions = [{ id, title: s?.title ?? title }, ...sessions];
       await selectSession(id);
     } catch (e) {
       console.error('[DocWright chat] Session create failed:', e);
@@ -328,10 +503,21 @@
   let sendTimeout: ReturnType<typeof setTimeout> | null = null;
 
   async function send() {
-    const text = input.trim();
+    let text = input.trim();
     if (!text) return;
     if (!currentID) { statusText = 'No active session — try New Session'; return; }
     if (sending) return;
+
+    // Append context from @-mentioned files
+    if (mentions.length > 0) {
+      const ctxBlocks = mentions.map(m => {
+        const ctx = m.context ? `\n${m.context}` : '';
+        return `[Context: ${m.path}]${ctx}`;
+      });
+      text = ctxBlocks.join('\n\n') + '\n\n' + text;
+      mentions = [];
+    }
+
     console.debug('[DocWright chat] Sending to session', currentID, ':', text.slice(0, 60));
     input = '';
     sending = true;
@@ -371,6 +557,16 @@
       console.debug('[DocWright chat] POST response:', data);
 
       if (data) {
+        // Capture usage from POST response
+        const usageRaw = data.usage;
+        if (usageRaw && currentID && (usageRaw.inputTokens || usageRaw.outputTokens)) {
+          usageMap = new Map(usageMap).set(currentID, {
+            inputTokens: usageRaw.inputTokens ?? 0,
+            outputTokens: usageRaw.outputTokens ?? 0,
+            cost: usageRaw.cost ?? 0,
+          });
+        }
+
         // Extract text from response parts — use as fallback if SSE didn't stream it
         const responseParts: any[] = data.parts ?? data.output?.parts ?? [];
         const textContent = responseParts
@@ -432,11 +628,39 @@
   }
 
   function handleKey(e: KeyboardEvent) {
+    if (mentionOpen) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); mentionIdx = Math.min(mentionIdx + 1, mentionFiltered.length - 1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); mentionIdx = Math.max(mentionIdx - 1, 0); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (mentionFiltered[mentionIdx]) selectMention(mentionFiltered[mentionIdx]);
+        return;
+      }
+      if (e.key === 'Escape') { e.preventDefault(); closeMention(); return; }
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
   function scrollToBottom() {
     setTimeout(() => msgEnd?.scrollIntoView({ behavior: 'smooth' }), 30);
+  }
+
+  function handleInput() {
+    if (!textareaEl) return;
+    const cursorPos = textareaEl.selectionStart;
+    const atIdx = detectMention(input, cursorPos);
+    if (atIdx >= 0) {
+      const query = input.slice(atIdx + 1, cursorPos);
+      if (mentionDebounce) clearTimeout(mentionDebounce);
+      mentionDebounce = setTimeout(() => {
+        mentionQuery = query;
+        mentionIdx = 0;
+        mentionOpen = true;
+        mentionTriggerPos = atIdx;
+      }, 120);
+    } else {
+      if (mentionOpen) closeMention();
+    }
   }
 
   // ── Mount ─────────────────────────────────────────────────────────────────
@@ -474,6 +698,7 @@
       if (r.ok) { const d = await r.json(); vaultPath = d.vaultPath ?? ''; }
     } catch { /* non-critical */ }
     await ensureMcp();
+    await fetchFileTree();
     await checkHealth();
   });
 
@@ -499,8 +724,43 @@
       {#if procStatus === 'running-ours'}
         <button class="icon-btn" onclick={stopViaServer} title="Stop OpenCode (started by this server)">■</button>
       {/if}
+      {#if currentUsage}
+        <span class="usage-badge" title={`↑ ${currentUsage.inputTokens.toLocaleString()} in · ↓ ${currentUsage.outputTokens.toLocaleString()} out · $${currentUsage.cost.toFixed(4)}`}>
+          ↑ {currentUsage.inputTokens < 1000 ? currentUsage.inputTokens : (currentUsage.inputTokens / 1000).toFixed(1) + 'k'}
+          ↓ {currentUsage.outputTokens < 1000 ? currentUsage.outputTokens : (currentUsage.outputTokens / 1000).toFixed(1) + 'k'}
+          {#if currentUsage.cost > 0}
+            ${currentUsage.cost.toFixed(2)}
+          {/if}
+        </span>
+      {/if}
     {:else}
       <span class="dot grey" title="Not connected"></span>
+    {/if}
+    {#if sending}
+      <button class="icon-btn abort-btn" onclick={cancelSend} title="Cancel in-flight message">✕</button>
+    {/if}
+    {#if models.length > 0}
+      <div class="model-picker-wrapper">
+        <button class="model-picker-btn" onclick={() => modelPickerOpen = !modelPickerOpen}
+          title={selectedModelID || 'Select model'}>
+          {selectedModelID ? models.find(m => m.id === selectedModelID)?.name ?? selectedModelID.split('/').pop() : '🧠'}
+        </button>
+        {#if modelPickerOpen}
+          <div class="model-dropdown" onmouseleave={() => modelPickerOpen = false}>
+            {#each [...groupedModels().entries()] as [providerName, providerModels]}
+              <div class="model-group">
+                <div class="model-group-label">{providerName}</div>
+                {#each providerModels as m}
+                  <button class="model-item" class:active={m.id === selectedModelID}
+                    onclick={() => changeModel(m.id, m.providerID)}>
+                    {m.name}
+                  </button>
+                {/each}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/if}
     <button class="icon-btn" onclick={() => showMultiReview.set(true)} title="Switch to Multi-Review mode">⊞ Multi</button>
     <button class="icon-btn" onclick={() => showSettings = !showSettings} title="Connection settings">⚙</button>
@@ -602,21 +862,18 @@
   {:else}
     <!-- ── Connected ────────────────────────────────────────────────────── -->
 
-    <!-- Session bar -->
-    <div class="session-bar">
-      <select class="session-select"
-        onchange={(e) => selectSession((e.target as HTMLSelectElement).value)}>
-        {#if sessions.length === 0}
-          <option value="">No sessions</option>
-        {/if}
-        {#each sessions.filter(s => s?.id) as s (s.id)}
-          <option value={s.id} selected={s.id === currentID}>
-            {s.title || s.id.slice(0, 14) + '…'}
-          </option>
-        {/each}
-      </select>
-      <button class="icon-btn" onclick={newSession} title="New session">＋</button>
-    </div>
+    <!-- Session sidebar -->
+    <SessionSidebar
+      sessions={sessionsWithUsage}
+      bind:currentID
+      baseUrl={base()}
+      {vaultPath}
+      showAll={showAllSessions}
+      onselect={(id) => selectSession(id)}
+      onnew={newSession}
+      onrefresh={loadSessions}
+      ontoggleall={toggleShowAll}
+    />
     {#if !currentID}
       <div class="no-session-warn">No active session — click ＋ to create one</div>
     {:else if !sseConnected}
@@ -650,9 +907,34 @@
     </div>
 
     <!-- Input -->
-    <div class="input-area">
-      <textarea class="chat-input" placeholder="Ask anything… (Enter to send)"
-        bind:value={input} onkeydown={handleKey} rows="3"
+    <div class="input-area" style="position:relative;">
+      {#if mentions.length > 0}
+        <div class="mention-chips">
+          {#each mentions as m}
+            <span class="mention-chip" title={m.path}>
+              <span class="mention-chip-label">{m.name}</span>
+              <button class="mention-chip-x" onclick={() => removeMention(m.path)}>✕</button>
+            </span>
+          {/each}
+        </div>
+      {/if}
+
+      {#if mentionOpen && mentionFiltered.length > 0}
+        <div class="mention-dropdown">
+          {#each mentionFiltered as file, i}
+            <button class="mention-item" class:active={i === mentionIdx}
+              onmousedown={() => selectMention(file)}
+              onmouseenter={() => mentionIdx = i}>
+              <span class="mention-item-name">{file.name}</span>
+              <span class="mention-item-path">{file.path}</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+
+      <textarea class="chat-input" placeholder="Ask anything… (Enter to send, @ to mention docs)"
+        bind:value={input} onkeydown={handleKey} oninput={handleInput}
+        bind:this={textareaEl} rows="3"
         disabled={sending}></textarea>
       <button class="send-btn" onclick={send}
         disabled={sending || !input.trim()} title="Send (Enter)">
@@ -680,6 +962,8 @@
 
   .no-session-warn { padding: 4px 12px; font-size: 10px; color: $amber; background: #1a1a00; border-bottom: 1px solid #333300; }
   .icon-btn { @include flat-btn; font-size: 12px; padding: 2px 5px; border-radius: 3px; &:hover { background: $bg-hover; } &.close:hover { color: $red; } }
+  .abort-btn { color: $amber; &:hover { color: $red; background: $red-bg; } }
+  .usage-badge { font-size: 9px; color: $tag; background: $tag-bg; border: 1px solid $tag-bdr; border-radius: 3px; padding: 0 5px; line-height: 16px; white-space: nowrap; cursor: default; }
 
   // Settings
   .settings-panel { padding: 10px 14px; border-bottom: 1px solid $border; background: $bg; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -728,4 +1012,22 @@
   .input-area { display: flex; gap: 6px; padding: 9px 10px; border-top: 1px solid $border; flex-shrink: 0; }
   .chat-input { flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 6px; color: $fg; font-size: 12px; font-family: inherit; padding: 7px 9px; resize: none; line-height: 1.4; &:focus { outline: none; border-color: $blue-bdr; } &:disabled { opacity: 0.5; } }
   .send-btn   { width: 32px; height: 32px; align-self: flex-end; background: $blue-bg; border: 1px solid $blue-bdr; border-radius: 6px; color: $blue; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; &:hover:not(:disabled) { background: #1e4a70; } &:disabled { opacity: 0.4; cursor: default; } }
+
+  // @-mention
+  .mention-chips  { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 0 4px; }
+  .mention-chip   { display: inline-flex; align-items: center; gap: 3px; background: $blue-bg; border: 1px solid $blue-bdr; border-radius: 3px; padding: 2px 6px; font-size: 10px; color: $blue; max-width: 100%; }
+  .mention-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+  .mention-chip-x { @include flat-btn; font-size: 10px; padding: 0; line-height: 1; color: $blue; opacity: 0.6; &:hover { opacity: 1; } }
+  .mention-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; max-height: 220px; overflow-y: auto; background: $bg-2; border: 1px solid $border; border-radius: 6px; z-index: 100; padding: 4px; margin-bottom: 4px; box-shadow: 0 -4px 12px rgba(0,0,0,.3); }
+  .mention-item { display: flex; flex-direction: column; gap: 1px; width: 100%; padding: 4px 8px; font-size: 11px; text-align: left; background: transparent; border: none; border-radius: 3px; color: $fg; cursor: pointer; &.active, &:hover { background: $blue-bg; } }
+  .mention-item-name { font-weight: 500; }
+  .mention-item-path { font-size: 9px; color: $muted; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  // Model picker
+  .model-picker-wrapper { position: relative; }
+  .model-picker-btn { @include flat-btn; font-size: 11px; padding: 2px 6px; border-radius: 3px; color: $fg-dim; background: $bg-2; border: 1px solid $border; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; &:hover { color: $fg; border-color: $blue-bdr; } }
+  .model-dropdown { position: absolute; top: 100%; right: 0; margin-top: 4px; background: $bg-2; border: 1px solid $border; border-radius: 6px; z-index: 100; min-width: 200px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,.3); padding: 4px; }
+  .model-group { margin-bottom: 4px; &:last-child { margin-bottom: 0; } }
+  .model-group-label { font-size: 9px; color: $muted; text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 8px 2px; }
+  .model-item { display: block; width: 100%; padding: 4px 8px; font-size: 11px; text-align: left; background: transparent; border: none; border-radius: 3px; color: $fg; cursor: pointer; &.active, &:hover { background: $blue-bg; } }
 </style>

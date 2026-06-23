@@ -49,20 +49,45 @@
     const extraMap = new Map<string, any>();
     const links: any[] = [];
 
+    function resolveTarget(targetVal: string): any | undefined {
+      return byTarget.get(targetVal);
+    }
+
+    function ensureExtra(target: any) {
+      if (!inView.has(target.filename) && !extraMap.has(target.filename)) {
+        extraMap.set(target.filename, {
+          id: target.filename, note: target,
+          type: target.frontmatter.type ?? 'unknown',
+          extra: true,
+        });
+      }
+    }
+
+    function addEdge(source: string, targetId: string, label: string) {
+      links.push({ source, target: targetId, label });
+    }
+
     for (const note of rows) {
       for (const ref of refs) {
         const val = note.frontmatter[ref.field];
-        if (!val) continue;
-        const target = byTarget.get(val);
-        if (!target) continue;
-        if (!inView.has(target.filename) && !extraMap.has(target.filename)) {
-          extraMap.set(target.filename, {
-            id: target.filename, note: target,
-            type: target.frontmatter.type ?? 'unknown',
-            extra: true,
-          });
+        if (val == null) continue;
+
+        if (Array.isArray(val)) {
+          // Array ref field: iterate over each target value
+          for (const item of val) {
+            if (typeof item !== 'string') continue;
+            const target = resolveTarget(item);
+            if (!target) continue;
+            ensureExtra(target);
+            addEdge(note.filename, target.filename, ref.label);
+          }
+        } else if (typeof val === 'string') {
+          // Single-value ref field (backward compatible)
+          const target = resolveTarget(val);
+          if (!target) continue;
+          ensureExtra(target);
+          addEdge(note.filename, target.filename, ref.label);
         }
-        links.push({ source: note.filename, target: target.filename, label: ref.label });
       }
     }
 
