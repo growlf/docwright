@@ -12,7 +12,7 @@ approved: true
 created_by: netyeti@phoenix
 assigned_to: NetYeti
 _path: proposals/modular-ai-review.md
-consumed_by: plans/modular-ai-review.md
+consumed_by: plans/completed/modular-ai-review.md
 ---
 
 ## Problem

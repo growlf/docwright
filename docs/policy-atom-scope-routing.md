@@ -70,5 +70,5 @@ MCP wiring is not needed unless the rule is relevant to AI-assisted writes:
 
 ## Related
 
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan
 - [[docs/policy-atom-model-routing.md]] — model routing per ai_category

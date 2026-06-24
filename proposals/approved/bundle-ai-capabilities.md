@@ -25,7 +25,7 @@ depends_on:
   - plans/phase-3-profile-acl-ai.md
   - proposals/approved/split-agent-governance.md
 _path: proposals/bundle-ai-capabilities.md
-consumed_by: plans/bundle-ai-capabilities.md
+consumed_by: plans/completed/bundle-ai-capabilities.md
 ---
 ## Problem
 

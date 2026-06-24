@@ -13,7 +13,7 @@ priority: medium
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
-consumed_by: plans/assign-plans-to-phases.md
+consumed_by: plans/completed/assign-plans-to-phases.md
 _path: proposals/assign-plans-to-phases.md
 ---
 

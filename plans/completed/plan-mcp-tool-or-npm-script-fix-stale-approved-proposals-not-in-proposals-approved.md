@@ -10,7 +10,7 @@ tags:
   - mcp
   - proposals
   - tooling
-proposal_source: proposals/mcp-tool-batch-fix-stale-approvals
+proposal_source: proposals/approved/mcp-tool-batch-fix-stale-approvals.md
 priority: medium
 mode: guided
 assigned_to: NetYeti
@@ -22,7 +22,7 @@ phase: 2
 total_steps: 5
 completed_steps: 5
 scenario_synthesis: Implement a formalized npm script + pre-commit hook that moves approved proposals to proposals/approved/ automatically; replaces the one-off bash script
-_path: plans/plan-mcp-tool-or-npm-script-fix-stale-approved-proposals-not-in-proposals-approved.md
+_path: plans/completed/plan-mcp-tool-or-npm-script-fix-stale-approved-proposals-not-in-proposals-approved.md
 ---
 
 # Plan: MCP Tool or npm Script: Fix Stale Approved Proposals Not in proposals/approved/

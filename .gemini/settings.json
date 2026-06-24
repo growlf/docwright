@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "dw-vault": {
+      "command": "node",
+      "args": [
+        "/home/netyeti/Projects/DocWright/dist/mcp/server.js",
+        "--mode",
+        "vault"
+      ],
+      "env": {
+        "DOCWRIGHT_PATH": "/home/netyeti/Projects/DocWright",
+        "DOCWRIGHT_VAULT_ROOT": "/home/netyeti/Projects/DocWright"
+      }
+    }
+  }
+}

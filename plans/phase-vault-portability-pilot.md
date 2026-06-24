@@ -22,9 +22,9 @@ tests_human_reviewed: false
 depends_on:
   - phase-2-foundation
 related_to:
-  - proposals/sub-plan-vault-write-api.md
-  - proposals/sub-plan-vault-document-index.md
-  - proposals/knowledge-graph-cross-document-idea-linkage.md
+  - proposals/approved/sub-plan-vault-write-api.md
+  - proposals/approved/sub-plan-vault-document-index.md
+  - proposals/approved/knowledge-graph-cross-document-idea-linkage.md
   - proposals/sub-plan-msp-pilot-vault.md
   - proposals/sub-plan-cascade-steam-early-access.md
 total_steps: 14
@@ -64,7 +64,7 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 10 | `docwright adopt` — existing vault adoption tooling | [[proposals/approved/docwright-adopt-existing-vault.md]] | ✅ Done |
 | 11 | Vault Write API (moveDocument, renameDocument, canonical setField) | [[proposals/approved/sub-plan-vault-write-api.md]] | ✅ Done |
 | 12 | Vault Document Index (unified frontmatter + wikilink edges) | [[proposals/approved/sub-plan-vault-document-index.md]] | ✅ Done |
-| 13 | Knowledge Graph (D3 force-directed, 4th status tab, gap detection) | [[proposals/knowledge-graph-cross-document-idea-linkage.md]] | ✅ Done — proposal approval pending |
+| 13 | Knowledge Graph (D3 force-directed, 4th status tab, gap detection) | [[proposals/approved/knowledge-graph-cross-document-idea-linkage.md]] | ✅ Done — proposal approval pending |
 
 **Ordering:** Deliverables 11 → 12 → 13 must land before pilots (7, 8). Everything else can run in parallel around that spine. Deliverable 6 runs independently and closes in Phase 5.
 
@@ -85,7 +85,7 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 11 | Architecture boundary document | `docs/vault-portability.md` written covering: three adoption modes, manifest upgrade contract, js-yaml baked-path approach, moving vaults between machines, CI usage, DOCWRIGHT_ROOT vs DOCWRIGHT_VAULT_ROOT. | ✅ Done | — | — |
 | 12 | Vault Write API | `moveDocument(src, dest)`, `renameDocument(path, newName)`, `setDocumentField(path, field, value)` implemented in `src/dispatch/vault-write.ts`. Full rollback on failure, wikilink cascade, cross-ref update, write-audit.jsonl. `fix-stale-approvals.ts` marked @deprecated — approve/rename endpoints wired to canonical API. 13 tests passing. | ✅ Done | — | — |
 | 13 | Vault Document Index | `buildIndex`, `readIndex`, `writeIndex`, `rebuildIfStale`, `getBacklinksFor`, `queryDocuments` implemented in `src/dispatch/vault-index.ts`. `/api/graph` and `/api/vault/query` live. SSE wires index rebuild on file change. Two test files (24 tests). Proposal `approved: true`. | ✅ Done | — | — |
-| 14 | Knowledge Graph | `KnowledgeGraph.svelte` (580 lines) and `GraphView.svelte` (228 lines) implemented. D3 force-directed, 4th status tab, 6 gap-detection categories, filter sidebar. Wired into status page. Proposal code-complete but `approved: false` — NetYeti to approve `proposals/knowledge-graph-cross-document-idea-linkage.md`. | ✅ Done | — | — |
+| 14 | Knowledge Graph | `KnowledgeGraph.svelte` (580 lines) and `GraphView.svelte` (228 lines) implemented. D3 force-directed, 4th status tab, 6 gap-detection categories, filter sidebar. Wired into status page. Proposal code-complete but `approved: false` — NetYeti to approve `proposals/approved/knowledge-graph-cross-document-idea-linkage.md`. | ✅ Done | — | — |
 
 ## Parallelism Map
 

@@ -5,7 +5,7 @@ completed_date: 2026-06-07
 author: NetYeti
 created: 2026-06-07
 tags: [planning]
-proposal_source: proposals/approved/ai-proposal-improve-on-save
+proposal_source: proposals/approved/ai-proposal-improve-on-save.md
 ---
 
 # Plan: AI Proposal Improvement — On-Save Trigger and Manual Button

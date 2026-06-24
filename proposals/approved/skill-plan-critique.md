@@ -16,8 +16,8 @@ assigned_to: NetYeti
 related_to:
   - policies/core/multi-perspective-review.md
   - policies/core/code-over-memory.md
-_path: proposals/skill-plan-critique.md
-consumed_by: plans/phase-1-critique-skill.md
+_path: proposals/approved/skill-plan-critique.md
+consumed_by: plans/completed/phase-1-critique-skill.md
 ---
 
 ## Problem

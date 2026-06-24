@@ -19,7 +19,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 related_to:
   - research/rlm-recursive-language-models.md
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+  - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - docs/collation.md
   - plans/phase-4-profile-aware-features.md
 ---

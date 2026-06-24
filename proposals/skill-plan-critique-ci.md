@@ -3,6 +3,7 @@ complexity: high
 title: CI-Triggered Plan Critique (Headless)
 author: NetYeti
 created: 2026-06-04
+approved: false
 tags:
   - governance
   - ci
@@ -14,7 +15,7 @@ deferred_reason: Requires headless Claude Code invocation mode. Doesn't exist ye
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - proposals/skill-plan-critique.md
+  - proposals/approved/skill-plan-critique.md
 _path: proposals/skill-plan-critique-ci.md
 ---
 ## Problem
@@ -34,7 +35,7 @@ This requires stable headless Claude Code support, which does not currently exis
 
 ## Deferred Because
 
-Manual skill ships first. CI automation is a quality-of-life improvement, not a blocker. See \[\[proposals/skill-plan-critique.md\]\].
+Manual skill ships first. CI automation is a quality-of-life improvement, not a blocker. See \[\[proposals/approved/skill-plan-critique.md\]\].
 
 ## Document History
 

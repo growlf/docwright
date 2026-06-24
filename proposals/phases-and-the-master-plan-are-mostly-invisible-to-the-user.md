@@ -107,20 +107,20 @@ should validate that `phase:` matches a known phase from `PROJECT.md` §14.
 
 ### 5. Phase tag on lifecycle graph *(blocked)*
 
-The lifecycle graph view ([[proposals/ui-lifecycle-graph-view.md]]) already
+The lifecycle graph view ([[proposals/approved/ui-lifecycle-graph-view.md]]) already
 supports a Phase view mode that groups nodes by phase. Once that proposal is
 approved and implemented, this proposal ensures the phase data from `PROJECT.md`
 is populated and the status page links into the graph view.
 
-**Blocked on:** approval/implementation of [[proposals/ui-lifecycle-graph-view.md]].
+**Blocked on:** approval/implementation of [[proposals/approved/ui-lifecycle-graph-view.md]].
 
 ## Relationship to Existing Work
 
 | Feature | Relationship |
 |---------|-------------|
 | [[proposals/proposal-relationship-engine-and-plan-button.md]] | Creates draft plans — this proposal makes them visible on the status page (Part 2) |
-| [[proposals/ui-lifecycle-graph-view.md]] | Phase grouping exists; blocked until approved |
-| [[proposals/ux-collating-proposals-into-apropriate-plans.md]] | Collation foundation — status page layout reference |
+| [[proposals/approved/ui-lifecycle-graph-view.md]] | Phase grouping exists; blocked until approved |
+| [[proposals/approved/ux-collating-proposals-into-apropriate-plans.md]] | Collation foundation — status page layout reference |
 | [[proposals/related-docs-ux-improvements.md]] | Status page UX improvements — prerequisites for layout changes |
 | `PROJECT.md` §14 | Canonical source of phase state and completion |
 | Versioning policy | `0.MINOR.PATCH` — minor = phase number, patch = completed plans in phase |

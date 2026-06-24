@@ -15,7 +15,7 @@ assigned_to: ""
 related_to:
   - policies/core/workflow-layer-governance.md
   - docs/ai-governance-enforcement.md
-  - plans/phase-1-plan-step-enforcement.md
+  - plans/completed/phase-1-plan-step-enforcement.md
 _path: proposals/plan-steps-structured-frontmatter.md
 ---
 

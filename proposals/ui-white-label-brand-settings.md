@@ -14,7 +14,7 @@ deferred_reason: brand.json config and logo serving work now. Settings UI to edi
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - proposals/ui-settings-activity-bar.md
+  - proposals/approved/ui-settings-activity-bar.md
 _path: proposals/ui-white-label-brand-settings.md
 ---
 ## Problem
@@ -46,7 +46,7 @@ A **Brand** section in the DocWright Settings panel (activity bar → ⚙) that 
 
 ## Deferred Because
 
-The settings panel (activity bar) does not exist yet. All of the above is fully functional by hand — edit `brand.json`, drop in `brand/logo.svg`, edit `brand/theme.css`. See `docs/customization.md` for instructions. See \[\[proposals/ui-settings-activity-bar.md\]\].
+The settings panel (activity bar) does not exist yet. All of the above is fully functional by hand — edit `brand.json`, drop in `brand/logo.svg`, edit `brand/theme.css`. See `docs/customization.md` for instructions. See \[\[proposals/approved/ui-settings-activity-bar.md\]\].
 
 ## Document History
 

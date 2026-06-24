@@ -16,7 +16,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/phase-0-spike-decision.md
   - plans/completed/phase-1-opencode-embed.md
-  - plans/phase-2-foundation.md
+  - plans/completed/phase-2-foundation.md
 consumed_by: plans/completed/phase-1-opencode-embed.md
 ---
 

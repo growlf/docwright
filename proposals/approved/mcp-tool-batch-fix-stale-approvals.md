@@ -15,7 +15,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/approved/mcp-tool-batch-fix-stale-approvals.md
-consumed_by: plans/plan-mcp-tool-or-npm-script-fix-stale-approved-proposals-not-in-proposals-approved.md
+consumed_by: plans/completed/plan-mcp-tool-or-npm-script-fix-stale-approved-proposals-not-in-proposals-approved.md
 ---
 ## Problem
 

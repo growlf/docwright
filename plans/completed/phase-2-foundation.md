@@ -18,7 +18,7 @@ mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 proposal_source:
-  - proposals/containerization.md
+  - proposals/approved/containerization.md
   - proposals/approved/research-stage-methodology.md
 depends_on:
   - phase-1-ui-polish

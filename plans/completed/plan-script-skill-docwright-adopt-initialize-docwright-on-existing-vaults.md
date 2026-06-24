@@ -7,10 +7,10 @@ author-role: contributor
 created: 2026-06-17
 created_by: NetYeti@phoenix
 tags: [planning, tooling, adoption, vault-portability]
-proposal_source: proposals/approved/docwright-adopt-existing-vault
+proposal_source: proposals/approved/docwright-adopt-existing-vault.md
 priority: high
 phase: 3
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 mode: autonomous
 waiting_reason: ""
 assigned_to: ["NetYeti"]
@@ -32,7 +32,7 @@ gate_note: ""
 gate_reviews: []
 gate_quorum: 1
 scenario_synthesis: >
-_path: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+_path: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 # Plan: docwright-adopt — Initialize DocWright on Existing Vaults
 

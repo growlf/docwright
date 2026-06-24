@@ -69,7 +69,7 @@ Deliverables:
 
 ### 3c — Knowledge Graph ⚡ (must land before pilots run)
 
-[[proposals/knowledge-graph-cross-document-idea-linkage.md]] Part C
+[[proposals/approved/knowledge-graph-cross-document-idea-linkage.md]] Part C
 
 **Why here:** The knowledge graph is an oversight and direction tool, not a
 feature. It shows structural failures before they compound — orphaned plans,

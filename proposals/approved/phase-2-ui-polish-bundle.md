@@ -19,7 +19,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/ui-keyboard-panel-shortcuts.md
   - proposals/ui-resizable-panels.md
-  - proposals/ui-vault-search.md
+  - proposals/approved/ui-vault-search.md
   - proposals/ui-theme-picker.md
   - proposals/tags-more-useful-to-humans.md
   - proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md
@@ -59,7 +59,7 @@ the activity bar. Results show document title, type badge, and a matched excerpt
 Powered by a server-side `/api/find` endpoint scanning vault files (no external
 search backend required for Phase 2 — deferred to qmd/Meilisearch in Phase 3).
 
-**Source:** [[proposals/ui-vault-search.md]]
+**Source:** [[proposals/approved/ui-vault-search.md]]
 
 ### 2. Policies activity bar button
 
@@ -122,9 +122,9 @@ Persisted to `localStorage`. Phase 2 ships: Dark (current), Light, and System
 
 - [[proposals/ui-theming-system.md]] (approved) — full CSS variable theming system;
   the theme picker (deliverable 7) is the user-facing surface for that work
-- [[proposals/ui-sidebar-consistency.md]] (approved) — panel layout foundation
+- [[proposals/approved/ui-sidebar-consistency.md]] (approved) — panel layout foundation
   that keyboard shortcuts and resize handles build on
-- [[proposals/ui-settings-activity-bar.md]] (approved) — activity bar design
+- [[proposals/approved/ui-settings-activity-bar.md]] (approved) — activity bar design
   that policies button (deliverable 2) plugs into
 
 ## Out of Scope

@@ -235,9 +235,9 @@ proposals regardless of profile, as plan creation is a core lifecycle action.
 | [[proposals/related-docs-ux-improvements.md]] | Threshold config, explicit related_to, ack state — prerequisites |
 | [[proposals/new-proposals-should-check-before-actual-creation.md]] | Pre-creation dup check uses same engine, different trigger point |
 | [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md]] | Draft Plans section consumes scaffolded plans; phase field shared |
-| [[proposals/ui-lifecycle-graph-view.md]] | Relationship data powers dependency ordering and cluster visualization |
+| [[proposals/approved/ui-lifecycle-graph-view.md]] | Relationship data powers dependency ordering and cluster visualization |
 | [[proposals/gantt-view-dependencies.md]] | Dependencies surfaced by the engine feed Gantt timeline |
-| [[proposals/skill-plan-critique.md]] | Optional AI critique pass on draft plans |
+| [[proposals/approved/skill-plan-critique.md]] | Optional AI critique pass on draft plans |
 | [[proposals/approval-need-assigned-to-picklist.md]] | `assigned_to` picklist integration for button display |
 | `PROJECT.md` §14 | Canonical phase list for validation and grouping |
 | `.opencode/skills/docwright-raw-proposal/` | Raw proposal detection feeds creation-time hierarchy detection |

@@ -17,8 +17,8 @@ estimated_effort: L
 approved: true
 assigned_to: NetYeti
 related_to:
-  - proposals/sub-plan-vault-write-api.md
-  - proposals/sub-plan-vault-document-index.md
+  - proposals/approved/sub-plan-vault-write-api.md
+  - proposals/approved/sub-plan-vault-document-index.md
   - plans/plan-ui-lifecycle-graph-view.md
   - proposals/deferred-rlm-python-microservice.md
   - research/rlm-recursive-language-models.md

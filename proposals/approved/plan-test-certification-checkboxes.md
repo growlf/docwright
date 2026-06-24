@@ -18,7 +18,7 @@ related_to:
   - proposals/plan-step-completion-enforcement.md
   - proposals/plan-complete-blocks-on-pending-steps.md
   - policies/core/ai-governance-boundaries.md
-  - proposals/skill-plan-critique.md
+  - proposals/approved/skill-plan-critique.md
 _path: proposals/plan-test-certification-checkboxes.md
 consumed_by: plans/completed/phase-1-plan-step-enforcement.md
 ---

@@ -16,8 +16,8 @@ complexity: high
 depends-on:
   - "[[plans/completed/enforce-lifecycle-compliance.md]]"
 related_to:
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
-consumed_by: plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+  - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+consumed_by: plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
 ---
 
 ## Problem

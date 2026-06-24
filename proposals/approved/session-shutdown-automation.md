@@ -11,7 +11,7 @@ priority: medium
 created_by: NetYeti@phoenix
 assigned_to: NetYeti@phoenix
 _path: proposals/session-shutdown-automation.md
-consumed_by: plans/session-shutdown-automation.md
+consumed_by: plans/completed/session-shutdown-automation.md
 ---
 
 ## Problem

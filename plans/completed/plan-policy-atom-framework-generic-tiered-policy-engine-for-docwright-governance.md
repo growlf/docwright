@@ -26,8 +26,8 @@ tests_defined: true
 tests_human_reviewed: true
 total_steps: 5
 completed_steps: 5
-_path: plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
-consumed_by: plans/plan-ai-task-category-taxonomy-route-atoms-and-plan-steps-to-the-right-model-at-authorship-time.md
+_path: plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+consumed_by: plans/ai-task-category-taxonomy.md
 ---
 # Policy Atom Framework — Generic Tiered Policy Engine
 

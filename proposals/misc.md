@@ -33,7 +33,7 @@ Immutable H1 from frontmatter title
 
 **Promoted**
 
-\[\[proposals/ui-immutable-title-h1.md\]\]
+\[\[proposals/approved/ui-immutable-title-h1.md\]\]
 
 2
 
@@ -49,7 +49,7 @@ AI-assisted proposal review/fill button
 
 **Covered**
 
-\[\[proposals/ai-proposal-improve-on-save.md\]\]
+\[\[proposals/approved/ai-proposal-improve-on-save.md\]\]
 
 4
 
@@ -57,7 +57,7 @@ AI-assisted proposal review/fill button
 
 **Pending**
 
-Not yet proposed — see \[\[proposals/multi-perspective-review-feature.md\]\] which partially covers (generic "second opinion" quick action)
+Not yet proposed — see \[\[proposals/approved/multi-perspective-review-feature.md\]\] which partially covers (generic "second opinion" quick action)
 
 5
 

@@ -13,7 +13,7 @@ related_to:
   - proposals/gantt-view-dependencies.md
   - plans/phase-4-profile-acl-ai.md
   - plans/completed/collation.md
-  - proposals/knowledge-graph-cross-document-idea-linkage.md
+  - proposals/approved/knowledge-graph-cross-document-idea-linkage.md
 depends_on: []
 blocks: []
 template_version: "1.0"
