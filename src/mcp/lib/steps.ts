@@ -24,16 +24,25 @@ export function countSteps(text: string): { total: number; completed: number } {
     const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
 
     if (statusColIdx < 0) {
-      // Look for header row — find a cell matching /^status$/i
+      // Try to find the Status column from this row's header
       const idx = cells.findIndex(c => /^status$/i.test(c));
       if (idx >= 0) {
+        // This is a header row — record Status position, don't count it
         statusColIdx = idx;
+        continue;
       }
-      // Either way, this is a header/separator row — don't count it
+      // No 'Status' cell found — if first cell is a positive integer this is a
+      // headerless data row; fall back to last-column (legacy 4-column behaviour)
+      const firstNum = parseInt(cells[0], 10);
+      if (firstNum > 0) {
+        const lastCell = cells[cells.length - 1] ?? '';
+        total++;
+        if (lastCell.includes('✅')) completed++;
+      }
       continue;
     }
 
-    // Guard: first numeric cell must be > 0 (excludes separator/header rows that slipped through)
+    // Header has been found — guard: first cell must be a positive integer
     const firstNumeric = parseInt(cells[0], 10);
     if (!(firstNumeric > 0)) continue;
 
@@ -85,9 +94,21 @@ export function replaceStepStatus(text: string, stepMatch: string, newStatus: st
     if (statusColIdx < 0) {
       const idx = cells.findIndex(c => /^status$/i.test(c));
       if (idx >= 0) {
+        // Header row — record Status column, never a match target
         statusColIdx = idx;
+        continue;
       }
-      // Header row — never a match target
+      // No header found — if this is a data row and matches, use last-column fallback
+      const firstNum = parseInt(cells[0], 10);
+      if (firstNum > 0 && line.includes(stepMatch)) {
+        const stripped = line.trimEnd();
+        const lastPipe = stripped.lastIndexOf('|', stripped.length - 2);
+        if (lastPipe >= 0) {
+          lines[i] = stripped.slice(0, lastPipe + 1) + ' ' + newStatus + ' |';
+          found = true;
+          break;
+        }
+      }
       continue;
     }
 
