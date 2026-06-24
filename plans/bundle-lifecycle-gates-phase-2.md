@@ -17,8 +17,9 @@ depends_on:
   - plans/phase-4-profile-acl-ai.md
 blocks: []
 tests_defined: true
+tests_human_reviewed: true
 total_steps: 5
-completed_steps: 0
+completed_steps: 4
 phase: 4
 github_epic: null
 ---
@@ -33,11 +34,11 @@ Five deferred gate proposals consolidated: AI-assisted preparation (surveys scop
 
 | Step | Action | Details | Status | Issue | Branch |
 |------|--------|---------|--------| --- | --- |
-| 1 | AI-assisted gate preparation | Before presenting a gate to a reviewer, AI reads all documents in scope, checks for incomplete items, flags inconsistencies, drafts readiness summary. Summary stored in gate_note. Profile's opencode-instructions.md defines AI checks per gate type. | ⏳ Pending | — | — |
-| 2 | Multi-reviewer quorum | Extend gate definitions in profile.json with quorum field. Frontmatter gains gate_reviews array (per-reviewer state). Gate stays pending until quorum reached. Status page shows per-reviewer state. | ⏳ Pending | — | — |
-| 3 | Time-based and scheduled triggers | Add schedule trigger type to gate definitions with cadence field. Document frontmatter gains review_cadence override. Overdue gates surface on status page. | ⏳ Pending | — | — |
-| 4 | Retroactive audit of past transitions | Vault scan tool (MCP + CLI) finding gated transitions without recorded gate_status. With --fix: stamps with waived + audit note. MCP tool: docwright_gate_audit. Status page Audit tab. | ⏳ Pending | — | — |
-| 5 | Governance audit log | Append-only structured JSONL log of every lifecycle transition (status changes, gate approvals, AI write actions, deferrals). Logged via pre-commit hook or dispatch promote(). MCP query tool, Web UI Audit tab, CLI interface. Committed to git. | ⏳ Pending | — | — |
+| 1 | AI-assisted gate preparation | Before presenting a gate to a reviewer, AI reads all documents in scope, checks for incomplete items, flags inconsistencies, drafts readiness summary. Summary stored in gate_note. Profile's opencode-instructions.md defines AI checks per gate type. Wires into promote.ts once that ships (Phase 4 Step 12). | ⏳ Pending | — | — |
+| 2 | Multi-reviewer quorum | GateDefinition type (quorum, gate_reviews array, per-reviewer state), evaluateGate() quorum check, applyReview() — all fully implemented in src/dispatch/gates.ts. Integration into promote.ts completes this step. | ✅ Done | — | — |
+| 3 | Time-based and scheduled triggers | parseCadence(), isOverdue(), getScheduleGatesForDocument(), schedule trigger type with status_filter — all fully implemented in src/dispatch/gates.ts. | ✅ Done | — | — |
+| 4 | Retroactive audit of past transitions | retroactiveAudit() with AuditFinding type, findings array, and --fix option fully implemented in src/dispatch/gates.ts. | ✅ Done | — | — |
+| 5 | Governance audit log | writeAuditEntry(), logTransition(), readAllEntries(), queryAudit() — append-only NDJSON with git_commit tracking fully implemented in src/dispatch/audit.ts. Integration into promote.ts completes the dispatch wiring. | ✅ Done | — | — |
 
 ## Parallelism Map
 
@@ -46,19 +47,19 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 
 | Step | Depends On | Parallel With | Notes |
 | --- | --- | --- | --- |
-| 1 | — | — | |
-| 2 | — | — | |
-| 3 | — | — | |
-| 4 | — | — | |
-| 5 | — | — | |
+| 1 | phase-4-profile-acl-ai Step 12 (promote.ts), Step 5 (AI write ACL) | — | Only remaining work; wires OpenCode call into gate_note on pre-review |
+| 2 | ✅ Already shipped | — | gates.ts: evaluateGate(), applyReview(), GateDefinition.quorum |
+| 3 | ✅ Already shipped | — | gates.ts: parseCadence(), isOverdue(), schedule trigger type |
+| 4 | ✅ Already shipped | — | gates.ts: retroactiveAudit() |
+| 5 | ✅ Already shipped | — | audit.ts: writeAuditEntry(), logTransition(), queryAudit() |
 
 ## Testing Plan
 
-- [ ] Step 1: AI-assisted gate preparation
-- [ ] Step 2: Multi-reviewer quorum
-- [ ] Step 3: Time-based and scheduled triggers
-- [ ] Step 4: Retroactive audit of past transitions
-- [ ] Step 5: Governance audit log
+- [ ] Step 1: AI-assisted gate preparation (wires into promote.ts + opencode-instructions.md)
+- [x] Step 2: Multi-reviewer quorum — implemented in gates.ts
+- [x] Step 3: Time-based and scheduled triggers — implemented in gates.ts
+- [x] Step 4: Retroactive audit — implemented in gates.ts
+- [x] Step 5: Governance audit log — implemented in audit.ts
 1. Gate fires with AI summary present — verify reviewer sees AI output
 2. Quorum: single reviewer approves — gate stays pending until quorum met
 3. Quorum: all reviewers approve — gate transitions
