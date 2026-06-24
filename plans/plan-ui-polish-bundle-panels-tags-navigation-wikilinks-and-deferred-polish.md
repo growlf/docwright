@@ -28,6 +28,7 @@ gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
 phase: 6
 consumed_by: plans/plan-ai-task-category-taxonomy-route-atoms-and-plan-steps-to-the-right-model-at-authorship-time.md
+github_epic: null
 ---
 
 # Plan: UI Polish Bundle — Panels, Tags, Navigation, Wikilinks, and Deferred Polish
@@ -51,9 +52,18 @@ Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` 
 > When marking a task ✅ Complete, update every step row in this table
 > to reflect what was actually built. Stale ⏳ rows mislead reviewers.
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | | | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | | | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
 
 ## Testing Plan
 

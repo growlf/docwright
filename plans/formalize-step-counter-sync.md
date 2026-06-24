@@ -12,6 +12,7 @@ tests_defined: true
 tests_human_reviewed: false
 phase: 5
 _path: plans/formalize-step-counter-sync.md
+github_epic: null
 ---
 # Formalize validation and auto-sync for step counters
 
@@ -23,9 +24,18 @@ _Plan generated from approved proposal: Formalize validation and auto-sync for s
 
 > When marking a task ✅ Complete, update every step row in this table to reflect what was actually built. Stale ⏳ rows mislead reviewers.
 
-| Step | Action | Details | Status |
+| Step | Action | Details | Status | Issue | Branch |
+| --- | --- | --- | --- | --- | --- |
+| 1 |  |  | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
 | --- | --- | --- | --- |
-| 1 |  |  | ⏳ Pending |
+| 1 | — | — | |
 
 ## Testing Plan
 

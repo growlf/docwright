@@ -32,6 +32,7 @@ gate_quorum: 1
 total_steps: 7
 completed_steps: 0
 phase: 3
+github_epic: null
 ---
 
 # Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System
@@ -62,15 +63,30 @@ re-implementing it.
 
 ## Implementation Steps
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Verify existing creation flow state | Open the "New Proposal" dialog and the properties pane. Document exactly what exists today: does a `category` field exist? Does the creation flow prompt for type? This determines which steps below are greenfield vs. extension. | ⏳ Pending |
-| 2 | Add `category` enum to proposal frontmatter schema | Extend `profile.json` for `org-operations` (and `doc-lifecycle`) to define `proposalCategories: ["feature", "bug", "thought"]`. Add `category` field to the proposal template with an empty default. Add frontmatter validation in the linter so unknown categories are flagged. | ⏳ Pending |
-| 3 | Create typed proposal templates | Add `templates/proposal-feature.md`, `templates/proposal-bug.md`, `templates/proposal-thought.md` to the profile. Each has category-appropriate section headings: bug template gets "Steps to Reproduce" + "Expected vs Actual"; feature gets "Proposed Solution" + "Out of Scope"; thought gets "Research Question" + "Initial Hypotheses". | ⏳ Pending |
-| 4 | Build `POST /api/generate-title` endpoint | New SvelteKit route. Accepts `{ description: string, category: string }`. Calls `OpenCodeEngine` with a short prompt: "Generate a concise, specific proposal title (max 10 words) for this [category]: [description]". Falls back to the first sentence of the description on error or when OPENCODE_URL is unset. | ⏳ Pending |
-| 5 | Update "New Proposal" creation flow | Replace the current single-step title prompt with a two-step modal: (1) pick category from a dropdown, (2) enter description (textarea). On submit, call `/api/generate-title`, show the generated title for confirmation (editable), then scaffold the correct template with the confirmed title. Show a spinner during title generation. | ⏳ Pending |
-| 6 | Show category in proposal lists and status page | Add category badge to the Open Proposals table on the status page. Add category chip to the PropertiesPane for proposals. Ensure the collation engine uses category as a signal (same category = higher `tag_overlap` weight). | ⏳ Pending |
-| 7 | Tests | Unit: `generateTitle` falls back gracefully when OpenCode is unavailable. Frontmatter validation rejects unknown categories. Template selection returns correct template per category. Manual: walk through all three category paths end-to-end; verify title generation and template scaffolding. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | Verify existing creation flow state | Open the "New Proposal" dialog and the properties pane. Document exactly what exists today: does a `category` field exist? Does the creation flow prompt for type? This determines which steps below are greenfield vs. extension. | ⏳ Pending | — | — |
+| 2 | Add `category` enum to proposal frontmatter schema | Extend `profile.json` for `org-operations` (and `doc-lifecycle`) to define `proposalCategories: ["feature", "bug", "thought"]`. Add `category` field to the proposal template with an empty default. Add frontmatter validation in the linter so unknown categories are flagged. | ⏳ Pending | — | — |
+| 3 | Create typed proposal templates | Add `templates/proposal-feature.md`, `templates/proposal-bug.md`, `templates/proposal-thought.md` to the profile. Each has category-appropriate section headings: bug template gets "Steps to Reproduce" + "Expected vs Actual"; feature gets "Proposed Solution" + "Out of Scope"; thought gets "Research Question" + "Initial Hypotheses". | ⏳ Pending | — | — |
+| 4 | Build `POST /api/generate-title` endpoint | New SvelteKit route. Accepts `{ description: string, category: string }`. Calls `OpenCodeEngine` with a short prompt: "Generate a concise, specific proposal title (max 10 words) for this [category]: [description]". Falls back to the first sentence of the description on error or when OPENCODE_URL is unset. | ⏳ Pending | — | — |
+| 5 | Update "New Proposal" creation flow | Replace the current single-step title prompt with a two-step modal: (1) pick category from a dropdown, (2) enter description (textarea). On submit, call `/api/generate-title`, show the generated title for confirmation (editable), then scaffold the correct template with the confirmed title. Show a spinner during title generation. | ⏳ Pending | — | — |
+| 6 | Show category in proposal lists and status page | Add category badge to the Open Proposals table on the status page. Add category chip to the PropertiesPane for proposals. Ensure the collation engine uses category as a signal (same category = higher `tag_overlap` weight). | ⏳ Pending | — | — |
+| 7 | Tests | Unit: `generateTitle` falls back gracefully when OpenCode is unavailable. Frontmatter validation rejects unknown categories. Template selection returns correct template per category. Manual: walk through all three category paths end-to-end; verify title generation and template scaffolding. | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
+| 5 | — | — | |
+| 6 | — | — | |
+| 7 | — | — | |
 
 ## Testing Plan
 

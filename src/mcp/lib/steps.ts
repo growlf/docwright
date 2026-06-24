@@ -6,22 +6,40 @@ export function countSteps(text: string): { total: number; completed: number } {
   let inSection = false;
   let total = 0;
   let completed = 0;
+  let statusColIdx = -1;
 
   for (const line of lines) {
     if (/^##\s/.test(line)) {
       inSection = /^##\s+Implementation Steps\b/i.test(line);
+      statusColIdx = -1;
       continue;
     }
-    if (!inSection || !line.startsWith('|') || line.startsWith('|---') || line.startsWith('| ---')) continue;
-    
+    if (!inSection || !line.startsWith('|')) continue;
+
+    // Skip separator rows (| --- | or | :--- | etc.)
+    if (/^\|[\s|:-]+\|$/.test(line)) continue;
+
     const parts = line.split('|');
-    const lastCell = (parts[parts.length - 2] || '').trim();
-    
-    // Skip header row
-    if (lastCell.toLowerCase() === 'status') continue;
-    
+    // parts[0] is empty (before first |), parts[parts.length-1] is empty (after last |)
+    const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
+
+    if (statusColIdx < 0) {
+      // Look for header row — find a cell matching /^status$/i
+      const idx = cells.findIndex(c => /^status$/i.test(c));
+      if (idx >= 0) {
+        statusColIdx = idx;
+      }
+      // Either way, this is a header/separator row — don't count it
+      continue;
+    }
+
+    // Guard: first numeric cell must be > 0 (excludes separator/header rows that slipped through)
+    const firstNumeric = parseInt(cells[0], 10);
+    if (!(firstNumeric > 0)) continue;
+
+    const statusCell = cells[statusColIdx] ?? '';
     total++;
-    if (lastCell.includes('✅')) {
+    if (statusCell.includes('✅')) {
       completed++;
     }
   }
@@ -44,23 +62,48 @@ export function replaceStepStatus(text: string, stepMatch: string, newStatus: st
   const lines = text.split('\n');
   let inSection = false;
   let found = false;
+  let statusColIdx = -1;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+
     if (/^##\s/.test(line)) {
       inSection = /^##\s+Implementation Steps\b/i.test(line);
-    } else if (inSection && line.startsWith('|') && line.includes(stepMatch)) {
-      const stripped = line.trimEnd();
-      if (stripped.endsWith('|')) {
-        const inner = stripped.slice(0, -1).trimEnd();
-        const lastPipe = inner.lastIndexOf('|');
-        if (lastPipe >= 0) {
-          lines[i] = inner.slice(0, lastPipe + 1) + ' ' + newStatus + ' |';
-          found = true;
-          break;
-        }
-      }
+      statusColIdx = -1;
+      continue;
     }
+
+    if (!inSection || !line.startsWith('|')) continue;
+
+    // Skip separator rows
+    if (/^\|[\s|:-]+\|$/.test(line)) continue;
+
+    const parts = line.split('|');
+    const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
+
+    // Detect header row to record statusColIdx
+    if (statusColIdx < 0) {
+      const idx = cells.findIndex(c => /^status$/i.test(c));
+      if (idx >= 0) {
+        statusColIdx = idx;
+      }
+      // Header row — never a match target
+      continue;
+    }
+
+    if (!line.includes(stepMatch)) continue;
+
+    // Guard: first numeric cell must be > 0 (skip accidental header matches)
+    const firstNumeric = parseInt(cells[0], 10);
+    if (!(firstNumeric > 0)) continue;
+
+    // Replace the cell at statusColIdx in the raw parts array.
+    // parts[0] = '' (before first |), so parts[statusColIdx + 1] is the status cell.
+    const rawParts = line.split('|');
+    rawParts[statusColIdx + 1] = ` ${newStatus} `;
+    lines[i] = rawParts.join('|');
+    found = true;
+    break;
   }
   return { text: lines.join('\n'), found };
 }
@@ -112,8 +155,8 @@ export function hasTestingPlan(content: string): boolean {
   const match = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=\n##\s|\n*$)/m);
   if (!match) return false;
   const section = match[1].trim();
-  return section !== '' && 
-         section !== '_Add test plan during implementation._' && 
+  return section !== '' &&
+         section !== '_Add test plan during implementation._' &&
          section !== '{{VALUE:testing}}';
 }
 
@@ -121,13 +164,13 @@ export function updateParentDeliverable(text: string, safeName: string): string 
   const fm = parseFrontmatter(text);
   const parentPlan = fm['parent_plan'];
   const parentDeliverable = fm['parent_deliverable'];
-  
+
   if (!parentPlan || !parentDeliverable) return '';
-  
+
   try {
     const pSafe = String(parentPlan).endsWith('.md') ? String(parentPlan) : `${parentPlan}.md`;
     let parentText = readFile(`plans/${pSafe}`);
-    
+
     const lines = parentText.split('\n');
     let inSection = false;
     let found = false;
@@ -139,7 +182,7 @@ export function updateParentDeliverable(text: string, safeName: string): string 
         continue;
       }
       if (!inSection || !line.startsWith('|')) continue;
-      
+
       const parts = line.split('|');
       if (parts.length > 2 && parts[1].trim() === String(parentDeliverable).trim()) {
         const lastIdx = parts.length - 2;
@@ -149,7 +192,7 @@ export function updateParentDeliverable(text: string, safeName: string): string 
         break;
       }
     }
-    
+
     if (found) {
       parentText = lines.join('\n');
       writeFile(`plans/${pSafe}`, parentText);

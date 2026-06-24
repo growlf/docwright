@@ -22,6 +22,7 @@ scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell
 total_steps: 17
 completed_steps: 8
 _path: plans/bundle-chat-session-panel.md
+github_epic: null
 ---
 
 # Chat & Session Panel Phase 2 — Session Management, @-Mention, Model Picker, History, Diff Review, and Terminal
@@ -49,40 +50,65 @@ specifications and the rationale for bundling.
 
 ### Tier 1 — Base Session Management
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | `dispatch/opencode.ts` adapter | Thin adapter wrapping all OpenCode HTTP calls: `createSession`, `sendMessage`, `forkSession`, `summarizeSession`, `shareSession`, `deleteSession`, `listProviders`, `listModels`. Absorbs API-shape changes in one place. All existing `ChatPanel.svelte` fetches migrate to use this module. | ✅ Done |
-| 2 | Session list sidebar | New `SessionSidebar.svelte` component, collapsible, inside `ChatPanel.svelte`. Fetches `GET /session` on mount; groups rows by today / yesterday / older (compare `session.time` to `Date.now()`). Each row: title (truncated), relative timestamp, token count badge. Active session highlighted. | ✅ Done |
-| 3 | Session CRUD actions | Per-row actions via a `⋯` menu: Fork → `POST /session/:id/fork`, Summarize → `POST /session/:id/summarize` (compacts context), Share → `POST /session/:id/share` (returns URL, copies to clipboard), Delete → confirm dialog then `DELETE /session/:id`. In-flight stream abort button in chat header: calls `AbortController` on the fetch, sends `POST /session/:id/abort` if available. | ✅ Done |
-| 4 | Token + cost tracking | Parse `usage` object from OpenCode SSE event stream (`event: message` → `data.usage.inputTokens`, `outputTokens`, `cost`). Accumulate per-session in a `Map<sessionId, Usage>` store. Display in session row (compact: `4.2k`) and chat header (full: `↑ 1.2k ↓ 3.0k  $0.02`). | ✅ Done |
-| 5 | @-mention context injection | Trigger: `@` typed in chat input. Autocomplete dropdown populated from the file tree store (already loaded — no new fetch). Filter by title + path as user types; cap at 50 results; debounce 120ms. Selecting a file: (a) appends a chip to the input area showing the doc title, (b) adds `\n\n[Context: path]\n<frontmatter summary>` to the prompt on send. Chips are individually removable. State: `let mentions = $state<string[]>([])`. | ✅ Done |
-| 6 | Model / provider picker | Dropdown in chat panel header. On panel mount: `GET /v2/provider` → list providers, `GET /v2/model` → list models per provider. Active session's current model shown as selected. On change: `PATCH /session/:id` with `{ modelId }` or re-create session with new model (whichever the OpenCode API supports). Default model readable/writable in `opencode.json` under `chat.defaultModel`. | ✅ Done |
-| 7 | Vault-scoped session history | Session created by DocWright: title auto-set to `[vault-name] <doc-title or "New Chat"> YYYY-MM-DD` via a `POST /session` body field or immediate rename. Session list: filter to current vault by matching title prefix `[vault-name]` by default. Toggle "Show all sessions" stores preference in `localStorage`. | ✅ Done |
-| 8 | Tests — Tier 1 | `test/dispatch/opencode.test.ts`: adapter unit tests (mock fetch, verify correct URL shapes + payloads). `test/webui/chat-session.test.ts`: @-mention parsing (trigger, filter, chip add/remove), session grouping (today/yesterday/older buckets), token accumulation arithmetic. Integration: create → fork → delete flow against `opencode.mock.ts`. | ✅ Done |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | `dispatch/opencode.ts` adapter | Thin adapter wrapping all OpenCode HTTP calls: `createSession`, `sendMessage`, `forkSession`, `summarizeSession`, `shareSession`, `deleteSession`, `listProviders`, `listModels`. Absorbs API-shape changes in one place. All existing `ChatPanel.svelte` fetches migrate to use this module. | ✅ Done | — | — |
+| 2 | Session list sidebar | New `SessionSidebar.svelte` component, collapsible, inside `ChatPanel.svelte`. Fetches `GET /session` on mount; groups rows by today / yesterday / older (compare `session.time` to `Date.now()`). Each row: title (truncated), relative timestamp, token count badge. Active session highlighted. | ✅ Done | — | — |
+| 3 | Session CRUD actions | Per-row actions via a `⋯` menu: Fork → `POST /session/:id/fork`, Summarize → `POST /session/:id/summarize` (compacts context), Share → `POST /session/:id/share` (returns URL, copies to clipboard), Delete → confirm dialog then `DELETE /session/:id`. In-flight stream abort button in chat header: calls `AbortController` on the fetch, sends `POST /session/:id/abort` if available. | ✅ Done | — | — |
+| 4 | Token + cost tracking | Parse `usage` object from OpenCode SSE event stream (`event: message` → `data.usage.inputTokens`, `outputTokens`, `cost`). Accumulate per-session in a `Map<sessionId, Usage>` store. Display in session row (compact: `4.2k`) and chat header (full: `↑ 1.2k ↓ 3.0k  $0.02`). | ✅ Done | — | — |
+| 5 | @-mention context injection | Trigger: `@` typed in chat input. Autocomplete dropdown populated from the file tree store (already loaded — no new fetch). Filter by title + path as user types; cap at 50 results; debounce 120ms. Selecting a file: (a) appends a chip to the input area showing the doc title, (b) adds `\n\n[Context: path]\n<frontmatter summary>` to the prompt on send. Chips are individually removable. State: `let mentions = $state<string[]>([])`. | ✅ Done | — | — |
+| 6 | Model / provider picker | Dropdown in chat panel header. On panel mount: `GET /v2/provider` → list providers, `GET /v2/model` → list models per provider. Active session's current model shown as selected. On change: `PATCH /session/:id` with `{ modelId }` or re-create session with new model (whichever the OpenCode API supports). Default model readable/writable in `opencode.json` under `chat.defaultModel`. | ✅ Done | — | — |
+| 7 | Vault-scoped session history | Session created by DocWright: title auto-set to `[vault-name] <doc-title or "New Chat"> YYYY-MM-DD` via a `POST /session` body field or immediate rename. Session list: filter to current vault by matching title prefix `[vault-name]` by default. Toggle "Show all sessions" stores preference in `localStorage`. | ✅ Done | — | — |
+| 8 | Tests — Tier 1 | `test/dispatch/opencode.test.ts`: adapter unit tests (mock fetch, verify correct URL shapes + payloads). `test/webui/chat-session.test.ts`: @-mention parsing (trigger, filter, chip add/remove), session grouping (today/yesterday/older buckets), token accumulation arithmetic. Integration: create → fork → delete flow against `opencode.mock.ts`. | ✅ Done | — | — |
 
 ### Tier 2 — Diff / Review Panel (gate: dispatch lifecycle awareness)
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 9 | Session diff fetch | `GET /session/:id/diff` → raw unified diff string. New `SessionDiffPanel.svelte` renders a split view using a CSS-grid diff layout (no library needed for Markdown files; fallback to unified view for binary). Accessible from a "Review changes" button in the session sidebar row. | ⏳ Pending |
-| 10 | Governance annotation | For each changed file in the diff, call `dispatch/linter.ts` to identify: (a) frontmatter fields that changed, (b) lifecycle transitions triggered (`status` before → after), (c) gate rules that fired. Annotate each diff hunk with a governance badge. Requires `dispatch/linter.ts` to expose a `diffAnnotate(before, after)` function. | ⏳ Pending |
-| 11 | Selective staging + commit | File-level checkboxes: Accept / Reject each changed file. "Commit accepted" button: stages accepted files via `POST /api/git/stage` and commits via `POST /api/git/commit`. Rejected files are restored from `HEAD`. This is the human-in-the-loop gate for AI-driven edits in guided mode. | ⏳ Pending |
-| 12 | Tests — Tier 2 | `diffAnnotate()` unit test: given before/after YAML, returns correct field-change list and transition events. Selective staging integration: mock git API, verify only accepted files staged. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 9 | Session diff fetch | `GET /session/:id/diff` → raw unified diff string. New `SessionDiffPanel.svelte` renders a split view using a CSS-grid diff layout (no library needed for Markdown files; fallback to unified view for binary). Accessible from a "Review changes" button in the session sidebar row. | ⏳ Pending | — | — |
+| 10 | Governance annotation | For each changed file in the diff, call `dispatch/linter.ts` to identify: (a) frontmatter fields that changed, (b) lifecycle transitions triggered (`status` before → after), (c) gate rules that fired. Annotate each diff hunk with a governance badge. Requires `dispatch/linter.ts` to expose a `diffAnnotate(before, after)` function. | ⏳ Pending | — | — |
+| 11 | Selective staging + commit | File-level checkboxes: Accept / Reject each changed file. "Commit accepted" button: stages accepted files via `POST /api/git/stage` and commits via `POST /api/git/commit`. Rejected files are restored from `HEAD`. This is the human-in-the-loop gate for AI-driven edits in guided mode. | ⏳ Pending | — | — |
+| 12 | Tests — Tier 2 | `diffAnnotate()` unit test: given before/after YAML, returns correct field-change list and transition events. Selective staging integration: mock git API, verify only accepted files staged. | ⏳ Pending | — | — |
 
 ### Tier 3 — Enterprise Dual Mode (gate: bundle-enterprise-tier approved)
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 13 | Named connection system | Connection config stored in `localStorage` as `dw:opencode-connections: Connection[]` where `Connection = { name, url, mode: 'direct'|'proxy', notes? }`. Settings panel tab "Connections": add / edit / delete / set-active. Active connection URL replaces `OPENCODE_URL` for all chat fetches at runtime. Sessions are per-connection (sidebar filtered by active connection). | ⏳ Pending |
-| 14 | Mixed content detection | On settings panel mount and on connection switch: check if page is `https:` and selected URL is `http:` non-localhost. If so: show amber warning with browser-specific guidance (Chrome/Edge: allowed; Firefox: flag needed; Safari: use proxy mode). Proxy mode routes OpenCode requests through `/api/opencode-proxy` on the DocWright server. | ⏳ Pending |
-| 15 | Tests — Tier 3 | Connection CRUD in localStorage (add/edit/delete/switch). Mixed content detection logic: `isUnsafeConnection(pageProtocol, connectionUrl)` unit test covering all 4 browser × protocol combinations. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 13 | Named connection system | Connection config stored in `localStorage` as `dw:opencode-connections: Connection[]` where `Connection = { name, url, mode: 'direct'|'proxy', notes? }`. Settings panel tab "Connections": add / edit / delete / set-active. Active connection URL replaces `OPENCODE_URL` for all chat fetches at runtime. Sessions are per-connection (sidebar filtered by active connection). | ⏳ Pending | — | — |
+| 14 | Mixed content detection | On settings panel mount and on connection switch: check if page is `https:` and selected URL is `http:` non-localhost. If so: show amber warning with browser-specific guidance (Chrome/Edge: allowed; Firefox: flag needed; Safari: use proxy mode). Proxy mode routes OpenCode requests through `/api/opencode-proxy` on the DocWright server. | ⏳ Pending | — | — |
+| 15 | Tests — Tier 3 | Connection CRUD in localStorage (add/edit/delete/switch). Mixed content detection logic: `isUnsafeConnection(pageProtocol, connectionUrl)` unit test covering all 4 browser × protocol combinations. | ⏳ Pending | — | — |
 
 ### Tier 4 — Terminal Panel (gate: demand confirmed)
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 16 | Demand validation | Survey developer users: is the AI chat panel (via OpenCode + MCP) sufficient for their automation needs, or is raw shell access required? Gate: at least 3 distinct developer users explicitly request a terminal panel. Document findings in `docs/terminal-demand.md`. | ⏳ Pending |
-| 17 | PTY panel (if gate clears) | Collapsible panel below chat using `xterm.js` (MIT, same as VS Code). WebSocket connection to OpenCode PTY endpoint scoped to vault directory. Security note: expose only if DocWright is deployed in a developer-only context — document this constraint clearly in the settings UI. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 16 | Demand validation | Survey developer users: is the AI chat panel (via OpenCode + MCP) sufficient for their automation needs, or is raw shell access required? Gate: at least 3 distinct developer users explicitly request a terminal panel. Document findings in `docs/terminal-demand.md`. | ⏳ Pending | — | — |
+| 17 | PTY panel (if gate clears) | Collapsible panel below chat using `xterm.js` (MIT, same as VS Code). WebSocket connection to OpenCode PTY endpoint scoped to vault directory. Security note: expose only if DocWright is deployed in a developer-only context — document this constraint clearly in the settings UI. | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
+| 5 | — | — | |
+| 6 | — | — | |
+| 7 | — | — | |
+| 8 | — | — | |
+| 9 | — | — | |
+| 10 | — | — | |
+| 11 | — | — | |
+| 12 | — | — | |
+| 13 | — | — | |
+| 14 | — | — | |
+| 15 | — | — | |
+| 16 | — | — | |
+| 17 | — | — | |
 
 ## Testing Plan
 

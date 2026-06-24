@@ -13,18 +13,29 @@ tests_defined: true
 tests_human_reviewed: false
 phase: 5
 _path: plans/sub-plan-contribution-pipeline.md
+github_epic: null
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 
 
 ## Implementation Steps
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | **Implement contribute_upstream function** | Create a function that validates input, generates a GitHub issue or URL, and logs it to the `.docwright/contributions.log` file. | ❌ Failed |
-| 2 | **Schedule review notifications and log structured entries** | Trigger notifications and store structured log entries when check failures occur; Triggers a review of all entries in `docs/friction-log.md` at set intervals for successful logs with no errors emitted. | ⏳ In Progress |
-| 3 | **Utilize list_docwright_issues with search filters for new proposal creation** | Use specific labels or terms to identify relevant issues, verify output, and generate a pre-filled URL fallback to automate consent workflow via proposal creation instead of direct GitHub issues. | ⏳ Stalled |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | **Implement contribute_upstream function** | Create a function that validates input, generates a GitHub issue or URL, and logs it to the `.docwright/contributions.log` file. | ❌ Failed | — | — |
+| 2 | **Schedule review notifications and log structured entries** | Trigger notifications and store structured log entries when check failures occur; Triggers a review of all entries in `docs/friction-log.md` at set intervals for successful logs with no errors emitted. | ⏳ In Progress | — | — |
+| 3 | **Utilize list_docwright_issues with search filters for new proposal creation** | Use specific labels or terms to identify relevant issues, verify output, and generate a pre-filled URL fallback to automate consent workflow via proposal creation instead of direct GitHub issues. | ⏳ Stalled | — | — |
 
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
 
 ## Overview
 

@@ -20,6 +20,7 @@ tests_defined: true
 total_steps: 5
 completed_steps: 0
 phase: 4
+github_epic: null
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log
@@ -30,13 +31,26 @@ Five deferred gate proposals consolidated: AI-assisted preparation (surveys scop
 
 ## Implementation Steps
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | AI-assisted gate preparation | Before presenting a gate to a reviewer, AI reads all documents in scope, checks for incomplete items, flags inconsistencies, drafts readiness summary. Summary stored in gate_note. Profile's opencode-instructions.md defines AI checks per gate type. | ⏳ Pending |
-| 2 | Multi-reviewer quorum | Extend gate definitions in profile.json with quorum field. Frontmatter gains gate_reviews array (per-reviewer state). Gate stays pending until quorum reached. Status page shows per-reviewer state. | ⏳ Pending |
-| 3 | Time-based and scheduled triggers | Add schedule trigger type to gate definitions with cadence field. Document frontmatter gains review_cadence override. Overdue gates surface on status page. | ⏳ Pending |
-| 4 | Retroactive audit of past transitions | Vault scan tool (MCP + CLI) finding gated transitions without recorded gate_status. With --fix: stamps with waived + audit note. MCP tool: docwright_gate_audit. Status page Audit tab. | ⏳ Pending |
-| 5 | Governance audit log | Append-only structured JSONL log of every lifecycle transition (status changes, gate approvals, AI write actions, deferrals). Logged via pre-commit hook or dispatch promote(). MCP query tool, Web UI Audit tab, CLI interface. Committed to git. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | AI-assisted gate preparation | Before presenting a gate to a reviewer, AI reads all documents in scope, checks for incomplete items, flags inconsistencies, drafts readiness summary. Summary stored in gate_note. Profile's opencode-instructions.md defines AI checks per gate type. | ⏳ Pending | — | — |
+| 2 | Multi-reviewer quorum | Extend gate definitions in profile.json with quorum field. Frontmatter gains gate_reviews array (per-reviewer state). Gate stays pending until quorum reached. Status page shows per-reviewer state. | ⏳ Pending | — | — |
+| 3 | Time-based and scheduled triggers | Add schedule trigger type to gate definitions with cadence field. Document frontmatter gains review_cadence override. Overdue gates surface on status page. | ⏳ Pending | — | — |
+| 4 | Retroactive audit of past transitions | Vault scan tool (MCP + CLI) finding gated transitions without recorded gate_status. With --fix: stamps with waived + audit note. MCP tool: docwright_gate_audit. Status page Audit tab. | ⏳ Pending | — | — |
+| 5 | Governance audit log | Append-only structured JSONL log of every lifecycle transition (status changes, gate approvals, AI write actions, deferrals). Logged via pre-commit hook or dispatch promote(). MCP query tool, Web UI Audit tab, CLI interface. Committed to git. | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
+| 5 | — | — | |
 
 ## Testing Plan
 
