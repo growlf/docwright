@@ -28,7 +28,7 @@ related_to:
   - proposals/sub-plan-msp-pilot-vault.md
   - proposals/sub-plan-cascade-steam-early-access.md
 total_steps: 14
-completed_steps: 8
+completed_steps: 10
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
 _path: plans/phase-vault-portability-pilot.md
 consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
@@ -63,8 +63,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ✅ Done |
 | 10 | `docwright adopt` — existing vault adoption tooling | [[proposals/approved/docwright-adopt-existing-vault.md]] | ✅ Done |
 | 11 | Vault Write API (moveDocument, renameDocument, canonical setField) | [[proposals/approved/sub-plan-vault-write-api.md]] | ✅ Done |
-| 12 | Vault Document Index (unified frontmatter + wikilink edges) | [[proposals/sub-plan-vault-document-index.md]] | ⏳ Needs approval — **blocks 13** |
-| 13 | Knowledge Graph (D3 force-directed, 4th status tab, gap detection) | [[proposals/knowledge-graph-cross-document-idea-linkage.md]] | ⏳ Needs approval — **must ship before pilots run** |
+| 12 | Vault Document Index (unified frontmatter + wikilink edges) | [[proposals/approved/sub-plan-vault-document-index.md]] | ✅ Done |
+| 13 | Knowledge Graph (D3 force-directed, 4th status tab, gap detection) | [[proposals/knowledge-graph-cross-document-idea-linkage.md]] | ✅ Done — proposal approval pending |
 
 **Ordering:** Deliverables 11 → 12 → 13 must land before pilots (7, 8). Everything else can run in parallel around that spine. Deliverable 6 runs independently and closes in Phase 5.
 
@@ -84,8 +84,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 10 | Friction log tooling | **Delegated to `plans/sub-plan-contribution-pipeline.md` Step 2.** See sub-plan for full details (log_friction MCP tool, docs/friction-log.md structure, periodic review cadence). | ⏳ Pending | — | — |
 | 11 | Architecture boundary document | `docs/vault-portability.md` written covering: three adoption modes, manifest upgrade contract, js-yaml baked-path approach, moving vaults between machines, CI usage, DOCWRIGHT_ROOT vs DOCWRIGHT_VAULT_ROOT. | ✅ Done | — | — |
 | 12 | Vault Write API | `moveDocument(src, dest)`, `renameDocument(path, newName)`, `setDocumentField(path, field, value)` implemented in `src/dispatch/vault-write.ts`. Full rollback on failure, wikilink cascade, cross-ref update, write-audit.jsonl. `fix-stale-approvals.ts` marked @deprecated — approve/rename endpoints wired to canonical API. 13 tests passing. | ✅ Done | — | — |
-| 13 | Vault Document Index | In-memory index built from full vault scan at startup, refreshed via SSE file-change events. Covers both frontmatter edges (`related_to`, `depends_on`, `proposal_source`, `consumed_by`) and body-text wikilinks. Exposes `/api/graph` (nodes + edges for KG) and `/api/vault/query`. Accurate from day one — no "basic" phase followed by enrichment. See [[proposals/sub-plan-vault-document-index.md]]. | ⏳ Pending | — | — |
-| 14 | Knowledge Graph | D3.js force-directed graph as the 4th status tab. Nodes: proposals, plans, research, policy atoms. Edges from vault document index (frontmatter + wikilinks). Gap detection overlays: orphaned plans, dead-end research, dependency roadblocks, phase orphans, thematic orphans. Ships with wikilink edges from day one. See [[proposals/knowledge-graph-cross-document-idea-linkage.md]]. | ⏳ Pending | — | — |
+| 13 | Vault Document Index | `buildIndex`, `readIndex`, `writeIndex`, `rebuildIfStale`, `getBacklinksFor`, `queryDocuments` implemented in `src/dispatch/vault-index.ts`. `/api/graph` and `/api/vault/query` live. SSE wires index rebuild on file change. Two test files (24 tests). Proposal `approved: true`. | ✅ Done | — | — |
+| 14 | Knowledge Graph | `KnowledgeGraph.svelte` (580 lines) and `GraphView.svelte` (228 lines) implemented. D3 force-directed, 4th status tab, 6 gap-detection categories, filter sidebar. Wired into status page. Proposal code-complete but `approved: false` — NetYeti to approve `proposals/knowledge-graph-cross-document-idea-linkage.md`. | ✅ Done | — | — |
 
 ## Parallelism Map
 
@@ -208,3 +208,4 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 | 2026-06-16 | Real-world pilot: DAFO Infrastructure Vault adopted by Garth Johnson (Cascade Steam Technology). First unplanned external vault adoption — existing Obsidian vault, non-empty directory, 6 proposals, GitHub private repo. Gaps documented in "Real-World Pilot" section above. Proposal [[proposals/approved/docwright-adopt-existing-vault.md]] created for adopt-vault tooling. | NetYeti |
 | 2026-06-17 | Roadmap restructure: Phase 3 gains three foundational prerequisites before pilots — Vault Write API (11), Vault Document Index (12), Knowledge Graph (13). Title updated to "Vault Foundation, Perception & Real-World Pilots". total_steps 11→14. Deliverables table fixed (approved proposal paths corrected, new rows added). Phase Gate updated. Contribution pipeline noted as Phase 5 parallel track, not a Phase 3 gate. | NetYeti |
 | 2026-06-24 | Deliverable #11 and Implementation Step 12 marked ✅ Done — vault-write.ts (moveDocument, renameDocument, setDocumentField) fully implemented; proposal already approved; Phase Gate was already checked; fix-stale-approvals.ts marked @deprecated; 13 tests passing. completed_steps corrected to 8 (was stale at 11). | NetYeti |
+| 2026-06-24 | Deliverables #12 and #13 + Implementation Steps 13 and 14 marked ✅ Done — vault-index.ts and KnowledgeGraph.svelte fully implemented; sub-plan-vault-document-index proposal approved; Phase Gate checked for both. Knowledge Graph proposal still needs formal approval (approved: false) — flagged in table. completed_steps updated to 10. | NetYeti |
