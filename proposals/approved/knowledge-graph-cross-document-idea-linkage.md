@@ -23,6 +23,7 @@ related_to:
   - proposals/deferred-rlm-python-microservice.md
   - research/rlm-recursive-language-models.md
 phase: 3
+consumed_by: plans/phase-vault-portability-pilot.md
 ---
 
 ## Problem
