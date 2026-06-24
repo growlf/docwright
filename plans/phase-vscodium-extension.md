@@ -18,6 +18,7 @@ depends_on:
 scenario_synthesis: VSCodium extension development; requires Node.js + VS Code API; no web UI or shell deployment steps in this plan
 _path: plans/phase-vscodium-extension.md
 proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 5; no individual proposal
+github_epic: null
 ---
 # VSCodium Extension
 

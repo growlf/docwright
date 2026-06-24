@@ -19,6 +19,7 @@ proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 5; no in
 phase: 5
 total_steps: 0
 completed_steps: 0
+github_epic: null
 ---
 
 # Phase 5 — Cascade STEAM Production Infrastructure

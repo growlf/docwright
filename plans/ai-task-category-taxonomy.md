@@ -15,6 +15,7 @@ scenario_synthesis: Extend AiCategory TypeScript union and JSON Schema to 6 valu
 tests_defined: true
 tests_human_reviewed: false
 _path: plans/ai-task-category-taxonomy.md
+github_epic: null
 ---
 
 # AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time
@@ -39,12 +40,24 @@ label at authorship time; the ai-stack project owns the capability registry.
 
 ## Implementation Steps
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Extend `AiCategory` schema | Added `'coding'` and `'agentic'` to TypeScript union in `schema.ts`, updated JSON Schema enum, updated validator, added 2 new tests. Updated `docs/policy-atom-model-routing.md` with routing tables for both new categories. | ✅ Done |
-| 2 | `categories.yaml` registry | Created `src/policy-atoms-core/categories.yaml` with display names, descriptions, status, min_model, routing_notes for all 6 categories. Exported `loadCategoryRegistry()` and `validateCategoryId()` from `categories.ts`. | ✅ Done |
-| 3 | ai-stack capability registry | **Independent workstream — ai-stack project.** Create `capability-registry.yaml` mapping `(ai_category)` to `(model, endpoint, node)` per fleet node. Wire LiteLLM routing config to read from registry. Provide `judgment_dispatch_hook` implementation. See [[docs/policy-atom-model-routing.md]] for the routing reference DocWright has already established. | ⏳ Pending (ai-stack) |
-| 4 | Creation-time category suggestion | `create-plan` endpoint: classification call per step to suggest `ai_category`. Web UI: `ai_category` dropdown in plan step editor (optional column). Phase 4/5 UI sprint — not blocking Steps 1–3. | ⏳ Pending (Phase 4/5 UI) |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | Extend `AiCategory` schema | Added `'coding'` and `'agentic'` to TypeScript union in `schema.ts`, updated JSON Schema enum, updated validator, added 2 new tests. Updated `docs/policy-atom-model-routing.md` with routing tables for both new categories. | ✅ Done | — | — |
+| 2 | `categories.yaml` registry | Created `src/policy-atoms-core/categories.yaml` with display names, descriptions, status, min_model, routing_notes for all 6 categories. Exported `loadCategoryRegistry()` and `validateCategoryId()` from `categories.ts`. | ✅ Done | — | — |
+| 3 | ai-stack capability registry | **Independent workstream — ai-stack project.** Create `capability-registry.yaml` mapping `(ai_category)` to `(model, endpoint, node)` per fleet node. Wire LiteLLM routing config to read from registry. Provide `judgment_dispatch_hook` implementation. See [[docs/policy-atom-model-routing.md]] for the routing reference DocWright has already established. | ⏳ Pending (ai-stack) | — | — |
+| 4 | Creation-time category suggestion | `create-plan` endpoint: classification call per step to suggest `ai_category`. Web UI: `ai_category` dropdown in plan step editor (optional column). Phase 4/5 UI sprint — not blocking Steps 1–3. | ⏳ Pending (Phase 4/5 UI) | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
 
 ## Testing Plan
 

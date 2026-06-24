@@ -21,6 +21,7 @@ tests_defined: true
 total_steps: 7
 completed_steps: 0
 phase: 5
+github_epic: null
 ---
 
 # Plan: UI — Lifecycle Graph View
@@ -31,15 +32,30 @@ Build a lifecycle graph view on the status page that visualises the full project
 
 ## Implementation Steps
 
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-| 1 | Add funnel view component to status page | Render lifecycle stages as horizontal swimlanes (open proposals, approved proposals, active plans, completed) using existing status API data. Each lane shows document cards. | ⏳ Pending |
-| 2 | SVG arrow connectors between stages | Simple SVG lines connecting adjacent swimlanes showing the progression flow. No graph library needed. | ⏳ Pending |
-| 3 | Click-to-navigate on cards | Each document card opens the document in the main content pane at its lifecycle path. | ⏳ Pending |
-| 4 | Hover tooltip with frontmatter summary | Tooltip on hover showing title, status, assigned_to, complexity from frontmatter. | ⏳ Pending |
-| 5 | Filter controls | Filter by phase, status, assigned contributor, or tag. Collapse completed work to focus on active/upcoming. | ⏳ Pending |
-| 6 | Phase view mode (Phase 3) | Group nodes by phase: frontmatter, showing Phase 1 through Phase N as column groups within each swimlane. Requires backlink index. | ⏳ Pending |
-| 7 | Dependency graph (Phase 3) | Force-directed graph using D3.js showing full document lineage with proposal_source, related_to, depends_on, blocks, subsumed_by edges. Requires backlink index from Phase 3. | ⏳ Pending |
+| Step | Action | Details | Status | Issue | Branch |
+|------|--------|---------|--------| --- | --- |
+| 1 | Add funnel view component to status page | Render lifecycle stages as horizontal swimlanes (open proposals, approved proposals, active plans, completed) using existing status API data. Each lane shows document cards. | ⏳ Pending | — | — |
+| 2 | SVG arrow connectors between stages | Simple SVG lines connecting adjacent swimlanes showing the progression flow. No graph library needed. | ⏳ Pending | — | — |
+| 3 | Click-to-navigate on cards | Each document card opens the document in the main content pane at its lifecycle path. | ⏳ Pending | — | — |
+| 4 | Hover tooltip with frontmatter summary | Tooltip on hover showing title, status, assigned_to, complexity from frontmatter. | ⏳ Pending | — | — |
+| 5 | Filter controls | Filter by phase, status, assigned contributor, or tag. Collapse completed work to focus on active/upcoming. | ⏳ Pending | — | — |
+| 6 | Phase view mode (Phase 3) | Group nodes by phase: frontmatter, showing Phase 1 through Phase N as column groups within each swimlane. Requires backlink index. | ⏳ Pending | — | — |
+| 7 | Dependency graph (Phase 3) | Force-directed graph using D3.js showing full document lineage with proposal_source, related_to, depends_on, blocks, subsumed_by edges. Requires backlink index from Phase 3. | ⏳ Pending | — | — |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
+| 5 | — | — | |
+| 6 | — | — | |
+| 7 | — | — | |
 
 ## Testing Plan
 
