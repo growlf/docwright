@@ -56,6 +56,24 @@ pre-commit hook calls `scripts/version.js` to:
 This is automatic — no human needs to remember to bump the version.
 The version is always derivable from the plan state.
 
+## Release branches
+
+When a milestone is ready (phase completion, major feature set), a release
+branch is created from `develop`:
+
+```
+git checkout -b release/v0.<phase>.<patch> develop
+```
+
+The release branch is where:
+- The version is finalized (auto-bumped or manually reviewed)
+- `CHANGELOG.md` release notes are written
+- Final validation CI runs
+- The PR to `main` is created and reviewed
+
+Once merged to `main`, the release branch is deleted and the tag is applied.
+This keeps `main` as a clean release record.
+
 ## Major version milestones
 
 Major versions are not automatic. They are proposed, approved, and tagged

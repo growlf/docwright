@@ -8,7 +8,7 @@
 interface SessionResult { id: string; title?: string; }
 
 async function fetchJson(method: string, path: string, body?: unknown): Promise<any> {
-  let url = path.startsWith('http') ? path : path;
+  const url = path.startsWith('http') ? path : path;
   const res = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
