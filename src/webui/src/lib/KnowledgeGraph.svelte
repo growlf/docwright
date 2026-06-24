@@ -7,7 +7,7 @@
   interface GraphNode {
     id: string; title: string; docType: string; status: string;
     phase: string; tags: string[]; author: string;
-    approved?: boolean; contentHash: string;
+    approved?: boolean; deferred?: boolean; contentHash: string;
     x?: number; y?: number; vx?: number; vy?: number; fx?: number | null; fy?: number | null;
   }
 
@@ -117,7 +117,7 @@
 
     const approvedNoResearch = new Set<string>();
     for (const n of ns) {
-      if (n.docType !== 'proposal' || n.approved !== true) continue;
+      if (n.docType !== 'proposal' || n.approved !== true || n.deferred) continue;
       if (!out(n.id).some(e => byId.get(e.target)?.docType === 'research')) approvedNoResearch.add(n.id);
     }
 
@@ -133,7 +133,8 @@
     }
 
     const thematicOrphans = new Set<string>();
-    const proposals = ns.filter(n => n.docType === 'proposal');
+    // Exclude deferred proposals — they're intentionally parked, not lost
+    const proposals = ns.filter(n => n.docType === 'proposal' && !n.deferred);
     for (let i = 0; i < proposals.length; i++) {
       for (let j = i + 1; j < proposals.length; j++) {
         const a = proposals[i], b = proposals[j];

@@ -12,6 +12,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to:
   - NetYeti
+consumed_by: plans/completed/phase-1-opencode-embed.md
 ---
 
 # Phase 0 Spike: OpenCode Embed Verification

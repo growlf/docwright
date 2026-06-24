@@ -663,3 +663,27 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 **Session note:** `docs/session-notes/session_note_202606221500.md`
 **Discovery data:** `docs/session-notes/BMS_DISCOVERY_DATA.md`
+
+---
+
+## Session: 2026-06-24 — PRs, Plans, Orphans, Research Restructure
+
+**Focus:** PR cleanup, plan consolidation, critical path work, vault graph orphan fixes
+
+**Completed:**
+- [x] Cleared PRs #17–#29: Vite 8 upgrade, branch scheme docs, step-issue tooling, branch policy CI gate
+- [x] Branch policy enforced: feat|fix|chore/* → develop; release/v* → main; CI gate required
+- [x] Consolidated active plans: 74 → 34 pending items; 2 canceled, 1 completed, 4 steps corrected done
+- [x] Master Stack artifact: full portfolio analysis, 4 layers, critical path identified
+- [x] Phase 3 governance closures: Deliverables 11, 12, 13 marked ✅ Done (code already existed)
+- [x] Knowledge Graph proposal approved (user committed with HUMAN_APPROVED=1)
+- [x] promote.ts implemented — Phase 4 apex, 5 functions, 15 tests, wires gates.ts + audit.ts
+- [x] Fixed 141 broken cross-references (83+ graph orphans resolved)
+- [x] research/INDEX.md → research/index.md (lowercase, wikilinks, graph edges)
+- [x] research/execution-mode/ subfolder — 4 docs moved, cluster index created
+- [x] Graph gap detection: deferred proposals excluded from orphan/thematic detection
+- [x] PR #30 open (research subfolder + orphan fixes) — CI pending at session end
+
+**Open:** PR #30 (`chore/research-subfolder-structure` → develop) needs merge. Vault renaming work (active plans still use mixed naming) to continue next session.
+
+**Session note:** `docs/session-notes/session_note_202606240000.md`

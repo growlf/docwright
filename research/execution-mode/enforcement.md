@@ -14,9 +14,12 @@ tags:
   - web-ui
 linked_proposals:
   - proposals/approved/research-plan-execution-modes.md
-related_research:
-  - research/plan-execution-mode-naming.md
-  - research/plan-execution-mode-ui-mocks.md
+related_to:
+  - research/execution-mode/index.md
+  - research/execution-mode/naming.md
+  - research/execution-mode/tool-survey.md
+  - research/execution-mode/ui-mocks.md
+_path: research/execution-mode/enforcement.md
 ---
 
 # Plan Execution Mode — Enforcement Contract

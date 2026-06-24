@@ -16,6 +16,7 @@ parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: "5"
 approved_date: 2026-06-11
 approved_by: agent
+consumed_by: plans/completed/sub-plan-vault-migration-system.md
 ---
 
 ## Problem
