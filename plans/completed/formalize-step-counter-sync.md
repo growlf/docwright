@@ -1,6 +1,7 @@
 ---
 title: Formalize validation and auto-sync for step counters
-status: in-progress
+status: completed
+completed_date: 2026-06-24
 author: NetYeti
 created: 2026-06-09
 tags: tooling-gap, governance, lifecycle
@@ -14,7 +15,7 @@ tests_human_reviewed: true
 phase: 5
 total_steps: 1
 completed_steps: 1
-_path: plans/formalize-step-counter-sync.md
+_path: plans/completed/formalize-step-counter-sync.md
 github_epic: null
 ---
 # Formalize validation and auto-sync for step counters
