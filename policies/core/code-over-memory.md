@@ -80,7 +80,7 @@ See [[workflow-layer-governance.md]] for the full principle.
   — should be caught by dispatch linter
   (see [[proposals/built-in-deferred-idea-capture.md]]).
 - **Phase gates**: phase completion without sign-off — enforced by hook
-  (see [[proposals/phase-gate-sign-off.md]]).
+  (see [[proposals/approved/phase-gate-sign-off.md]]).
 
 ## AI memory as fallback, not primary
 

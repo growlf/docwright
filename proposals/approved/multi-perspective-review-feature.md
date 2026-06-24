@@ -15,9 +15,9 @@ created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
   - policies/core/multi-perspective-review.md
-  - proposals/web-ui-ai-chat-panel.md
-  - proposals/phase-gate-sign-off.md
-consumed_by: plans/phase-1-ui-polish.md
+  - proposals/approved/web-ui-ai-chat-panel.md
+  - proposals/approved/phase-gate-sign-off.md
+consumed_by: plans/completed/phase-1-ui-polish.md
 ---
 
 ## Problem
@@ -85,7 +85,7 @@ when the answer is "not needed for this one."
 
 ### 3. Phase gate integration
 
-The phase gate reviewer prompt (see [[proposals/phase-gate-sign-off.md]])
+The phase gate reviewer prompt (see [[proposals/approved/phase-gate-sign-off.md]])
 includes: "Did you seek a second perspective on any significant decisions in
 this phase?" The answer is logged in `gate_note` — optional, but the question
 is always asked.

@@ -11,7 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/approve-sub-plan-from-parent.md
-consumed_by: plans/approve-sub-plan-from-parent.md
+consumed_by: plans/completed/approve-sub-plan-from-parent.md
 ---
 
 ## Problem

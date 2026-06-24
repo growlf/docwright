@@ -12,11 +12,11 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: Netyeti
 related_to:
-  - proposals/web-ui-ai-chat-panel.md
-  - proposals/multi-perspective-review-feature.md
+  - proposals/approved/web-ui-ai-chat-panel.md
+  - proposals/approved/multi-perspective-review-feature.md
   - proposals/approved/ux-new-proposal.md
-_path: proposals/ai-proposal-improve-on-save.md
-consumed_by: plans/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
+_path: proposals/approved/ai-proposal-improve-on-save.md
+consumed_by: plans/completed/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
 ---
 
 ## Problem

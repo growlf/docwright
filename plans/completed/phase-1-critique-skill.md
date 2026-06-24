@@ -9,7 +9,7 @@ gate_reviewer: NetYeti
 gate_status: waived
 gate_note: "Waived retroactively — completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 proposal_source:
-  - proposals/skill-plan-critique.md
+  - proposals/approved/skill-plan-critique.md
 priority: critical
 mode: mentor
 assigned_to: NetYeti
@@ -19,7 +19,7 @@ tags:
   - governance
   - skills
   - ai
-_path: plans/phase-1-critique-skill.md
+_path: plans/completed/phase-1-critique-skill.md
 ---
 
 # Phase 1 — Plan Critique Skill
@@ -35,7 +35,7 @@ that every plan we execute has already been stress-tested.
 Building the tool that audits plans AFTER plans are already in flight is
 backwards. This is the highest-priority Phase 1 item.
 
-See [[proposals/skill-plan-critique.md]] for the full specification.
+See [[proposals/approved/skill-plan-critique.md]] for the full specification.
 
 ## Deliverables
 

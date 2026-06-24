@@ -15,7 +15,7 @@ complexity: high
 phase: 3
 mode: autonomous
 assigned_to: NetYeti
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: 1
 tests_defined: true
 scenario_synthesis: Migrate Python MCP server logic to TypeScript; implement standard MCP lifecycle; no external network access beyond dev dependencies.

@@ -13,7 +13,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/need-a-way-to-quickly-discern-raw-proposals.md
-consumed_by: plans/need-a-way-to-quickly-discern-raw-proposals.md
+consumed_by: plans/completed/need-a-way-to-quickly-discern-raw-proposals.md
 ---
 
 ## Problem
@@ -67,7 +67,7 @@ Optionally, a periodic check (triggered by webhook or cron) that:
 
 | Feature | Relationship |
 |---------|-------------|
-| [[proposals/ai-proposal-improve-on-save.md]] | `fillProposal()` is the drafting engine this proposal triggers |
+| [[proposals/approved/ai-proposal-improve-on-save.md]] | `fillProposal()` is the drafting engine this proposal triggers |
 | [[proposals/doc-automations.md]] | Auto-drafting on save complements the raw-proposal triage flow |
 | [[proposals/tags-more-useful-to-humans.md]] | Raw proposals get auto-tagged during drafting |
 | Status page | Raw Proposals section extends the existing status page layout |

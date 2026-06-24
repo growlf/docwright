@@ -12,7 +12,7 @@ deferred: false
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
-  - proposals/ui-settings-activity-bar.md
+  - proposals/approved/ui-settings-activity-bar.md
 consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
@@ -36,7 +36,7 @@ attribution). The panel provides:
 
 Requires integrating a search backend. The activity bar slot is reserved
 for it. Vault navigation by file tree is sufficient for launch.
-See [[proposals/ui-settings-activity-bar.md]].
+See [[proposals/approved/ui-settings-activity-bar.md]].
 
 ## Document History
 

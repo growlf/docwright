@@ -11,7 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/plan-content-from-proposal-body.md
-consumed_by: plans/plan-content-from-proposal-body.md
+consumed_by: plans/completed/plan-content-from-proposal-body.md
 ---
 
 ## Problem

@@ -16,7 +16,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: Netyeti
 _path: proposals/research-stage-methodology.md
-consumed_by: plans/research-stage-methodology.md
+consumed_by: plans/completed/research-stage-methodology.md
 ---
 
 ## Problem

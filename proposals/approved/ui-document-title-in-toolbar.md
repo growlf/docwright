@@ -16,7 +16,7 @@ consumed_by: plans/completed/web-ui-polish.md
 ## Problem
 
 The document toolbar showed only the raw file path (e.g.
-`proposals/web-ui-ai-chat-panel.md`) with no document title. Users had no
+`proposals/approved/web-ui-ai-chat-panel.md`) with no document title. Users had no
 clear indication of which document they were viewing without reading the path
 or scrolling to find a heading in the body.
 

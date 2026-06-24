@@ -177,4 +177,4 @@ The 1,500-token limit is enforced by the sync-checker. Do not increase it — th
 - [[docs/decisions-ledger.md]] — F3 (8b tool failure), F6 (14b on Phoenix Arc), P3 (cluster GPU status)
 - [[research/rlm-recursive-language-models.md]] — RLM for multi-atom cross-reference
 - [[research/plan-execution-mode-enforcement.md]] — how mode:mentor/guided/autonomous gates judgment outputs
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan

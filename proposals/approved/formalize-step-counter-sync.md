@@ -14,7 +14,7 @@ related_to: ["plans/auto-plan-executor.md", "plans/sub-plan-ts-mcp-server.md"]
 depends_on: []
 blocks: []
 _path: proposals/formalize-step-counter-sync.md
-consumed_by: plans/formalize-step-counter-sync.md
+consumed_by: plans/completed/formalize-step-counter-sync.md
 ---
 
 # Formalize validation and auto-sync for step counters

@@ -15,7 +15,7 @@ complexity: medium
 mode: guided
 scenario_synthesis: Vault migration system; npm scripts, MIGRATION.md parsing, config.json versioning; no VS Code or IDE-specific steps
 assigned_to: NetYeti
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: 5
 tests_defined: true
 phase: 3

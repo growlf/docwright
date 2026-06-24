@@ -12,7 +12,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/phase-closeout-procedure.md
-consumed_by: plans/phase-closeout-procedure.md
+consumed_by: plans/completed/phase-closeout-procedure.md
 ---
 
 ## Problem

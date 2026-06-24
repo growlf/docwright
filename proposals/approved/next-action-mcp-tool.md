@@ -11,7 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/next-action-mcp-tool.md
-consumed_by: plans/next-action-mcp-tool.md
+consumed_by: plans/completed/next-action-mcp-tool.md
 ---
 
 ## Problem

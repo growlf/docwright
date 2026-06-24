@@ -15,7 +15,7 @@ deferred_reason: "Requires full profile engine (Phase 3). MVP uses a hardcoded c
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
-  - proposals/web-ui-ai-chat-panel.md
+  - proposals/approved/web-ui-ai-chat-panel.md
   - plans/phase-3-profile-acl-ai.md
 ---
 

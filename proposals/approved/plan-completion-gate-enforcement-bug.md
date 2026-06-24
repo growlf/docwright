@@ -16,10 +16,10 @@ priority: critical
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+  - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - plans/ai-task-category-taxonomy.md
 _path: proposals/plan-completion-gate-enforcement-bug.md
-consumed_by: plans/plan-completion-gate-enforcement-bug.md
+consumed_by: plans/completed/plan-completion-gate-enforcement-bug.md
 ---
 
 ## Problem
@@ -144,7 +144,7 @@ proposition of the governance system.
 
 ## Related
 
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — this plan itself has unchecked gate criteria that the current enforcement cannot block
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — this plan itself has unchecked gate criteria that the current enforcement cannot block
 - `src/mcp/lib/steps.ts` — `checkCompletionGate()` and `hasPendingSteps()`
 - `src/webui/src/lib/PropertiesPane.svelte` — Complete button visibility logic
 

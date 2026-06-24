@@ -12,10 +12,10 @@ created_by: NetYeti@phoenix
 assigned_to: netyeti
 priority: medium
 complexity: low
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: 4
 _path: proposals/sub-plan-profile-override-merge.md
-consumed_by: plans/sub-plan-profile-override-merge.md
+consumed_by: plans/completed/sub-plan-profile-override-merge.md
 ---
 
 ## Problem

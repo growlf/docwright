@@ -16,7 +16,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/research-plan-execution-modes.md
-consumed_by: plans/research-plan-execution-modes.md
+consumed_by: plans/completed/research-plan-execution-modes.md
 ---
 ---
 

@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 priority: medium
 complexity: medium
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: "5"
 approved_date: 2026-06-11
 approved_by: agent

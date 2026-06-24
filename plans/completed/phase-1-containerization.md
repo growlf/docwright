@@ -8,7 +8,7 @@ phase: 1
 gate_reviewer: NetYeti
 gate_status: waived
 proposal_source:
-  - proposals/containerization.md
+  - proposals/approved/containerization.md
 priority: medium
 mode: mentor
 assigned_to: NetYeti
@@ -23,7 +23,7 @@ tags:
 tests_defined: true
 total_steps: 7
 completed_steps: 7
-_path: plans/phase-1-containerization.md
+_path: plans/completed/phase-1-containerization.md
 ---
 
 ## Overview
@@ -34,7 +34,7 @@ Containerization is promoted to Phase 1 to ensure the web tool ships in a
 reproducible, stable environment before Phase 2 begins.
 
 This plan delivers a complete Docker packaging covering all three deployment
-scenarios (standalone, team server, enterprise). See [[proposals/containerization.md]]
+scenarios (standalone, team server, enterprise). See [[proposals/approved/containerization.md]]
 for the full specification.
 
 ## Implementation Steps

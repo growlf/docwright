@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: high
 complexity: high
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-vault-portability-pilot.md
 parent_deliverable: "7"
 ---
 

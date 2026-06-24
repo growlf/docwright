@@ -15,10 +15,10 @@ author-role: contributor
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - proposals/approved/sub-plan-docwright-init-scaffold.md
+  - proposals/sub-plan-docwright-init-scaffold.md
   - plans/phase-vault-portability-pilot.md
 _path: proposals/approved/docwright-adopt-existing-vault.md
-consumed_by: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 ## Problem
 
@@ -390,7 +390,7 @@ This proposal was derived directly from the DAFO Infrastructure Vault adoption s
 ## Related
 
 *   \[\[plans/phase-vault-portability-pilot.md\]\] — Phase 3 plan; DAFO pilot findings documented there
-*   \[\[proposals/approved/sub-plan-docwright-init-scaffold.md\]\] — the `init.ts` script this extends; also needs manifest/stamp changes
+*   \[\[proposals/sub-plan-docwright-init-scaffold.md\]\] — the `init.ts` script this extends; also needs manifest/stamp changes
 *   \[\[proposals/sub-plan-cascade-steam-early-access.md\]\] — next planned vault adoption; required validation milestone
 *   \[\[scripts/vault-migrate.ts\]\] — existing schema migration script; `adopt --upgrade` delegates schema bumps to this
 *   \[\[scripts/install-hooks.sh\]\] — hook installer; js-yaml baked-path fix lands here before adopt-vault.ts ships
