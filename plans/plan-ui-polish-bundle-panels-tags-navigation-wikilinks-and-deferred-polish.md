@@ -1,6 +1,6 @@
 ---
 title: "Plan: UI Polish Bundle — Panels, Tags, Navigation, Wikilinks, and Deferred Polish"
-status: draft
+status: canceled
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
@@ -15,8 +15,8 @@ depends_on: []
 blocks: []
 reviewed_by:
 reviewed_date:
-canceled_date:  # Populated when plan is canceled
-cancellation_reason:  # Populated when plan is canceled
+canceled_date: 2026-06-24
+cancellation_reason: "Phase 6 placeholder — no implementation steps ever defined. Scope consumed by ai-task-category-taxonomy plan (see consumed_by). Any genuine polish items should be captured as individual proposals when they become actionable."
 template_version: "1.0"
 tests_defined: false  # Set to true after confirming test coverage is adequate — required before plan can be completed
 # Gate fields — populated when a lifecycle gate applies to this document
