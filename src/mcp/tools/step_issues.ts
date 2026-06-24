@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 
 function slugify(text: string): string {
   // Strip markdown: **bold**, `code`, [link](url), *italic*
-  let s = text
+  const s = text
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/`(.+?)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
