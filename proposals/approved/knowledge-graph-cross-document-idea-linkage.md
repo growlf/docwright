@@ -14,8 +14,8 @@ tags:
   - gap-detection
 complexity: high
 estimated_effort: L
-approved: false
-assigned_to: ""
+approved: true
+assigned_to: NetYeti
 related_to:
   - proposals/sub-plan-vault-write-api.md
   - proposals/sub-plan-vault-document-index.md
