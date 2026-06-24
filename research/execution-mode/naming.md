@@ -13,8 +13,12 @@ tags:
   - ux
 linked_proposals:
   - proposals/approved/research-plan-execution-modes.md
-related_research:
-  - research/plan-execution-mode-tool-survey.md
+related_to:
+  - research/execution-mode/index.md
+  - research/execution-mode/enforcement.md
+  - research/execution-mode/tool-survey.md
+  - research/execution-mode/ui-mocks.md
+_path: research/execution-mode/naming.md
 ---
 
 # Plan Execution Mode — Naming Recommendation

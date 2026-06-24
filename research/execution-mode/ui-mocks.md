@@ -13,9 +13,12 @@ tags:
   - web-ui
 linked_proposals:
   - proposals/approved/research-plan-execution-modes.md
-related_research:
-  - research/plan-execution-mode-naming.md
-  - research/plan-execution-mode-tool-survey.md
+related_to:
+  - research/execution-mode/index.md
+  - research/execution-mode/enforcement.md
+  - research/execution-mode/naming.md
+  - research/execution-mode/tool-survey.md
+_path: research/execution-mode/ui-mocks.md
 ---
 
 # Plan Execution Mode — Web UI Mocks Per Mode

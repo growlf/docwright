@@ -3,26 +3,26 @@ title: Research Index
 type: index
 _path: research/index.md
 related_to:
-  - research/plan-execution-mode-enforcement.md
-  - research/plan-execution-mode-naming.md
-  - research/plan-execution-mode-tool-survey.md
-  - research/plan-execution-mode-ui-mocks.md
+  - research/execution-mode/index.md
   - research/rlm-recursive-language-models.md
 ---
 
 # Research Index
 
 Quick reference for AI sessions. Read this before claiming a research topic hasn't been
-explored. Full documents are in `research/`. Active docs are works-in-progress;
-concluded docs have a recommendation recorded.
+explored. Active docs are works-in-progress; concluded docs have a recommendation recorded.
+
+## Clusters
+
+| Cluster | Status | Summary |
+|---|---|---|
+| [[research/execution-mode/index\|execution-mode/]] | concluded (4 docs) | How DocWright models AI autonomy — `mode: mentor\|guided\|autonomous` |
+
+## Standalone
 
 | File | Status | Question | Conclusion |
-|------|--------|----------|------------|
-| [[research/plan-execution-mode-enforcement]] | concluded | Which behaviors branch on mode, and where is each enforced — Web UI, MCP, linter, or AI preamble? | recommends |
-| [[research/plan-execution-mode-naming]] | concluded | What should the `automated` field and its values be renamed to? | recommends |
-| [[research/plan-execution-mode-tool-survey]] | concluded | How do comparable AI-assisted tools model "how much does the AI do"? | recommends |
-| [[research/plan-execution-mode-ui-mocks]] | concluded | Which buttons appear per mode; how does the human perceive mode at a glance? | recommends |
-| [[research/rlm-recursive-language-models]] | active | Can RLMs address DocWright's context-window and token-burn problems, and what is the correct integration path? | recommends |
+|---|---|---|---|
+| [[research/rlm-recursive-language-models]] | active | Can RLMs address DocWright's context-window and token-burn problems? | recommends |
 
 ## How to use
 
