@@ -78,3 +78,10 @@ spike/
 *.js.map
 .logs/
 session-ses_*.md
+
+# DocWright — managed entries (added by adopt-vault.ts)
+.dw-session.json
+.claude/skills/
+.opencode/skills/
+.gemini/agents/
+.gemini/settings.json
