@@ -17,8 +17,8 @@ depends_on:
 _path: plans/phase-4-profile-acl-ai.md
 proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 4; no individual proposal
 phase: 4
-total_steps: 0
-completed_steps: 0
+total_steps: 12
+completed_steps: 1
 github_epic: null
 ---
 # Phase 4 — Profile Engine, ACL & AI Integration
@@ -44,7 +44,7 @@ This plan tracks all Phase 4 deliverables. Each deliverable will be broken out i
 | 9 | LLM Wiki engine (`src/dispatch/llmwiki.ts`) — Ingest/Lint/Save-to-Wiki | ⏳ Planned | knowledge-base profile; Karpathy pattern |
 | 10 | `opencode-instructions.md` for all four bundled profiles | ⏳ Planned | Each must embed core philosophy + security/policy prompts |
 | 11 | Frontmatter linter (`src/dispatch/linter.ts`) — full schema enforcement | ⏳ Planned | Runs on save; surfaces violations in Web UI |
-| 12 | Promote workflow (`src/dispatch/promote.ts`) — status transitions | ⏳ Planned | Validates transitions against profile state machine |
+| 12 | Promote workflow (`src/dispatch/promote.ts`) — status transitions | ✅ Done | `checkTransition`, `executeTransition`, `checkWithAI`, `getBlockedDocuments`, `diffAnnotate` — 15 tests passing. Wires gates.ts + audit.ts into a single integration point. |
 
 ## Phase Context
 
