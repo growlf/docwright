@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-25 — Phase 3 Closure Prep, Stale Dist Bug
+
+**Focus:** Phase 3 closure prep, stale dist bug discovery
+
+**Completed:**
+- [x] Checked off all Phase 3 Testing Plan items (Steps 2+10 noted as delegated)
+- [x] Closed dogfooding Phase Gate (ongoing through 1.0 by design)
+- [x] Fixed MCP tool corruption to frontmatter (total_steps, completed_steps, tests_defined)
+- [x] Created `feat/knowledge-graph` branch from develop for ongoing KG tuning
+- [x] Rebuilt `dist/` via `npm run compile` (stale since Jun 22, broke 6-column step counting)
+- [x] Phase 3 transition ready — blocked only by running MCP server needing restart
+
+**Session note:** `docs/session-notes/session_note_202606250720.md`
+
+---
+
 ## Session: 2026-06-24 — Housekeeping, Plan Renames, Phase 3 Pilots
 
 **Focus:** PR/stash cleanup, naming coherence, Phase 3 pilot validation
