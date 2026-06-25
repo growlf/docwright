@@ -391,7 +391,7 @@ This proposal was derived directly from the DAFO Infrastructure Vault adoption s
 
 *   \[\[plans/phase-3-vault-foundation.md\]\] — Phase 3 plan; DAFO pilot findings documented there
 *   \[\[proposals/sub-plan-docwright-init-scaffold.md\]\] — the `init.ts` script this extends; also needs manifest/stamp changes
-*   \[\[proposals/sub-plan-cascade-steam-early-access.md\]\] — next planned vault adoption; required validation milestone
+*   \[\[proposals/approved/sub-plan-cascade-steam-early-access.md\]\] — next planned vault adoption; required validation milestone
 *   \[\[scripts/vault-migrate.ts\]\] — existing schema migration script; `adopt --upgrade` delegates schema bumps to this
 *   \[\[scripts/install-hooks.sh\]\] — hook installer; js-yaml baked-path fix lands here before adopt-vault.ts ships
 *   \[\[policies/core/bugs-before-features.md\]\] — install-hooks.sh js-yaml fix is a pre-condition

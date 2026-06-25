@@ -96,11 +96,11 @@ Delivers:
 
 ### 3d — MSP Pilot Vault ⚡
 
-[[proposals/sub-plan-msp-pilot-vault.md]] — **unapproved, approve first**
+[[proposals/approved/sub-plan-msp-pilot-vault.md]] — approved ✅
 
 ### 3e — Cascade STEAM Early-Access Pilot ⚡
 
-[[proposals/sub-plan-cascade-steam-early-access.md]] — **unapproved, approve second**
+[[proposals/approved/sub-plan-cascade-steam-early-access.md]] — approved ✅
 
 Both pilots must complete one full proposal→plan→completed cycle with no manual
 file edits and no stale `_path:` fields. The write API (3a) makes that bar

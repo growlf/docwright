@@ -25,8 +25,8 @@ related_to:
   - proposals/approved/sub-plan-vault-write-api.md
   - proposals/approved/sub-plan-vault-document-index.md
   - proposals/approved/knowledge-graph-cross-document-idea-linkage.md
-  - proposals/sub-plan-msp-pilot-vault.md
-  - proposals/sub-plan-cascade-steam-early-access.md
+  - proposals/approved/sub-plan-msp-pilot-vault.md
+  - proposals/approved/sub-plan-cascade-steam-early-access.md
 total_steps: 14
 completed_steps: 10
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
@@ -58,8 +58,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 4 | Profile override merge engine | [[proposals/approved/sub-plan-profile-override-merge.md]] | ✅ Done |
 | 5 | Vault migration system (`MIGRATION.md` + `vault:migrate`) | [[proposals/approved/sub-plan-vault-migration-system.md]] | ✅ Done |
 | 6 | Contribution pipeline & friction log | [[proposals/approved/sub-plan-contribution-pipeline.md]] | 🔀 In progress — moved to Phase 5 (5e); does not gate Phase 3 |
-| 7 | MSP pilot vault (non-profit managed services) | [[proposals/sub-plan-msp-pilot-vault.md]] | ⏳ Needs approval |
-| 8 | Cascade STEAM early-access vault | [[proposals/sub-plan-cascade-steam-early-access.md]] | ⏳ Needs approval |
+| 7 | MSP pilot vault (non-profit managed services) | [[proposals/approved/sub-plan-msp-pilot-vault.md]] | ⏳ Pending |
+| 8 | Cascade STEAM early-access vault | [[proposals/approved/sub-plan-cascade-steam-early-access.md]] | ⏳ Pending |
 | 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ✅ Done |
 | 10 | `docwright adopt` — existing vault adoption tooling | [[proposals/approved/docwright-adopt-existing-vault.md]] | ✅ Done |
 | 11 | Vault Write API (moveDocument, renameDocument, canonical setField) | [[proposals/approved/sub-plan-vault-write-api.md]] | ✅ Done |

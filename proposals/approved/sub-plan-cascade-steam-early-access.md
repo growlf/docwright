@@ -7,9 +7,11 @@ tags:
   - cascade-steam
   - early-access
   - vault-seed
-approved: false
+approved: true
+approved_date: 2026-06-24
+approved_by: NetYeti
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: "NetYeti"
 priority: high
 complexity: medium
 parent_plan: plans/phase-3-vault-foundation.md
