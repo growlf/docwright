@@ -245,7 +245,7 @@
   @use './tokens' as *;
 
   .graph-wrap {
-    position: relative; width: 100%; height: 560px;
+    position: relative; width: 100%; flex: 1; min-height: 300px;
     background: $bg-2; border-radius: 6px; overflow: hidden;
   }
   svg { position: absolute; inset: 0; width: 100%; height: 100%; }
