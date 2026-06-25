@@ -1,15 +1,5 @@
 {
   "mcpServers": {
-    "erpnext": {
-      "type": "stdio",
-      "command": "/home/netyeti/Projects/bms-ai-cluster/scripts/erpnext-mcp-run.sh",
-      "args": []
-    },
-    "technitium": {
-      "type": "stdio",
-      "command": "/home/netyeti/Projects/bms-ai-cluster/scripts/technitium-mcp-run.sh",
-      "args": []
-    },
     "dw-vault": {
       "type": "stdio",
       "command": "node",
