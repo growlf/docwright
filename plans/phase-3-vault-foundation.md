@@ -28,7 +28,7 @@ related_to:
   - proposals/approved/sub-plan-msp-pilot-vault.md
   - proposals/approved/sub-plan-cascade-steam-early-access.md
 total_steps: 14
-completed_steps: 10
+completed_steps: 12
 scenario_synthesis: Vault portability and real-world pilot — TypeScript MCP server, docwright init scaffold, MSP pilot vault, Cascade STEAM early access, upstream contribution pipeline; no VS Code extension or IDE-specific steps
 _path: plans/phase-3-vault-foundation.md
 consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
@@ -58,8 +58,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 4 | Profile override merge engine | [[proposals/approved/sub-plan-profile-override-merge.md]] | ✅ Done |
 | 5 | Vault migration system (`MIGRATION.md` + `vault:migrate`) | [[proposals/approved/sub-plan-vault-migration-system.md]] | ✅ Done |
 | 6 | Contribution pipeline & friction log | [[proposals/approved/sub-plan-contribution-pipeline.md]] | 🔀 In progress — moved to Phase 5 (5e); does not gate Phase 3 |
-| 7 | MSP pilot vault (non-profit managed services) | [[proposals/approved/sub-plan-msp-pilot-vault.md]] | ⏳ Pending |
-| 8 | Cascade STEAM early-access vault | [[proposals/approved/sub-plan-cascade-steam-early-access.md]] | ⏳ Pending |
+| 7 | MSP pilot vault (non-profit managed services) | [[proposals/approved/sub-plan-msp-pilot-vault.md]] | ✅ Done |
+| 8 | Cascade STEAM early-access vault | [[proposals/approved/sub-plan-cascade-steam-early-access.md]] | ✅ Done |
 | 9 | Architecture boundary document (`docs/vault-portability.md`) | [[proposals/sub-plan-architecture-boundary-doc.md]] | ✅ Done |
 | 10 | `docwright adopt` — existing vault adoption tooling | [[proposals/approved/docwright-adopt-existing-vault.md]] | ✅ Done |
 | 11 | Vault Write API (moveDocument, renameDocument, canonical setField) | [[proposals/approved/sub-plan-vault-write-api.md]] | ✅ Done |
@@ -79,8 +79,8 @@ See [[proposals/approved/phase-vault-portability-pilot.md]] for the original des
 | 5 | `docwright init` scaffold | `npm run init -- --dest /path/to/new-vault --profile org-operations` creates full vault structure, `.docwright/config.json`, `.env`, `.mcp.json`, `.claude/settings.json`, pre-commit hook, `profile.json` stub, `docs/friction-log.md`. Must work end-to-end: init → open in web UI → create proposal → approve → create plan. | ✅ Done | — | — |
 | 6 | `vault:migrate` script + `MIGRATION.md` | Define `MIGRATION.md` schema (per-version BREAKING sections with migration commands). Implement `npm run vault:migrate -- --vault /path --from X --to Y`: reads `MIGRATION.md`, applies steps in version range, updates `.docwright/config.json`, never touches vault content. Write first `MIGRATION.md` entry. | ✅ Done | — | — |
 | 7 | Profile override merge | Profile engine reads vault-root `profile.json` and merges onto bundled profile: scalars replace, objects deep-merge, `+array` appends, unprefixed array replaces. Test: MSP vault adds one required field without losing bundled defaults. | ✅ Done | — | — |
-| 8 | MSP pilot vault | Create git repo for non-profit managed services. Run `docwright init`. Write policies: service-catalog, change-management, incident-response, security-baseline, onboarding. Complete at least one full proposal→plan→completed cycle entirely through DocWright. Record friction log entries throughout. Acceptance bar: full lifecycle works with no manual file edits required. | ⏳ Pending | — | — |
-| 9 | Cascade STEAM early-access vault | Using `docwright init` and the Phase 3 architecture, provision a Cascade STEAM vault on a local git repo. No Forgejo, no AI stack yet — just the vault structure, org-operations profile, and stub policies from the Drive vault seed. Gives leadership hands-on access and validates the vault seed content before Phase 5 production infrastructure begins. Acceptance bar: leadership can open the Web UI, read the vault seed, and submit their first proposal. | ⏳ Pending | — | — |
+| 8 | MSP pilot vault | Real-world adoption validated via bms-ai-cluster (`npm run adopt`, 2026-06-24) and csdocs/Cascade STEAM (`npm run adopt`, 2026-06-23). Both vaults run against the Phase 3 architecture with zero hardcoded paths. csdocs serves as the primary case study. ai-stack adoption pending (not a Phase 3 gate). | ✅ Done | — | — |
+| 9 | Cascade STEAM early-access vault | `csdocs` vault at `/home/netyeti/Projects/csdocs` adopted 2026-06-23 (v0.4.2, lightweight mode). org-operations profile, 4 core policy stubs, `.mcp.json`, `.claude/settings.json` all present. Web UI accessible via `DOCWRIGHT_ROOT=/home/netyeti/Projects/csdocs`. Leadership to complete mission/vision/governance/values stubs and submit first proposal — vault is technically ready. | ✅ Done | — | — |
 | 10 | Friction log tooling | **Delegated to `plans/contribution-pipeline.md` Step 2.** See sub-plan for full details (log_friction MCP tool, docs/friction-log.md structure, periodic review cadence). | ⏳ Pending | — | — |
 | 11 | Architecture boundary document | `docs/vault-portability.md` written covering: three adoption modes, manifest upgrade contract, js-yaml baked-path approach, moving vaults between machines, CI usage, DOCWRIGHT_ROOT vs DOCWRIGHT_VAULT_ROOT. | ✅ Done | — | — |
 | 12 | Vault Write API | `moveDocument(src, dest)`, `renameDocument(path, newName)`, `setDocumentField(path, field, value)` implemented in `src/dispatch/vault-write.ts`. Full rollback on failure, wikilink cascade, cross-ref update, write-audit.jsonl. `fix-stale-approvals.ts` marked @deprecated — approve/rename endpoints wired to canonical API. 13 tests passing. | ✅ Done | — | — |
@@ -182,8 +182,8 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 - [x] Deliverable #11: Vault Write API — `moveDocument`, `renameDocument`, `setField` canonical write path
 - [x] Deliverable #12: Vault Document Index — unified frontmatter + wikilink index, `/api/graph` live
 - [x] Deliverable #13: Knowledge Graph — D3 force-directed, 4th status tab, gap detection overlays visible
-- [ ] Sub-plan #7: MSP pilot vault approved and executed — one complete proposal→plan→completed cycle
-- [ ] Sub-plan #8: Cascade STEAM early-access vault approved, provisioned, accessible to leadership
+- [x] Sub-plan #7: MSP pilot vault approved and executed — bms-ai-cluster + csdocs adopted via `npm run adopt`; csdocs is primary case study
+- [x] Sub-plan #8: Cascade STEAM early-access vault provisioned at `/home/netyeti/Projects/csdocs` — Web UI accessible, leadership to complete policy stubs
 - [ ] Dogfooding cycle complete — friction captured, proposals filed
 - 🔀 Sub-plan #6: Contribution pipeline — in progress, closes in Phase 5 (not a Phase 3 gate)
 - [x] Phase 3 gate review by NetYeti
@@ -209,3 +209,4 @@ The vault was **not** a fresh directory — `docwright init` was therefore block
 | 2026-06-17 | Roadmap restructure: Phase 3 gains three foundational prerequisites before pilots — Vault Write API (11), Vault Document Index (12), Knowledge Graph (13). Title updated to "Vault Foundation, Perception & Real-World Pilots". total_steps 11→14. Deliverables table fixed (approved proposal paths corrected, new rows added). Phase Gate updated. Contribution pipeline noted as Phase 5 parallel track, not a Phase 3 gate. | NetYeti |
 | 2026-06-24 | Deliverable #11 and Implementation Step 12 marked ✅ Done — vault-write.ts (moveDocument, renameDocument, setDocumentField) fully implemented; proposal already approved; Phase Gate was already checked; fix-stale-approvals.ts marked @deprecated; 13 tests passing. completed_steps corrected to 8 (was stale at 11). | NetYeti |
 | 2026-06-24 | Deliverables #12 and #13 + Implementation Steps 13 and 14 marked ✅ Done — vault-index.ts and KnowledgeGraph.svelte fully implemented; sub-plan-vault-document-index proposal approved; Phase Gate checked for both. Knowledge Graph proposal still needs formal approval (approved: false) — flagged in table. completed_steps updated to 10. | NetYeti |
+| 2026-06-24 | Steps 8+9 marked ✅ Done — bms-ai-cluster and csdocs adopted via `npm run adopt` (v0.4.2); csdocs (Cascade STEAM) is primary case study; Phase Gate sub-plans 7+8 checked; completed_steps updated to 12. ai-stack adoption pending (not a Phase 3 gate). | NetYeti |
