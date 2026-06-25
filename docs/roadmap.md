@@ -243,7 +243,7 @@ driven by observed friction, not speculation.
 | `knowledge-base` profile full implementation | Phase 6 plan | Medium |
 | AI Task Category Taxonomy Steps 3–4 | [[plans/ai-model-routing.md]] | Medium |
 | Enterprise Tier Bundle | [[proposals/bundle-enterprise-tier.md]] | Medium |
-| UI Polish cycle | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low — needs real user feedback first |
+| UI Polish cycle | [[plans/completed/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low — needs real user feedback first |
 
 **Decision required before Phase 6 starts — `plan-steps-structured-frontmatter.md`:**
 YAML steps as source of truth is a breaking structural change affecting every plan.
