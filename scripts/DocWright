@@ -145,7 +145,7 @@ native_mode() {
     }
 
     log "starting OpenCode serve..."
-    opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 >"$LOG_DIR/opencode.log" 2>&1 &
+    opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
     OC_PID=$!
 
     wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || {
