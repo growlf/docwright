@@ -36,6 +36,7 @@ import {
 
   let projects     = $state<ProjectEntry[]>([]);
   let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+  let activePlugins = $state<{ name: string; displayName: string; icon: string }[]>([]);
 
   // AI model picker
   let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
@@ -682,6 +683,7 @@ import {
   onMount(() => {
     loadBrand();
     loadProjects();
+    fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(p => { activePlugins = p; }).catch(() => {});
     let es = new EventSource('/api/watch');
     const attachWatch = (source: EventSource) => {
       source.addEventListener('filechange', (e: MessageEvent) => {
@@ -811,6 +813,12 @@ import {
     <button class="act-btn" class:active={leftView === 'git'}
       onclick={() => { leftView = 'git'; showSidebar = true; }}
       title="Git">⎇</button>
+    {#each activePlugins as plugin}
+      <button class="act-btn"
+        class:active={$page.url.pathname.startsWith(`/plugin/${plugin.name}`)}
+        onclick={() => goto(`/plugin/${plugin.name}`)}
+        title={plugin.displayName}>{plugin.icon}</button>
+    {/each}
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
