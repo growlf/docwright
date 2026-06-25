@@ -42,6 +42,7 @@
   }
 
   function teardown() {
+    if (typeof window === 'undefined') return;
     if (errorHandler) window.removeEventListener('error', errorHandler);
     delete (window as any).__docwright;
   }
