@@ -7,8 +7,8 @@
 
 REPO="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
 WEBUI="$REPO/src/webui"
-VITE_PORT=5173
-OC_PORT=4096
+VITE_PORT="${VITE_PORT:-5173}"
+OC_PORT="${OC_PORT:-4096}"
 LOG_DIR="$REPO/.logs"
 VITE_PID=""
 OC_PID=""
