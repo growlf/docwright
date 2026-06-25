@@ -23,7 +23,7 @@ export const stepIssueTools: McpTool[] = [
         plan_name: {
           type: 'string',
           description:
-            'Plan filename without path/extension (e.g. bundle-chat-session-panel) or full relative path (plans/...md)'
+            'Plan filename without path/extension (e.g. chat-session-panel) or full relative path (plans/...md)'
         },
         step: {
           type: 'number',
@@ -56,7 +56,7 @@ export const stepIssueTools: McpTool[] = [
         plan_name: {
           type: 'string',
           description:
-            'Plan filename without path/extension (e.g. bundle-chat-session-panel) or full relative path (plans/...md)'
+            'Plan filename without path/extension (e.g. chat-session-panel) or full relative path (plans/...md)'
         },
         step: {
           type: 'number',

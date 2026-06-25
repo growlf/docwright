@@ -210,7 +210,7 @@ Key deliverables:
 ## VSCodium Extension (after alpha)
 
 Goal: working extension skeleton after web tool validated by real users.
-See `plans/phase-vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
+See `plans/vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
 
 ## Repo structure
 

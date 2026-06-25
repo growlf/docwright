@@ -14,7 +14,7 @@ mode: guided
 assigned_to: netyeti
 tests_defined: true
 tests_human_reviewed: false
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 4
 total_steps: 5
 completed_steps: 5

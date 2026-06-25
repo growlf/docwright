@@ -10,12 +10,12 @@ tags: [planning, tooling, adoption, vault-portability]
 proposal_source: proposals/approved/docwright-adopt-existing-vault.md
 priority: high
 phase: 3
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 mode: autonomous
 waiting_reason: ""
 assigned_to: ["NetYeti"]
 related_to:
-  - plans/phase-vault-portability-pilot.md
+  - plans/phase-3-vault-foundation.md
 depends_on: []
 blocks: []
 reviewed_by: ""

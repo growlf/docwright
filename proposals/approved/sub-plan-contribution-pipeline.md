@@ -13,10 +13,10 @@ created_by: NetYeti@phoenix
 assigned_to: NetYeti
 priority: medium
 complexity: medium
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 6
 _path: proposals/sub-plan-contribution-pipeline.md
-consumed_by: plans/sub-plan-contribution-pipeline.md
+consumed_by: plans/contribution-pipeline.md
 ---
 
 ## Problem
@@ -35,7 +35,7 @@ Deliver two related MCP tools that form an upstream contribution pipeline:
 
 ## Parent Reference
 
-This is sub-plan **#6** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Steps 2 + 10). It closes the feedback loop between vault users and DocWright development.
+This is sub-plan **#6** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Steps 2 + 10). It closes the feedback loop between vault users and DocWright development.
 
 ## Dependencies
 

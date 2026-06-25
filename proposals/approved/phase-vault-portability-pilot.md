@@ -14,7 +14,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/phase-vault-portability-pilot.md
-consumed_by: plans/phase-vault-portability-pilot.md
+consumed_by: plans/phase-3-vault-foundation.md
 ---
 
 ## Problem

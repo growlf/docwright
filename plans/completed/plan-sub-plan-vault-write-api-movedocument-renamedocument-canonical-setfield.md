@@ -22,7 +22,7 @@ tests_human_reviewed: false
 total_steps: 7
 completed_steps: 7
 related_to:
-  - plans/phase-vault-portability-pilot.md
+  - plans/phase-3-vault-foundation.md
   - plans/completed/sub-plan-vault-document-index.md
 _path: plans/completed/plan-sub-plan-vault-write-api-movedocument-renamedocument-canonical-setfield
 ---

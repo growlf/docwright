@@ -24,7 +24,7 @@ depends_on:
   - plans/completed/lifecycle-gates-extension-bundle.md
   - plans/phase-4-profile-acl-ai.md
 _path: proposals/approved/bundle-lifecycle-gates-phase-2.md
-consumed_by: plans/bundle-lifecycle-gates-phase-2.md
+consumed_by: plans/lifecycle-gates.md
 ---
 
 ## Problem

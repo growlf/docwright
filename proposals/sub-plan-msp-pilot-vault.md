@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: high
 complexity: high
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "7"
 ---
 
@@ -37,7 +37,7 @@ The pilot vault exercises:
 
 ## Parent Reference
 
-This is sub-plan **#7** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 8). It is the primary validation gate for the entire vault portability architecture.
+This is sub-plan **#7** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 8). It is the primary validation gate for the entire vault portability architecture.
 
 ## Dependencies
 

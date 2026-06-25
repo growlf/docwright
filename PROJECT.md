@@ -991,7 +991,7 @@ structured upstream contribution pipeline so real-world usage drives evolution.
 proposal→plan→completed cycle with no manual file edits required.
 
 For sequencing and current status, see [[docs/roadmap.md]] and
-[[plans/phase-vault-portability-pilot.md]].
+[[plans/phase-3-vault-foundation.md]].
 
 ---
 

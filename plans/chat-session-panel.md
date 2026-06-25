@@ -21,7 +21,7 @@ depends_on:
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps
 total_steps: 17
 completed_steps: 8
-_path: plans/bundle-chat-session-panel.md
+_path: plans/chat-session-panel.md
 github_epic: null
 ---
 

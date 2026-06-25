@@ -177,7 +177,7 @@ export function GET() {
   //
   // currentPhase = phase number of the in-progress or approved phase overview plan.
   // Falls back to the highest completed phase number, then 1.
-  // Uses basename match (^phase-\d) so plans like bundle-lifecycle-gates-phase-2
+  // Uses basename match (^phase-\d) so plans like lifecycle-gates
   // don't pollute the phase number.
   const allPlansForPhase = [
     ...readDir(path.join(REPO_ROOT, 'plans')),

@@ -20,7 +20,7 @@ current phase gate.
 
 ## Phase 3 — Vault Foundation, Perception & Real-World Pilots (Current)
 
-**Plan:** [[plans/phase-vault-portability-pilot.md]] · 8/11 steps done
+**Plan:** [[plans/phase-3-vault-foundation.md]] · 8/11 steps done
 
 **Thesis:** DocWright can be adopted by a real organization on an existing vault
 with accurate references, no repair scripts, and a graph that shows you what you
@@ -155,7 +155,7 @@ Unlocks 4c and all profile-aware Phase 5 features.
 
 ### 4c — Lifecycle Gates Phase 2 ⚡
 
-[[plans/bundle-lifecycle-gates-phase-2.md]]
+[[plans/lifecycle-gates.md]]
 
 Depends on 4b. AI-assisted gate preparation, multi-reviewer quorum, retroactive
 audit, time-based/scheduled triggers, governance audit JSONL log. Required before
@@ -207,7 +207,7 @@ Depends on 4b (profile engine) for context injection.
 
 ### 5e — Contribution Pipeline
 
-`sub-plan-contribution-pipeline.md` — `contribute_upstream()` MCP tool,
+`contribution-pipeline.md` — `contribute_upstream()` MCP tool,
 `log_friction()`, `list_docwright_issues`. No phase dependency — runs in parallel
 with all of Phase 5.
 
@@ -215,7 +215,7 @@ with all of Phase 5.
 
 - Knowledge graph filter improvements and additional overlays driven by real usage
   observations from Phase 3 onward
-- `plan-ui-lifecycle-graph-view.md` — lifecycle funnel/swimlane view; shares D3
+- `lifecycle-graph.md` — lifecycle funnel/swimlane view; shares D3
   install with knowledge graph
 - `formalize-step-counter-sync.md` — auto-sync step counter validation
 - `phases-and-the-master-plan-are-mostly-invisible-to-the-user.md` — surface
@@ -224,7 +224,7 @@ with all of Phase 5.
 
 ### 🔀 Chat & Session Panel Phase 2 (parallel track)
 
-[[plans/bundle-chat-session-panel.md]] — in progress, no phase dependency.
+[[plans/chat-session-panel.md]] — in progress, no phase dependency.
 Closes before Phase 6 gate.
 
 ---
@@ -241,7 +241,7 @@ driven by observed friction, not speculation.
 | AI Capabilities Bundle | [[proposals/bundle-ai-capabilities.md]] | Medium |
 | `org-operations` profile full implementation | Phase 6 plan | High |
 | `knowledge-base` profile full implementation | Phase 6 plan | Medium |
-| AI Task Category Taxonomy Steps 3–4 | [[plans/ai-task-category-taxonomy.md]] | Medium |
+| AI Task Category Taxonomy Steps 3–4 | [[plans/ai-model-routing.md]] | Medium |
 | Enterprise Tier Bundle | [[proposals/bundle-enterprise-tier.md]] | Medium |
 | UI Polish cycle | [[proposals/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md]] | Low — needs real user feedback first |
 
