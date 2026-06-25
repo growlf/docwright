@@ -137,7 +137,7 @@ native_mode() {
     log "starting Vite dev server..."
     OPENCODE_URL="http://localhost:${OC_PORT}" \
     DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-$PWD}" \
-    npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 >"$LOG_DIR/vite.log" 2>&1 &
+    npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT" >"$LOG_DIR/vite.log" 2>&1 &
     VITE_PID=$!
 
     wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || {
