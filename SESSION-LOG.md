@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-25 — Phase 3 & AI Routing Closed, Worktree Setup
+
+**Focus:** Phase 3 transition, ai-model-routing closure, worktrees, hook fix
+
+**Completed:**
+- [x] Phase 3 transitioned to completed — v0.4.0 tagged and pushed
+- [x] ai-model-routing closed — DocWright-side done, steps 3+4 delegated
+- [x] Two proposals filed: phase-close Web UI, MCP stale dist detection
+- [x] Three worktrees set up: develop / DocWright-plugin / DocWright-kg
+- [x] install-hooks.sh js-yaml quoting bug fixed (worktree hook installs)
+- [ ] DocWright-plugin staged files — hook reinstall needed, resolve next session
+
+**Session note:** `docs/session-notes/session_note_202606251200.md`
+
+---
+
 ## Session: 2026-06-25 — Phase 3 Closure Prep, Stale Dist Bug
 
 **Focus:** Phase 3 closure prep, stale dist bug discovery
