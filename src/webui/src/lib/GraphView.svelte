@@ -5,16 +5,29 @@
 
   interface NoteData { path: string; filename: string; frontmatter: Record<string, any>; }
   interface RefField  { field: string; target: string; label: string; }
+  interface DwViewConfig {
+    type?: string; mode?: string;
+    nodes?: { labelField?: string; groupBy?: string; colorBy?: string };
+    edges?: Array<{ field: string; label: string }>;
+    labelField?: string; colorBy?: string;
+  }
 
-  let { rows, allNotes, docwright }: {
+  let { rows, allNotes, docwright, viewConfig = null }: {
     rows: NoteData[];
     allNotes: NoteData[];
     docwright: any;
+    viewConfig?: DwViewConfig | null;
   } = $props();
 
   let container: HTMLDivElement;
   let svgEl:     SVGSVGElement;
   let sim: d3.Simulation<any, any> | null = null;
+
+  const STATUS_COLOR: Record<string, string> = {
+    running:   '#4ecdc4', active:    '#4ecdc4', online:  '#4ecdc4', connected: '#4ecdc4',
+    stopped:   '#ff6b6b', offline:   '#ff6b6b', error:   '#ff4444',
+    inactive:  '#888',    unknown:   '#555',
+  };
 
   const TYPE_COLOR: Record<string, string> = {
     hypervisor:      '#4a9eff',
@@ -31,6 +44,13 @@
   };
 
   function refFields(): RefField[] {
+    if (viewConfig?.edges?.length) {
+      return viewConfig.edges.map(e => ({
+        field: e.field,
+        target: docwright?.fields?.[e.field]?.target ?? 'hostname',
+        label: e.label,
+      }));
+    }
     return Object.entries(docwright?.fields ?? {})
       .filter(([, c]: any) => c.type === 'ref')
       .map(([field, c]: any) => ({ field, target: c.target ?? 'hostname', label: c.edgeLabel ?? field }));
@@ -98,6 +118,20 @@
     if (!svgEl || !container) return;
     if (sim) { sim.stop(); sim = null; }
 
+    const colorBy   = viewConfig?.nodes?.colorBy   ?? viewConfig?.colorBy   ?? 'type';
+    const labelField = viewConfig?.nodes?.labelField ?? viewConfig?.labelField ?? 'hostname';
+
+    function nodeColor(d: any): string {
+      if (colorBy === 'status') {
+        const s = String(d.note.frontmatter.status ?? '').toLowerCase();
+        return STATUS_COLOR[s] ?? '#777';
+      }
+      return TYPE_COLOR[d.type] ?? '#555';
+    }
+    function nodeLabel(d: any): string {
+      return String(d.note.frontmatter[labelField] ?? d.id).slice(0, 18);
+    }
+
     const { nodes, links } = buildGraph(rows, allNotes);
     const w = container.clientWidth  || 900;
     const h = container.clientHeight || 540;
@@ -141,13 +175,13 @@
 
     node.append('circle')
       .attr('r', d => d.extra ? 9 : 13)
-      .attr('fill', d => TYPE_COLOR[d.type] ?? '#555')
+      .attr('fill', d => d.extra ? '#333' : nodeColor(d))
       .attr('opacity', d => d.extra ? 0.35 : 0.88)
       .attr('stroke', d => d.extra ? '#333' : '#111')
       .attr('stroke-width', 1.5);
 
     node.append('text')
-      .text(d => (d.note.frontmatter.hostname ?? d.id).slice(0, 18))
+      .text(d => nodeLabel(d))
       .attr('y', 24).attr('text-anchor', 'middle')
       .attr('font-size', 10).attr('fill', d => d.extra ? '#555' : '#ccc')
       .attr('pointer-events', 'none');
@@ -191,12 +225,15 @@
 
   <!-- Legend -->
   <div class="legend">
-    {#each Object.entries(TYPE_COLOR).filter(([t]) => rows.some(n => n.frontmatter.type === t)) as [type, color]}
-      <span class="leg-item">
-        <span class="leg-dot" style="background:{color}"></span>
-        {type}
-      </span>
-    {/each}
+    {#if (viewConfig?.nodes?.colorBy ?? viewConfig?.colorBy ?? 'type') === 'status'}
+      {#each Object.entries(STATUS_COLOR).filter(([s]) => rows.some(n => String(n.frontmatter.status ?? '').toLowerCase() === s)) as [status, color]}
+        <span class="leg-item"><span class="leg-dot" style="background:{color}"></span>{status}</span>
+      {/each}
+    {:else}
+      {#each Object.entries(TYPE_COLOR).filter(([t]) => rows.some(n => n.frontmatter.type === t)) as [type, color]}
+        <span class="leg-item"><span class="leg-dot" style="background:{color}"></span>{type}</span>
+      {/each}
+    {/if}
   </div>
 
   {#if rows.length === 0}

@@ -13,6 +13,15 @@
     sort?: Array<{ property: string; direction: 'ASC' | 'DESC' }>;
     columnSize?: Record<string, number>;
   }
+  interface DwViewConfig {
+    id: string; type: 'graph' | 'flowchart'; mode?: string;
+    filters?: { and?: string[]; or?: string[] };
+    nodes?: { labelField?: string; groupBy?: string; colorBy?: string };
+    edges?: Array<{ field: string; label: string }>;
+    layers?: Array<{ match: string; rank: number }>;
+    layout?: string; root?: string; parentField?: string;
+    labelField?: string; colorBy?: string;
+  }
   interface NoteData {
     path: string;
     filename: string;
@@ -24,11 +33,14 @@
   let views     = $state<ViewConfig[]>([]);
   let notes     = $state<NoteData[]>([]);
   let docwright = $state<any>(null);
+  let dwViews   = $state<DwViewConfig[]>([]);
 
-  let activeIdx  = $state(0);
-  let sortField  = $state<string | null>(null);
-  let sortAsc    = $state(true);
-  let viewMode   = $state<'table' | 'graph' | 'hierarchical'>('table');
+  let activeIdx    = $state(0);
+  let activeDomain = $state<'table' | 'dw'>('table');
+  let activeDwId   = $state('');
+  let sortField    = $state<string | null>(null);
+  let sortAsc      = $state(true);
+  let viewMode     = $state<'table' | 'graph' | 'hierarchical'>('table');
 
   $effect(() => { void load(basePath); });
 
@@ -40,7 +52,10 @@
     views     = data.views     ?? [];
     notes     = data.notes     ?? [];
     docwright = data.docwright ?? null;
+    dwViews   = data.docwright?.views ?? [];
     activeIdx = 0;
+    activeDomain = 'table';
+    activeDwId   = dwViews[0]?.id ?? '';
     sortField = null;
     loading = false;
   }
@@ -125,11 +140,17 @@
 
   // ── Derived rows ──────────────────────────────────────────────────────────
 
-  let activeView = $derived(views[activeIdx] ?? null);
+  let activeView    = $derived(views[activeIdx] ?? null);
+  let activeDwView  = $derived(dwViews.find(v => v.id === activeDwId) ?? null);
+  let dwRows        = $derived(
+    activeDwView?.filters ? applyFilters(notes, activeDwView.filters) : notes
+  );
 
   let rows = $derived(
     activeView ? sortRows(applyFilters(notes, activeView.filters), activeView) : []
   );
+
+  let displayCount = $derived(activeDomain === 'dw' ? dwRows.length : rows.length);
 
   let cols = $derived(
     (activeView?.order ?? []).filter(c => c !== 'file.name' ? true : true)
@@ -173,7 +194,7 @@
 <div class="base-wrap">
   <div class="base-header">
     <h1 class="base-title">{title}</h1>
-    <span class="base-count">{rows.length} record{rows.length !== 1 ? 's' : ''}</span>
+    <span class="base-count">{displayCount} record{displayCount !== 1 ? 's' : ''}</span>
   </div>
 
   <!-- View tabs + mode toggle -->
@@ -182,12 +203,23 @@
       {#each views as view, i}
         <button
           class="view-tab"
-          class:active={i === activeIdx}
-          onclick={() => { activeIdx = i; sortField = null; }}
+          class:active={activeDomain === 'table' && i === activeIdx}
+          onclick={() => { activeDomain = 'table'; activeIdx = i; sortField = null; }}
         >{view.name}</button>
       {/each}
+      {#if dwViews.length}
+        <span class="tab-sep">|</span>
+        {#each dwViews as dv}
+          <button
+            class="view-tab dw-tab"
+            class:active={activeDomain === 'dw' && activeDwId === dv.id}
+            onclick={() => { activeDomain = 'dw'; activeDwId = dv.id; }}
+          >{dv.type === 'flowchart' ? '⤵' : '⬡'} {dv.id}</button>
+        {/each}
+      {/if}
     </div>
 
+    {#if activeDomain === 'table'}
     <div class="mode-toggle">
       <button class="mode-btn" class:active={viewMode === 'table'}
         onclick={() => viewMode = 'table'} title="Table view">
@@ -202,12 +234,19 @@
         ⤵ Hierarchy
       </button>
     </div>
+    {/if}
   </div>
 
   {#if loading}
     <div class="base-loading">Loading…</div>
   {:else if error}
     <div class="base-error">{error}</div>
+  {:else if activeDomain === 'dw' && activeDwView}
+    {#if activeDwView.type === 'flowchart'}
+      <HierarchyView rows={dwRows} allNotes={notes} {docwright} viewConfig={activeDwView} />
+    {:else}
+      <GraphView rows={dwRows} allNotes={notes} {docwright} viewConfig={activeDwView} />
+    {/if}
   {:else if !activeView}
     <div class="base-empty">No views defined in this base file.</div>
   {:else if viewMode === 'table'}
@@ -304,6 +343,14 @@
     margin-bottom: -1px;
     &:hover { color: $fg-dim; }
     &.active { color: $fg; border-bottom-color: $blue; }
+    &.dw-tab { color: $muted; border-bottom-style: dashed;
+      &.active { color: $teal; border-bottom-color: $teal; border-bottom-style: solid; }
+      &:hover { color: $teal; }
+    }
+  }
+  .tab-sep {
+    color: $border; font-size: 14px; padding: 0 4px;
+    align-self: center; user-select: none;
   }
 
   /* Mode toggle */
