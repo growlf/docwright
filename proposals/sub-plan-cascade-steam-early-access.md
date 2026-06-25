@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: high
 complexity: medium
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "8"
 ---
 
@@ -32,7 +32,7 @@ Using `docwright init` (sub-plan #3) and the Phase 3 vault-portable architecture
 
 ## Parent Reference
 
-This is sub-plan **#8** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 9). It de-risks Phase 5 by proving the governance content works before the production infrastructure build.
+This is sub-plan **#8** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 9). It de-risks Phase 5 by proving the governance content works before the production infrastructure build.
 
 ## Dependencies
 

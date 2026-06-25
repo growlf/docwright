@@ -15,7 +15,7 @@ complexity: medium
 mode: guided
 scenario_synthesis: Vault migration system; npm scripts, MIGRATION.md parsing, config.json versioning; no VS Code or IDE-specific steps
 assigned_to: NetYeti
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 5
 tests_defined: true
 phase: 3
@@ -36,7 +36,7 @@ As DocWright evolves, vault configuration schemas will change. Without a migrati
 
 ### Parent Reference
 
-This is sub-plan **#5** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 6). It provides the safety net for vault schema evolution.
+This is sub-plan **#5** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 6). It provides the safety net for vault schema evolution.
 
 ### Dependencies
 

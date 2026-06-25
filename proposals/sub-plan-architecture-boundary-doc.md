@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: low
 complexity: low
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "9"
 ---
 
@@ -33,7 +33,7 @@ This becomes the canonical reference for all new vault deployments, including Ph
 
 ## Parent Reference
 
-This is sub-plan **#9** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 11). It captures all architecture decisions made during Phase 3.
+This is sub-plan **#9** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 11). It captures all architecture decisions made during Phase 3.
 
 ## Dependencies
 

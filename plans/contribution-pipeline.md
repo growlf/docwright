@@ -17,7 +17,7 @@ tests_human_reviewed: false
 phase: 5
 total_steps: 3
 completed_steps: 0
-_path: plans/sub-plan-contribution-pipeline.md
+_path: plans/contribution-pipeline.md
 github_epic: null
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
@@ -32,7 +32,7 @@ structured path to report it. This sub-plan adds three MCP tools:
 - `log_friction` — structured friction log entry to `docs/friction-log.md`
 - `list_docwright_issues` + `create_docwright_proposal` — consent-based intake flow
 
-**Parent plan:** Phase 3 — Vault Portability (`plans/phase-vault-portability-pilot.md`,
+**Parent plan:** Phase 3 — Vault Portability (`plans/phase-3-vault-foundation.md`,
 Steps 2 + 10). This sub-plan is the authoritative spec; Steps 2 and 10 in the parent
 delegate here. Does not gate Phase 3 completion.
 

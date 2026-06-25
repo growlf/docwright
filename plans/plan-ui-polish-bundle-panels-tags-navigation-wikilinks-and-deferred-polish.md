@@ -16,7 +16,7 @@ blocks: []
 reviewed_by:
 reviewed_date:
 canceled_date: 2026-06-24
-cancellation_reason: "Phase 6 placeholder — no implementation steps ever defined. Scope consumed by ai-task-category-taxonomy plan (see consumed_by). Any genuine polish items should be captured as individual proposals when they become actionable."
+cancellation_reason: "Phase 6 placeholder — no implementation steps ever defined. Scope consumed by ai-model-routing plan (see consumed_by). Any genuine polish items should be captured as individual proposals when they become actionable."
 template_version: "1.0"
 tests_defined: false  # Set to true after confirming test coverage is adequate — required before plan can be completed
 # Gate fields — populated when a lifecycle gate applies to this document
@@ -27,7 +27,7 @@ gate_note:      # Optional reviewer note
 gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
 phase: 6
-consumed_by: plans/ai-task-category-taxonomy.md
+consumed_by: plans/ai-model-routing.md
 github_epic: null
 ---
 

@@ -25,7 +25,7 @@ absorbs:
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
 _path: proposals/bundle-chat-session-panel.md
-consumed_by: plans/bundle-chat-session-panel.md
+consumed_by: plans/chat-session-panel.md
 ---
 
 ## Problem

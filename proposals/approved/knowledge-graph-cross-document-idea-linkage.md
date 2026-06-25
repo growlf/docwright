@@ -19,11 +19,11 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/sub-plan-vault-write-api.md
   - proposals/approved/sub-plan-vault-document-index.md
-  - plans/plan-ui-lifecycle-graph-view.md
+  - plans/lifecycle-graph.md
   - proposals/deferred-rlm-python-microservice.md
   - research/rlm-recursive-language-models.md
 phase: 3
-consumed_by: plans/phase-vault-portability-pilot.md
+consumed_by: plans/phase-3-vault-foundation.md
 ---
 
 ## Problem

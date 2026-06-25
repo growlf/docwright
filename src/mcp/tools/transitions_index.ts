@@ -54,7 +54,7 @@ export const transitionTools: McpTool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        parent_plan: { type: 'string', description: 'Name of the parent plan (e.g. "phase-vault-portability-pilot")' },
+        parent_plan: { type: 'string', description: 'Name of the parent plan (e.g. "phase-3-vault-foundation")' },
         proposal_name: { type: 'string', description: 'Name of the sub-plan proposal (e.g. "sub-plan-vault-migration-system")' }
       },
       required: ['parent_plan', 'proposal_name']

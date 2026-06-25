@@ -14,7 +14,7 @@ assigned_to: NetYeti
 scenario_synthesis: Extend AiCategory TypeScript union and JSON Schema to 6 values, create categories.yaml registry, add routing docs for coding and agentic; no VS Code API, no database; ai-stack integration is an independent workstream
 tests_defined: true
 tests_human_reviewed: false
-_path: plans/ai-task-category-taxonomy.md
+_path: plans/ai-model-routing.md
 github_epic: null
 ---
 

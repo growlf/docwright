@@ -308,7 +308,7 @@ export async function checkWithAI(
  *
  * Wired by:
  *   Phase 3 Step 13 — Knowledge Graph gap detection overlay
- *   plan-ui-lifecycle-graph-view Step 1 — funnel view blocked-lane badge
+ *   lifecycle-graph Step 1 — funnel view blocked-lane badge
  */
 export function getBlockedDocuments(
   vaultRoot: string,

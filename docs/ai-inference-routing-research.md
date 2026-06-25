@@ -4,7 +4,7 @@ status: research
 author: NetYeti
 created: 2026-06-14
 tags: ai, olla, ollama, gpu, routing, performance, intel-arc
-consumed_by: plans/ai-task-category-taxonomy.md
+consumed_by: plans/ai-model-routing.md
 ---
 
 # AI Inference Routing & GPU Optimization Research

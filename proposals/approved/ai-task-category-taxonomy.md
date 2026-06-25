@@ -25,7 +25,7 @@ related_to:
 depends_on: []
 blocks: []
 _path: proposals/ai-task-category-taxonomy.md
-consumed_by: plans/ai-task-category-taxonomy.md
+consumed_by: plans/ai-model-routing.md
 ---
 
 ## What Is Already Implemented

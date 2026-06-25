@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: high
 complexity: medium
-parent_plan: plans/phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "2"
 ---
 
@@ -30,7 +30,7 @@ Deliver two tightly-coupled changes that together make vaults path-portable:
 
 ## Parent Reference
 
-This is sub-plan **#2** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Steps 3–4). It unblocks the `docwright init` scaffold and both pilot vaults.
+This is sub-plan **#2** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Steps 3–4). It unblocks the `docwright init` scaffold and both pilot vaults.
 
 ## Dependencies
 

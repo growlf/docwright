@@ -13,7 +13,7 @@ proposal_source: proposals/approved/enforce-lifecycle-compliance.md
 priority: high
 mode: guided
 assigned_to: NetYeti
-consumed_by: plans/ai-task-category-taxonomy.md
+consumed_by: plans/ai-model-routing.md
 ---
 
 ## Summary

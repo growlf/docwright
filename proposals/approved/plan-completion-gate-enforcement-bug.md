@@ -17,7 +17,7 @@ created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
-  - plans/ai-task-category-taxonomy.md
+  - plans/ai-model-routing.md
 _path: proposals/plan-completion-gate-enforcement-bug.md
 consumed_by: plans/completed/plan-completion-gate-enforcement-bug.md
 ---
