@@ -28,6 +28,7 @@ gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
 phase: 6
 consumed_by: plans/ai-model-routing.md
+_path: plans/completed/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
 github_epic: null
 ---
 

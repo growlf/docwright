@@ -20,7 +20,7 @@ proposal_source: proposals/policy-atom-framework.md
 depends_on: []
 related_to:
   - docs/profile-contribution-architecture.md
-  - plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
+  - plans/completed/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
   - plans/completed/enforce-lifecycle-compliance.md
 tests_defined: true
 tests_human_reviewed: true
