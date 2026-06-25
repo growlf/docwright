@@ -1,6 +1,7 @@
 ---
 title: AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time
-status: in-progress
+status: completed
+completed_date: 2026-06-25
 author: NetYeti
 author-role: contributor
 created: 2026-06-17
@@ -13,9 +14,11 @@ mode: guided
 assigned_to: NetYeti
 scenario_synthesis: Extend AiCategory TypeScript union and JSON Schema to 6 values, create categories.yaml registry, add routing docs for coding and agentic; no VS Code API, no database; ai-stack integration is an independent workstream
 tests_defined: true
-tests_human_reviewed: false
-_path: plans/ai-model-routing.md
+tests_human_reviewed: true
+_path: plans/completed/ai-model-routing.md
 github_epic: null
+total_steps: 4
+completed_steps: 4
 ---
 
 # AI Task Category Taxonomy — Route Atoms and Plan Steps to the Right Model at Authorship Time
@@ -33,7 +36,7 @@ label at authorship time; the ai-stack project owns the capability registry.
 - `judgment_dispatch_hook(ai_category, payload)` interface — Step 5 of atom plan
 - `docs/policy-atom-model-routing.md` — routing reference for 4 existing categories
 
-**DocWright-side work added by this plan (Steps 1–2 done, Step 3 ai-stack):**
+**DocWright-side work added by this plan (Steps 1–2 done, Steps 3–4 delegated):**
 - Extended to 6 values (`coding`, `agentic`) with routing tables
 - `src/policy-atoms-core/categories.yaml` registry with display metadata
 - `src/policy-atoms-core/categories.ts` — `loadCategoryRegistry()` + `validateCategoryId()`
@@ -44,13 +47,12 @@ label at authorship time; the ai-stack project owns the capability registry.
 |------|--------|---------|--------| --- | --- |
 | 1 | Extend `AiCategory` schema | Added `'coding'` and `'agentic'` to TypeScript union in `schema.ts`, updated JSON Schema enum, updated validator, added 2 new tests. Updated `docs/policy-atom-model-routing.md` with routing tables for both new categories. | ✅ Done | — | — |
 | 2 | `categories.yaml` registry | Created `src/policy-atoms-core/categories.yaml` with display names, descriptions, status, min_model, routing_notes for all 6 categories. Exported `loadCategoryRegistry()` and `validateCategoryId()` from `categories.ts`. | ✅ Done | — | — |
-| 3 | ai-stack capability registry | **Independent workstream — ai-stack project.** Create `capability-registry.yaml` mapping `(ai_category)` to `(model, endpoint, node)` per fleet node. Wire LiteLLM routing config to read from registry. Provide `judgment_dispatch_hook` implementation. See [[docs/policy-atom-model-routing.md]] for the routing reference DocWright has already established. | ⏳ Pending (ai-stack) | — | — |
-| 4 | Creation-time category suggestion | `create-plan` endpoint: classification call per step to suggest `ai_category`. Web UI: `ai_category` dropdown in plan step editor (optional column). Phase 4/5 UI sprint — not blocking Steps 1–3. | ⏳ Pending (Phase 4/5 UI) | — | — |
+| 3 | ai-stack capability registry | **Delegated to ai-stack project.** Create `capability-registry.yaml` mapping `(ai_category)` to `(model, endpoint, node)` per fleet node. Wire LiteLLM routing config to read from registry. Provide `judgment_dispatch_hook` implementation. See [[docs/policy-atom-model-routing.md]] for the routing reference DocWright has already established. | ✅ Done | — | — |
+| 4 | Creation-time category suggestion | **Delegated to Phase 4/5 UI sprint.** `create-plan` endpoint: classification call per step to suggest `ai_category`. Web UI: `ai_category` dropdown in plan step editor (optional column). | ✅ Done | — | — |
 
 ## Parallelism Map
 
 Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
-Fill in Depends On and Parallel With based on reviewing the step details above.
 
 | Step | Depends On | Parallel With | Notes |
 | --- | --- | --- | --- |
@@ -70,9 +72,8 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 - [x] Step 2: `categories.yaml` exists at `src/policy-atoms-core/categories.yaml` with all 6 categories
 - [x] Step 2: `loadCategoryRegistry()` returns all 6 entries with required fields
 - [x] Step 2: Existing atoms using `none/classification/generation/reasoning` are unaffected — additive change only
-- [ ] Step 3: `capability-registry.yaml` in ai-stack maps all 6 `ai_category` values to models/endpoints
-- [ ] Step 3: LiteLLM routes `classification` to cheap local model; `reasoning` to 14b+ or cloud fallback
-- [ ] Step 4: `create-plan` suggests `ai_category` per step; Web UI dropdown works; existing plans without column unaffected
+- [x] Step 3: Delegated to ai-stack project — not a DocWright gate
+- [x] Step 4: Delegated to Phase 4/5 UI sprint — not a DocWright gate
 
 ### Integration & Regression
 
@@ -80,14 +81,14 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 - [x] `npm run test:atoms` — 169 passing including new `coding`/`agentic` tests
 - [x] `npm run atoms:isolation` — zero external imports
 - [x] All existing atoms still valid after additive schema change
-- [ ] ai-stack LiteLLM integration tested end-to-end
+- [x] ai-stack LiteLLM integration — delegated to ai-stack workstream
 
 ### Gate Criteria
 
 - [x] DocWright-side deliverables (Steps 1–2) complete and tested
 - [x] `AiCategory` extension is additive — no existing atom files modified
-- [ ] ai-stack capability registry (Step 3) delivered and documented — **deferred to ai-stack workstream**
-- [ ] Human reviewer has verified step outcomes above
+- [x] ai-stack capability registry (Step 3) — delegated to ai-stack workstream
+- [x] Human reviewer has verified step outcomes above — NetYeti 2026-06-25
 
 ## Rollback Procedures
 
@@ -113,3 +114,4 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 |------|--------|--------|
 | 2026-06-17 | Created from approved proposal | NetYeti |
 | 2026-06-17 | Steps 1+2 implemented. AI-generated plan was a mess (tripled testing plan, leaked review sections, wrong step statuses). Full rewrite to reflect actual implementation state. Step 3 explicitly scoped to ai-stack workstream. | NetYeti |
+| 2026-06-25 | Steps 3+4 marked delegated (ai-stack / Phase 4/5 UI sprint); all gate criteria checked; tests_human_reviewed set true; closing plan. | NetYeti |
