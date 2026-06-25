@@ -201,9 +201,13 @@ function writeLightweight(
   }, null, 2) + '\n';
   writeManaged(dest, '.gemini/settings.json', geminiSettings, manifest);
 
-  // .claude/settings.json — copy DocWright's settings with resolved path
+  // .claude/settings.json — copy DocWright's settings with resolved path.
+  // Skip when the vault IS the DocWright installation (dest === docwrightPath):
+  // the source file already uses ${DOCWRIGHT_PATH} variables that bash expands
+  // at hook runtime via direnv, so overwriting it with hardcoded paths would
+  // break portability of the repo itself.
   const dwClaudeSettings = path.join(docwrightPath, '.claude', 'settings.json');
-  if (fs.existsSync(dwClaudeSettings)) {
+  if (fs.existsSync(dwClaudeSettings) && dest !== docwrightPath) {
     let content = fs.readFileSync(dwClaudeSettings, 'utf8');
     content = content.replace(/\$\{DOCWRIGHT_PATH\}/g, docwrightPath);
     writeManaged(dest, '.claude/settings.json', content, manifest);
