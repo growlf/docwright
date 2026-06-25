@@ -5,6 +5,23 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-24 — Housekeeping, Plan Renames, Phase 3 Pilots
+
+**Focus:** PR/stash cleanup, naming coherence, Phase 3 pilot validation
+
+**Completed:**
+- [x] Merged PR #30 (research subfolder structure + orphan fixes)
+- [x] Cleared both stash entries — extracted .envrc + .gitignore adopt-vault entries (PR #31)
+- [x] Renamed 8 active plans for consistency + full cross-ref cascade across 47 files (PR #32)
+- [x] Archived canceled ui-polish-bundle plan to plans/completed/ (PR #33)
+- [x] Approved sub-plan-msp-pilot-vault + sub-plan-cascade-steam-early-access (HUMAN_APPROVED)
+- [x] Marked Phase 3 Steps 8+9 ✅ Done — bms-ai-cluster + csdocs validated as real-world pilots (PR #34)
+- [x] Phase 3 now 12/14 steps complete; formal closure deferred to next session
+
+**Session note:** `docs/session-notes/session_note_202606241400.md`
+
+---
+
 ## Session: 2026-06-02 — Web UI SSE Live Reload
 
 **Focus:** Wire SSE live reload for SvelteKit Web UI — file tree auto-refresh and
