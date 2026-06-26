@@ -93,14 +93,6 @@ import {
   $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
   $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) showRightPanel = true; }); return u; });
 
-  // When navigating away from a plugin page (e.g. clicking a file in search),
-  // reset leftView so the native panels take over cleanly.
-  $effect(() => {
-    const path = $page.url.pathname;
-    if (leftView.startsWith('plugin-') && !path.startsWith('/plugin/')) {
-      leftView = 'files';
-    }
-  });
   let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
