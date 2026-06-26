@@ -704,3 +704,31 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 **Open:** PR #30 (`chore/research-subfolder-structure` → develop) needs merge. Vault renaming work (active plans still use mixed naming) to continue next session.
 
 **Session note:** `docs/session-notes/session_note_202606240000.md`
+
+---
+
+## Session: 2026-06-25 — KG Launch Setup, Graph Views, Scanner Refactor
+
+**Focus:** DocWright-kg environment, KG graph UI, bms-ai-cluster scanner architecture
+
+**Completed:**
+- [x] DocWright-kg symlink + launcher `--vault` flag — all three repos; eliminates stale env var footgun
+- [x] `adopt-vault.ts` self-stomp fix — `.claude/settings.json` not overwritten when vault = installation
+- [x] Playwright e2e suite committed — `npm run test:e2e` mandatory before reporting UI changes
+- [x] erpnext/technitium MCP entries removed from all three DocWright repo configs
+- [x] `BaseView.svelte` — docwright.views surfaced as tabs (Nexus Graph, Container Hierarchy, Network Flow)
+- [x] `ForceGraph.svelte` — shared D3 engine; KnowledgeGraph + GraphView refactored to thin wrappers
+- [x] Graph pane height fixed (base-mode flex chain; root cause was `.page-wrap align-items: flex-start`)
+- [x] `enrich-uplinks.py` — bridge table + LLDP → uplink_host for all YetiCraft devices
+- [x] `DeviceRegistry` gather→resolve→write pipeline — eliminates scan-order relationship bugs
+- [x] `uplink_host` as first-class field: ref_fields, extra_fields, YAML sources, survives syncs
+- [x] Scanner: MAC dedup, IP conflict guard, placeholder marking, `--audit` mode
+- [x] Full sync: 56 YAML + 138 DHCP = 61 canonical devices; 28 aliases merged; 2 new devices found; ✓ all reach router
+
+**Open:**
+- Proxmox credentials needed for container topology
+- 14 MAC duplicates + 8 placeholders need human review/merge
+- `espressif` + `sterling` on YetiCraft network — unidentified
+- BMS sync deferred (router unreachable this session)
+
+**Session note:** `docs/session-notes/session_note_202606251800.md`
