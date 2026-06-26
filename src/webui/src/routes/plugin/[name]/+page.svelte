@@ -3,6 +3,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { showToast } from '$lib/toast.js';
   import { notifications } from '$lib/notifications.js';
+  import { pluginRightHtml, pluginRightLabel, pluginRightFocus } from '$lib/pluginPanel.js';
 
   interface PluginMeta { name: string; displayName: string; icon: string; description: string; }
 
@@ -26,6 +27,14 @@
         message: string;
         persistent?: boolean;
       }) => notifications.add({ ...opts, persistent: opts.persistent ?? false }),
+      setRightPanel: (html: string, label?: string) => {
+        pluginRightHtml.set(html);
+        pluginRightLabel.set(label ?? 'Info');
+        pluginRightFocus.update(n => n + 1); // triggers auto-focus in layout
+      },
+      clearRightPanel: () => {
+        pluginRightHtml.set('');
+      },
     };
   }
 
@@ -45,6 +54,7 @@
     if (typeof window === 'undefined') return;
     if (errorHandler) window.removeEventListener('error', errorHandler);
     delete (window as any).__docwright;
+    pluginRightHtml.set('');
   }
 
   onDestroy(teardown);

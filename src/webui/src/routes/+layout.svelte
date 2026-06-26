@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { goto } from '$app/navigation';
+  import { pluginRightHtml, pluginRightLabel, pluginRightFocus } from '$lib/pluginPanel.js';
   import FileTree from './FileTree.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
@@ -83,7 +84,14 @@ import {
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
-  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
+  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute' | 'plugin-info'>('properties');
+
+  // Plugin right panel
+  let prHtml  = $state('');
+  let prLabel = $state('Info');
+  $effect(() => { const u = pluginRightHtml.subscribe(v => { prHtml = v; }); return u; });
+  $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
+  $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) { rightTab = 'plugin-info'; showRightPanel = true; } }); return u; });
   let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
@@ -958,6 +966,10 @@ import {
           Improve{il ? ' ⏳' : ir ? ' ✓' : ''}
         </button>
       {/if}
+      {#if prHtml}
+        <button class="right-tab" class:active={rightTab === 'plugin-info'}
+          onclick={() => rightTab = 'plugin-info'}>{prLabel}</button>
+      {/if}
     </div>
 
     {#if rightTab === 'properties'}
@@ -1007,6 +1019,8 @@ import {
       />
     {:else if rightTab === 'execute'}
       <PlanExecutePanel />
+    {:else if rightTab === 'plugin-info'}
+      <div class="plugin-right-panel">{@html prHtml}</div>
     {:else}
       <CollationPanel
         matches={cm}
@@ -1262,6 +1276,7 @@ import {
   .right-tab:hover  { color: #aaa; }
   .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
   .right-empty { padding: 16px; font-size: 12px; color: #444; text-align: center; margin-top: 32px; }
+  .plugin-right-panel { padding: 12px; overflow-y: auto; flex: 1; font-size: 12px; color: var(--fg, #ccc); }
 
   /* Chat toggle — replaces FAB, sits at bottom of viewport above footer */
   .chat-toggle {
