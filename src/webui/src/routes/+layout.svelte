@@ -84,14 +84,14 @@ import {
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
-  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute' | 'plugin-info'>('properties');
+  let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
 
   // Plugin right panel
   let prHtml  = $state('');
   let prLabel = $state('Info');
   $effect(() => { const u = pluginRightHtml.subscribe(v => { prHtml = v; }); return u; });
   $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
-  $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) { rightTab = 'plugin-info'; showRightPanel = true; } }); return u; });
+  $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) showRightPanel = true; }); return u; });
   let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
@@ -942,8 +942,14 @@ import {
     {/if}
   </main>
 
-  <!-- Right sidebar — full height, always present -->
+  <!-- Right sidebar — plugin owns it entirely when leftView is a plugin -->
   <Panel side="right" bind:open={showRightPanel}>
+    {#if leftView.startsWith('plugin-')}
+      {@const pname = leftView.slice(7)}
+      {@const plabel = activePlugins.find(p => p.name === pname)?.displayName ?? pname}
+      <div class="plugin-right-header">{plabel}</div>
+      <div id="{pname}-right-panel-root" style="flex:1;overflow-y:auto;min-height:0;">{@html prHtml}</div>
+    {:else}
     <div class="right-tab-bar">
       <button class="right-tab" class:active={rightTab === 'properties'}
         onclick={() => { if (!applyingReview) rightTab = 'properties'; }}>Properties</button>
@@ -965,10 +971,6 @@ import {
           onclick={() => { if (!applyingReview) handleImprove(); }}>
           Improve{il ? ' ⏳' : ir ? ' ✓' : ''}
         </button>
-      {/if}
-      {#if prHtml}
-        <button class="right-tab" class:active={rightTab === 'plugin-info'}
-          onclick={() => rightTab = 'plugin-info'}>{prLabel}</button>
       {/if}
     </div>
 
@@ -1019,8 +1021,6 @@ import {
       />
     {:else if rightTab === 'execute'}
       <PlanExecutePanel />
-    {:else if rightTab === 'plugin-info'}
-      <div class="plugin-right-panel">{@html prHtml}</div>
     {:else}
       <CollationPanel
         matches={cm}
@@ -1036,6 +1036,7 @@ import {
         onrecheck={() => { if ($currentDoc.filePath) findRelated($currentDoc.filePath); }}
         onclose={() => { rightTab = 'properties'; collationMatches.set([]); collationRelationships.set([]); }}
       />
+    {/if}
     {/if}
   </Panel>
 
@@ -1276,7 +1277,7 @@ import {
   .right-tab:hover  { color: #aaa; }
   .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
   .right-empty { padding: 16px; font-size: 12px; color: #444; text-align: center; margin-top: 32px; }
-  .plugin-right-panel { padding: 12px; overflow-y: auto; flex: 1; font-size: 12px; color: var(--fg, #ccc); }
+  .plugin-right-header { padding: 8px 12px 7px; font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
 
   /* Chat toggle — replaces FAB, sits at bottom of viewport above footer */
   .chat-toggle {
