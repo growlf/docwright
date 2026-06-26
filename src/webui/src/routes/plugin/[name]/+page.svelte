@@ -71,18 +71,27 @@
     const probe = await fetch(bundleUrl, { method: 'HEAD' });
     if (!probe.ok) { status = 'no-bundle'; return; }
 
-    // Load stylesheet if present
-    const styleUrl = `/api/plugin/${pluginName}/client/style.css`;
-    const styleProbe = await fetch(styleUrl, { method: 'HEAD' });
-    if (styleProbe.ok) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet'; link.href = styleUrl;
-      document.head.appendChild(link);
+    // Only probe for stylesheet if the plugin manifest declares one
+    if (pluginInfo.clientStylesheet) {
+      const styleUrl = `/api/plugin/${pluginName}/client/style.css`;
+      const styleProbe = await fetch(styleUrl, { method: 'HEAD' });
+      if (styleProbe.ok) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet'; link.href = styleUrl;
+        document.head.appendChild(link);
+      }
     }
 
     // Wire bridge and error boundary before the bundle executes
     setupBridge(pluginName);
     setupErrorBoundary(pluginName);
+
+    // Skip injection if pre-load already registered the plugin
+    const alreadyLoaded = (window as any).__dw_plugins?.has(pluginName);
+    if (alreadyLoaded) {
+      if (status === 'loading') status = 'ready';
+      return;
+    }
 
     const script = document.createElement('script');
     script.src = bundleUrl;
@@ -91,7 +100,6 @@
       errorMsg = 'Bundle failed to load (network error or syntax error)';
     };
     script.onload = () => {
-      // Only mark ready if the error boundary hasn't already caught a runtime error
       if (status === 'loading') status = 'ready';
     };
     document.head.appendChild(script);
