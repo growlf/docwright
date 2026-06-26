@@ -81,23 +81,28 @@ async function checkBaseViewGraph(page: Page, baseUrl: string): Promise<CheckRes
 
   await shot(page, 'base-view-graph');
 
-  results.push(await check('graph-wrap has non-zero height', async () => {
-    const el = await inspectElement(page, '.graph-wrap');
-    if (!el) return 'graph-wrap not found';
+  results.push(await check('fg-canvas has non-zero height', async () => {
+    const el = await inspectElement(page, '.fg-canvas');
+    if (!el) return 'fg-canvas not found';
     const h = parseInt(el.height);
-    return h > 200 || `graph-wrap height=${el.height} (too small or zero)`;
+    return h > 200 || `fg-canvas height=${el.height} (too small or zero)`;
   }));
 
   results.push(await check('graph renders nodes (circles > 0)', async () => {
-    const circles = await page.locator('.graph-wrap svg circle').count();
+    const circles = await page.locator('.fg-canvas svg circle').count();
     return circles > 0 || `0 circles found in SVG`;
   }));
 
   results.push(await check('graph fills available pane height (>500px)', async () => {
-    const el = await inspectElement(page, '.graph-wrap');
-    if (!el) return 'graph-wrap not found';
+    const el = await inspectElement(page, '.fg-canvas');
+    if (!el) return 'fg-canvas not found';
     const h = parseInt(el.height);
-    return h > 500 || `graph height=${h}px — not filling pane`;
+    return h > 500 || `fg-canvas height=${h}px — not filling pane`;
+  }));
+
+  results.push(await check('filter sidebar visible with controls', async () => {
+    const sections = await page.locator('.fg-section-title').allTextContents();
+    return sections.length > 0 || `no .fg-section-title found in sidebar`;
   }));
 
   results.push(await check('no JS errors on graph view', async () => {
