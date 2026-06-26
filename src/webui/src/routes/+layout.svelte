@@ -104,19 +104,37 @@ import {
     });
   });
 
-  // Bridge — available to all plugin bundles as soon as the layout mounts
+  // Unified bridge — window.__docwright is the single entry point for all plugins.
+  // registerView() stores VCs in the same __dw_plugins Map the activation effect reads.
+  // Backward compat: window.__docwright_host keeps the old method names — removed in Step 11.
   onMount(() => {
-    (window as any).__docwright_host = {
-      setRightPanel: (html: string, label?: string) => {
+    if (!(window as any).__dw_plugins) (window as any).__dw_plugins = new Map<string, any>();
+    const bridge = {
+      toast: (msg: string, dur?: number) => showToast(msg, dur ?? 4000),
+      notify: (opts: { type: string; title: string; message: string; persistent?: boolean }) => {
+        notifications.add({ type: opts.type as any, title: opts.title, message: opts.message, persistent: opts.persistent ?? false });
+      },
+      claimRightPanel: (html: string, label?: string) => {
         pluginRightHtml.set(html);
         if (label) pluginRightLabel.set(label);
         pluginRightFocus.update(n => n + 1);
       },
-      clearRightPanel: () => { pluginRightHtml.set(''); },
-      toast: (msg: string, dur?: number) => { showToast(msg, dur ?? 4000); },
-      notify: (opts: { type: string; title: string; message: string; persistent?: boolean }) => {
-        notifications.add({ type: opts.type as any, title: opts.title, message: opts.message, persistent: opts.persistent ?? false });
-      },
+      releaseRightPanel: () => pluginRightHtml.set(''),
+      navigate: (path: string) => goto(path),
+      openDocument: (vaultPath: string) => goto('/' + vaultPath.replace(/\.md$/, '')),
+      apiBase: '/api',
+      vaultRoot: '',
+      apiVersion: '1',
+    };
+    (window as any).__docwright = {
+      bridge,
+      registerView: (name: string, vc: any) => (window as any).__dw_plugins.set(name, vc),
+    };
+    // Backward compat shim — remove in Step 11
+    (window as any).__docwright_host = {
+      ...bridge,
+      setRightPanel: bridge.claimRightPanel,
+      clearRightPanel: bridge.releaseRightPanel,
     };
   });
 
