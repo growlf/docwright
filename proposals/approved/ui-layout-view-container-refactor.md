@@ -10,9 +10,9 @@ tags:
   - layout
 complexity: high
 estimated_effort: L
-approved: false
+approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: "NetYeti"
 depends_on:
   - plans/plugin-system.md
 author-role: operator
