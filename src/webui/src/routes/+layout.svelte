@@ -66,7 +66,10 @@ import {
   let critiqueBodyFingerprint = $state('');
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
-  let leftView       = $state<'files' | 'search' | 'policies' | 'tags' | 'settings' | 'git'>('files');
+  let leftView       = $state<string>(
+    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'files') : 'files'
+  );
+  $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
   const THEMES: Theme[] = ['dark', 'light', 'system'];
   const THEME_ICONS: Record<Theme, string> = { dark: '🌙', light: '☀️', system: '💻' };
