@@ -4,11 +4,17 @@
   import { goto } from '$app/navigation';
 
   interface NoteData { path: string; filename: string; frontmatter: Record<string, any>; }
+  interface DwViewConfig {
+    type?: string; mode?: string; root?: string;
+    parentField?: string; labelField?: string;
+    nodes?: { labelField?: string };
+  }
 
-  let { rows, allNotes, docwright }: {
+  let { rows, allNotes, docwright, viewConfig = null }: {
     rows: NoteData[];
     allNotes: NoteData[];
     docwright: any;
+    viewConfig?: DwViewConfig | null;
   } = $props();
 
   let container: HTMLDivElement;
@@ -29,9 +35,16 @@
   };
 
   function buildHierarchy(rows: NoteData[], allNotes: NoteData[]) {
-    // Find first ref field to use as parent
-    const refEntries = Object.entries(docwright?.fields ?? {})
-      .filter(([, c]: any) => c.type === 'ref');
+    const labelF = viewConfig?.labelField ?? viewConfig?.nodes?.labelField ?? 'hostname';
+
+    // Determine parent field: viewConfig.parentField wins, else first ref field
+    let refEntries: [string, any][] = [];
+    if (viewConfig?.parentField) {
+      refEntries = [[viewConfig.parentField, docwright?.fields?.[viewConfig.parentField] ?? {}]];
+    } else {
+      refEntries = Object.entries(docwright?.fields ?? {})
+        .filter(([, c]: any) => c.type === 'ref');
+    }
 
     if (!refEntries.length) {
       // No ref fields — group by type
@@ -45,7 +58,7 @@
         id: '__root__', label: 'All', isGroup: true,
         children: [...byType.entries()].map(([type, notes]) => ({
           id: '__type__' + type, label: type, isGroup: true,
-          children: notes.map(n => ({ id: n.filename, label: n.frontmatter.hostname ?? n.filename, note: n })),
+          children: notes.map(n => ({ id: n.filename, label: n.frontmatter[labelF] ?? n.filename, note: n })),
         })),
       };
     }
@@ -88,7 +101,7 @@
       const ch = (childrenOf.get(note.filename) ?? []).map(toNode);
       return {
         id: note.filename,
-        label: note.frontmatter.hostname ?? note.filename,
+        label: note.frontmatter[labelF] ?? note.filename,
         note,
         ...(ch.length ? { children: ch } : {}),
       };
@@ -102,7 +115,7 @@
       if (ch.length) {
         rootChildren.push({
           id: '__ext__' + pfn,
-          label: pnote.frontmatter.hostname ?? pfn,
+          label: pnote.frontmatter[labelF] ?? pfn,
           note: pnote,
           extra: true,
           children: ch.map(toNode),

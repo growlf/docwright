@@ -513,7 +513,7 @@
   }
 </script>
 
-<div class="page-wrap">
+<div class="page-wrap" class:base-mode={isBase}>
   <!-- Base view — rendered directly, no toolbar/editor chrome -->
   {#if isBase}
     <BaseView path={filePath()} />
@@ -605,6 +605,8 @@
 
   /* page-wrap is always a flex row — Panel.svelte handles open/closed width */
   .page-wrap { display: flex; min-height: 100%; align-items: flex-start; }
+  /* base views need column layout so BaseView can flex-grow to fill the slot */
+  .page-wrap.base-mode { flex-direction: column; align-items: stretch; height: 100%; min-height: 0; }
   .page-body { flex: 1; min-width: 0; padding: 32px; overflow-y: auto; }
 
   /* Right panel tab bar */
