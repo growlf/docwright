@@ -13,6 +13,15 @@
     sort?: Array<{ property: string; direction: 'ASC' | 'DESC' }>;
     columnSize?: Record<string, number>;
   }
+  interface DwViewConfig {
+    id: string; type: 'graph' | 'flowchart'; mode?: string;
+    filters?: { and?: string[]; or?: string[] };
+    nodes?: { labelField?: string; groupBy?: string; colorBy?: string };
+    edges?: Array<{ field: string; label: string }>;
+    layers?: Array<{ match: string; rank: number }>;
+    layout?: string; root?: string; parentField?: string;
+    labelField?: string; colorBy?: string;
+  }
   interface NoteData {
     path: string;
     filename: string;
@@ -24,11 +33,14 @@
   let views     = $state<ViewConfig[]>([]);
   let notes     = $state<NoteData[]>([]);
   let docwright = $state<any>(null);
+  let dwViews   = $state<DwViewConfig[]>([]);
 
-  let activeIdx  = $state(0);
-  let sortField  = $state<string | null>(null);
-  let sortAsc    = $state(true);
-  let viewMode   = $state<'table' | 'graph' | 'hierarchical'>('table');
+  let activeIdx    = $state(0);
+  let activeDomain = $state<'table' | 'dw'>('table');
+  let activeDwId   = $state('');
+  let sortField    = $state<string | null>(null);
+  let sortAsc      = $state(true);
+  let viewMode     = $state<'table' | 'graph' | 'hierarchical'>('table');
 
   $effect(() => { void load(basePath); });
 
@@ -40,7 +52,10 @@
     views     = data.views     ?? [];
     notes     = data.notes     ?? [];
     docwright = data.docwright ?? null;
+    dwViews   = data.docwright?.views ?? [];
     activeIdx = 0;
+    activeDomain = 'table';
+    activeDwId   = dwViews[0]?.id ?? '';
     sortField = null;
     loading = false;
   }
@@ -125,11 +140,17 @@
 
   // ── Derived rows ──────────────────────────────────────────────────────────
 
-  let activeView = $derived(views[activeIdx] ?? null);
+  let activeView    = $derived(views[activeIdx] ?? null);
+  let activeDwView  = $derived(dwViews.find(v => v.id === activeDwId) ?? null);
+  let dwRows        = $derived(
+    activeDwView?.filters ? applyFilters(notes, activeDwView.filters) : notes
+  );
 
   let rows = $derived(
     activeView ? sortRows(applyFilters(notes, activeView.filters), activeView) : []
   );
+
+  let displayCount = $derived(activeDomain === 'dw' ? dwRows.length : rows.length);
 
   let cols = $derived(
     (activeView?.order ?? []).filter(c => c !== 'file.name' ? true : true)
@@ -173,7 +194,7 @@
 <div class="base-wrap">
   <div class="base-header">
     <h1 class="base-title">{title}</h1>
-    <span class="base-count">{rows.length} record{rows.length !== 1 ? 's' : ''}</span>
+    <span class="base-count">{displayCount} record{displayCount !== 1 ? 's' : ''}</span>
   </div>
 
   <!-- View tabs + mode toggle -->
@@ -182,12 +203,23 @@
       {#each views as view, i}
         <button
           class="view-tab"
-          class:active={i === activeIdx}
-          onclick={() => { activeIdx = i; sortField = null; }}
+          class:active={activeDomain === 'table' && i === activeIdx}
+          onclick={() => { activeDomain = 'table'; activeIdx = i; sortField = null; }}
         >{view.name}</button>
       {/each}
+      {#if dwViews.length}
+        <span class="tab-sep">|</span>
+        {#each dwViews as dv}
+          <button
+            class="view-tab dw-tab"
+            class:active={activeDomain === 'dw' && activeDwId === dv.id}
+            onclick={() => { activeDomain = 'dw'; activeDwId = dv.id; }}
+          >{dv.type === 'flowchart' ? '⤵' : '⬡'} {dv.id}</button>
+        {/each}
+      {/if}
     </div>
 
+    {#if activeDomain === 'table'}
     <div class="mode-toggle">
       <button class="mode-btn" class:active={viewMode === 'table'}
         onclick={() => viewMode = 'table'} title="Table view">
@@ -202,86 +234,101 @@
         ⤵ Hierarchy
       </button>
     </div>
+    {/if}
   </div>
 
-  {#if loading}
-    <div class="base-loading">Loading…</div>
-  {:else if error}
-    <div class="base-error">{error}</div>
-  {:else if !activeView}
-    <div class="base-empty">No views defined in this base file.</div>
-  {:else if viewMode === 'table'}
-    <!-- ── Table ──────────────────────────────────────────────────────── -->
-    <div class="table-scroll">
-      <table class="base-table">
-        <thead>
-          <tr>
-            {#each cols as col}
-              <th
-                style="min-width:{colWidth(col)}"
-                class:sort-asc={sortField === col && sortAsc}
-                class:sort-desc={sortField === col && !sortAsc}
-                onclick={() => handleColClick(col)}
-              >
-                {colLabel(col)}
-                {#if sortField === col}
-                  <span class="sort-arrow">{sortAsc ? '↑' : '↓'}</span>
-                {/if}
-              </th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#each rows as note}
-            <tr onclick={() => goto('/' + note.path.replace(/\.md$/, ''))}>
+  <div class="view-body">
+    {#if loading}
+      <div class="base-loading">Loading…</div>
+    {:else if error}
+      <div class="base-error">{error}</div>
+    {:else if activeDomain === 'dw' && activeDwView}
+      {#if activeDwView.type === 'flowchart'}
+        <HierarchyView rows={dwRows} allNotes={notes} {docwright} viewConfig={activeDwView} />
+      {:else}
+        <GraphView rows={dwRows} allNotes={notes} {docwright} viewConfig={activeDwView} />
+      {/if}
+    {:else if !activeView}
+      <div class="base-empty">No views defined in this base file.</div>
+    {:else if viewMode === 'table'}
+      <!-- ── Table ──────────────────────────────────────────────────────── -->
+      <div class="table-scroll">
+        <table class="base-table">
+          <thead>
+            <tr>
               {#each cols as col}
-                {@const val = rawVal(note, col)}
-                <td>
-                  {#if col === 'file.name'}
-                    <a class="note-link" href="/{note.path.replace(/\.md$/, '')}"
-                      onclick={(e) => e.stopPropagation()}
-                    >{note.filename}</a>
-                  {:else if col === 'arp_status'}
-                    <span class="arp">{ARP[val] ?? '❓'} {val}</span>
-                  {:else if col === 'credentials'}
-                    <span class="cred" class:cred-yes={val === true || val === 'true'}>
-                      {val === true || val === 'true' ? '✓' : '✗'}
-                    </span>
-                  {:else if col === 'ip' || col === 'mac'}
-                    <code class="mono">{val}</code>
-                  {:else if col === 'proxmox_id' && (!val || val === '0')}
-                    <span class="muted">—</span>
-                  {:else if val === '' || val === null || val === undefined}
-                    <span class="muted">—</span>
-                  {:else}
-                    {val}
+                <th
+                  style="min-width:{colWidth(col)}"
+                  class:sort-asc={sortField === col && sortAsc}
+                  class:sort-desc={sortField === col && !sortAsc}
+                  onclick={() => handleColClick(col)}
+                >
+                  {colLabel(col)}
+                  {#if sortField === col}
+                    <span class="sort-arrow">{sortAsc ? '↑' : '↓'}</span>
                   {/if}
-                </td>
+                </th>
               {/each}
             </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-    {#if rows.length === 0}
-      <div class="base-empty">No records match this view's filters.</div>
+          </thead>
+          <tbody>
+            {#each rows as note}
+              <tr onclick={() => goto('/' + note.path.replace(/\.md$/, ''))}>
+                {#each cols as col}
+                  {@const val = rawVal(note, col)}
+                  <td>
+                    {#if col === 'file.name'}
+                      <a class="note-link" href="/{note.path.replace(/\.md$/, '')}"
+                        onclick={(e) => e.stopPropagation()}
+                      >{note.filename}</a>
+                    {:else if col === 'arp_status'}
+                      <span class="arp">{ARP[val] ?? '❓'} {val}</span>
+                    {:else if col === 'credentials'}
+                      <span class="cred" class:cred-yes={val === true || val === 'true'}>
+                        {val === true || val === 'true' ? '✓' : '✗'}
+                      </span>
+                    {:else if col === 'ip' || col === 'mac'}
+                      <code class="mono">{val}</code>
+                    {:else if col === 'proxmox_id' && (!val || val === '0')}
+                      <span class="muted">—</span>
+                    {:else if val === '' || val === null || val === undefined}
+                      <span class="muted">—</span>
+                    {:else}
+                      {val}
+                    {/if}
+                  </td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      {#if rows.length === 0}
+        <div class="base-empty">No records match this view's filters.</div>
+      {/if}
+
+    {:else if viewMode === 'graph'}
+      <!-- ── Graph ──────────────────────────────────────────────────────── -->
+      <GraphView {rows} allNotes={notes} {docwright} />
+
+    {:else if viewMode === 'hierarchical'}
+      <!-- ── Hierarchy ──────────────────────────────────────────────────── -->
+      <HierarchyView {rows} allNotes={notes} {docwright} />
+
     {/if}
-
-  {:else if viewMode === 'graph'}
-    <!-- ── Graph ──────────────────────────────────────────────────────── -->
-    <GraphView {rows} allNotes={notes} {docwright} />
-
-  {:else if viewMode === 'hierarchical'}
-    <!-- ── Hierarchy ──────────────────────────────────────────────────── -->
-    <HierarchyView {rows} allNotes={notes} {docwright} />
-
-  {/if}
+  </div>
 </div>
 
 <style lang="scss">
   @use './tokens' as *;
 
-  .base-wrap { padding: 32px; display: flex; flex-direction: column; gap: 0; min-height: 100%; }
+  /* Make the slot a flex column so base-wrap can fill it.
+     overflow: hidden moves scrolling responsibility to .view-body and .page-body
+     (both already have overflow-y: auto), so regular pages are unaffected. */
+  :global(#page-slot) { display: flex; flex-direction: column; overflow: hidden; }
+
+  .base-wrap { padding: 32px; display: flex; flex-direction: column; gap: 0; flex: 1; min-height: 0; box-sizing: border-box; }
+  .view-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 
   .base-header {
     display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px;
@@ -304,6 +351,14 @@
     margin-bottom: -1px;
     &:hover { color: $fg-dim; }
     &.active { color: $fg; border-bottom-color: $blue; }
+    &.dw-tab { color: $muted; border-bottom-style: dashed;
+      &.active { color: $teal; border-bottom-color: $teal; border-bottom-style: solid; }
+      &:hover { color: $teal; }
+    }
+  }
+  .tab-sep {
+    color: $border; font-size: 14px; padding: 0 4px;
+    align-self: center; user-select: none;
   }
 
   /* Mode toggle */
@@ -319,7 +374,7 @@
   }
 
   /* Table */
-  .table-scroll { overflow-x: auto; }
+  .table-scroll { overflow: auto; flex: 1; min-height: 0; }
   .base-table {
     width: 100%; border-collapse: collapse; font-size: 13px;
     th {
