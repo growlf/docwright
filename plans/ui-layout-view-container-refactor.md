@@ -41,10 +41,66 @@ views into a pure shell that delegates entirely to registered View Container
 plugins. Each native view (Files, Git, Policies, Tags) becomes a bundled View
 Container plugin following the same contract as external plugins (ERP Images).
 
-**Reference:** `docs/design/ui-anatomy.html` — component anatomy diagram with
-all regions labelled. Use this as the shared vocabulary throughout this work.
-
 **Worktree:** `~/Projects/DocWright-ui` on `feat/ui-layout-refactor`
+
+---
+
+## UI Component Anatomy
+
+> **UI Component Anatomy:** [`docs/design/ui-anatomy.svg`](../docs/design/ui-anatomy.svg)
+> Artifact: https://claude.ai/code/artifact/99c6eb86-3b83-4840-b039-71ef765ed79c
+
+![DocWright UI Anatomy](../docs/design/ui-anatomy.svg)
+
+The numbered badges in the diagram correspond to the component reference table below.
+Blue dashed outlines = DocWright chrome (always shell-controlled).
+Green dashed outlines = plugin-owned when a View Container is active.
+
+| # | Component Name | CSS / ID | Who owns it |
+|---|---------------|----------|-------------|
+| ① | Toolbar | `.app-toolbar` | Shell chrome — always DocWright |
+| ② | Activity Bar | `.activity-bar` | Shell chrome — icon list from `__dw_plugins` registry after refactor |
+| ③ | View Container Icon | `.act-btn` | One per registered View Container; `order` in manifest controls position |
+| ④ | Left Panel | `.panel-left` | **View Container owns it entirely** when active |
+| ⑤ | Sidebar Header | `.sidebar-header` | Present in DocWright native views today; **absent** after refactor (View Container provides its own top chrome) |
+| ⑥ | Left Panel Content | `#erp-images-sidebar-root` (example) | Mounted by View Container's `mountSidebar()` |
+| ⑦ | Main Content Area | `#content` / SvelteKit routes | View Containers contribute routes under `/plugin/[name]`; URL encodes sub-state as query params |
+| ⑧ | Right Panel | `.panel-right` | **View Container owns it entirely** when active |
+| ⑨ | Right Panel Header / Tab Bar | `.right-tab-bar` / `.plugin-right-header` | DocWright native: tabs (Properties/Related/Review). Plugin active: single header label |
+| ⑩ | Right Panel Content | `PropertiesPane` / `#erp-images-right-panel-root` | DocWright: frontmatter fields. Plugin: HTML via `bridge.setRightPanel()` |
+| ⑪ | Footer | `.app-footer` | Shell chrome. **After refactor: Settings link added here** |
+| ⚡ | Chat Toggle | `.chat-toggle` | Shell chrome — always present |
+
+### Panel ownership rules
+
+**When a View Container is active:**
+- Left Panel → 100% View Container owned (no Sidebar Header, no DocWright chrome)
+- Right Panel → 100% View Container owned (tab bar replaced by plugin header)
+
+**When no View Container is active (transitional — disappears after refactor):**
+- Left Panel → DocWright native (Sidebar Header + hardcoded content switch)
+- Right Panel → DocWright native tabs (Properties / Related / Review / Improve)
+
+### Plugin registration contract
+
+```javascript
+// bundle.js — called by DocWright layout when leftView switches to this plugin
+window.__dw_plugins.set('my-view', {
+  mountSidebar() { /* render into #my-view-sidebar-root */ }
+});
+
+// plugin.json — View Container declaration
+{
+  "apiVersion": "1",
+  "type": "view-container",   // ← new field for this refactor
+  "name": "files",
+  "icon": "📄",
+  "order": 1,                 // ← activity bar position
+  "searchable": true          // ← layout injects search input, VC handles query
+}
+```
+
+---
 
 ---
 
