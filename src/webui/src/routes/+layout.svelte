@@ -833,9 +833,13 @@ import {
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
+    {#if leftView.startsWith('plugin-')}
+      {@const pluginName = leftView.slice(7)}
+      <div id="{pluginName}-sidebar-root" style="flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;"></div>
+    {:else}
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : leftView === 'settings' ? 'Settings' : leftView.startsWith('plugin-') ? activePlugins.find(p => `plugin-${p.name}` === leftView)?.displayName ?? leftView.slice(7) : 'Git'}
+        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : leftView === 'settings' ? 'Settings' : 'Git'}
       </span>
       {#if leftView === 'files'}
       <div class="new-group-inner">
@@ -900,11 +904,9 @@ import {
         </div>
       </div>
 
-    {:else if leftView.startsWith('plugin-')}
-      {@const pluginName = leftView.slice(7)}
-      <div id="{pluginName}-sidebar-root" style="flex:1;overflow-y:auto;min-height:0;"></div>
     {:else}
       <GitPanel />
+    {/if}
     {/if}
   </Panel>
   <!-- Main content + chat at bottom -->
