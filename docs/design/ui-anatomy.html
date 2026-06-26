@@ -1,0 +1,705 @@
+<!doctype html>
+<title>DocWright UI Anatomy</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #06070f;
+    --surface:   #0f0f14;
+    --panel:     #0b0b10;
+    --border:    #1a1c2e;
+    --muted:     #3a3d58;
+    --label:     #8890b8;
+    --fg:        #d8dcf0;
+    --bright:    #eceffe;
+    --blue:      #58a6ff;
+    --blue-dim:  #1a2d4a;
+    --green:     #3fb950;
+    --green-dim: #0e2318;
+    --amber:     #d4a017;
+    --mono:      ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+    --sans:      system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 48px 32px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .doc-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--bright);
+    letter-spacing: -.01em;
+    text-wrap: balance;
+  }
+  .doc-subtitle {
+    margin-top: 6px;
+    color: var(--label);
+    font-size: 13px;
+    max-width: 520px;
+  }
+  .doc-header { margin-bottom: 40px; }
+
+  /* ── Mockup shell ── */
+  .mockup-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,.5);
+    position: relative;
+  }
+
+  /* Toolbar */
+  .m-toolbar {
+    height: 40px;
+    background: #0d0d12;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 8px;
+    position: relative;
+  }
+  .m-toolbar-left { display: flex; align-items: center; gap: 6px; }
+  .m-toolbar-center { flex: 1; display: flex; justify-content: center; }
+  .m-toolbar-brand { font-size: 12px; font-weight: 700; color: #58a6ff; }
+  .m-toolbar-right { display: flex; align-items: center; gap: 6px; }
+  .m-btn { background: none; border: 1px solid #2a2d40; border-radius: 3px; color: #667; padding: 2px 7px; font-size: 10px; cursor: default; }
+  .m-icon-btn { width: 22px; height: 22px; background: none; border: none; color: #555; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+
+  /* Main row */
+  .m-body { display: flex; height: 380px; }
+
+  /* Activity bar */
+  .m-activity-bar {
+    width: 40px;
+    background: #080810;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 6px;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .m-act-icon {
+    width: 32px; height: 32px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    color: #3a3d58;
+    cursor: default;
+  }
+  .m-act-icon.active {
+    color: #ccd;
+    background: #1a1a2a;
+    border-left: 2px solid #58a6ff;
+    border-radius: 0 5px 5px 0;
+  }
+  .m-act-icon.plugin { color: #58a6ff; opacity: .7; }
+
+  /* Left panel */
+  .m-left-panel {
+    width: 210px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .m-sidebar-header {
+    height: 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #445;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .m-sidebar-content {
+    flex: 1;
+    padding: 6px 0;
+    overflow: hidden;
+  }
+  .m-file-row {
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #778;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .m-file-row.active { color: #ccd; background: rgba(88,166,255,.08); }
+  .m-file-icon { font-size: 10px; opacity: .6; }
+
+  /* Main content */
+  .m-main {
+    flex: 1;
+    background: #111118;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .m-breadcrumb {
+    height: 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 10px;
+    color: #445;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .m-content-area { flex: 1; padding: 16px; overflow: hidden; }
+  .m-doc-h1 { font-size: 15px; font-weight: 700; color: #ccd; margin-bottom: 8px; }
+  .m-doc-body { font-size: 11px; color: #556; line-height: 1.7; }
+  .m-doc-line { height: 9px; background: #1e2030; border-radius: 3px; margin-bottom: 6px; }
+
+  /* Right panel */
+  .m-right-panel {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .m-right-tabs {
+    height: 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+  }
+  .m-right-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #445;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+  }
+  .m-right-tab.active { color: #ccd; border-bottom-color: #58a6ff; }
+  .m-right-content { flex: 1; padding: 10px 12px; overflow: hidden; }
+  .m-prop-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #12141e;
+    font-size: 10px;
+  }
+  .m-prop-key { color: #445; }
+  .m-prop-val { color: #778; font-family: var(--mono); }
+
+  /* Footer */
+  .m-footer {
+    height: 32px;
+    background: #0d0d12;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    font-size: 10px;
+    color: #334;
+  }
+  .m-footer-spacer { flex: 1; }
+
+  /* ── Callout badges ── */
+  .badge {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    font-family: var(--mono);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--blue);
+    pointer-events: none;
+    user-select: none;
+  }
+  .badge.green {
+    background: var(--green);
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--green);
+  }
+
+  /* ── Region outlines (hover reveal) ── */
+  .m-region {
+    position: absolute;
+    border: 1px dashed transparent;
+    border-radius: 2px;
+    transition: border-color .15s;
+    pointer-events: none;
+  }
+
+  /* ── Legend ── */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 40px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  @media (max-width: 700px) { .legend-grid { grid-template-columns: 1fr; } }
+
+  .legend-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .legend-badge {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #000;
+    font-size: 10px; font-weight: 800;
+    font-family: var(--mono);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .legend-badge.green { background: var(--green); }
+  .legend-body { flex: 1; min-width: 0; }
+  .legend-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bright);
+    line-height: 1.3;
+  }
+  .legend-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--blue);
+    margin: 2px 0;
+  }
+  .legend-id.green { color: var(--green); }
+  .legend-desc {
+    font-size: 11px;
+    color: var(--label);
+    line-height: 1.5;
+  }
+
+  /* ── Plugin ownership ── */
+  .ownership-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 2px;
+  }
+  .ownership-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 14px 16px;
+  }
+  .ownership-card.plugin-owned { border-color: rgba(63,185,80,.3); background: var(--green-dim); }
+  .ownership-card.dw-owned { border-color: rgba(88,166,255,.2); background: var(--blue-dim); }
+  .ownership-heading {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ownership-card.plugin-owned .ownership-heading { color: var(--green); }
+  .ownership-card.dw-owned .ownership-heading { color: var(--blue); }
+  .ownership-list {
+    list-style: none;
+    font-size: 12px;
+    color: var(--label);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ownership-list li::before { content: '— '; color: var(--muted); }
+
+  /* ── API box ── */
+  .api-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 16px 18px;
+    margin-top: 2px;
+  }
+  .api-box h3 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+  .api-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .api-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 600;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .05em;
+    padding: 0 10px 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .api-table td {
+    padding: 5px 10px 5px 0;
+    border-bottom: 1px solid #10121c;
+    vertical-align: top;
+  }
+  .api-table td:first-child { font-family: var(--mono); color: var(--blue); white-space: nowrap; }
+  .api-table td:last-child { color: var(--label); }
+
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .note strong { color: var(--label); }
+</style>
+
+<div class="doc-header">
+  <div class="doc-eyebrow">DocWright · Developer Reference</div>
+  <h1>UI Component Anatomy</h1>
+  <p class="doc-subtitle">Shared vocabulary for building and discussing plugins. Green badges mark regions a plugin can own; blue badges mark DocWright-controlled chrome.</p>
+</div>
+
+<!-- ── MOCKUP ── -->
+<div class="mockup-wrap" style="position:relative;">
+
+  <!-- Toolbar -->
+  <div class="m-toolbar">
+    <div class="m-toolbar-left">
+      <div class="m-icon-btn">☰</div>
+    </div>
+    <div class="m-toolbar-center">
+      <span class="m-toolbar-brand">DocWright</span>
+    </div>
+    <div class="m-toolbar-right">
+      <div class="m-btn">+ New</div>
+      <div class="m-btn" style="font-family:monospace;font-size:9px;">⚙ AI</div>
+      <div class="m-icon-btn">⊞</div>
+    </div>
+    <span class="badge" style="top:10px;right:58px;">1</span>
+  </div>
+
+  <!-- Body row -->
+  <div class="m-body">
+
+    <!-- Activity Bar -->
+    <div class="m-activity-bar">
+      <div class="m-act-icon active">📄</div>
+      <div class="m-act-icon">🔍</div>
+      <div class="m-act-icon">📋</div>
+      <div class="m-act-icon">🏷</div>
+      <div class="m-act-icon">⚙</div>
+      <div class="m-act-icon">⎇</div>
+      <div style="flex:1"></div>
+      <div class="m-act-icon plugin" style="margin-bottom:6px;">🐳</div>
+    </div>
+    <span class="badge" style="top:52px;left:48px;">2</span>
+    <span class="badge" style="top:84px;left:48px;">3</span>
+
+    <!-- Left panel -->
+    <div class="m-left-panel">
+      <div class="m-sidebar-header">
+        Files
+      </div>
+      <div class="m-sidebar-content">
+        <div class="m-file-row"><span class="m-file-icon">📁</span>plans</div>
+        <div class="m-file-row active"><span class="m-file-icon">📄</span>plugin-system.md</div>
+        <div class="m-file-row"><span class="m-file-icon">📁</span>proposals</div>
+        <div class="m-file-row"><span class="m-file-icon">📄</span>SESSION-LOG.md</div>
+        <div class="m-file-row"><span class="m-file-icon">📁</span>docs</div>
+        <div class="m-file-row"><span class="m-file-icon">📁</span>inventory</div>
+      </div>
+      <span class="badge green" style="top:53px;left:170px;">4</span>
+      <span class="badge green" style="top:84px;left:170px;">5</span>
+      <span class="badge green" style="top:130px;left:170px;">6</span>
+    </div>
+
+    <!-- Main content -->
+    <div class="m-main">
+      <div class="m-breadcrumb">
+        <span>plans</span><span style="color:#334;">/</span><span style="color:#889;">plugin-system.md</span>
+      </div>
+      <div class="m-content-area">
+        <div class="m-doc-h1">Plugin System — Extensible Module Architecture</div>
+        <div class="m-doc-body">
+          <div class="m-doc-line" style="width:88%"></div>
+          <div class="m-doc-line" style="width:72%"></div>
+          <div class="m-doc-line" style="width:95%"></div>
+          <div class="m-doc-line" style="width:60%"></div>
+          <div style="height:12px"></div>
+          <div class="m-doc-line" style="width:50%"></div>
+          <div class="m-doc-line" style="width:82%"></div>
+          <div class="m-doc-line" style="width:68%"></div>
+        </div>
+      </div>
+      <span class="badge green" style="top:140px;left:50%;transform:translateX(-50%);">7</span>
+    </div>
+
+    <!-- Right panel -->
+    <div class="m-right-panel">
+      <div class="m-right-tabs">
+        <div class="m-right-tab active">Properties</div>
+        <div class="m-right-tab">Related</div>
+        <div class="m-right-tab">Review</div>
+      </div>
+      <div class="m-right-content">
+        <div class="m-prop-row"><span class="m-prop-key">status</span><span class="m-prop-val">in-progress</span></div>
+        <div class="m-prop-row"><span class="m-prop-key">author</span><span class="m-prop-val">NetYeti</span></div>
+        <div class="m-prop-row"><span class="m-prop-key">phase</span><span class="m-prop-val">4</span></div>
+        <div class="m-prop-row"><span class="m-prop-key">priority</span><span class="m-prop-val">high</span></div>
+        <div class="m-prop-row"><span class="m-prop-key">ticket</span><span class="m-prop-val">CS-0029</span></div>
+      </div>
+      <span class="badge green" style="top:52px;right:12px;">8</span>
+      <span class="badge green" style="top:84px;right:12px;">9</span>
+      <span class="badge green" style="top:140px;right:12px;">10</span>
+    </div>
+
+  </div><!-- /m-body -->
+
+  <!-- Footer -->
+  <div class="m-footer">
+    <span>DocWright</span>
+    <span>·</span>
+    <span>MIT License</span>
+    <div class="m-footer-spacer"></div>
+    <div class="m-btn">🌙 dark</div>
+    <span class="badge" style="bottom:6px;right:58px;">11</span>
+  </div>
+
+</div><!-- /mockup-wrap -->
+
+
+<!-- ── LEGEND ── -->
+<div class="section-label">Component Reference</div>
+
+<div class="legend-grid">
+
+  <div class="legend-row">
+    <div class="legend-badge">1</div>
+    <div class="legend-body">
+      <div class="legend-name">Toolbar</div>
+      <div class="legend-id">.app-toolbar</div>
+      <div class="legend-desc">Always-visible top bar. Contains hamburger toggle, brand/home link, + New menu, AI model picker, and right-panel toggle. DocWright chrome — plugins do not control it.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge">2</div>
+    <div class="legend-body">
+      <div class="legend-name">Activity Bar</div>
+      <div class="legend-id">.activity-bar</div>
+      <div class="legend-desc">The leftmost vertical strip. The single source of truth for which view is active. Always visible; always shows which icon is selected. DocWright-controlled chrome — persistent across all views.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge">3</div>
+    <div class="legend-body">
+      <div class="legend-name">View Container Icon</div>
+      <div class="legend-id">.act-btn</div>
+      <div class="legend-desc">A single icon slot in the Activity Bar. Each registered view (Files, Git, a plugin) gets one. Active state shown with left accent border. Plugin icons appended dynamically from <code style="font-family:var(--mono);font-size:10px;color:var(--blue);">/api/plugins</code>.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">4</div>
+    <div class="legend-body">
+      <div class="legend-name">Left Panel</div>
+      <div class="legend-id" style="color:var(--green);">.panel-left / #erp-images-sidebar-root</div>
+      <div class="legend-desc">Content area beside the Activity Bar. When a DocWright view is active: DocWright owns it (file tree, git panel, etc.). When a plugin view is active: <strong>plugin owns the entire panel</strong> — no header, no chrome, full height.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">5</div>
+    <div class="legend-body">
+      <div class="legend-name">Sidebar Header</div>
+      <div class="legend-id" style="color:var(--green);">.sidebar-header</div>
+      <div class="legend-desc">Label bar at top of Left Panel. Shows the view name and optional actions (e.g. + for Files view). Present in DocWright native views; <strong>absent when plugin owns the panel</strong> — the plugin provides its own top-of-panel chrome.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">6</div>
+    <div class="legend-body">
+      <div class="legend-name">Left Panel Content</div>
+      <div class="legend-id" style="color:var(--green);">mounted by plugin or DocWright view</div>
+      <div class="legend-desc">The scrollable content below the Sidebar Header. DocWright renders file trees, panels, tag lists. Plugins register a <code style="font-family:var(--mono);font-size:10px;color:var(--green);">mountSidebar()</code> function in <code style="font-family:var(--mono);font-size:10px;color:var(--green);">window.__dw_plugins</code> and DocWright calls it when the view switches.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">7</div>
+    <div class="legend-body">
+      <div class="legend-name">Main Content Area</div>
+      <div class="legend-id" style="color:var(--green);">#content / SvelteKit routes</div>
+      <div class="legend-desc">The center pane. Driven by URL routing. DocWright renders markdown documents, status pages, graph views. Plugins contribute routes under <code style="font-family:var(--mono);font-size:10px;color:var(--green);">/plugin/[name]</code> and encode sub-state as query params (e.g. <code style="font-family:var(--mono);font-size:10px;color:var(--green);">?uc=helpdesk&amp;tag=v16.1.0</code>).</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">8</div>
+    <div class="legend-body">
+      <div class="legend-name">Right Panel</div>
+      <div class="legend-id" style="color:var(--green);">.panel-right / #erp-images-right-panel-root</div>
+      <div class="legend-desc">Context-sensitive panel. When a DocWright view is active: shows Properties / Related / Review tabs. When a plugin view is active: <strong>plugin owns the entire panel</strong> — tab bar replaced by a plugin header, content populated via <code style="font-family:var(--mono);font-size:10px;color:var(--green);">bridge.setRightPanel(html)</code>.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">9</div>
+    <div class="legend-body">
+      <div class="legend-name">Right Panel Header / Tab Bar</div>
+      <div class="legend-id" style="color:var(--green);">.right-tab-bar / .plugin-right-header</div>
+      <div class="legend-desc">DocWright native views: tab bar with Properties, Related, Review, Improve, Execute. Plugin views: replaced by a plain header showing the plugin's display name. Tabs only appear when DocWright owns the panel.</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge green">10</div>
+    <div class="legend-body">
+      <div class="legend-name">Right Panel Content</div>
+      <div class="legend-id" style="color:var(--green);">PropertiesPane / plugin HTML</div>
+      <div class="legend-desc">DocWright: document frontmatter fields, related documents, AI review output. Plugin: any HTML provided to <code style="font-family:var(--mono);font-size:10px;color:var(--green);">bridge.setRightPanel()</code>. Should match DocWright's visual language (use <code style="font-family:var(--mono);font-size:10px;color:var(--green);">var(--fg)</code>, <code style="font-family:var(--mono);font-size:10px;color:var(--green);">var(--muted)</code> etc.).</div>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-badge">11</div>
+    <div class="legend-body">
+      <div class="legend-name">Footer</div>
+      <div class="legend-id">.app-footer</div>
+      <div class="legend-desc">Bottom strip. Contains attribution, theme picker. Future: Settings link. DocWright chrome — plugins do not control it. Persisted across all views.</div>
+    </div>
+  </div>
+
+  <div class="legend-row" style="border-color:rgba(88,166,255,.2);">
+    <div class="legend-badge" style="background:rgba(88,166,255,.15);color:var(--blue);box-shadow:none;">⚡</div>
+    <div class="legend-body">
+      <div class="legend-name">Chat Toggle</div>
+      <div class="legend-id">.chat-toggle</div>
+      <div class="legend-desc">Fixed floating button above the footer. Opens/closes the AI chat panel which springs up from the bottom of the Main Content Area. DocWright chrome — always present regardless of active view.</div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ── OWNERSHIP ── -->
+<div class="section-label" style="margin-top:40px;">Panel Ownership Rules</div>
+<div class="ownership-grid">
+  <div class="ownership-card plugin-owned">
+    <div class="ownership-heading">🟢 Plugin-owned when active</div>
+    <ul class="ownership-list">
+      <li>Left Panel — full height, no DocWright header</li>
+      <li>Left Panel Content — via <code style="font-family:var(--mono);font-size:10px;">mountSidebar()</code></li>
+      <li>Right Panel — full height, plugin header replaces tab bar</li>
+      <li>Right Panel Content — via <code style="font-family:var(--mono);font-size:10px;">bridge.setRightPanel(html)</code></li>
+      <li>Main Content routes under <code style="font-family:var(--mono);font-size:10px;">/plugin/[name]</code></li>
+    </ul>
+  </div>
+  <div class="ownership-card dw-owned">
+    <div class="ownership-heading">🔵 Always DocWright-controlled</div>
+    <ul class="ownership-list">
+      <li>Toolbar — hamburger, brand, + New, model picker</li>
+      <li>Activity Bar — icon registration, active state</li>
+      <li>Footer — attribution, theme picker</li>
+      <li>Chat toggle and chat panel</li>
+      <li>Toast and notification system</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ── PLUGIN API ── -->
+<div class="section-label" style="margin-top:40px;">Plugin Contract Quick Reference</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">
+
+  <div class="api-box">
+    <h3>Registration (bundle.js)</h3>
+    <table class="api-table">
+      <tr><th>Key</th><th>Description</th></tr>
+      <tr><td>window.__dw_plugins</td><td>Map of registered plugins. Layout reads from this.</td></tr>
+      <tr><td>.set('name', obj)</td><td>Register with <code style="color:var(--blue);">{ mountSidebar }</code></td></tr>
+      <tr><td>mountSidebar()</td><td>Called by layout via <code style="color:var(--blue);">requestAnimationFrame</code> when leftView switches to this plugin</td></tr>
+    </table>
+  </div>
+
+  <div class="api-box">
+    <h3>Bridge (window.__docwright_host)</h3>
+    <table class="api-table">
+      <tr><th>Method</th><th>Description</th></tr>
+      <tr><td>.toast(msg, ms)</td><td>Show a toast notification</td></tr>
+      <tr><td>.notify({type, title, message})</td><td>Persistent notification panel</td></tr>
+      <tr><td>.setRightPanel(html, label)</td><td>Populate right panel, opens it</td></tr>
+      <tr><td>.clearRightPanel()</td><td>Empty right panel on teardown</td></tr>
+    </table>
+  </div>
+
+  <div class="api-box" style="grid-column:1/-1;">
+    <h3>URL State Convention</h3>
+    <table class="api-table">
+      <tr><th>URL pattern</th><th>Meaning</th></tr>
+      <tr><td>/plugin/[name]</td><td>Plugin main content — help/welcome page</td></tr>
+      <tr><td>/plugin/[name]?uc=helpdesk</td><td>Use case selected, no specific tag</td></tr>
+      <tr><td>/plugin/[name]?uc=helpdesk&amp;tag=v16.1.0</td><td>Specific tag selected — shareable, survives refresh</td></tr>
+      <tr><td>(future) /plugin/[name]/path/to/thing</td><td>Path-based routing for cleaner URLs — opt-in per plugin via plugin.json</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<p class="note"><strong>leftView persistence:</strong> stored in <code style="font-family:var(--mono);font-size:11px;color:var(--blue);">localStorage('dw-left-view')</code> — survives page refresh. When navigating to a non-plugin URL while a plugin panel is active, the active view resets to <code style="font-family:var(--mono);font-size:11px;color:var(--blue);">'files'</code>.</p>

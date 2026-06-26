@@ -7,8 +7,8 @@
 
 REPO="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
 WEBUI="$REPO/src/webui"
-VITE_PORT=5173
-OC_PORT=4096
+VITE_PORT="${VITE_PORT:-5173}"
+OC_PORT="${OC_PORT:-4096}"
 LOG_DIR="$REPO/.logs"
 VITE_PID=""
 OC_PID=""
@@ -137,7 +137,7 @@ native_mode() {
     log "starting Vite dev server..."
     OPENCODE_URL="http://localhost:${OC_PORT}" \
     DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-$PWD}" \
-    npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 >"$LOG_DIR/vite.log" 2>&1 &
+    npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT" >"$LOG_DIR/vite.log" 2>&1 &
     VITE_PID=$!
 
     wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || {
@@ -145,7 +145,7 @@ native_mode() {
     }
 
     log "starting OpenCode serve..."
-    opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 >"$LOG_DIR/opencode.log" 2>&1 &
+    opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
     OC_PID=$!
 
     wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || {

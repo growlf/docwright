@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { goto } from '$app/navigation';
+  import { pluginRightHtml, pluginRightLabel, pluginRightFocus } from '$lib/pluginPanel.js';
   import FileTree from './FileTree.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
@@ -36,6 +37,7 @@ import {
 
   let projects     = $state<ProjectEntry[]>([]);
   let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+  let activePlugins = $state<{ name: string; displayName: string; icon: string }[]>([]);
 
   // AI model picker
   let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
@@ -65,7 +67,10 @@ import {
   let critiqueBodyFingerprint = $state('');
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
-  let leftView       = $state<'files' | 'search' | 'policies' | 'tags' | 'settings' | 'git'>('files');
+  let leftView       = $state<string>(
+    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'files') : 'files'
+  );
+  $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
   const THEMES: Theme[] = ['dark', 'light', 'system'];
   const THEME_ICONS: Record<Theme, string> = { dark: '🌙', light: '☀️', system: '💻' };
@@ -80,6 +85,41 @@ import {
   let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
+
+  // Plugin right panel
+  let prHtml  = $state('');
+  let prLabel = $state('Info');
+  $effect(() => { const u = pluginRightHtml.subscribe(v => { prHtml = v; }); return u; });
+  $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
+  $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) showRightPanel = true; }); return u; });
+
+  // When leftView switches to a plugin, call its registered mountSidebar()
+  // requestAnimationFrame ensures the sidebar div is in the DOM first
+  $effect(() => {
+    if (!leftView.startsWith('plugin-')) return;
+    const pname = leftView.slice(7);
+    requestAnimationFrame(() => {
+      const plugin = (window as any).__dw_plugins?.get(pname);
+      plugin?.mountSidebar?.();
+    });
+  });
+
+  // Bridge — available to all plugin bundles as soon as the layout mounts
+  onMount(() => {
+    (window as any).__docwright_host = {
+      setRightPanel: (html: string, label?: string) => {
+        pluginRightHtml.set(html);
+        if (label) pluginRightLabel.set(label);
+        pluginRightFocus.update(n => n + 1);
+      },
+      clearRightPanel: () => { pluginRightHtml.set(''); },
+      toast: (msg: string, dur?: number) => { showToast(msg, dur ?? 4000); },
+      notify: (opts: { type: string; title: string; message: string; persistent?: boolean }) => {
+        notifications.add({ type: opts.type as any, title: opts.title, message: opts.message, persistent: opts.persistent ?? false });
+      },
+    };
+  });
+
   let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
@@ -682,6 +722,16 @@ import {
   onMount(() => {
     loadBrand();
     loadProjects();
+    fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
+      activePlugins = plugins;
+      // Pre-load all plugin bundles so sidebars are ready without navigation
+      (window as any).__dw_plugins = (window as any).__dw_plugins || new Map();
+      for (const plugin of plugins) {
+        const s = document.createElement('script');
+        s.src = `/api/plugin/${plugin.name}/client/bundle.js`;
+        document.head.appendChild(s);
+      }
+    }).catch(() => {});
     let es = new EventSource('/api/watch');
     const attachWatch = (source: EventSource) => {
       source.addEventListener('filechange', (e: MessageEvent) => {
@@ -811,9 +861,19 @@ import {
     <button class="act-btn" class:active={leftView === 'git'}
       onclick={() => { leftView = 'git'; showSidebar = true; }}
       title="Git">⎇</button>
+    {#each activePlugins as plugin}
+      <button class="act-btn"
+        class:active={leftView === `plugin-${plugin.name}`}
+        onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
+        title={plugin.displayName}>{plugin.icon}</button>
+    {/each}
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
+    {#if leftView.startsWith('plugin-')}
+      {@const pluginName = leftView.slice(7)}
+      <div id="{pluginName}-sidebar-root" style="flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;"></div>
+    {:else}
     <div class="sidebar-header">
       <span class="sidebar-view-label">
         {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : leftView === 'settings' ? 'Settings' : 'Git'}
@@ -884,6 +944,7 @@ import {
     {:else}
       <GitPanel />
     {/if}
+    {/if}
   </Panel>
   <!-- Main content + chat at bottom -->
   <main id="content">
@@ -920,8 +981,14 @@ import {
     {/if}
   </main>
 
-  <!-- Right sidebar — full height, always present -->
+  <!-- Right sidebar — plugin owns it entirely when leftView is a plugin -->
   <Panel side="right" bind:open={showRightPanel}>
+    {#if leftView.startsWith('plugin-')}
+      {@const pname = leftView.slice(7)}
+      {@const plabel = activePlugins.find(p => p.name === pname)?.displayName ?? pname}
+      <div class="plugin-right-header">{plabel}</div>
+      <div id="{pname}-right-panel-root" style="flex:1;overflow-y:auto;min-height:0;">{@html prHtml}</div>
+    {:else}
     <div class="right-tab-bar">
       <button class="right-tab" class:active={rightTab === 'properties'}
         onclick={() => { if (!applyingReview) rightTab = 'properties'; }}>Properties</button>
@@ -1008,6 +1075,7 @@ import {
         onrecheck={() => { if ($currentDoc.filePath) findRelated($currentDoc.filePath); }}
         onclose={() => { rightTab = 'properties'; collationMatches.set([]); collationRelationships.set([]); }}
       />
+    {/if}
     {/if}
   </Panel>
 
@@ -1248,6 +1316,7 @@ import {
   .right-tab:hover  { color: #aaa; }
   .right-tab.active { color: #ccc; border-bottom-color: #58a6ff; }
   .right-empty { padding: 16px; font-size: 12px; color: #444; text-align: center; margin-top: 32px; }
+  .plugin-right-header { padding: 8px 12px 7px; font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
 
   /* Chat toggle — replaces FAB, sits at bottom of viewport above footer */
   .chat-toggle {
