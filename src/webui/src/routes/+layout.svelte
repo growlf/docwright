@@ -93,6 +93,33 @@ import {
   $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
   $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) showRightPanel = true; }); return u; });
 
+  // When leftView switches to a plugin, call its registered mountSidebar()
+  // requestAnimationFrame ensures the sidebar div is in the DOM first
+  $effect(() => {
+    if (!leftView.startsWith('plugin-')) return;
+    const pname = leftView.slice(7);
+    requestAnimationFrame(() => {
+      const plugin = (window as any).__dw_plugins?.get(pname);
+      plugin?.mountSidebar?.();
+    });
+  });
+
+  // Bridge — available to all plugin bundles as soon as the layout mounts
+  onMount(() => {
+    (window as any).__docwright_host = {
+      setRightPanel: (html: string, label?: string) => {
+        pluginRightHtml.set(html);
+        if (label) pluginRightLabel.set(label);
+        pluginRightFocus.update(n => n + 1);
+      },
+      clearRightPanel: () => { pluginRightHtml.set(''); },
+      toast: (msg: string, dur?: number) => { showToast(msg, dur ?? 4000); },
+      notify: (opts: { type: string; title: string; message: string; persistent?: boolean }) => {
+        notifications.add({ type: opts.type as any, title: opts.title, message: opts.message, persistent: opts.persistent ?? false });
+      },
+    };
+  });
+
   let applyingReview = $state(false);
 
   // Subscribe to shared collation stores
@@ -695,7 +722,16 @@ import {
   onMount(() => {
     loadBrand();
     loadProjects();
-    fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(p => { activePlugins = p; }).catch(() => {});
+    fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
+      activePlugins = plugins;
+      // Pre-load all plugin bundles so sidebars are ready without navigation
+      (window as any).__dw_plugins = (window as any).__dw_plugins || new Map();
+      for (const plugin of plugins) {
+        const s = document.createElement('script');
+        s.src = `/api/plugin/${plugin.name}/client/bundle.js`;
+        document.head.appendChild(s);
+      }
+    }).catch(() => {});
     let es = new EventSource('/api/watch');
     const attachWatch = (source: EventSource) => {
       source.addEventListener('filechange', (e: MessageEvent) => {
@@ -828,7 +864,7 @@ import {
     {#each activePlugins as plugin}
       <button class="act-btn"
         class:active={leftView === `plugin-${plugin.name}`}
-        onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; goto(`/plugin/${plugin.name}`); }}
+        onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
         title={plugin.displayName}>{plugin.icon}</button>
     {/each}
   </div>
