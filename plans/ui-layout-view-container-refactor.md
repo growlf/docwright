@@ -32,9 +32,10 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 16
+completed_steps: 17
 github_epic: null
 tests_defined: false
+gate_note: "Changed files are untestable types: plans/ui-layout-view-container-refactor.md"
 ---
 
 # UI Layout Refactor — View Container Plugin Architecture
@@ -247,7 +248,7 @@ requires no changes to View Container implementations.
 | 15 | Lazy-load plugin bundles | Remove the startup preload loop (`for plugin in plugins: append script`). Instead, load `bundle.js` on first activation of that VC — append script tag, await `window.__docwright` registration, then call `mount()`. Cache: don't reload if already registered. | ✅ Done |
 | **Phase 4 — Validation + Docs** | | | |
 | 16 | Playwright regression suite | Extend e2e suite to cover: file browse + open, git stage/commit, policy list, tag navigation, ERP Images (zero changes required), search (`Ctrl+K` focus), mobile hamburger + VC strip. All must pass. | ✅ Done |
-| 17 | Plugin developer guide | `docs/plugins.md`: full API reference (plugin.json schema, bridge methods, mount lifecycle, searchable contract, right panel claim, TypeScript types, example plugin skeleton). Link `plugin-api.d.ts` from the guide. | ⏳ Pending |
+| 17 | Plugin developer guide | `docs/plugins.md`: full API reference (plugin.json schema, bridge methods, mount lifecycle, searchable contract, right panel claim, TypeScript types, example plugin skeleton). Link `plugin-api.d.ts` from the guide. | ✅ Done |
 | 18 | Merge to develop | Open PR `feat/ui-layout-refactor` → `develop`. `+layout.svelte` must have zero view-specific component imports. Anatomy diagram updated if any region names changed. | ⏳ Pending |
 
 ---
