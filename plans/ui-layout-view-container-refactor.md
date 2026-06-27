@@ -32,7 +32,7 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 15
+completed_steps: 16
 github_epic: null
 tests_defined: false
 ---
@@ -246,7 +246,7 @@ requires no changes to View Container implementations.
 | 14 | Activity bar from registry | Remove hardcoded `act-btn` elements for Files, Search, Policies, Tags, Settings, Git. The activity bar renders from the registered VC list sorted by `order`. Plugins at `order: 100+` appear after core views, separated by a thin divider. | ✅ Done |
 | 15 | Lazy-load plugin bundles | Remove the startup preload loop (`for plugin in plugins: append script`). Instead, load `bundle.js` on first activation of that VC — append script tag, await `window.__docwright` registration, then call `mount()`. Cache: don't reload if already registered. | ✅ Done |
 | **Phase 4 — Validation + Docs** | | | |
-| 16 | Playwright regression suite | Extend e2e suite to cover: file browse + open, git stage/commit, policy list, tag navigation, ERP Images (zero changes required), search (`Ctrl+K` focus), mobile hamburger + VC strip. All must pass. | ⏳ Pending |
+| 16 | Playwright regression suite | Extend e2e suite to cover: file browse + open, git stage/commit, policy list, tag navigation, ERP Images (zero changes required), search (`Ctrl+K` focus), mobile hamburger + VC strip. All must pass. | ✅ Done |
 | 17 | Plugin developer guide | `docs/plugins.md`: full API reference (plugin.json schema, bridge methods, mount lifecycle, searchable contract, right panel claim, TypeScript types, example plugin skeleton). Link `plugin-api.d.ts` from the guide. | ⏳ Pending |
 | 18 | Merge to develop | Open PR `feat/ui-layout-refactor` → `develop`. `+layout.svelte` must have zero view-specific component imports. Anatomy diagram updated if any region names changed. | ⏳ Pending |
 
