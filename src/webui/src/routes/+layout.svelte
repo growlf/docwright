@@ -68,13 +68,14 @@ import {
     typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'governance') : 'governance'
   );
 
-  // Core VC registry — maps leftView key → VC metadata for template routing.
+  // Core VC registry — insertion order = activity bar order.
   // External plugins use leftView === 'plugin-<name>'; core VCs use their plain name.
   const CORE_VCS = new Map([
-    ['governance', { searchable: true }],
-    ['files',      { searchable: true }],
-    ['git',        { searchable: false }],
-    ['tags',       { searchable: false }],
+    ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true  }],
+    ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true  }],
+    ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false }],
+    ['tags',       { order: 30, icon: '🏷', label: 'Tags',              searchable: false }],
+    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: false }],
   ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
@@ -136,6 +137,14 @@ import {
     (window as any).__docwright.registerView('git', {
       mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
       unmount() { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
+    });
+
+    // Register Search as a core View Container (order: 25, searchable: false).
+    // SearchPanel subscribes to searchFocusTrigger internally — Ctrl+K still works.
+    let searchApp: any = null;
+    (window as any).__docwright.registerView('search', {
+      mount(el: HTMLElement) { searchApp = svelteMount(SearchPanel, { target: el }); },
+      unmount() { if (searchApp) { svelteUnmount(searchApp); searchApp = null; } },
     });
 
     // Register Tags as a core View Container (order: 30, searchable: false).
@@ -759,15 +768,10 @@ import {
 
   onMount(() => {
     loadBrand();
+    // Plugin bundles are now lazy-loaded on first activation (Step 15).
+    // ViewContainerMount handles loading when the VC isn't yet in __dw_plugins.
     fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
       activePlugins = plugins;
-      // Pre-load all plugin bundles so sidebars are ready without navigation
-      (window as any).__dw_plugins = (window as any).__dw_plugins || new Map();
-      for (const plugin of plugins) {
-        const s = document.createElement('script');
-        s.src = `/api/plugin/${plugin.name}/client/bundle.js`;
-        document.head.appendChild(s);
-      }
     }).catch(() => {});
     let es = new EventSource('/api/watch');
     const attachWatch = (source: EventSource) => {
@@ -878,67 +882,58 @@ import {
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
 
-  <!-- Activity bar — switches left panel content -->
+  <!-- Activity bar — rendered from CORE_VCS registry + external plugins (Step 14) -->
   <div class="activity-bar">
-    <button class="act-btn" class:active={leftView === 'governance'}
-      onclick={() => { leftView = 'governance'; showSidebar = true; }}
-      title="Governance Engine">🏛</button>
-    <button class="act-btn" class:active={leftView === 'files'}
-      onclick={() => { leftView = 'files'; showSidebar = true; }}
-      title="Files">📄</button>
-    <button class="act-btn" class:active={leftView === 'search'}
-      onclick={() => { leftView = 'search'; showSidebar = true; searchFocusTrigger.update(n => n + 1); }}
-      title="Search (Ctrl+K)">🔍</button>
-    <button class="act-btn" class:active={leftView === 'tags'}
-      onclick={() => { leftView = 'tags'; showSidebar = true; }}
-      title="Tags">🏷</button>
-    <button class="act-btn" class:active={leftView === 'git'}
-      onclick={() => { leftView = 'git'; showSidebar = true; }}
-      title="Git">⎇</button>
-    {#each activePlugins as plugin}
-      <button class="act-btn"
-        class:active={leftView === `plugin-${plugin.name}`}
-        onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
-        title={plugin.displayName}>{plugin.icon}</button>
+    {#each [...CORE_VCS.entries()] as [vcId, meta]}
+      <button class="act-btn" class:active={leftView === vcId}
+        onclick={() => {
+          leftView = vcId; showSidebar = true;
+          if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+        }}
+        title={meta.label}>{meta.icon}</button>
     {/each}
+    {#if activePlugins.length > 0}
+      <div class="act-divider"></div>
+      {#each activePlugins as plugin}
+        <button class="act-btn"
+          class:active={leftView === `plugin-${plugin.name}`}
+          onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
+          title={plugin.displayName}>{plugin.icon}</button>
+      {/each}
+    {/if}
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
-    <!-- Mobile activity bar strip — mirrors desktop activity bar, hidden on desktop -->
+    <!-- Mobile activity bar strip — registry-driven (Step 14), hidden on desktop -->
     <div class="mobile-vc-strip">
-      <button class="mobile-act-btn" class:active={leftView === 'governance'} onclick={() => leftView = 'governance'} title="Governance">🏛</button>
-      <button class="mobile-act-btn" class:active={leftView === 'files'} onclick={() => leftView = 'files'} title="Files">📄</button>
-      <button class="mobile-act-btn" class:active={leftView === 'search'} onclick={() => { leftView = 'search'; searchFocusTrigger.update(n => n + 1); }} title="Search">🔍</button>
-      <button class="mobile-act-btn" class:active={leftView === 'tags'} onclick={() => leftView = 'tags'} title="Tags">🏷</button>
-      <button class="mobile-act-btn" class:active={leftView === 'git'} onclick={() => leftView = 'git'} title="Git">⎇</button>
+      {#each [...CORE_VCS.entries()] as [vcId, meta]}
+        <button class="mobile-act-btn" class:active={leftView === vcId}
+          onclick={() => {
+            leftView = vcId;
+            if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+          }}
+          title={meta.label}>{meta.icon}</button>
+      {/each}
       {#each activePlugins as plugin}
         <button class="mobile-act-btn" class:active={leftView === `plugin-${plugin.name}`}
           onclick={() => leftView = `plugin-${plugin.name}`} title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     </div>
 
-    {#if CORE_VCS.has(leftView) || leftView.startsWith('plugin-')}
-      {@const vcName = leftView.startsWith('plugin-') ? leftView.slice(7) : leftView}
-      {@const searchable = CORE_VCS.get(leftView)?.searchable
-        ?? activePlugins.find(p => p.name === vcName)?.searchable
-        ?? false}
-      {#if searchable}
-        <div class="vc-search-bar">
-          <input class="vc-search-input" type="search" placeholder="Search…"
-            oninput={(e) => {
-              const q = (e.target as HTMLInputElement).value;
-              (window as any).__dw_plugins?.get(vcName)?.onSearch?.(q);
-            }} />
-        </div>
-      {/if}
-      <ViewContainerMount vcName={vcName} />
-    {:else}
-      <!-- Only native view remaining: Search (becomes a VC in Step 14) -->
-      <div class="sidebar-header">
-        <span class="sidebar-view-label">Search</span>
+    {@const vcName = leftView.startsWith('plugin-') ? leftView.slice(7) : leftView}
+    {@const searchable = CORE_VCS.get(leftView)?.searchable
+      ?? activePlugins.find(p => p.name === vcName)?.searchable
+      ?? false}
+    {#if searchable}
+      <div class="vc-search-bar">
+        <input class="vc-search-input" type="search" placeholder="Search…"
+          oninput={(e) => {
+            const q = (e.target as HTMLInputElement).value;
+            (window as any).__dw_plugins?.get(vcName)?.onSearch?.(q);
+          }} />
       </div>
-      <SearchPanel />
     {/if}
+    <ViewContainerMount vcName={vcName} />
   </Panel>
   <!-- Main content + chat at bottom -->
   <main id="content">
@@ -1232,14 +1227,10 @@ import {
   }
   .act-btn:hover  { color: #aaa; background: #1a1a1a; }
   .act-btn.active { color: #ccc; background: #1a1a2a; border-left: 2px solid #58a6ff; border-radius: 0 4px 4px 0; }
+  .act-divider { width: 70%; height: 1px; background: #2a2a2a; margin: 4px auto; }
 
   /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; flex: 1; min-height: 0; font-family: system-ui, -apple-system, sans-serif; }
-  .sidebar-header { padding: 8px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-shrink: 0; min-height: 36px; }
-  .sidebar-view-label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
-  .new-btn-sm { background: none; border: 1px solid #444; color: #aaa; width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-  .new-btn-sm:hover { background: #222; color: #fff; }
-  .new-group-inner { position: relative; }
 
   /* ── Settings view ───────────────────────────────────────────────────────── */
 
@@ -1411,10 +1402,8 @@ import {
     .hamburger, .home-btn, .gear-btn { color: #666; }
     .hamburger:hover, .home-btn:hover, .gear-btn:hover { color: #222; background: #e4e4e4; }
     .brand-name   { color: #4a6cf7; }
-    .sidebar-header { background: #fff; border-bottom-color: #d0d0d0; }
-    .sidebar-view-label { color: #888; }
-    .new-btn, .new-btn-sm { border-color: #bbb; color: #555; }
-    .new-btn:hover, .new-btn-sm:hover { background: #e4e4e4; color: #111; }
+    .new-btn { border-color: #bbb; color: #555; }
+    .new-btn:hover { background: #e4e4e4; color: #111; }
     .new-menu { background: #fff; border-color: #d0d0d0; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
     .new-menu-item { color: #333; }
     .new-menu-item:hover { background: #e0e8ff; color: #111; }

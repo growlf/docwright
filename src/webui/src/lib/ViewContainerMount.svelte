@@ -13,16 +13,31 @@
 
   let { vcName }: { vcName: string } = $props();
 
-  let containerEl = $state<HTMLDivElement | null>(null);
-  let errorMsg    = $state<string | null>(null);
+  let containerEl   = $state<HTMLDivElement | null>(null);
+  let errorMsg      = $state<string | null>(null);
+  let bundleVersion = $state(0); // increment on bundle load to re-trigger effect
 
   $effect(() => {
+    void bundleVersion; // reactive dependency — re-runs when bundle loads
     const el = containerEl;
     if (!el) return;
 
     errorMsg = null;
     const vc = (window as any).__dw_plugins?.get(vcName);
-    if (!vc) return;
+
+    // Lazy-load external plugin bundle on first activation if not yet registered.
+    // Core VCs are pre-registered in layout onMount; only external plugins need this path.
+    if (!vc) {
+      const bundleUrl = `/api/plugin/${vcName}/client/bundle.js`;
+      if (!document.querySelector(`script[src="${bundleUrl}"]`)) {
+        const script = document.createElement('script');
+        script.src = bundleUrl;
+        script.onload  = () => { bundleVersion++; }; // triggers effect re-run
+        script.onerror = () => { errorMsg = `Bundle failed to load: ${vcName}`; };
+        document.head.appendChild(script);
+      }
+      return;
+    }
 
     if (typeof vc.mount === 'function') {
       try {

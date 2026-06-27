@@ -32,7 +32,7 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 12
+completed_steps: 15
 github_epic: null
 tests_defined: false
 ---
@@ -242,9 +242,9 @@ requires no changes to View Container implementations.
 | 11 | Governance Engine View Container | Build `GovernancePanel.svelte` as the primary core VC (`order: 10`). Sub-views: Lifecycle Status (active proposals/plans — replaces `/status` default), Policy Chain Browser, Outcome Lineage, Profile Dashboard, Hook Status. Register `searchable: true`. Remove `PoliciesPanel.svelte` from layout. Remove `window.__docwright_host` backward compat shim. See `proposals/governance-engine-view-container.md`. Verify: status view, policy list, lifecycle trail. | ✅ Done |
 | 12 | Tags View Container | Bundle `TagsPanel.svelte` as core VC with `order: 30`. Remove from layout. Verify: tag list, filter, tagged-doc navigation. | ✅ Done |
 | **Phase 3 — Shell Cleanup** | | | |
-| 13 | Remove hardcoded switch | After steps 9–12, the left-panel `{#if leftView === ...}` switch has no cases. Remove it. The panel renders only: `ViewContainerMount` for the active VC, or the per-view search input when `searchable: true`. | ⏳ Pending |
-| 14 | Activity bar from registry | Remove hardcoded `act-btn` elements for Files, Search, Policies, Tags, Settings, Git. The activity bar renders from the registered VC list sorted by `order`. Plugins at `order: 100+` appear after core views, separated by a thin divider. | ⏳ Pending |
-| 15 | Lazy-load plugin bundles | Remove the startup preload loop (`for plugin in plugins: append script`). Instead, load `bundle.js` on first activation of that VC — append script tag, await `window.__docwright` registration, then call `mount()`. Cache: don't reload if already registered. | ⏳ Pending |
+| 13 | Remove hardcoded switch | After steps 9–12, the left-panel `{#if leftView === ...}` switch has no cases. Remove it. The panel renders only: `ViewContainerMount` for the active VC, or the per-view search input when `searchable: true`. | ✅ Done |
+| 14 | Activity bar from registry | Remove hardcoded `act-btn` elements for Files, Search, Policies, Tags, Settings, Git. The activity bar renders from the registered VC list sorted by `order`. Plugins at `order: 100+` appear after core views, separated by a thin divider. | ✅ Done |
+| 15 | Lazy-load plugin bundles | Remove the startup preload loop (`for plugin in plugins: append script`). Instead, load `bundle.js` on first activation of that VC — append script tag, await `window.__docwright` registration, then call `mount()`. Cache: don't reload if already registered. | ✅ Done |
 | **Phase 4 — Validation + Docs** | | | |
 | 16 | Playwright regression suite | Extend e2e suite to cover: file browse + open, git stage/commit, policy list, tag navigation, ERP Images (zero changes required), search (`Ctrl+K` focus), mobile hamburger + VC strip. All must pass. | ⏳ Pending |
 | 17 | Plugin developer guide | `docs/plugins.md`: full API reference (plugin.json schema, bridge methods, mount lifecycle, searchable contract, right panel claim, TypeScript types, example plugin skeleton). Link `plugin-api.d.ts` from the guide. | ⏳ Pending |
