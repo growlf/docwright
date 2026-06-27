@@ -6,7 +6,9 @@
   import ViewContainerMount from '$lib/ViewContainerMount.svelte';
   import { searchFocusTrigger } from '$lib/searchFocus.js';
   import { filesSearchQuery } from '$lib/filesVc.js';
+  import { govSearchQuery } from '$lib/govVc.js';
   import FileTree from './FileTree.svelte';
+  import GovernancePanel from '$lib/GovernancePanel.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
@@ -26,7 +28,6 @@ import {
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
-  import PoliciesPanel from '$lib/PoliciesPanel.svelte';
   import TagsPanel from '$lib/TagsPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
@@ -64,7 +65,7 @@ import {
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
   let leftView       = $state<string>(
-    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'files') : 'files'
+    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'governance') : 'governance'
   );
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
@@ -86,8 +87,7 @@ import {
   $effect(() => { const u = rightPanelClaim.subscribe(v => { rpc = v; if (v) showRightPanel = true; }); return u; });
 
   // Unified bridge — window.__docwright is the single entry point for all plugins.
-  // registerView() stores VCs in the same __dw_plugins Map the activation effect reads.
-  // Backward compat: window.__docwright_host keeps the old method names — removed in Step 11.
+  // registerView() stores VCs in the __dw_plugins Map; ViewContainerMount activates them.
   onMount(() => {
     if (!(window as any).__dw_plugins) (window as any).__dw_plugins = new Map<string, any>();
     const bridge = {
@@ -109,12 +109,17 @@ import {
       bridge,
       registerView: (name: string, vc: any) => (window as any).__dw_plugins.set(name, vc),
     };
-    // Backward compat shim — remove in Step 11
-    (window as any).__docwright_host = {
-      ...bridge,
-      setRightPanel: bridge.claimRightPanel,
-      clearRightPanel: bridge.releaseRightPanel,
-    };
+    // Register Governance Engine as the primary core VC (order: 10, searchable: true).
+    // APIs: GET /api/status, /api/list, /api/profile-config (reads — auth-ready).
+    let govApp: any = null;
+    (window as any).__docwright.registerView('governance', {
+      mount(el: HTMLElement) {
+        govApp = svelteMount(GovernancePanel, { target: el });
+      },
+      unmount() { if (govApp) { svelteUnmount(govApp); govApp = null; } },
+      onSearch(query: string) { govSearchQuery.set(query); },
+      onDeactivate() { govSearchQuery.set(''); },
+    });
 
     // Register Git as a core View Container (order: 40, searchable: false).
     // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth).
@@ -857,15 +862,15 @@ import {
 
   <!-- Activity bar — switches left panel content -->
   <div class="activity-bar">
+    <button class="act-btn" class:active={leftView === 'governance'}
+      onclick={() => { leftView = 'governance'; showSidebar = true; }}
+      title="Governance Engine">🏛</button>
     <button class="act-btn" class:active={leftView === 'files'}
       onclick={() => { leftView = 'files'; showSidebar = true; }}
       title="Files">📄</button>
     <button class="act-btn" class:active={leftView === 'search'}
       onclick={() => { leftView = 'search'; showSidebar = true; searchFocusTrigger.update(n => n + 1); }}
       title="Search (Ctrl+K)">🔍</button>
-    <button class="act-btn" class:active={leftView === 'policies'}
-      onclick={() => { leftView = 'policies'; showSidebar = true; }}
-      title="Policies">📋</button>
     <button class="act-btn" class:active={leftView === 'tags'}
       onclick={() => { leftView = 'tags'; showSidebar = true; }}
       title="Tags">🏷</button>
@@ -883,9 +888,9 @@ import {
   <Panel side="left" bind:open={showSidebar}>
     <!-- Mobile activity bar strip — mirrors desktop activity bar, hidden on desktop -->
     <div class="mobile-vc-strip">
+      <button class="mobile-act-btn" class:active={leftView === 'governance'} onclick={() => leftView = 'governance'} title="Governance">🏛</button>
       <button class="mobile-act-btn" class:active={leftView === 'files'} onclick={() => leftView = 'files'} title="Files">📄</button>
       <button class="mobile-act-btn" class:active={leftView === 'search'} onclick={() => { leftView = 'search'; searchFocusTrigger.update(n => n + 1); }} title="Search">🔍</button>
-      <button class="mobile-act-btn" class:active={leftView === 'policies'} onclick={() => leftView = 'policies'} title="Policies">📋</button>
       <button class="mobile-act-btn" class:active={leftView === 'tags'} onclick={() => leftView = 'tags'} title="Tags">🏷</button>
       <button class="mobile-act-btn" class:active={leftView === 'git'} onclick={() => leftView = 'git'} title="Git">⎇</button>
       {#each activePlugins as plugin}
@@ -910,13 +915,11 @@ import {
     {:else}
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : 'Tags'}
+        {leftView === 'search' ? 'Search' : 'Tags'}
       </span>
     </div>
     {#if leftView === 'search'}
       <SearchPanel />
-    {:else if leftView === 'policies'}
-      <PoliciesPanel />
     {:else if leftView === 'tags'}
       <TagsPanel />
     {/if}

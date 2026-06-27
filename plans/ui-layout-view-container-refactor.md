@@ -32,7 +32,7 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 10
+completed_steps: 11
 github_epic: null
 tests_defined: false
 ---
@@ -239,7 +239,7 @@ requires no changes to View Container implementations.
 | **Phase 2 — Extract Core Views** | | | |
 | 9 | Files View Container | Convert `FileTree.svelte` + project section to use `mount(el)` pattern (Svelte component mounted imperatively into the provided element). Register as core VC with `order: 20`, `searchable: true`. Remove `leftView === 'files'` case and `FileTree` import from layout. Verify: file browsing, file open, project section, + New menu via `bridge.emit('shell:new-menu')`. | ✅ Done |
 | 10 | Git View Container + DiffView widget | Extract `DiffView.svelte` into `widgets/DiffView.svelte` (unified + side-by-side modes). Bundle `GitPanel.svelte` as core VC with `order: 40`. Remove from layout. Verify: stage, unstage, commit, diff view. | ✅ Done |
-| 11 | Governance Engine View Container | Build `GovernancePanel.svelte` as the primary core VC (`order: 10`). Sub-views: Lifecycle Status (active proposals/plans — replaces `/status` default), Policy Chain Browser, Outcome Lineage, Profile Dashboard, Hook Status. Register `searchable: true`. Remove `PoliciesPanel.svelte` from layout. Remove `window.__docwright_host` backward compat shim. See `proposals/governance-engine-view-container.md`. Verify: status view, policy list, lifecycle trail. | ⏳ Pending |
+| 11 | Governance Engine View Container | Build `GovernancePanel.svelte` as the primary core VC (`order: 10`). Sub-views: Lifecycle Status (active proposals/plans — replaces `/status` default), Policy Chain Browser, Outcome Lineage, Profile Dashboard, Hook Status. Register `searchable: true`. Remove `PoliciesPanel.svelte` from layout. Remove `window.__docwright_host` backward compat shim. See `proposals/governance-engine-view-container.md`. Verify: status view, policy list, lifecycle trail. | ✅ Done |
 | 12 | Tags View Container | Bundle `TagsPanel.svelte` as core VC with `order: 30`. Remove from layout. Verify: tag list, filter, tagged-doc navigation. | ⏳ Pending |
 | **Phase 3 — Shell Cleanup** | | | |
 | 13 | Remove hardcoded switch | After steps 9–12, the left-panel `{#if leftView === ...}` switch has no cases. Remove it. The panel renders only: `ViewContainerMount` for the active VC, or the per-view search input when `searchable: true`. | ⏳ Pending |
