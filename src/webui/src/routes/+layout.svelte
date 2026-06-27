@@ -116,6 +116,14 @@ import {
       clearRightPanel: bridge.releaseRightPanel,
     };
 
+    // Register Git as a core View Container (order: 40, searchable: false).
+    // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth).
+    let gitApp: any = null;
+    (window as any).__docwright.registerView('git', {
+      mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
+      unmount() { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
+    });
+
     // Register Files as a core View Container (order: 20, searchable: true).
     // Uses Svelte's imperative mount() — element is provided by ViewContainerMount.
     let filesApp: any = null;
@@ -902,7 +910,7 @@ import {
     {:else}
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : 'Git'}
+        {leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : 'Tags'}
       </span>
     </div>
     {#if leftView === 'search'}
@@ -911,8 +919,6 @@ import {
       <PoliciesPanel />
     {:else if leftView === 'tags'}
       <TagsPanel />
-    {:else}
-      <GitPanel />
     {/if}
     {/if}
   </Panel>
