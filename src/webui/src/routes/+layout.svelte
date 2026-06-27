@@ -1,16 +1,12 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
-  import { mount as svelteMount, unmount as svelteUnmount } from 'svelte';
   import { goto } from '$app/navigation';
   import { rightPanelClaim, type RightPanelClaim, vcRegistryVersion } from '$lib/pluginPanel.js';
   import ViewContainerMount from '$lib/ViewContainerMount.svelte';
   import { searchFocusTrigger } from '$lib/searchFocus.js';
   import { filesSearchQuery } from '$lib/filesVc.js';
   import { govSearchQuery } from '$lib/govVc.js';
-  import FileTree from './FileTree.svelte';
-  import GovernancePanel from '$lib/GovernancePanel.svelte';
-  import TagsPanel from '$lib/TagsPanel.svelte';
-  import GitPanel from '$lib/GitPanel.svelte';
+  import { setupCoreVCs } from '$lib/coreVCs.js';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
@@ -28,7 +24,6 @@ import {
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
-  import SearchPanel from '$lib/SearchPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
   interface BrandConfig { name: string; logoPath: string | null; }
@@ -122,58 +117,12 @@ import {
         vcRegistryVersion.update(n => n + 1); // signals ViewContainerMount to retry
       },
     };
-    // Register Governance Engine as the primary core VC (order: 10, searchable: true).
-    // APIs: GET /api/status, /api/list, /api/profile-config (reads — auth-ready).
-    let govApp: any = null;
-    (window as any).__docwright.registerView('governance', {
-      mount(el: HTMLElement) {
-        govApp = svelteMount(GovernancePanel, { target: el });
-      },
-      unmount() { if (govApp) { svelteUnmount(govApp); govApp = null; } },
-      onSearch(query: string) { govSearchQuery.set(query); },
-      onDeactivate() { govSearchQuery.set(''); },
-    });
-
-    // Register Git as a core View Container (order: 40, searchable: false).
-    // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth).
-    let gitApp: any = null;
-    (window as any).__docwright.registerView('git', {
-      mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
-      unmount() { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
-    });
-
-    // Register Search as a core View Container (order: 25, searchable: false).
-    // SearchPanel subscribes to searchFocusTrigger internally — Ctrl+K still works.
-    let searchApp: any = null;
-    (window as any).__docwright.registerView('search', {
-      mount(el: HTMLElement) { searchApp = svelteMount(SearchPanel, { target: el }); },
-      unmount() { if (searchApp) { svelteUnmount(searchApp); searchApp = null; } },
-    });
-
-    // Register Tags as a core View Container (order: 30, searchable: false).
-    // Tags has its own built-in filter input — shell search input not needed.
-    // API: GET /api/tags (read — auth-ready).
-    let tagsApp: any = null;
-    (window as any).__docwright.registerView('tags', {
-      mount(el: HTMLElement) { tagsApp = svelteMount(TagsPanel, { target: el }); },
-      unmount() { if (tagsApp) { svelteUnmount(tagsApp); tagsApp = null; } },
-    });
-
-    // Register Files as a core View Container (order: 20, searchable: true).
-    // Uses Svelte's imperative mount() — element is provided by ViewContainerMount.
-    let filesApp: any = null;
-    (window as any).__docwright.registerView('files', {
-      mount(el: HTMLElement) {
-        filesApp = svelteMount(FileTree, {
-          target: el,
-          props: { onNewMenu: () => { showNewMenu = !showNewMenu; } },
-        });
-      },
-      unmount() {
-        if (filesApp) { svelteUnmount(filesApp); filesApp = null; }
-      },
-      onSearch(query: string) { filesSearchQuery.set(query); },
-      onDeactivate() { filesSearchQuery.set(''); },
+    // Register all core View Containers (Governance, Search, Tags, Git, Files).
+    // All view-specific imports live in coreVCs.ts — layout stays view-agnostic.
+    setupCoreVCs({
+      onNewMenu:        () => { showNewMenu = !showNewMenu; },
+      filesSearchQuery,
+      govSearchQuery,
     });
   });
 
