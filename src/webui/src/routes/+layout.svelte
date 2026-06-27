@@ -2,7 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import { mount as svelteMount, unmount as svelteUnmount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { rightPanelClaim, type RightPanelClaim } from '$lib/pluginPanel.js';
+  import { rightPanelClaim, type RightPanelClaim, vcRegistryVersion } from '$lib/pluginPanel.js';
   import ViewContainerMount from '$lib/ViewContainerMount.svelte';
   import { searchFocusTrigger } from '$lib/searchFocus.js';
   import { filesSearchQuery } from '$lib/filesVc.js';
@@ -117,7 +117,10 @@ import {
     };
     (window as any).__docwright = {
       bridge,
-      registerView: (name: string, vc: any) => (window as any).__dw_plugins.set(name, vc),
+      registerView: (name: string, vc: any) => {
+        (window as any).__dw_plugins.set(name, vc);
+        vcRegistryVersion.update(n => n + 1); // signals ViewContainerMount to retry
+      },
     };
     // Register Governance Engine as the primary core VC (order: 10, searchable: true).
     // APIs: GET /api/status, /api/list, /api/profile-config (reads — auth-ready).
@@ -933,7 +936,7 @@ import {
           }} />
       </div>
     {/if}
-    <ViewContainerMount vcName={vcName} />
+    <ViewContainerMount vcName={vcName} lazy={leftView.startsWith('plugin-')} />
   </Panel>
   <!-- Main content + chat at bottom -->
   <main id="content">

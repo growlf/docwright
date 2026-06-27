@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { vcRegistryVersion } from '$lib/pluginPanel.js';
+
   /**
    * ViewContainerMount — error-isolated View Container lifecycle manager.
    *
@@ -11,30 +14,38 @@
    * - Calls vc.onDeactivate() + vc.unmount() on cleanup (effect re-run or destroy).
    */
 
-  let { vcName }: { vcName: string } = $props();
+  // lazy: true → load bundle.js on first activation (external plugins).
+  //        false → wait for registerView() registration only (core VCs).
+  let { vcName, lazy = false }: { vcName: string; lazy?: boolean } = $props();
 
   let containerEl   = $state<HTMLDivElement | null>(null);
   let errorMsg      = $state<string | null>(null);
-  let bundleVersion = $state(0); // increment on bundle load to re-trigger effect
+  let bundleVersion = $state(0); // increment on external bundle load to re-trigger effect
+  let regVersion    = $state(0); // mirrors vcRegistryVersion — re-triggers on core VC registration
+
+  onMount(() => vcRegistryVersion.subscribe(v => { regVersion = v; }));
 
   $effect(() => {
-    void bundleVersion; // reactive dependency — re-runs when bundle loads
+    void bundleVersion; // reactive: re-runs when external bundle loads
+    void regVersion;    // reactive: re-runs when any VC is registered (core or external)
     const el = containerEl;
     if (!el) return;
 
     errorMsg = null;
     const vc = (window as any).__dw_plugins?.get(vcName);
 
-    // Lazy-load external plugin bundle on first activation if not yet registered.
-    // Core VCs are pre-registered in layout onMount; only external plugins need this path.
     if (!vc) {
-      const bundleUrl = `/api/plugin/${vcName}/client/bundle.js`;
-      if (!document.querySelector(`script[src="${bundleUrl}"]`)) {
-        const script = document.createElement('script');
-        script.src = bundleUrl;
-        script.onload  = () => { bundleVersion++; }; // triggers effect re-run
-        script.onerror = () => { errorMsg = `Bundle failed to load: ${vcName}`; };
-        document.head.appendChild(script);
+      // External plugins: load bundle.js on first activation.
+      // Core VCs (lazy=false): just wait — vcRegistryVersion will re-trigger this effect.
+      if (lazy) {
+        const bundleUrl = `/api/plugin/${vcName}/client/bundle.js`;
+        if (!document.querySelector(`script[src="${bundleUrl}"]`)) {
+          const script = document.createElement('script');
+          script.src = bundleUrl;
+          script.onload  = () => { bundleVersion++; };
+          script.onerror = () => { errorMsg = `Bundle failed to load: ${vcName}`; };
+          document.head.appendChild(script);
+        }
       }
       return;
     }
