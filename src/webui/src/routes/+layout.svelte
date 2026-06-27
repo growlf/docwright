@@ -9,6 +9,7 @@
   import { govSearchQuery } from '$lib/govVc.js';
   import FileTree from './FileTree.svelte';
   import GovernancePanel from '$lib/GovernancePanel.svelte';
+  import TagsPanel from '$lib/TagsPanel.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
@@ -28,7 +29,6 @@ import {
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import SearchPanel from '$lib/SearchPanel.svelte';
-  import TagsPanel from '$lib/TagsPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
   interface BrandConfig { name: string; logoPath: string | null; }
@@ -67,6 +67,15 @@ import {
   let leftView       = $state<string>(
     typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'governance') : 'governance'
   );
+
+  // Core VC registry — maps leftView key → VC metadata for template routing.
+  // External plugins use leftView === 'plugin-<name>'; core VCs use their plain name.
+  const CORE_VCS = new Map([
+    ['governance', { searchable: true }],
+    ['files',      { searchable: true }],
+    ['git',        { searchable: false }],
+    ['tags',       { searchable: false }],
+  ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
   const THEMES: Theme[] = ['dark', 'light', 'system'];
@@ -127,6 +136,15 @@ import {
     (window as any).__docwright.registerView('git', {
       mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
       unmount() { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
+    });
+
+    // Register Tags as a core View Container (order: 30, searchable: false).
+    // Tags has its own built-in filter input — shell search input not needed.
+    // API: GET /api/tags (read — auth-ready).
+    let tagsApp: any = null;
+    (window as any).__docwright.registerView('tags', {
+      mount(el: HTMLElement) { tagsApp = svelteMount(TagsPanel, { target: el }); },
+      unmount() { if (tagsApp) { svelteUnmount(tagsApp); tagsApp = null; } },
     });
 
     // Register Files as a core View Container (order: 20, searchable: true).
@@ -899,30 +917,27 @@ import {
       {/each}
     </div>
 
-    {#if leftView.startsWith('plugin-')}
-      {@const pluginName = leftView.slice(7)}
-      {@const vcMeta = activePlugins.find(p => p.name === pluginName)}
-      {#if vcMeta?.searchable}
+    {#if CORE_VCS.has(leftView) || leftView.startsWith('plugin-')}
+      {@const vcName = leftView.startsWith('plugin-') ? leftView.slice(7) : leftView}
+      {@const searchable = CORE_VCS.get(leftView)?.searchable
+        ?? activePlugins.find(p => p.name === vcName)?.searchable
+        ?? false}
+      {#if searchable}
         <div class="vc-search-bar">
-          <input class="vc-search-input" type="search" placeholder="Search {vcMeta.displayName}…"
+          <input class="vc-search-input" type="search" placeholder="Search…"
             oninput={(e) => {
               const q = (e.target as HTMLInputElement).value;
-              (window as any).__dw_plugins?.get(pluginName)?.onSearch?.(q);
+              (window as any).__dw_plugins?.get(vcName)?.onSearch?.(q);
             }} />
         </div>
       {/if}
-      <ViewContainerMount vcName={pluginName} />
+      <ViewContainerMount vcName={vcName} />
     {:else}
-    <div class="sidebar-header">
-      <span class="sidebar-view-label">
-        {leftView === 'search' ? 'Search' : 'Tags'}
-      </span>
-    </div>
-    {#if leftView === 'search'}
+      <!-- Only native view remaining: Search (becomes a VC in Step 14) -->
+      <div class="sidebar-header">
+        <span class="sidebar-view-label">Search</span>
+      </div>
       <SearchPanel />
-    {:else if leftView === 'tags'}
-      <TagsPanel />
-    {/if}
     {/if}
   </Panel>
   <!-- Main content + chat at bottom -->
