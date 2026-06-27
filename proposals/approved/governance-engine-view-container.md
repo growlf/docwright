@@ -1,5 +1,5 @@
 ---
-title: "Governance Engine View Container — Primary Shell Experience"
+title: Governance Engine View Container — Primary Shell Experience
 author: NetYeti
 created: 2026-06-27
 tags:
@@ -11,9 +11,9 @@ tags:
   - policies
 complexity: high
 priority: high
-approved: false
+approved: true
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: NetYeti
 related_to:
   - proposals/ui-layout-view-container-refactor.md
 depends_on:
