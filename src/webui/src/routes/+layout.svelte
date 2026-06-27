@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
+  import { mount as svelteMount, unmount as svelteUnmount } from 'svelte';
   import { goto } from '$app/navigation';
   import { rightPanelClaim, type RightPanelClaim } from '$lib/pluginPanel.js';
   import ViewContainerMount from '$lib/ViewContainerMount.svelte';
   import { searchFocusTrigger } from '$lib/searchFocus.js';
+  import { filesSearchQuery } from '$lib/filesVc.js';
   import FileTree from './FileTree.svelte';
   import GitPanel from '$lib/GitPanel.svelte';
   import { page } from '$app/stores';
@@ -28,17 +30,9 @@ import {
   import TagsPanel from '$lib/TagsPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
 
-  interface ProjectEntry {
-    name: string;
-    path: string;
-    profile: string;
-    last_session?: string;
-  }
-
   interface BrandConfig { name: string; logoPath: string | null; }
 
-  let projects     = $state<ProjectEntry[]>([]);
-  let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+  let brand = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
   let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean }[]>([]);
 
   // AI model picker
@@ -121,6 +115,23 @@ import {
       setRightPanel: bridge.claimRightPanel,
       clearRightPanel: bridge.releaseRightPanel,
     };
+
+    // Register Files as a core View Container (order: 20, searchable: true).
+    // Uses Svelte's imperative mount() — element is provided by ViewContainerMount.
+    let filesApp: any = null;
+    (window as any).__docwright.registerView('files', {
+      mount(el: HTMLElement) {
+        filesApp = svelteMount(FileTree, {
+          target: el,
+          props: { onNewMenu: () => { showNewMenu = !showNewMenu; } },
+        });
+      },
+      unmount() {
+        if (filesApp) { svelteUnmount(filesApp); filesApp = null; }
+      },
+      onSearch(query: string) { filesSearchQuery.set(query); },
+      onDeactivate() { filesSearchQuery.set(''); },
+    });
   });
 
   let applyingReview = $state(false);
@@ -708,13 +719,6 @@ import {
     });
   }
 
-  function loadProjects() {
-    fetch('/api/registry')
-      .then(r => r.json())
-      .then(data => { projects = data.projects || []; })
-      .catch(() => { projects = []; });
-  }
-
   function loadBrand() {
     fetch('/api/brand')
       .then(r => r.json())
@@ -724,7 +728,6 @@ import {
 
   onMount(() => {
     loadBrand();
-    loadProjects();
     fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
       activePlugins = plugins;
       // Pre-load all plugin bundles so sidebars are ready without navigation
@@ -899,19 +902,8 @@ import {
     {:else}
     <div class="sidebar-header">
       <span class="sidebar-view-label">
-        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : 'Git'}
+        {leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : 'Git'}
       </span>
-      {#if leftView === 'files'}
-      <div class="new-group-inner">
-        <button class="new-btn-sm" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }} title="New document">+</button>
-        {#if showNewMenu}
-          <div class="new-menu" onclick={(e) => e.stopPropagation()}>
-            <button class="new-menu-item" onclick={newFile}>New File</button>
-            <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
-          </div>
-        {/if}
-      </div>
-      {/if}
     </div>
     {#if leftView === 'search'}
       <SearchPanel />
@@ -919,20 +911,6 @@ import {
       <PoliciesPanel />
     {:else if leftView === 'tags'}
       <TagsPanel />
-    {:else if leftView === 'files'}
-      <FileTree currentPath={$page.url.pathname} />
-      {#if projects.length > 0}
-        <div class="project-section">
-          <div class="project-heading">Projects</div>
-          {#each projects as p}
-            <a class="project-link" href={p.path}>
-              <span class="project-name">{p.name}</span>
-              <span class="project-profile">{p.profile}</span>
-            </a>
-          {/each}
-        </div>
-      {/if}
-
     {:else}
       <GitPanel />
     {/if}
@@ -1240,14 +1218,6 @@ import {
   .new-group-inner { position: relative; }
 
   /* ── Settings view ───────────────────────────────────────────────────────── */
-  .settings-view { padding: 8px 0; flex: 1; overflow-y: auto; }
-  .settings-group { margin-bottom: 16px; }
-  .settings-group-label { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px 2px; }
-  .settings-file { display: block; padding: 4px 16px; font-size: 12px; color: #888; text-decoration: none; font-family: monospace; }
-  .settings-file:hover { background: #1a1a1a; color: #58a6ff; }
-  .settings-hint { padding: 12px 16px; font-size: 11px; color: #444; line-height: 1.5; border-top: 1px solid #1a1a1a; margin-top: 8px; }
-  .settings-hint a { color: #58a6ff; text-decoration: none; }
-  .settings-hint a:hover { text-decoration: underline; }
 
   .brand-name { font-size: 13px; font-weight: 600; color: #58a6ff; white-space: nowrap; letter-spacing: 0.02em; }
   .toolbar-brand:hover .brand-name { color: #88c4ff; }
@@ -1336,10 +1306,6 @@ import {
   .toast-action { background: none; border: 1px solid #2b5b84; color: #58a6ff; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .toast-action:hover { background: #1a3a5a; }
   .toast-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0 2px; }
-  .project-section { border-top: 1px solid #222; padding: 8px 0; }
-  .project-heading { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px; white-space: nowrap; overflow: hidden; }
-  .project-link { display: block; padding: 4px 16px; font-size: 13px; color: #aaa; text-decoration: none; }
-  .project-link:hover { background: #1a1a1a; color: #fff; }
   .project-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .project-profile { font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; }
 
@@ -1428,13 +1394,6 @@ import {
     .new-menu { background: #fff; border-color: #d0d0d0; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
     .new-menu-item { color: #333; }
     .new-menu-item:hover { background: #e0e8ff; color: #111; }
-    .settings-group-label { color: #888; }
-    .settings-file { color: #555; }
-    .settings-file:hover { background: #eaeaea; color: #4a6cf7; }
-    .settings-hint { color: #888; border-top-color: #e4e4e4; }
-    .project-heading { color: #888; }
-    .project-link { color: #555; }
-    .project-link:hover { background: #eaeaea; color: #111; }
     .right-tab        { color: #888; }
     .right-tab.active { color: #333; border-bottom-color: #4a6cf7; }
     .toast { background: #fff; border-color: #d0d0d0; color: #333; }

@@ -32,7 +32,7 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 8
+completed_steps: 9
 github_epic: null
 tests_defined: false
 ---
@@ -237,7 +237,7 @@ requires no changes to View Container implementations.
 | 7 | Settings → footer | Remove Settings from the activity bar. Add Settings icon/link to `.app-footer`. Settings content: `/settings` route (simple static page, links to config files and a theme picker form). No modal needed — a route is simpler and linkable. | ✅ Done |
 | 8 | Per-view search wiring | When a VC has `searchable: true`, the shell renders a search `<input>` at the top of the left panel. On input, calls `vc.onSearch(query)`. `Ctrl+K` sets `leftView = 'files'` and focuses the search input via a `searchFocusTrigger` store (eliminates the `bind:this={searchPanel}` reference). | ✅ Done |
 | **Phase 2 — Extract Core Views** | | | |
-| 9 | Files View Container | Convert `FileTree.svelte` + project section to use `mount(el)` pattern (Svelte component mounted imperatively into the provided element). Register as core VC with `order: 20`, `searchable: true`. Remove `leftView === 'files'` case and `FileTree` import from layout. Verify: file browsing, file open, project section, + New menu via `bridge.emit('shell:new-menu')`. | ⏳ Pending |
+| 9 | Files View Container | Convert `FileTree.svelte` + project section to use `mount(el)` pattern (Svelte component mounted imperatively into the provided element). Register as core VC with `order: 20`, `searchable: true`. Remove `leftView === 'files'` case and `FileTree` import from layout. Verify: file browsing, file open, project section, + New menu via `bridge.emit('shell:new-menu')`. | ✅ Done |
 | 10 | Git View Container + DiffView widget | Extract `DiffView.svelte` into `widgets/DiffView.svelte` (unified + side-by-side modes). Bundle `GitPanel.svelte` as core VC with `order: 40`. Remove from layout. Verify: stage, unstage, commit, diff view. | ⏳ Pending |
 | 11 | Governance Engine View Container | Build `GovernancePanel.svelte` as the primary core VC (`order: 10`). Sub-views: Lifecycle Status (active proposals/plans — replaces `/status` default), Policy Chain Browser, Outcome Lineage, Profile Dashboard, Hook Status. Register `searchable: true`. Remove `PoliciesPanel.svelte` from layout. Remove `window.__docwright_host` backward compat shim. See `proposals/governance-engine-view-container.md`. Verify: status view, policy list, lifecycle trail. | ⏳ Pending |
 | 12 | Tags View Container | Bundle `TagsPanel.svelte` as core VC with `order: 30`. Remove from layout. Verify: tag list, filter, tagged-doc navigation. | ⏳ Pending |
