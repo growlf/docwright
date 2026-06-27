@@ -50,6 +50,8 @@
       // vc captured in this closure — always the VC that was activated here,
       // regardless of what vcName has become by the time cleanup runs.
       try { vc.onDeactivate?.(); vc.unmount?.(); } catch { /* non-fatal */ }
+      // Auto-release any right panel claim this VC may have set.
+      try { (window as any).__docwright?.bridge?.releaseRightPanel?.(); } catch { /* non-fatal */ }
     };
   });
 </script>

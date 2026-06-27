@@ -32,8 +32,9 @@ _path: plans/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 0
+completed_steps: 8
 github_epic: null
+tests_defined: false
 ---
 
 # UI Layout Refactor — View Container Plugin Architecture
@@ -226,19 +227,19 @@ requires no changes to View Container implementations.
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
 | **Phase 0 — API Contract** | | | |
-| 1 | `plugin-api.d.ts` + `window.__docwright` scaffold | Create `src/webui/src/lib/plugin-api.d.ts` with full TypeScript interface (DWViewContainer, DWBridge, DWDocwright). In `+layout.svelte` onMount, replace `window.__docwright_host` and `window.__dw_plugins` with a single `window.__docwright` object. `registerView()` stores VCs in a Map; bridge methods delegate to existing layout functions. **Backward compat shim:** keep `window.__docwright_host` pointing at `window.__docwright.bridge` for one release — remove in Step 11. | ⏳ Pending |
-| 2 | Error boundary + mobile VC strip | Add `ViewContainerMount.svelte` — wraps each VC `mount()` call in a try/catch; shows an error panel with the plugin name on throw, does NOT propagate to layout. Add a horizontal icon strip inside the mobile left panel overlay for activity bar equivalent. | ⏳ Pending |
-| 3 | `mount(el)` migration | Update the layout's VC activation effect: instead of `requestAnimationFrame(() => plugin.mountSidebar())`, call `vc.mount(containerEl)` directly (element is in DOM at call site). Update `cs-erp-images` stub to use `mount(el)` — one-line change. | ⏳ Pending |
-| 4 | Right panel priority model | Replace `{#if leftView.startsWith('plugin-')} {@html prHtml}` binary switch with a priority store: `rightPanelClaim = { html, label }` (null = no claim). Shell renders: claim present → plugin view, else → standard tabs. `bridge.claimRightPanel()` sets the store; `bridge.releaseRightPanel()` clears it. `onDeactivate()` auto-clears claim. | ⏳ Pending |
+| 1 | `plugin-api.d.ts` + `window.__docwright` scaffold | Create `src/webui/src/lib/plugin-api.d.ts` with full TypeScript interface (DWViewContainer, DWBridge, DWDocwright). In `+layout.svelte` onMount, replace `window.__docwright_host` and `window.__dw_plugins` with a single `window.__docwright` object. `registerView()` stores VCs in a Map; bridge methods delegate to existing layout functions. **Backward compat shim:** keep `window.__docwright_host` pointing at `window.__docwright.bridge` for one release — remove in Step 11. | ✅ Done |
+| 2 | Error boundary + mobile VC strip | Add `ViewContainerMount.svelte` — wraps each VC `mount()` call in a try/catch; shows an error panel with the plugin name on throw, does NOT propagate to layout. Add a horizontal icon strip inside the mobile left panel overlay for activity bar equivalent. | ✅ Done |
+| 3 | `mount(el)` migration | Update the layout's VC activation effect: instead of `requestAnimationFrame(() => plugin.mountSidebar())`, call `vc.mount(containerEl)` directly (element is in DOM at call site). Update `cs-erp-images` stub to use `mount(el)` — one-line change. | ✅ Done |
+| 4 | Right panel priority model | Replace `{#if leftView.startsWith('plugin-')} {@html prHtml}` binary switch with a priority store: `rightPanelClaim = { html, label }` (null = no claim). Shell renders: claim present → plugin view, else → standard tabs. `bridge.claimRightPanel()` sets the store; `bridge.releaseRightPanel()` clears it. `onDeactivate()` auto-clears claim. | ✅ Done |
 | **Phase 1 — Foundation** | | | |
-| 5 | `plugin.json` schema additions | Add `order`, `searchable`, `capabilities` to `PluginManifest` TypeScript interface and JSON schema. Update `scanPlugins()` to sort by `order`. Core bundled VCs (registered without a `plugin.json` file) use defaults: `order` by registration sequence. | ⏳ Pending |
-| 6 | Shared widget library scaffold | Create `src/webui/src/lib/widgets/`. Extract `TreePanel.svelte` from `FileTree.svelte` (generic tree, no vault-specific logic). Move `_tokens.scss` into `widgets/_tokens.scss` — import from all panels. | ⏳ Pending |
-| 7 | Settings → footer | Remove Settings from the activity bar. Add Settings icon/link to `.app-footer`. Settings content: `/settings` route (simple static page, links to config files and a theme picker form). No modal needed — a route is simpler and linkable. | ⏳ Pending |
-| 8 | Per-view search wiring | When a VC has `searchable: true`, the shell renders a search `<input>` at the top of the left panel. On input, calls `vc.onSearch(query)`. `Ctrl+K` sets `leftView = 'files'` and focuses the search input via a `searchFocusTrigger` store (eliminates the `bind:this={searchPanel}` reference). | ⏳ Pending |
+| 5 | `plugin.json` schema additions | Add `order`, `searchable`, `capabilities` to `PluginManifest` TypeScript interface and JSON schema. Update `scanPlugins()` to sort by `order`. Core bundled VCs (registered without a `plugin.json` file) use defaults: `order` by registration sequence. | ✅ Done |
+| 6 | Shared widget library scaffold | Create `src/webui/src/lib/widgets/`. Extract `TreePanel.svelte` from `FileTree.svelte` (generic tree, no vault-specific logic). Move `_tokens.scss` into `widgets/_tokens.scss` — import from all panels. | ✅ Done |
+| 7 | Settings → footer | Remove Settings from the activity bar. Add Settings icon/link to `.app-footer`. Settings content: `/settings` route (simple static page, links to config files and a theme picker form). No modal needed — a route is simpler and linkable. | ✅ Done |
+| 8 | Per-view search wiring | When a VC has `searchable: true`, the shell renders a search `<input>` at the top of the left panel. On input, calls `vc.onSearch(query)`. `Ctrl+K` sets `leftView = 'files'` and focuses the search input via a `searchFocusTrigger` store (eliminates the `bind:this={searchPanel}` reference). | ✅ Done |
 | **Phase 2 — Extract Core Views** | | | |
-| 9 | Files View Container | Convert `FileTree.svelte` + project section to use `mount(el)` pattern (Svelte component mounted imperatively into the provided element). Register as core VC with `order: 10`, `searchable: true`. Remove `leftView === 'files'` case and `FileTree` import from layout. Verify: file browsing, file open, project section, + New menu via `bridge.emit('shell:new-menu')`. | ⏳ Pending |
+| 9 | Files View Container | Convert `FileTree.svelte` + project section to use `mount(el)` pattern (Svelte component mounted imperatively into the provided element). Register as core VC with `order: 20`, `searchable: true`. Remove `leftView === 'files'` case and `FileTree` import from layout. Verify: file browsing, file open, project section, + New menu via `bridge.emit('shell:new-menu')`. | ⏳ Pending |
 | 10 | Git View Container + DiffView widget | Extract `DiffView.svelte` into `widgets/DiffView.svelte` (unified + side-by-side modes). Bundle `GitPanel.svelte` as core VC with `order: 40`. Remove from layout. Verify: stage, unstage, commit, diff view. | ⏳ Pending |
-| 11 | Policies View Container | Bundle `PoliciesPanel.svelte` as core VC with `order: 20`. Remove from layout. Remove `window.__docwright_host` backward compat shim now that all core code uses the new API. Verify: policy list, filter, detail navigation. | ⏳ Pending |
+| 11 | Governance Engine View Container | Build `GovernancePanel.svelte` as the primary core VC (`order: 10`). Sub-views: Lifecycle Status (active proposals/plans — replaces `/status` default), Policy Chain Browser, Outcome Lineage, Profile Dashboard, Hook Status. Register `searchable: true`. Remove `PoliciesPanel.svelte` from layout. Remove `window.__docwright_host` backward compat shim. See `proposals/governance-engine-view-container.md`. Verify: status view, policy list, lifecycle trail. | ⏳ Pending |
 | 12 | Tags View Container | Bundle `TagsPanel.svelte` as core VC with `order: 30`. Remove from layout. Verify: tag list, filter, tagged-doc navigation. | ⏳ Pending |
 | **Phase 3 — Shell Cleanup** | | | |
 | 13 | Remove hardcoded switch | After steps 9–12, the left-panel `{#if leftView === ...}` switch has no cases. Remove it. The panel renders only: `ViewContainerMount` for the active VC, or the per-view search input when `searchable: true`. | ⏳ Pending |
@@ -269,10 +270,11 @@ requires no changes to View Container implementations.
 - [ ] `window.__docwright` is the only plugin global (`__dw_plugins` and `__docwright_host` removed)
 - [ ] `plugin-api.d.ts` exists and matches the live bridge implementation
 - [ ] All activity bar icons come from the registered VC list sorted by `order`
-- [ ] Files, Git, Policies, Tags work identically to today as View Containers
+- [ ] Files, Git, Governance Engine, Tags work as View Containers; Governance Engine is primary (order: 10)
 - [ ] Settings accessible from footer via `/settings` route
 - [ ] `src/webui/src/lib/widgets/` contains TreePanel + DiffView + shared tokens
 - [ ] Plugin bundles load lazily on first activation
 - [ ] ERP Images plugin passes Playwright tests unchanged
 - [ ] `docs/plugins.md` written and links `plugin-api.d.ts`
 - [ ] PR merged to develop
+

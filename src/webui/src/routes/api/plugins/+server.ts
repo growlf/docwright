@@ -7,6 +7,8 @@ export function GET() {
     version: manifest.version,
     icon: manifest.icon,
     description: manifest.description,
+    order: manifest.order,
+    searchable: manifest.searchable,
   }));
   return Response.json(plugins);
 }
