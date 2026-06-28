@@ -22,10 +22,15 @@ function writeProposal(dir: string, name: string, approved: boolean): string {
 }
 
 function run(dir: string, args = ''): { out: string; code: number } {
+  // Unset vault path vars so the script targets the temp vault via process.cwd(),
+  // not whatever the outer shell has DOCWRIGHT_VAULT_ROOT/DOCWRIGHT_ROOT set to.
+  const env = { ...process.env };
+  delete env.DOCWRIGHT_VAULT_ROOT;
+  delete env.DOCWRIGHT_ROOT;
   try {
     const out = execSync(
       `npx tsx "${SCRIPT}" ${args}`,
-      { cwd: dir, encoding: 'utf-8', env: { ...process.env } }
+      { cwd: dir, encoding: 'utf-8', env }
     );
     return { out, code: 0 };
   } catch (e: any) {
