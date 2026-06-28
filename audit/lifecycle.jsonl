@@ -17,3 +17,5 @@
 {"ts":"2026-06-06T08:27:30.004Z","doc_path":"plans/c.md","transition_from":"in-progress","transition_to":"completed","actor":"AI-agent","actor_type":"ai","gate_id":"plan-complete","gate_status":"approved","git_commit":"8e09ddf"}
 {"ts":"2026-06-28T14:40:49.198Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"2d083b1"}
 {"ts":"2026-06-28T14:40:49.203Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"2d083b1"}
+{"ts":"2026-06-28T14:48:15.216Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"512cd3e"}
+{"ts":"2026-06-28T14:48:15.220Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"512cd3e"}
