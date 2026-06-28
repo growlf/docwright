@@ -333,6 +333,128 @@ content of `el` is under your control.
 
 ---
 
+## server.js — API routes
+
+If your plugin needs server-side logic, export handler functions from `server.js`
+(path configurable via `serverEntrypoint`). DocWright dispatches all requests to
+`/api/plugin/<name>/<subpath>` that are not static files.
+
+```javascript
+// server.js — CommonJS module
+async function GET({ request, subpath }) {
+  // subpath = everything after /api/plugin/<name>/
+  // e.g. /api/plugin/my-plugin/api/items  →  subpath = "api/items"
+  const url = new URL(request.url);
+  const sp  = url.searchParams;
+
+  if (subpath === 'api/items') {
+    return Response.json([{ id: 1, name: 'Widget' }]);
+  }
+
+  return new Response(`not found: ${subpath}`, { status: 404 });
+}
+
+async function POST({ request, subpath }) {
+  const body = await request.json();
+  if (subpath === 'api/items') {
+    // ... save body ...
+    return Response.json({ ok: true });
+  }
+  return new Response('Not found', { status: 404 });
+}
+
+module.exports = { GET, POST };   // PUT, DELETE, PATCH also supported
+```
+
+DocWright enforces path traversal guards on static file serving — requests that
+escape the plugin directory are rejected with 403. Your handler receives all other
+paths regardless of depth.
+
+### SSE streaming
+
+Return a `ReadableStream` with `Content-Type: text/event-stream` for streaming output
+(build logs, deploy progress, live updates):
+
+```javascript
+async function GET({ request, subpath }) {
+  if (subpath !== 'api/stream') return new Response('not found', { status: 404 });
+
+  const { spawn } = require('child_process');
+  const sse      = obj          => `data: ${JSON.stringify(obj)}\n\n`;
+  const sseEvent = (event, obj) => `event: ${event}\ndata: ${JSON.stringify(obj)}\n\n`;
+
+  const stream = new ReadableStream({
+    start(ctrl) {
+      const enc  = s    => ctrl.enqueue(Buffer.from(s));
+      const proc = spawn('my-long-running-command', []);
+      proc.stdout.on('data', d => enc(sse({ line: d.toString() })));
+      proc.stderr.on('data', d => enc(sse({ line: d.toString() })));
+      proc.on('close', code => { enc(sseEvent('done', { code })); ctrl.close(); });
+      proc.on('error', err  => { enc(sseEvent('error', { message: err.message })); ctrl.close(); });
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',   // disable nginx buffering
+    },
+  });
+}
+```
+
+Client-side consumption:
+
+```javascript
+const es = new EventSource('/api/plugin/my-plugin/api/stream');
+es.onmessage = e => {
+  const { line } = JSON.parse(e.data);
+  logEl.textContent += line;
+};
+es.addEventListener('done', e => {
+  const { code } = JSON.parse(e.data);
+  es.close();
+  console.log('exited', code);
+});
+es.addEventListener('error', () => es.close());
+```
+
+---
+
+## Hot-reload
+
+DocWright watches `${VAULT_ROOT}/plugins/` via SSE. When any file changes, it
+re-fetches `/api/plugins` and updates the activity bar — no server restart needed.
+
+To reload your bundle during development:
+
+1. Save your `client/bundle.js`
+2. The activity bar icon refreshes within ~300 ms
+3. Click away from and back to your view — `mount(el)` runs with the new code
+
+A hard browser refresh (`Ctrl+Shift+R`) is only needed if the bundle was cached by the
+browser's script tag cache.
+
+---
+
+## Error isolation
+
+DocWright's error boundary protects the shell from plugin crashes:
+
+- **Synchronous errors** thrown inside `mount()` or the bundle IIFE are caught via
+  `window.addEventListener('error', ...)`, scoped to the plugin's bundle URL.
+- **Unhandled promise rejections** attributed to the plugin's bundle path are also caught.
+- When an error is caught, DocWright shows an error panel with the message and a
+  "Reload plugin" button. The rest of the shell continues to work.
+- **Console output** (`error`, `warn`, `log`, `info`) is prefixed with `[plugin:<name>]`
+  while the plugin page is active, and restored on navigation away.
+
+Your `server.js` throwing an unhandled exception returns a 500 response to the client.
+The DocWright server process is unaffected.
+
+---
+
 ## TypeScript types
 
 Copy `src/webui/src/lib/plugin-api.d.ts` into your project for full type coverage:
@@ -370,7 +492,7 @@ dw.registerView('my-plugin', {
 User clicks activity bar icon
         │
         ▼
-DocWright checks __dw_plugins for 'my-plugin'
+DocWright checks the registerView registry for 'my-plugin'
         │
         ├── Not found → load client/bundle.js
         │                │
@@ -615,7 +737,6 @@ to clear the cached script tag if the bundle has changed.
 - Import from DocWright's source tree (`$lib/`, `$app/`)
 - Use `bridge.emit()` — this is for core plugins only (source tree only)
 - Write directly to `window.__dw_plugins` — use `registerView()` only
-- Access `window.__docwright_host` — this shim was removed in v0.5.x
 
 ### Core plugins vs external plugins
 
