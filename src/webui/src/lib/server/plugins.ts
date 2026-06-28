@@ -87,7 +87,9 @@ export function scanPlugins(): LoadedPlugin[] {
 
   const loaded: LoadedPlugin[] = [];
   for (const entry of fs.readdirSync(pluginsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
+    const entryPath = path.join(pluginsDir, entry.name);
+    // isDirectory() doesn't follow symlinks; use statSync so symlinked plugin dirs work
+    if (!fs.statSync(entryPath).isDirectory()) continue;
     const manifestPath = path.join(pluginsDir, entry.name, 'plugin.json');
     if (!fs.existsSync(manifestPath)) continue;
     try {

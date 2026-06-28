@@ -169,7 +169,7 @@ export async function POST({ request }) {
         risk: 'Risk Assessment',
         rollback: 'Rollback Procedures',
       };
-      for (const [secKey, reviewText] of Object.entries(sectionReviews)) {
+      for (const [secKey, reviewText] of Object.entries(sectionReviews) as [string, string][]) {
         if (reviewText.startsWith('Error:')) continue;
         const sectionName = sectionNameMap[secKey] || secKey.charAt(0).toUpperCase() + secKey.slice(1);
         const currentBody = extractSection(improvedBody, sectionName);
@@ -239,24 +239,22 @@ export async function POST({ request }) {
         `RISK ASSESSMENT:\n${riskContent.slice(0, 500) || '(empty)'}\n\n` +
         `ROLLBACK PROCEDURES:\n${rollbackContent.slice(0, 500) || '(empty)'}\n` +
         (overviewSnippet ? `\nOVERALL ASSESSMENT FROM REVIEW:\n${overviewSnippet}\n` : '');
+      let structuralNotes = '';
       try {
-        const structuralNotes = await callOlla(structuralPrompt);
-        if (structuralNotes && structuralNotes.length > 20) {
-          improvedBody += `\n\n## Structural Review\n\n${structuralNotes}\n`;
-        }
+        const raw = await callOlla(structuralPrompt);
+        if (raw && raw.length > 20) structuralNotes = raw;
       } catch { /* intentionally empty */ }
-    }
-
-    // Append overall assessment as a section if present (deterministic, no AI)
-    if (overview) {
-      improvedBody += `\n\n## AI Review Findings\n\n### Overall Assessment\n\n${overview}\n`;
+      // Return structural notes separately — they are review artifacts, not document content
+      if (structuralNotes) {
+        return json({ improved: improvedBody === body ? null : improvedBody, original: body, generatedSteps, structuralNotes, overviewNotes: overview ?? '' });
+      }
     }
 
     if (improvedBody === body) {
       return json({ error: 'No improvements were generated — AI returned empty or unchanged content', original: body });
     }
 
-    return json({ improved: improvedBody, original: body, generatedSteps });
+    return json({ improved: improvedBody, original: body, generatedSteps, structuralNotes: '', overviewNotes: overview ?? '' });
   } catch (err: any) {
     return json({ error: err?.message ?? String(err), original: body });
   }

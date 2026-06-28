@@ -14,7 +14,7 @@ proposal_source: proposals/approved/bundle-chat-session-panel.md
 priority: medium
 mode: guided
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 phase: 5
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
@@ -22,7 +22,8 @@ scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell
 total_steps: 17
 completed_steps: 8
 _path: plans/chat-session-panel.md
-github_epic: null
+github_epic:
+automated: full
 ---
 
 # Chat & Session Panel Phase 2 — Session Management, @-Mention, Model Picker, History, Diff Review, and Terminal
