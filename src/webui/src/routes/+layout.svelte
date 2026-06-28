@@ -549,7 +549,13 @@ import {
       if (!res.ok) { showToast('Apply review failed', 3000); return; }
       const data = await res.json();
       if (data.error) { showToast(data.error, 3000); return; }
-      if (!data.improved) return;
+
+      // If the server returned structural notes but no improved body, show them in the panel
+      if (!data.improved) {
+        if (data.structuralNotes) planReviewOverview.set('**Structural notes (not applied):**\n\n' + data.structuralNotes);
+        return;
+      }
+
       let author = 'DocWright Review';
       try {
         const idRes = await fetch('/api/git/config?key=user.name');
@@ -557,14 +563,19 @@ import {
       } catch {}
       const bodyWithHistory = appendDocHistory(data.improved, 'AI-improved via Review', author);
       const fm = { ...($currentDoc.frontmatter ?? {}) };
-      fm.status = 'draft'; // reset so plan can be re-approved and re-started
+      // Bug 1 fix: only demote to draft if plan was in-progress; approved/draft stay as-is
+      if (fm.status === 'in-progress') fm.status = 'draft';
+      // Bug 2 fix: preserve _path (recalculate from the file path, don't drop it)
+      fm._path = fp;
       const fmLines = Object.entries(fm)
-        .filter(([k]) => k !== '_path')
         .map(([k, v]) => {
           if (Array.isArray(v)) return v.length ? `${k}:\n${v.map(i => `  - ${i}`).join('\n')}` : `${k}: []`;
           if (typeof v === 'boolean') return `${k}: ${v}`;
           if (v === null || v === undefined || v === '') return `${k}:`;
-          return `${k}: ${v}`;
+          // Bug 3 fix: quote strings that contain YAML-special sequences
+          const s = String(v);
+          const needsQuotes = /[:#\[\]{},&*?|<>=!%@`]/.test(s) || /^[\s\-"'`]/.test(s) || s.includes('\n');
+          return needsQuotes ? `${k}: "${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : `${k}: ${s}`;
         }).join('\n');
       const newRaw = `---\n${fmLines}\n---\n${bodyWithHistory}`;
       const writeRes = await fetch('/api/write?path=' + encodeURIComponent(fp), {
@@ -578,7 +589,12 @@ import {
         if (!wasStepGeneration) rightTab = 'properties';
         planReviewSteps.set({});
         planReviewSections.set({});
-        planReviewOverview.set('');
+        // Bug 4 fix: show structural notes in the review panel instead of writing them to the file
+        if (data.structuralNotes) {
+          planReviewOverview.set('**Structural notes:**\n\n' + data.structuralNotes);
+        } else {
+          planReviewOverview.set('');
+        }
       }
     } finally {
       applyingReview = false;
