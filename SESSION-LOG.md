@@ -846,3 +846,22 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Fixed BaseView.svelte evalCond to implement file.inFolder(), file.name, file.ext, and nested OR/AND filters
 
 **Session note:** `docs/session-notes/session_note_202606281200.md`
+
+---
+
+## Session: 2026-06-28 — Plugin System Complete
+
+**Focus:** Plugin system — all 14 steps
+
+**Completed:**
+- [x] Error boundary: console scoping, unhandled rejection handler, teardown (step 8)
+- [x] Manifest validation tests: 13 new tests, 60 total passing (step 9)
+- [x] Plugin hot-reload: SSE `pluginchange` events, activity bar auto-refresh (step 10)
+- [x] JS bridge fix: layout owns `window.__docwright`, `/api/config` for vaultRoot (step 11)
+- [x] cs-erp-images bridge updated to `registerView`/`claimRightPanel` contract (step 12)
+- [x] cs-erp-images Deployment UI: SSH site manager, command generator, SSE runner (step 13)
+- [x] Plugin contribution guide: `docs/plugins.md` with server.js, SSE, hot-reload sections (step 14)
+- [x] Bug fix: asset-management profile missing research doc type (3 integration tests restored)
+- [x] Merged feature/plugin-system → develop, pushed to origin
+
+**Session note:** `docs/session-notes/session_note_202606282300.md`
