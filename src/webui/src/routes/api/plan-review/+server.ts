@@ -9,6 +9,7 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
 const AI_TIMEOUT = 180_000;
 const OLLA_BASE = process.env.OLLA_BASE || 'http://localhost:11434/v1';
 const OLLA_MODEL = process.env.OLLA_MODEL || 'llama3.1:8b';
+const OLLA_API_KEY = process.env.OLLA_API_KEY ?? '';
 
 function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -52,7 +53,7 @@ async function callOlla(prompt: string, retries = 1): Promise<string> {
     try {
       const res = await fetch(`${OLLA_BASE}/chat/completions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(OLLA_API_KEY ? { 'Authorization': `Bearer ${OLLA_API_KEY}` } : {}) },
         body: JSON.stringify({
           model: OLLA_MODEL,
           messages: [{ role: 'user', content: prompt }],
