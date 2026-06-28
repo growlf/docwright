@@ -8,7 +8,7 @@
   interface ViewConfig {
     type: string;
     name: string;
-    filters?: { and?: string[]; or?: string[] };
+    filters?: { and?: any[]; or?: any[] };
     order?: string[];
     sort?: Array<{ property: string; direction: 'ASC' | 'DESC' }>;
     columnSize?: Record<string, number>;
@@ -68,9 +68,30 @@
     return v;
   }
 
-  function evalCond(note: NoteData, expr: string): boolean {
-    // Skip Obsidian meta-conditions — not meaningful in DocWright context
-    if (expr.includes('file.name') || expr.includes('file.inFolder')) return true;
+  function evalCond(note: NoteData, expr: any): boolean {
+    // Nested filter object: { and: [...] } or { or: [...] }
+    if (typeof expr === 'object' && expr !== null) {
+      if (Array.isArray(expr.and)) return expr.and.every((c: any) => evalCond(note, c));
+      if (Array.isArray(expr.or))  return expr.or.some((c: any)  => evalCond(note, c));
+      return true;
+    }
+    if (typeof expr !== 'string') return true;
+
+    // file.inFolder("path") — note.path is vault-relative e.g. policies/technology/foo.md
+    const m_inFolder = expr.match(/file\.inFolder\("([^"]+)"\)/);
+    if (m_inFolder) return note.path.startsWith(m_inFolder[1] + '/');
+
+    // file.name != "X" / file.name == "X"
+    const m_name_neq = expr.match(/file\.name\s*!=\s*"([^"]+)"/);
+    if (m_name_neq) return note.filename !== m_name_neq[1];
+    const m_name_eq  = expr.match(/file\.name\s*={1,2}\s*"([^"]+)"/);
+    if (m_name_eq)  return note.filename === m_name_eq[1];
+
+    // file.ext != "X" / file.ext == "X"
+    const m_ext_neq = expr.match(/file\.ext\s*!=\s*"([^"]+)"/);
+    if (m_ext_neq) return (note.path.split('.').pop() ?? '') !== m_ext_neq[1];
+    const m_ext_eq  = expr.match(/file\.ext\s*={1,2}\s*"([^"]+)"/);
+    if (m_ext_eq)  return (note.path.split('.').pop() ?? '') === m_ext_eq[1];
 
     const m_in = expr.match(/^(\w+)\s+IN\s+\[([^\]]+)\]$/i);
     if (m_in) {

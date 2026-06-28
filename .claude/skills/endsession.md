@@ -1,6 +1,6 @@
 ---
 name: endsession
-description: Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status
+description: Automated session shutdown — saves session note, updates SESSION-LOG.md, commits all remaining changes, pushes all branches, reports status
 triggers:
   - endsession
   - end session
@@ -12,6 +12,10 @@ triggers:
 # DocWright Session Shutdown Skill
 
 Triggered by: "endsession", "end session", "shutdown"
+
+> **Invocation note:** This is a DocWright local skill, NOT a harness-registered skill.
+> Do NOT call `Skill("endsession")` — that will fail with "Unknown skill".
+> Instead, read this file and execute the steps below directly using Bash and Write tools.
 
 Do NOT ask for permission. Execute all steps automatically.
 
@@ -26,7 +30,8 @@ Machine is always `$(hostname)` — never user-supplied.
 
 - Read `SESSION-LOG.md` (last 100 lines) to find last session timestamp
 - Run `git log --oneline --since="<last-session-date>"` for commits this session
-- Run `git status --short` for uncommitted changes
+- Run `git status --short` across the main worktree and any known sibling worktrees
+  (`../DocWright-kg`, `../DocWright-plugin`, etc. — check if they exist)
 - List active plans: any `.md` in `plans/` with `status: in-progress` or `status: approved`
 
 ### 3. Phase close-out check
@@ -69,11 +74,17 @@ Write `docs/session-notes/session_note_YYYYMMDDHHMM.md`:
 
 ## Uncommitted Changes
 
-<none or list>
+<none or list — will be committed in Step 6>
+
+## Architecture State
+
+<brief note on current architecture state>
 
 ## Next Session Should Start With
 
-- <action items>
+```bash
+<commands to run>
+```
 ```
 
 ### 5. Update SESSION-LOG.md
@@ -93,6 +104,39 @@ Append a new entry after the last `---`:
 **Session note:** `docs/session-notes/session_note_YYYYMMDDHHMM.md`
 ```
 
-### 6. Report
+### 6. Commit all remaining changes
 
-Print: session note path, active plans, git status, uncommitted changes, next-session action items.
+After all docs and logs are written, commit everything outstanding across all worktrees.
+
+For each worktree with uncommitted or untracked content:
+1. `git status --short` — identify what's pending
+2. Stage all relevant files. Exclude:
+   - `.env` and any file that looks like credentials/secrets
+   - `node_modules/`, `dist/`, `.next/`, build artifacts
+   - Screenshot directories (`test/webui/screenshots/`, `/tmp/`)
+   - Files already in `.gitignore`
+3. If anything to commit: `git commit -m "docs: session note YYYY-MM-DD — <focus>"`
+4. If a worktree has no changes, skip it silently
+
+### 7. Push all branches
+
+Push every branch that has unpushed commits:
+
+```bash
+# For each worktree / branch with commits ahead of remote
+git push origin <current-branch>
+
+# If no remote tracking ref yet:
+git push -u origin <current-branch>
+```
+
+Report which branches were pushed and which were already up-to-date.
+
+### 8. Report
+
+Print a concise summary:
+- Session note path
+- Files committed and pushed (per worktree/branch)
+- Active plans and their priorities
+- Branches pushed / already up-to-date
+- Top 3 action items for next session, ordered by priority

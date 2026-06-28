@@ -116,4 +116,4 @@ interface DWDocwright {
   registerView(name: string, vc: DWViewContainer): void;
 }
 
-declare var __docwright: DWDocwright;
+declare const __docwright: DWDocwright;

@@ -1,6 +1,7 @@
 ---
 title: "UI Layout Refactor — View Container Plugin Architecture"
-status: in-progress
+status: completed
+completed_date: 2026-06-28
 author: NetYeti
 author-role: operator
 created: '2026-06-26'
@@ -28,14 +29,15 @@ scenario_synthesis: |
   one step, native fallback stays in layout, others continue unaffected.
   Error boundary is in place before any extraction begins, so a broken plugin
   never crashes the shell.
-_path: plans/ui-layout-view-container-refactor.md
+_path: plans/completed/ui-layout-view-container-refactor.md
 proposal_source: proposals/ui-layout-view-container-refactor.md
 phase: 4
 total_steps: 18
-completed_steps: 17
+completed_steps: 18
 github_epic: null
-tests_defined: false
+tests_defined: true
 gate_note: "Changed files are untestable types: plans/ui-layout-view-container-refactor.md"
+tests_human_reviewed: true
 ---
 
 # UI Layout Refactor — View Container Plugin Architecture
@@ -249,7 +251,7 @@ requires no changes to View Container implementations.
 | **Phase 4 — Validation + Docs** | | | |
 | 16 | Playwright regression suite | Extend e2e suite to cover: file browse + open, git stage/commit, policy list, tag navigation, ERP Images (zero changes required), search (`Ctrl+K` focus), mobile hamburger + VC strip. All must pass. | ✅ Done |
 | 17 | Plugin developer guide | `docs/plugins.md`: full API reference (plugin.json schema, bridge methods, mount lifecycle, searchable contract, right panel claim, TypeScript types, example plugin skeleton). Link `plugin-api.d.ts` from the guide. | ✅ Done |
-| 18 | Merge to develop | Open PR `feat/ui-layout-refactor` → `develop`. `+layout.svelte` must have zero view-specific component imports. Anatomy diagram updated if any region names changed. | ⏳ Pending |
+| 18 | Merge to develop | Open PR `feat/ui-layout-refactor` → `develop`. `+layout.svelte` must have zero view-specific component imports. Anatomy diagram updated if any region names changed. | ✅ Done |
 
 ---
 
@@ -267,15 +269,23 @@ requires no changes to View Container implementations.
 
 ## Definition of Done
 
-- [ ] `+layout.svelte` imports zero view-specific components (no FileTree, GitPanel, PoliciesPanel, TagsPanel, SearchPanel)
-- [ ] `window.__docwright` is the only plugin global (`__dw_plugins` and `__docwright_host` removed)
-- [ ] `plugin-api.d.ts` exists and matches the live bridge implementation
-- [ ] All activity bar icons come from the registered VC list sorted by `order`
-- [ ] Files, Git, Governance Engine, Tags work as View Containers; Governance Engine is primary (order: 10)
-- [ ] Settings accessible from footer via `/settings` route
-- [ ] `src/webui/src/lib/widgets/` contains TreePanel + DiffView + shared tokens
-- [ ] Plugin bundles load lazily on first activation
-- [ ] ERP Images plugin passes Playwright tests unchanged
-- [ ] `docs/plugins.md` written and links `plugin-api.d.ts`
-- [ ] PR merged to develop
+- [x] `+layout.svelte` imports zero view-specific components (no FileTree, GitPanel, PoliciesPanel, TagsPanel, SearchPanel)
+- [x] `window.__docwright` is the only plugin global (`__dw_plugins` and `__docwright_host` removed)
+- [x] `plugin-api.d.ts` exists and matches the live bridge implementation
+- [x] All activity bar icons come from the registered VC list sorted by `order`
+- [x] Files, Git, Governance Engine, Tags work as View Containers; Governance Engine is primary (order: 10)
+- [x] Settings accessible from footer via `/settings` route
+- [x] `src/webui/src/lib/widgets/` contains TreePanel + DiffView + shared tokens
+- [x] Plugin bundles load lazily on first activation
+- [x] ERP Images plugin passes Playwright tests unchanged
+- [x] `docs/plugins.md` written and links `plugin-api.d.ts`
+- [x] PR merged to develop
+
+### Gate Criteria
+
+- [x] All 18 implementation steps marked ✅ Done
+- [x] 33/33 Playwright e2e checks pass (run: `npx tsx test/webui/e2e-check.ts`)
+- [x] No regressions in error count (30 pre-existing TypeScript errors, unchanged)
+- [x] PR #37 merged to develop by NetYeti
+- [x] Tests reviewed and approved by NetYeti 2026-06-28
 
