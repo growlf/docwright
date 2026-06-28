@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — Doc Audit, Release v0.4.1
+
+**Focus:** Doc drift audit, v0.4.1 release to main
+
+**Completed:**
+- [x] Audited and rewrote README.md — Phase 1 status table, real quick-start, auth snippets, deployment table
+- [x] Created docs/authentication.md — comprehensive auth setup guide (all three modes, Forgejo OAuth, user management, OCC, troubleshooting)
+- [x] Updated CONTRIBUTING.md — web UI dev setup, `npm run test:webui`, local auth testing
+- [x] Updated SECURITY.md — cascadesteam.org email, session/OCC scope, auth-mode network warning
+- [x] Updated PR #41 with proper v0.4.1 release title and full feature description
+- [x] Bumped version to 0.4.1; merged PR #41 to main (squash); tagged v0.4.1
+
+**Session note:** `docs/session-notes/session_note_202606282000.md`
+
+---
+
 ## Session: 2026-06-28 — PR Merges + Branch Cleanup
 
 **Focus:** Merge auth + ForceGraph PRs, clean up worktrees and branches
