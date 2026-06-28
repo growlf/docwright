@@ -5,6 +5,25 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — Governance Engine VC Complete
+
+**Focus:** Governance engine VC, test fixes, plan completion
+
+**Completed:**
+- [x] Fixed `/api/profile-config` to return name, version, documentTypes (was returning only features/relationshipEngine)
+- [x] Fixed `profile.json` clobbering `documentTypes` with empty array
+- [x] Deleted orphaned `PoliciesPanel.svelte`
+- [x] Added Playwright e2e checks for Profile sub-view (35/35 passing)
+- [x] Fixed pre-existing `dayGroup` test flakes (calendar-day anchor helpers)
+- [x] Fixed pre-existing `fix-stale-approvals` failures (env var isolation)
+- [x] All tests clean: 36/36 webui, 277/277 dispatch, 35/35 e2e
+- [x] PR #42 created, merged to develop, branch deleted
+- [x] `governance-engine-view-container` plan completed and archived
+
+**Session note:** `docs/session-notes/session_note_202606282100.md`
+
+---
+
 ## Session: 2026-06-28 — Doc Audit, Release v0.4.1
 
 **Focus:** Doc drift audit, v0.4.1 release to main
