@@ -20,7 +20,7 @@ _path: plans/plugin-system.md
 proposal_source: profile-contribution-architecture.md
 phase: 4
 total_steps: 14
-completed_steps: 12
+completed_steps: 13
 github_epic:
 automated: full
 tests_defined: false
@@ -73,7 +73,7 @@ cs-erp-images plugin implementation, depending on this plan.
 | 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.toast('message')` instead of direct DOM manipulation. | ✅ Done |
 | **Phase 4 — Module 0 Full Implementation** | | | |
 | 12 | cs-erp-images Image Generator UI | Full SvelteKit app compiled to `client/bundle.js`. App selector form (reads `/api/plugin/erp-images/api/catalogue`), version calculator, GitHub PR creation flow. | ✅ Done |
-| 13 | cs-erp-images Deployment UI | Customer deployment form: image picker (GHCR list), site info, Ansible vars generator, playbook trigger or command display. | ⏳ Pending |
+| 13 | cs-erp-images Deployment UI | Customer deployment form: image picker (GHCR list), site info, Ansible vars generator, playbook trigger or command display. | ✅ Done |
 | 14 | Contribution guide | `docs/plugins.md` in DocWright: how to build a plugin, `plugin.json` schema reference, bridge API, bundle build patterns. | ⏳ Pending |
 
 ---
