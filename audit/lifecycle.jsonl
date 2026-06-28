@@ -19,3 +19,9 @@
 {"ts":"2026-06-28T14:40:49.203Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"2d083b1"}
 {"ts":"2026-06-28T14:48:15.216Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"512cd3e"}
 {"ts":"2026-06-28T14:48:15.220Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"512cd3e"}
+{"ts":"2026-06-28T15:06:30.619Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"9b0e902"}
+{"ts":"2026-06-28T15:06:30.624Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"9b0e902"}
+{"ts":"2026-06-28T15:06:47.758Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"9b0e902"}
+{"ts":"2026-06-28T15:06:47.763Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"9b0e902"}
+{"ts":"2026-06-28T16:08:34.362Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"2f13a4b"}
+{"ts":"2026-06-28T16:08:34.367Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"2f13a4b"}
