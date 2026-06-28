@@ -13,7 +13,7 @@ const MSG_RE = /^(feat|fix|docs|refactor|test|chore|policy|decision): .+/;
 // a conventional commit message would normally use
 const SAFE_RE = /^[\w\s:.,!?()[\]{}\-_@#/'"*+<>~`|&=]+$/;
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
   const body = await request.json().catch(() => null);
   const message: string = body?.message?.trim() ?? '';
 
@@ -34,15 +34,20 @@ export async function POST({ request }) {
     writeFileSync(join(REPO, '.git', 'COMMIT_EDITMSG'), message + '\n');
     writeFileSync(msgFile, message + '\n');
 
-    // HUMAN_APPROVED=1: Web UI commits are always human-initiated (browser tool,
-    // not accessible to AI agents). This allows governance-sensitive changes
-    // (approved proposals, completed plans, tests_defined) to commit without
-    // requiring the user to drop to the shell.
-    // Phase 2: replace with Forgejo OAuth session verification.
+    // Web UI commits are always human-initiated. Pass authenticated identity
+    // when available; fall back to git config for AUTH_MODE=none.
+    const authorEnv: Record<string, string> = {};
+    if (locals.user) {
+      authorEnv.GIT_AUTHOR_NAME = locals.user.displayName;
+      authorEnv.GIT_AUTHOR_EMAIL = locals.user.email;
+      authorEnv.GIT_COMMITTER_NAME = locals.user.displayName;
+      authorEnv.GIT_COMMITTER_EMAIL = locals.user.email;
+    }
+
     const result = spawnSync('git', ['commit', '-F', msgFile], {
       cwd: REPO,
       encoding: 'utf-8',
-      env: { ...process.env, GIT_DIR: join(REPO, '.git'), GIT_WORK_TREE: REPO, HUMAN_APPROVED: '1' },
+      env: { ...process.env, GIT_DIR: join(REPO, '.git'), GIT_WORK_TREE: REPO, HUMAN_APPROVED: '1', ...authorEnv },
     });
 
     if (result.status !== 0) {

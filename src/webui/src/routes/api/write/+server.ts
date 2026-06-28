@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import { rebuildRelationships } from '../../../../../dispatch/relationships';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
@@ -40,6 +41,10 @@ function applySyncTestCriteria(filePath: string, content: string): string {
   return syncTestCriteria(content, title);
 }
 
+function etag(content: string): string {
+  return `"${createHash('sha256').update(content).digest('hex').slice(0, 16)}"`;
+}
+
 export async function POST({ url, request }) {
   const filePath = url.searchParams.get('path');
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
@@ -47,8 +52,18 @@ export async function POST({ url, request }) {
   const resolved = path.resolve(REPO_ROOT, filePath);
   if (!resolved.startsWith(REPO_ROOT)) return json({ error: 'invalid path' }, { status: 403 });
 
-  const { content } = await request.json();
+  const body = await request.json();
+  const { content } = body;
   if (content === undefined) return json({ error: 'missing content' }, { status: 400 });
+
+  // OCC: if client sent If-Match, verify against current file content.
+  const ifMatch = request.headers.get('If-Match');
+  if (ifMatch && fs.existsSync(resolved)) {
+    const current = fs.readFileSync(resolved, 'utf-8');
+    if (etag(current) !== ifMatch) {
+      return json({ conflict: true, currentContent: current }, { status: 409 });
+    }
+  }
 
   const dir = path.dirname(resolved);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -68,5 +83,5 @@ export async function POST({ url, request }) {
     }, 0);
   }
 
-  return json({ ok: true, path: filePath });
+  return json({ ok: true, path: filePath, etag: etag(finalContent) });
 }
