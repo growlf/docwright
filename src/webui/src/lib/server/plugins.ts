@@ -9,6 +9,11 @@ export interface PluginManifest {
   description: string;
   icon: string;
   author?: string;
+  // View Container fields (Step 5)
+  type: 'view-container' | 'tool';   // opts into activity bar + sidebar presence
+  order: number;                      // activity bar position; external plugins use 100+
+  searchable: boolean;                // true → shell renders search input; vc.onSearch() called
+  capabilities: string[];             // reserved for future permission gating
   serverEntrypoint: string;
   clientEntrypoint: string;
   clientStylesheet: string;
@@ -30,16 +35,21 @@ function vaultRoot(): string {
 }
 
 const DEFAULTS = {
+  type: 'view-container' as const,
+  order: 100,
+  searchable: false,
+  capabilities: [] as string[],
   serverEntrypoint: 'server.js',
   clientEntrypoint: 'client/bundle.js',
   clientStylesheet: 'client/style.css',
-} as const;
+};
 
 const REQUIRED_FIELDS = ['apiVersion', 'name', 'displayName', 'version', 'description', 'icon'] as const;
 const SUPPORTED_API_VERSIONS = new Set(['1']);
 const KNOWN_FIELDS = new Set([
   'apiVersion', 'name', 'displayName', 'version', 'description', 'icon',
-  'author', 'serverEntrypoint', 'clientEntrypoint', 'clientStylesheet',
+  'author', 'type', 'order', 'searchable', 'capabilities',
+  'serverEntrypoint', 'clientEntrypoint', 'clientStylesheet',
 ]);
 
 export function validateManifest(raw: Partial<PluginManifest>, dirName: string): ManifestValidation {
@@ -98,6 +108,8 @@ export function scanPlugins(): LoadedPlugin[] {
       console.warn(`[plugins] Failed to parse ${manifestPath}:`, e);
     }
   }
+  // Sort by order so activity bar position is stable across restarts
+  loaded.sort((a, b) => a.manifest.order - b.manifest.order);
   return loaded;
 }
 

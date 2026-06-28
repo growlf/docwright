@@ -1,9 +1,12 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { goto } from '$app/navigation';
-  import { pluginRightHtml, pluginRightLabel, pluginRightFocus } from '$lib/pluginPanel.js';
-  import FileTree from './FileTree.svelte';
-  import GitPanel from '$lib/GitPanel.svelte';
+  import { rightPanelClaim, type RightPanelClaim, vcRegistryVersion } from '$lib/pluginPanel.js';
+  import ViewContainerMount from '$lib/ViewContainerMount.svelte';
+  import { searchFocusTrigger } from '$lib/searchFocus.js';
+  import { filesSearchQuery } from '$lib/filesVc.js';
+  import { govSearchQuery } from '$lib/govVc.js';
+  import { setupCoreVCs } from '$lib/coreVCs.js';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
   import { toasts, dismissToast, showToast } from '$lib/toast';
@@ -21,23 +24,12 @@ import {
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
-  import SearchPanel from '$lib/SearchPanel.svelte';
-  import PoliciesPanel from '$lib/PoliciesPanel.svelte';
-  import TagsPanel from '$lib/TagsPanel.svelte';
   import { currentDoc } from '$lib/currentDoc';
-
-  interface ProjectEntry {
-    name: string;
-    path: string;
-    profile: string;
-    last_session?: string;
-  }
 
   interface BrandConfig { name: string; logoPath: string | null; }
 
-  let projects     = $state<ProjectEntry[]>([]);
-  let brand        = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
-  let activePlugins = $state<{ name: string; displayName: string; icon: string }[]>([]);
+  let brand = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
+  let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean }[]>([]);
 
   // AI model picker
   let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
@@ -68,8 +60,18 @@ import {
   const mobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
   let showSidebar    = $state(!mobile());
   let leftView       = $state<string>(
-    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'files') : 'files'
+    typeof localStorage !== 'undefined' ? (localStorage.getItem('dw-left-view') ?? 'governance') : 'governance'
   );
+
+  // Core VC registry — insertion order = activity bar order.
+  // External plugins use leftView === 'plugin-<name>'; core VCs use their plain name.
+  const CORE_VCS = new Map([
+    ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true  }],
+    ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true  }],
+    ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false }],
+    ['tags',       { order: 30, icon: '🏷', label: 'Tags',              searchable: false }],
+    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: false }],
+  ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
   const THEMES: Theme[] = ['dark', 'light', 'system'];
@@ -82,42 +84,46 @@ import {
     if (typeof document !== 'undefined') document.documentElement.setAttribute('data-theme', t);
   }
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
-  let searchPanel: SearchPanel;
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
 
-  // Plugin right panel
-  let prHtml  = $state('');
-  let prLabel = $state('Info');
-  $effect(() => { const u = pluginRightHtml.subscribe(v => { prHtml = v; }); return u; });
-  $effect(() => { const u = pluginRightLabel.subscribe(v => { prLabel = v; }); return u; });
-  $effect(() => { const u = pluginRightFocus.subscribe(v => { if (v > 0) showRightPanel = true; }); return u; });
+  // Right panel priority model — null = no VC claim, show standard tabs
+  let rpc = $state<RightPanelClaim | null>(null);
+  $effect(() => { const u = rightPanelClaim.subscribe(v => { rpc = v; if (v) showRightPanel = true; }); return u; });
 
-  // When leftView switches to a plugin, call its registered mountSidebar()
-  // requestAnimationFrame ensures the sidebar div is in the DOM first
-  $effect(() => {
-    if (!leftView.startsWith('plugin-')) return;
-    const pname = leftView.slice(7);
-    requestAnimationFrame(() => {
-      const plugin = (window as any).__dw_plugins?.get(pname);
-      plugin?.mountSidebar?.();
-    });
-  });
-
-  // Bridge — available to all plugin bundles as soon as the layout mounts
+  // Unified bridge — window.__docwright is the single entry point for all plugins.
+  // registerView() stores VCs in the __dw_plugins Map; ViewContainerMount activates them.
   onMount(() => {
-    (window as any).__docwright_host = {
-      setRightPanel: (html: string, label?: string) => {
-        pluginRightHtml.set(html);
-        if (label) pluginRightLabel.set(label);
-        pluginRightFocus.update(n => n + 1);
-      },
-      clearRightPanel: () => { pluginRightHtml.set(''); },
-      toast: (msg: string, dur?: number) => { showToast(msg, dur ?? 4000); },
+    if (!(window as any).__dw_plugins) (window as any).__dw_plugins = new Map<string, any>();
+    const bridge = {
+      toast: (msg: string, dur?: number) => showToast(msg, dur ?? 4000),
       notify: (opts: { type: string; title: string; message: string; persistent?: boolean }) => {
         notifications.add({ type: opts.type as any, title: opts.title, message: opts.message, persistent: opts.persistent ?? false });
       },
+      claimRightPanel: (html: string, label?: string) => {
+        rightPanelClaim.set({ html, label: label ?? 'Info' });
+      },
+      releaseRightPanel: () => rightPanelClaim.set(null),
+      navigate: (path: string) => goto(path),
+      openDocument: (vaultPath: string) => goto('/' + vaultPath.replace(/\.md$/, '')),
+      apiBase: '/api',
+      vaultRoot: '',
+      apiVersion: '1',
     };
+    (window as any).__docwright = {
+      bridge,
+      registerView: (name: string, vc: any) => {
+        (window as any).__dw_plugins.set(name, vc);
+        vcRegistryVersion.update(n => n + 1); // signals ViewContainerMount to retry
+      },
+    };
+    // Register all core View Containers (Governance, Search, Tags, Git, Files).
+    // All view-specific imports live in coreVCs.ts — layout stays view-agnostic.
+    setupCoreVCs({
+      onNewMenu:        () => { showNewMenu = !showNewMenu; },
+      filesSearchQuery,
+      govSearchQuery,
+    });
   });
 
   let applyingReview = $state(false);
@@ -705,13 +711,6 @@ import {
     });
   }
 
-  function loadProjects() {
-    fetch('/api/registry')
-      .then(r => r.json())
-      .then(data => { projects = data.projects || []; })
-      .catch(() => { projects = []; });
-  }
-
   function loadBrand() {
     fetch('/api/brand')
       .then(r => r.json())
@@ -721,16 +720,10 @@ import {
 
   onMount(() => {
     loadBrand();
-    loadProjects();
+    // Plugin bundles are now lazy-loaded on first activation (Step 15).
+    // ViewContainerMount handles loading when the VC isn't yet in __dw_plugins.
     fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
       activePlugins = plugins;
-      // Pre-load all plugin bundles so sidebars are ready without navigation
-      (window as any).__dw_plugins = (window as any).__dw_plugins || new Map();
-      for (const plugin of plugins) {
-        const s = document.createElement('script');
-        s.src = `/api/plugin/${plugin.name}/client/bundle.js`;
-        document.head.appendChild(s);
-      }
     }).catch(() => {});
     let es = new EventSource('/api/watch');
     const attachWatch = (source: EventSource) => {
@@ -751,7 +744,7 @@ import {
         e.preventDefault();
         leftView = 'search';
         showSidebar = true;
-        setTimeout(() => searchPanel?.focusSearch(), 50);
+        searchFocusTrigger.update(n => n + 1);
       } else if (e.ctrlKey && !e.shiftKey && e.key === '\\') {
         e.preventDefault();
         showSidebar = !showSidebar;
@@ -841,110 +834,58 @@ import {
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div id="app" onclick={closeMenus}>
 
-  <!-- Activity bar — switches left panel content -->
+  <!-- Activity bar — rendered from CORE_VCS registry + external plugins (Step 14) -->
   <div class="activity-bar">
-    <button class="act-btn" class:active={leftView === 'files'}
-      onclick={() => { leftView = 'files'; showSidebar = true; }}
-      title="Files">📄</button>
-    <button class="act-btn" class:active={leftView === 'search'}
-      onclick={() => { leftView = 'search'; showSidebar = true; setTimeout(() => searchPanel?.focusSearch(), 50); }}
-      title="Search (Ctrl+K)">🔍</button>
-    <button class="act-btn" class:active={leftView === 'policies'}
-      onclick={() => { leftView = 'policies'; showSidebar = true; }}
-      title="Policies">📋</button>
-    <button class="act-btn" class:active={leftView === 'tags'}
-      onclick={() => { leftView = 'tags'; showSidebar = true; }}
-      title="Tags">🏷</button>
-    <button class="act-btn" class:active={leftView === 'settings'}
-      onclick={() => { leftView = 'settings'; showSidebar = true; }}
-      title="Settings">⚙</button>
-    <button class="act-btn" class:active={leftView === 'git'}
-      onclick={() => { leftView = 'git'; showSidebar = true; }}
-      title="Git">⎇</button>
-    {#each activePlugins as plugin}
-      <button class="act-btn"
-        class:active={leftView === `plugin-${plugin.name}`}
-        onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
-        title={plugin.displayName}>{plugin.icon}</button>
+    {#each [...CORE_VCS.entries()] as [vcId, meta]}
+      <button class="act-btn" class:active={leftView === vcId}
+        onclick={() => {
+          leftView = vcId; showSidebar = true;
+          if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+        }}
+        title={meta.label}>{meta.icon}</button>
     {/each}
+    {#if activePlugins.length > 0}
+      <div class="act-divider"></div>
+      {#each activePlugins as plugin}
+        <button class="act-btn"
+          class:active={leftView === `plugin-${plugin.name}`}
+          onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
+          title={plugin.displayName}>{plugin.icon}</button>
+      {/each}
+    {/if}
   </div>
 
   <Panel side="left" bind:open={showSidebar}>
-    {#if leftView.startsWith('plugin-')}
-      {@const pluginName = leftView.slice(7)}
-      <div id="{pluginName}-sidebar-root" style="flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;"></div>
-    {:else}
-    <div class="sidebar-header">
-      <span class="sidebar-view-label">
-        {leftView === 'files' ? 'Files' : leftView === 'search' ? 'Search' : leftView === 'policies' ? 'Policies' : leftView === 'tags' ? 'Tags' : leftView === 'settings' ? 'Settings' : 'Git'}
-      </span>
-      {#if leftView === 'files'}
-      <div class="new-group-inner">
-        <button class="new-btn-sm" onclick={(e) => { e.stopPropagation(); showNewMenu = !showNewMenu; }} title="New document">+</button>
-        {#if showNewMenu}
-          <div class="new-menu" onclick={(e) => e.stopPropagation()}>
-            <button class="new-menu-item" onclick={newFile}>New File</button>
-            <button class="new-menu-item" onclick={newProposal}>New Proposal</button>
-          </div>
-        {/if}
-      </div>
-      {/if}
+    <!-- Mobile activity bar strip — registry-driven (Step 14), hidden on desktop -->
+    <div class="mobile-vc-strip">
+      {#each [...CORE_VCS.entries()] as [vcId, meta]}
+        <button class="mobile-act-btn" class:active={leftView === vcId}
+          onclick={() => {
+            leftView = vcId;
+            if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+          }}
+          title={meta.label}>{meta.icon}</button>
+      {/each}
+      {#each activePlugins as plugin}
+        <button class="mobile-act-btn" class:active={leftView === `plugin-${plugin.name}`}
+          onclick={() => leftView = `plugin-${plugin.name}`} title={plugin.displayName}>{plugin.icon}</button>
+      {/each}
     </div>
-    {#if leftView === 'search'}
-      <SearchPanel bind:this={searchPanel} />
-    {:else if leftView === 'policies'}
-      <PoliciesPanel />
-    {:else if leftView === 'tags'}
-      <TagsPanel />
-    {:else if leftView === 'files'}
-      <FileTree currentPath={$page.url.pathname} />
-      {#if projects.length > 0}
-        <div class="project-section">
-          <div class="project-heading">Projects</div>
-          {#each projects as p}
-            <a class="project-link" href={p.path}>
-              <span class="project-name">{p.name}</span>
-              <span class="project-profile">{p.profile}</span>
-            </a>
-          {/each}
-        </div>
-      {/if}
 
-    {:else if leftView === 'settings'}
-      <div class="settings-view">
-        <div class="settings-group">
-          <div class="settings-group-label">AI Instructions</div>
-          <a class="settings-file" href="/CLAUDE">CLAUDE.md</a>
-          <a class="settings-file" href="/AGENTS">AGENTS.md</a>
-        </div>
-        <div class="settings-group">
-          <div class="settings-group-label">Templates</div>
-          <a class="settings-file" href="/templates/proposal-template">proposal-template.md</a>
-          <a class="settings-file" href="/templates/plan-template">plan-template.md</a>
-          <a class="settings-file" href="/templates/research-template">research-template.md</a>
-        </div>
-        <div class="settings-group">
-          <div class="settings-group-label">Project</div>
-          <a class="settings-file" href="/CONTRIBUTING">CONTRIBUTING.md</a>
-          <a class="settings-file" href="/SECURITY">SECURITY.md</a>
-          <a class="settings-file" href="/CHANGELOG">CHANGELOG.md</a>
-          <a class="settings-file" href="/NOTICE">NOTICE.md</a>
-        </div>
-        <div class="settings-group">
-          <div class="settings-group-label">Brand</div>
-          <a class="settings-file" href="/brand.json">brand.json</a>
-          <a class="settings-file" href="/brand/theme.css">brand/theme.css</a>
-        </div>
-        <div class="settings-hint">
-          Edit these files to customise DocWright.<br>
-          See <a href="/docs/customization">docs/customization.md</a> for details.
-        </div>
+    {@const vcName = leftView.startsWith('plugin-') ? leftView.slice(7) : leftView}
+    {@const searchable = CORE_VCS.get(leftView)?.searchable
+      ?? activePlugins.find(p => p.name === vcName)?.searchable
+      ?? false}
+    {#if searchable}
+      <div class="vc-search-bar">
+        <input class="vc-search-input" type="search" placeholder="Search…"
+          oninput={(e) => {
+            const q = (e.target as HTMLInputElement).value;
+            (window as any).__dw_plugins?.get(vcName)?.onSearch?.(q);
+          }} />
       </div>
-
-    {:else}
-      <GitPanel />
     {/if}
-    {/if}
+    <ViewContainerMount vcName={vcName} lazy={leftView.startsWith('plugin-')} />
   </Panel>
   <!-- Main content + chat at bottom -->
   <main id="content">
@@ -981,20 +922,18 @@ import {
     {/if}
   </main>
 
-  <!-- Right sidebar — plugin owns it entirely when leftView is a plugin -->
+  <!-- Right sidebar — VC claim takes priority over standard tabs -->
   <Panel side="right" bind:open={showRightPanel}>
-    {#if leftView.startsWith('plugin-')}
-      {@const pname = leftView.slice(7)}
-      {@const plabel = activePlugins.find(p => p.name === pname)?.displayName ?? pname}
-      <div class="plugin-right-header">{plabel}</div>
-      <div id="{pname}-right-panel-root" style="flex:1;overflow-y:auto;min-height:0;">{@html prHtml}</div>
+    {#if rpc}
+      <div class="plugin-right-header">{rpc.label}</div>
+      <div style="flex:1;overflow-y:auto;min-height:0;">{@html rpc.html}</div>
     {:else}
     <div class="right-tab-bar">
       <button class="right-tab" class:active={rightTab === 'properties'}
         onclick={() => { if (!applyingReview) rightTab = 'properties'; }}>Properties</button>
       <button class="right-tab" class:active={rightTab === 'related'}
-        onclick={() => { if (!applyingReview) { rightTab = 'related'; if (!collationMatches.length && $currentDoc.filePath) findRelated($currentDoc.filePath); } }}>
-        Related{collationMatches.length > 0 ? ` (${collationMatches.length})` : ''}
+        onclick={() => { if (!applyingReview) { rightTab = 'related'; if (!cm.length && $currentDoc.filePath) findRelated($currentDoc.filePath); } }}>
+        Related{cm.length > 0 ? ` (${cm.length})` : ''}
       </button>
       {#if $currentDoc.docType === 'plan'}
         <button class="right-tab" class:active={rightTab === 'review'}
@@ -1178,6 +1117,8 @@ import {
     github.com/growlf/docwright
   </a>
   <span class="footer-spacer"></span>
+  <a href="/settings" class="footer-link footer-settings" title="Settings">⚙ Settings</a>
+  <span class="footer-sep">·</span>
   <button class="theme-btn" onclick={cycleTheme}
     title="Theme: {theme} · Click to cycle (dark → light → system)">
     {THEME_ICONS[theme]} {theme}
@@ -1238,24 +1179,12 @@ import {
   }
   .act-btn:hover  { color: #aaa; background: #1a1a1a; }
   .act-btn.active { color: #ccc; background: #1a1a2a; border-left: 2px solid #58a6ff; border-radius: 0 4px 4px 0; }
+  .act-divider { width: 70%; height: 1px; background: #2a2a2a; margin: 4px auto; }
 
   /* ── Core layout ────────────────────────────────────────────────────────── */
   #app { display: flex; flex: 1; min-height: 0; font-family: system-ui, -apple-system, sans-serif; }
-  .sidebar-header { padding: 8px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-shrink: 0; min-height: 36px; }
-  .sidebar-view-label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
-  .new-btn-sm { background: none; border: 1px solid #444; color: #aaa; width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-  .new-btn-sm:hover { background: #222; color: #fff; }
-  .new-group-inner { position: relative; }
 
   /* ── Settings view ───────────────────────────────────────────────────────── */
-  .settings-view { padding: 8px 0; flex: 1; overflow-y: auto; }
-  .settings-group { margin-bottom: 16px; }
-  .settings-group-label { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px 2px; }
-  .settings-file { display: block; padding: 4px 16px; font-size: 12px; color: #888; text-decoration: none; font-family: monospace; }
-  .settings-file:hover { background: #1a1a1a; color: #58a6ff; }
-  .settings-hint { padding: 12px 16px; font-size: 11px; color: #444; line-height: 1.5; border-top: 1px solid #1a1a1a; margin-top: 8px; }
-  .settings-hint a { color: #58a6ff; text-decoration: none; }
-  .settings-hint a:hover { text-decoration: underline; }
 
   .brand-name { font-size: 13px; font-weight: 600; color: #58a6ff; white-space: nowrap; letter-spacing: 0.02em; }
   .toolbar-brand:hover .brand-name { color: #88c4ff; }
@@ -1344,18 +1273,61 @@ import {
   .toast-action { background: none; border: 1px solid #2b5b84; color: #58a6ff; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .toast-action:hover { background: #1a3a5a; }
   .toast-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0 2px; }
-  .project-section { border-top: 1px solid #222; padding: 8px 0; }
-  .project-heading { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 16px; white-space: nowrap; overflow: hidden; }
-  .project-link { display: block; padding: 4px 16px; font-size: 13px; color: #aaa; text-decoration: none; }
-  .project-link:hover { background: #1a1a1a; color: #fff; }
   .project-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .project-profile { font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; }
+
+  /* ── Per-VC search bar (shown when active plugin VC has searchable: true) ── */
+  .vc-search-bar { padding: 6px 8px; flex-shrink: 0; }
+  .vc-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg, #111);
+    border: 1px solid var(--border, #2a2a2a);
+    border-radius: 4px;
+    color: var(--fg, #ddd);
+    font-size: 12px;
+    padding: 5px 8px;
+    outline: none;
+  }
+  .vc-search-input:focus { border-color: var(--accent, #7c9ef7); }
+
+  /* ── Mobile VC strip (inside left panel, mirrors activity bar on mobile) ── */
+  .mobile-vc-strip {
+    display: none;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 2px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border, #1e2030);
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .mobile-vc-strip::-webkit-scrollbar { display: none; }
+  .mobile-act-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted, #666);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, color 0.1s;
+  }
+  .mobile-act-btn:hover { background: var(--bg-hover, #1a1a1a); color: var(--fg, #ccc); }
+  .mobile-act-btn.active { background: var(--accent-muted, #1e2a4a); color: var(--accent, #5e81f4); }
 
   /* ── Mobile (≤ 768px) ────────────────────────────────────────────────────── */
   @media (max-width: 768px) {
     #content { padding-top: 0; } /* toolbar is in flow, no fixed offset needed */
     .toast-container { bottom: 80px; }
-    .activity-bar { display: none; } /* activity bar hidden on mobile — hamburger + toolbar covers it */
+    .activity-bar { display: none; } /* activity bar hidden on mobile — mobile-vc-strip takes over */
+    .mobile-vc-strip { display: flex; }
   }
 
   /* ── Theme picker button ─────────────────────────────────────────────────── */
@@ -1382,20 +1354,11 @@ import {
     .hamburger, .home-btn, .gear-btn { color: #666; }
     .hamburger:hover, .home-btn:hover, .gear-btn:hover { color: #222; background: #e4e4e4; }
     .brand-name   { color: #4a6cf7; }
-    .sidebar-header { background: #fff; border-bottom-color: #d0d0d0; }
-    .sidebar-view-label { color: #888; }
-    .new-btn, .new-btn-sm { border-color: #bbb; color: #555; }
-    .new-btn:hover, .new-btn-sm:hover { background: #e4e4e4; color: #111; }
+    .new-btn { border-color: #bbb; color: #555; }
+    .new-btn:hover { background: #e4e4e4; color: #111; }
     .new-menu { background: #fff; border-color: #d0d0d0; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
     .new-menu-item { color: #333; }
     .new-menu-item:hover { background: #e0e8ff; color: #111; }
-    .settings-group-label { color: #888; }
-    .settings-file { color: #555; }
-    .settings-file:hover { background: #eaeaea; color: #4a6cf7; }
-    .settings-hint { color: #888; border-top-color: #e4e4e4; }
-    .project-heading { color: #888; }
-    .project-link { color: #555; }
-    .project-link:hover { background: #eaeaea; color: #111; }
     .right-tab        { color: #888; }
     .right-tab.active { color: #333; border-bottom-color: #4a6cf7; }
     .toast { background: #fff; border-color: #d0d0d0; color: #333; }

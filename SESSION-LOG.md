@@ -764,3 +764,19 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - BMS sync deferred (router unreachable this session)
 
 **Session note:** `docs/session-notes/session_note_202606251800.md`
+
+---
+
+## Session: 2026-06-26 — UI Layout Refactor Plan + Steps 1–2
+
+**Focus:** UI plugin architecture plan overhaul, bridge unification, error boundary
+
+**Completed:**
+- [x] Overhauled `ui-layout-view-container-refactor.md` plan: 14→18 steps, Phase 0 API contract, unified bridge, lifecycle callbacks, priority right panel, mobile VC strip, TypeScript types, lazy loading
+- [x] Step 1: `window.__docwright` unified bridge (replaces dual `__dw_plugins`+`__docwright_host` globals), backward-compat shim, `plugin-api.d.ts` ambient type declarations
+- [x] Step 2 (partial): `ViewContainerMount.svelte` error boundary — mount/unmount lifecycle, try/catch isolation, old mountSidebar() backward-compat fallback
+
+**Open:**
+- Step 2 layout wiring: import ViewContainerMount, remove old mountSidebar $effect, replace plugin div, add mobile VC strip CSS — see session note for exact edits
+
+**Session note:** `docs/session-notes/session_note_202606262000.md`
