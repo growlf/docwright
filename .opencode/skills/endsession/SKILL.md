@@ -10,6 +10,10 @@ distributable: true
 
 Triggered by: "endsession", "end session", "shutdown"
 
+> **Invocation note (Claude Code):** This is a DocWright local skill, NOT a
+> harness-registered skill. Do NOT call `Skill("endsession")` — that fails.
+> Read this file and execute the steps directly using Bash and Write tools.
+
 Do NOT ask for permission. Execute all steps automatically.
 
 ## Steps

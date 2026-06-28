@@ -13,6 +13,10 @@ triggers:
 
 Triggered by: "endsession", "end session", "shutdown"
 
+> **Invocation note:** This is a DocWright local skill, NOT a harness-registered skill.
+> Do NOT call `Skill("endsession")` — that will fail with "Unknown skill".
+> Instead, read this file and execute the steps below directly using Bash and Write tools.
+
 Do NOT ask for permission. Execute all steps automatically.
 
 ## Steps
