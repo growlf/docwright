@@ -151,8 +151,15 @@
       goto($page.url.pathname, { replaceState: true, noScroll: true });
     }
     return fileChanged.subscribe((change) => {
-      if (!change || mode !== 'read') return;
-      if (change.path === filePath() || change.path.endsWith('/' + filePath())) loadFile();
+      if (!change) return;
+      const isThisFile = change.path === filePath() || change.path.endsWith('/' + filePath());
+      if (!isThisFile) return;
+      if (mode !== 'read') {
+        // Bug 5 fix: don't silently ignore external changes while the user is editing
+        showToast('This document was modified externally. Discard your edits or save to overwrite.', 6000);
+        return;
+      }
+      loadFile();
     });
   });
 
