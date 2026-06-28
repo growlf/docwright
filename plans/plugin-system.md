@@ -1,9 +1,9 @@
 ---
-title: "Plugin System — Extensible Module Architecture"
-status: in-progress
+title: Plugin System — Extensible Module Architecture
+status: completed
 author: NetYeti
 author-role: operator
-created: '2026-06-25'
+created: 2026-06-25
 type: plan
 tags:
   - plugin-system
@@ -20,8 +20,12 @@ _path: plans/plugin-system.md
 proposal_source: profile-contribution-architecture.md
 phase: 4
 total_steps: 14
-completed_steps: 0
-github_epic: null
+completed_steps: 14
+github_epic:
+automated: full
+tests_defined: true
+tests_human_reviewed: true
+gate_note: "Changed files are untestable types: plans/plugin-system.md"
 ---
 
 # Plugin System — Extensible Module Architecture
@@ -64,14 +68,14 @@ cs-erp-images plugin implementation, depending on this plan.
 | 6 | Activity bar dynamic icons | `+layout.svelte` fetches `/api/plugins` on mount, renders one activity bar button per plugin using its `icon` emoji. Clicking navigates to `/plugin/{name}`. | ✅ Done |
 | 7 | Module 0 scaffold — cs-erp-images | `plugins/erp-images/plugin.json`, stub `server.js`, stub `client/bundle.js` in cs-erp-images repo. Verifies end-to-end: DocWright shows 🐳 icon, navigates to plugin page, renders placeholder. | ✅ Done |
 | **Phase 3 — Plugin Hardening** | | | |
-| 8 | Error boundary | Plugin page wraps bundle execution in try/catch. Plugin JS errors show an error panel without crashing DocWright layout. Console errors are scoped to plugin name prefix. | ⏳ Pending |
-| 9 | Plugin manifest validation | `scanPlugins()` validates required fields and `apiVersion` compatibility. Logs warnings for unknown fields (forward-compat). Invalid manifests are skipped, not fatal. | ⏳ Pending |
-| 10 | Plugin hot-reload | File watcher on `plugins/*/` triggers re-scan. Activity bar updates without full page reload. Useful during plugin development. | ⏳ Pending |
-| 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.toast('message')` instead of direct DOM manipulation. | ⏳ Pending |
+| 8 | Error boundary | Plugin page wraps bundle execution in try/catch. Plugin JS errors show an error panel without crashing DocWright layout. Console errors are scoped to plugin name prefix. | ✅ Done |
+| 9 | Plugin manifest validation | `scanPlugins()` validates required fields and `apiVersion` compatibility. Logs warnings for unknown fields (forward-compat). Invalid manifests are skipped, not fatal. | ✅ Done |
+| 10 | Plugin hot-reload | File watcher on `plugins/*/` triggers re-scan. Activity bar updates without full page reload. Useful during plugin development. | ✅ Done |
+| 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.bridge.toast('message')` instead of direct DOM manipulation. | ✅ Done |
 | **Phase 4 — Module 0 Full Implementation** | | | |
-| 12 | cs-erp-images Image Generator UI | Full SvelteKit app compiled to `client/bundle.js`. App selector form (reads `/api/plugin/erp-images/api/catalogue`), version calculator, GitHub PR creation flow. | ⏳ Pending |
-| 13 | cs-erp-images Deployment UI | Customer deployment form: image picker (GHCR list), site info, Ansible vars generator, playbook trigger or command display. | ⏳ Pending |
-| 14 | Contribution guide | `docs/plugins.md` in DocWright: how to build a plugin, `plugin.json` schema reference, bridge API, bundle build patterns. | ⏳ Pending |
+| 12 | cs-erp-images Image Generator UI | Full SvelteKit app compiled to `client/bundle.js`. App selector form (reads `/api/plugin/erp-images/api/catalogue`), version calculator, GitHub PR creation flow. | ✅ Done |
+| 13 | cs-erp-images Deployment UI | Customer deployment form: image picker (GHCR list), site info, Ansible vars generator, playbook trigger or command display. | ✅ Done |
+| 14 | Contribution guide | `docs/plugins.md` in DocWright: how to build a plugin, `plugin.json` schema reference, bridge API, bundle build patterns. | ✅ Done |
 
 ---
 
@@ -126,4 +130,42 @@ module.exports = { GET, POST };
 | `src/webui/src/routes/api/plugins/+server.ts` | List active plugins |
 | `src/webui/src/routes/api/plugin/[name]/[...path]/+server.ts` | Catch-all: static files + server handler dispatch |
 | `src/webui/src/routes/plugin/[name]/+page.svelte` | Full-page plugin view |
-| `src/webui/src/routes/+layout.svelte` | Dynamic activity bar icons (6-line addition) |
+| `src/webui/src/routes/+layout.svelte` | Dynamic activity bar icons |
+
+## Testing Plan
+
+### Step Verification
+
+- [x] Step 1: `plugin.json` schema
+- [x] Step 2: `src/webui/src/lib/server/plugins.ts`
+- [x] Step 3: `/api/plugins` route
+- [x] Step 4: `/api/plugin/[name]/[...path]` catch-all
+- [x] Step 5: `/plugin/[name]/+page.svelte`
+- [x] Step 6: Activity bar dynamic icons
+- [x] Step 7: Module 0 scaffold — cs-erp-images
+- [x] Step 8: Error boundary
+- [x] Step 9: Plugin manifest validation
+- [x] Step 10: Plugin hot-reload
+- [x] Step 11: DocWright JS bridge
+- [x] Step 12: cs-erp-images Image Generator UI
+- [x] Step 13: cs-erp-images Deployment UI
+- [x] Step 14: Contribution guide
+
+### Integration & Regression
+
+- [x] Existing tests pass without modification (`npm test`)
+- [x] TypeScript compiles cleanly (`npm run typecheck`)
+- [x] Plugin System functionality works end-to-end
+
+### Gate Criteria
+
+- [x] `tests_defined` set to `true` in frontmatter
+- [x] Human reviewer has verified step outcomes above
+- [x] No regressions introduced to adjacent workflows
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-06-28 | Formal verification pass — 21/21 checks passed via Playwright e2e. Bug found and fixed: scanPlugins() symlink traversal. Bridge API confirmed at window.__docwright.bridge. Hot-reload, manifest validation, error boundary, path traversal guard, docs/plugins.md all verified. Test script: test/webui/plugin-verify.ts. | NetYeti |
+| 2026-06-28 | Restored Testing Plan section lost during cherry-pick conflict resolution. | NetYeti |
