@@ -5,6 +5,20 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — Multi-User Auth + OCC
+
+**Focus:** Multi-user auth, Forgejo OAuth, OCC conflict dialog
+
+**Completed:**
+- [x] Drafted 12 implementation steps for `multiuser-auth-concurrent-sessions` plan
+- [x] Delivered all 12 steps: hooks.server.ts, session store, Forgejo OAuth client, local auth fallback, login/callback/logout routes, UserBadge in toolbar, +layout.server.ts, per-user git attribution, ETag on /api/read, OCC check on /api/write, .env.example auth vars, 11 unit tests
+- [x] Follow-up: client-side OCC conflict dialog — two-pane diff, Cancel/Take-server/Overwrite-mine
+- [x] Verified: API-layer (6 fetch checks, all pass) + Playwright UI (dialog renders and resolves correctly)
+
+**Session note:** `docs/session-notes/session_note_202606281600.md`
+
+---
+
 ## Session: 2026-06-28 — UI Layout Refactor Complete, Governance Engine Vision
 
 **Focus:** UI layout refactor (18/18 steps), governance engine architecture, branch structure
