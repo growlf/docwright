@@ -20,7 +20,7 @@ _path: plans/plugin-system.md
 proposal_source: profile-contribution-architecture.md
 phase: 4
 total_steps: 14
-completed_steps: 10
+completed_steps: 11
 github_epic:
 automated: full
 tests_defined: false
@@ -70,7 +70,7 @@ cs-erp-images plugin implementation, depending on this plan.
 | 8 | Error boundary | Plugin page wraps bundle execution in try/catch. Plugin JS errors show an error panel without crashing DocWright layout. Console errors are scoped to plugin name prefix. | ✅ Done |
 | 9 | Plugin manifest validation | `scanPlugins()` validates required fields and `apiVersion` compatibility. Logs warnings for unknown fields (forward-compat). Invalid manifests are skipped, not fatal. | ✅ Done |
 | 10 | Plugin hot-reload | File watcher on `plugins/*/` triggers re-scan. Activity bar updates without full page reload. Useful during plugin development. | ✅ Done |
-| 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.toast('message')` instead of direct DOM manipulation. | ⏳ Pending |
+| 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.toast('message')` instead of direct DOM manipulation. | ✅ Done |
 | **Phase 4 — Module 0 Full Implementation** | | | |
 | 12 | cs-erp-images Image Generator UI | Full SvelteKit app compiled to `client/bundle.js`. App selector form (reads `/api/plugin/erp-images/api/catalogue`), version calculator, GitHub PR creation flow. | ⏳ Pending |
 | 13 | cs-erp-images Deployment UI | Customer deployment form: image picker (GHCR list), site info, Ansible vars generator, playbook trigger or command display. | ⏳ Pending |

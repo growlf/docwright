@@ -1,8 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
-  import { showToast } from '$lib/toast.js';
-  import { notifications } from '$lib/notifications.js';
   import { rightPanelClaim } from '$lib/pluginPanel.js';
 
   interface PluginMeta { name: string; displayName: string; icon: string; description: string; }
@@ -18,24 +16,10 @@
   let rejectionHandler: (e: PromiseRejectionEvent) => void;
   let originalConsole: { error: typeof console.error; warn: typeof console.warn; log: typeof console.log; info: typeof console.info } | null = null;
 
-  function setupBridge(name: string) {
-    (window as any).__docwright = {
-      pluginName: name,
-      apiBase: '',
-      toast: (msg: string, duration?: number) => showToast(msg, duration ?? 4000),
-      notify: (opts: {
-        type: 'info' | 'warning' | 'error' | 'success';
-        title: string;
-        message: string;
-        persistent?: boolean;
-      }) => notifications.add({ ...opts, persistent: opts.persistent ?? false }),
-      setRightPanel: (html: string, label?: string) => {
-        rightPanelClaim.set({ html, label: label ?? 'Info' });
-      },
-      clearRightPanel: () => {
-        rightPanelClaim.set(null);
-      },
-    };
+  function setPluginName(name: string) {
+    // Augment the layout bridge with the active plugin name; do not replace the bridge.
+    const dw = (window as any).__docwright;
+    if (dw?.bridge) dw.bridge.pluginName = name;
   }
 
   function setupConsoleScope(name: string) {
@@ -88,7 +72,8 @@
       console.info  = originalConsole.info;
       originalConsole = null;
     }
-    delete (window as any).__docwright;
+    const dw = (window as any).__docwright;
+    if (dw?.bridge) delete dw.bridge.pluginName;
     rightPanelClaim.set(null);
   }
 
@@ -117,8 +102,8 @@
       }
     }
 
-    // Wire bridge, console scope, and error boundary before the bundle executes
-    setupBridge(pluginName);
+    // Wire plugin name into bridge, console scope, and error boundary before bundle executes
+    setPluginName(pluginName);
     setupConsoleScope(pluginName);
     setupErrorBoundary(pluginName);
 
