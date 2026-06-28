@@ -10,7 +10,7 @@ tags:
 proposal_source: proposals/approved/sub-plan-contribution-pipeline.md
 priority: medium
 mode: autonomous
-scenario_synthesis: "Contribution pipeline and friction log — MCP tools (contribute_upstream, log_friction, list_docwright_issues, create_docwright_proposal); structured logging; GitHub issue/URL generation; no VS Code or IDE-specific steps"
+scenario_synthesis: Contribution pipeline and friction log — MCP tools (contribute_upstream, log_friction, list_docwright_issues, create_docwright_proposal); structured logging; GitHub issue/URL generation; no VS Code or IDE-specific steps
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
@@ -18,7 +18,8 @@ phase: 5
 total_steps: 3
 completed_steps: 0
 _path: plans/contribution-pipeline.md
-github_epic: null
+github_epic:
+automated: full
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 
@@ -57,6 +58,9 @@ delegate here. Does not gate Phase 3 completion.
 ## Testing Plan
 
 ### Step Verification
+- [ ] Step 1: `contribute_upstream` MCP tool
+- [ ] Step 2: `log_friction` MCP tool + periodic review
+- [ ] Step 3: `list_docwright_issues` + consent intake flow
 
 - [ ] Step 1: `contribute_upstream` with valid token creates a GitHub issue and logs the entry
 - [ ] Step 1: `contribute_upstream` without token returns a pre-filled URL and still logs

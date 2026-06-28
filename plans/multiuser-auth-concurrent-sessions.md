@@ -14,7 +14,7 @@ tags:
 proposal_source: proposals/approved/multiuser-auth-concurrent-sessions.md
 priority: critical
 complexity: high
-automated: guided
+automated: full
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
@@ -131,6 +131,21 @@ idiomatic approach and keeps all auth logic in one place.
 ## Testing Plan
 
 ### Step Verification
+- [ ] Step 1: `app.d.ts` — extend App.Locals
+- [ ] Step 2: `session.ts` — in-memory session store
+- [ ] Step 3: `hooks.server.ts` — session middleware
+- [ ] Step 4: `forgejo-oauth.ts` — OAuth2 client
+- [ ] Step 5: `local-auth.ts` — local auth fallback
+- [ ] Step 6: Login page
+- [ ] Step 7: OAuth callback route
+- [ ] Step 8: Identity badge in app toolbar
+- [ ] Step 9: Authenticated git attribution
+- [ ] Step 10: `.env.example` — auth vars
+- [ ] Step 11: ETag on file reads
+- [ ] Step 12: `If-Match` check on writes
+- [ ] Step 13: Conflict UI in editor
+- [ ] Step 14: Route protection audit
+- [ ] Step 15: Session expiry + logout
 
 - [ ] Step 1: App.Locals type compiles; all existing routes typecheck with `locals.user`
 - [ ] Step 2: Session store get/set/delete; TTL expiry returns null

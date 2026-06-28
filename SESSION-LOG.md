@@ -5,6 +5,26 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — Plugin System Close-out, Bug Fixes, Claude API
+
+**Focus:** Plugin system verified and closed, apply-review bugs fixed, Claude wired as AI backend
+
+**Completed:**
+- [x] Formally verified plugin-system plan — 21/21 Playwright e2e checks, all 14 steps confirmed
+- [x] Fixed `scanPlugins()` symlink traversal bug (`Dirent.isDirectory()` → `fs.statSync().isDirectory()`)
+- [x] Fixed 5 apply-review / SSE watch bugs: status demotion, `_path` drop, unquoted YAML, AI notes in plan files, silent edit-mode reload suppression
+- [x] Wrote 9 implementation steps for governance-engine-view-container plan
+- [x] Wrote 15 implementation steps (5 phases) for multiuser-auth-concurrent-sessions plan
+- [x] Captured critical proposal: plan-lifecycle-enforcement-gaps (6-layer fix for governance trail failures)
+- [x] Wired Anthropic Claude API as inference backend (OLLA_API_KEY in src/webui/.env)
+- [x] plugin-system plan archived to plans/completed/, v0.4.3 released to main
+- [x] develop reset to main via branch protection API (removed stuck merge commit)
+- [x] Lifecycle enforcement proposal approved, plan scaffolded
+
+**Session note:** `docs/session-notes/session_note_202606282330.md`
+
+---
+
 ## Session: 2026-06-28 — PR Merges + Branch Cleanup
 
 **Focus:** Merge auth + ForceGraph PRs, clean up worktrees and branches
