@@ -87,6 +87,7 @@ Each developer's machine:
 
 **Setup:** DocWright on a server with TLS cert, Forgejo for git, each
 developer runs opencode locally with the `--cors` flag.
+See [docs/authentication.md](./authentication.md) for Forgejo OAuth configuration.
 
 ---
 
