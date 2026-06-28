@@ -5,6 +5,21 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — PR Merges + Branch Cleanup
+
+**Focus:** Merge auth + ForceGraph PRs, clean up worktrees and branches
+
+**Completed:**
+- [x] Rebased `feat/multiuser-auth` onto develop, resolved SESSION-LOG.md conflict, merged PR #39
+- [x] Rebased `feat/knowledge-graph` in DocWright-kg worktree onto develop, merged PR #40
+- [x] Deleted merged branches: `feat/multiuser-auth`, `feat/knowledge-graph`, `feat/ui-layout-refactor`, `feat/plugin-system`, `dependabot/…multi-…`
+- [x] Removed worktree directories: `DocWright-kg`, `DocWright-plugin`
+- [x] One worktree remaining: `DocWright/` on develop
+
+**Session note:** `docs/session-notes/session_note_202606281800.md`
+
+---
+
 ## Session: 2026-06-28 — Multi-User Auth + OCC
 
 **Focus:** Multi-user auth, Forgejo OAuth, OCC conflict dialog
