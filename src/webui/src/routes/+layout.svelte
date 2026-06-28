@@ -730,9 +730,18 @@ import {
       activePlugins = plugins;
     }).catch(() => {});
     let es = new EventSource('/api/watch');
+    const reloadPlugins = () => {
+      fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
+        activePlugins = plugins;
+      }).catch(() => {});
+    };
+
     const attachWatch = (source: EventSource) => {
       source.addEventListener('filechange', (e: MessageEvent) => {
         fileChanged.set(JSON.parse(e.data));
+      });
+      source.addEventListener('pluginchange', () => {
+        reloadPlugins();
       });
       source.addEventListener('error', () => {
         source.close();

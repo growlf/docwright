@@ -7,10 +7,15 @@ const REPO_ROOT = (() => {
   return path.resolve(process.cwd(), '../..');
 })();
 
+const VAULT_ROOT = process.env.DOCWRIGHT_VAULT_ROOT ?? process.cwd();
+const PLUGINS_DIR = path.join(VAULT_ROOT, 'plugins');
+
 export function GET({ request }) {
   let watcher: fs.FSWatcher | null = null;
+  let pluginWatcher: fs.FSWatcher | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
+  let pluginDebounce: ReturnType<typeof setTimeout> | null = null;
   let closed = false;
 
   const stream = new ReadableStream({
@@ -49,6 +54,19 @@ export function GET({ request }) {
         send('error', { message: 'watch not supported on this platform' });
       }
 
+      // Watch plugins/ for hot-reload — non-fatal if the directory doesn't exist yet
+      if (fs.existsSync(PLUGINS_DIR)) {
+        try {
+          pluginWatcher = fs.watch(PLUGINS_DIR, { recursive: true }, (_eventType, filename) => {
+            if (!filename) return;
+            if (pluginDebounce) clearTimeout(pluginDebounce);
+            pluginDebounce = setTimeout(() => {
+              send('pluginchange', { changed: String(filename).replace(/\\/g, '/') });
+            }, 300);
+          });
+        } catch { /* watch not supported — ignore */ }
+      }
+
       send('open', { root: REPO_ROOT });
 
       // Heartbeat every 15s — keeps connection alive and flushes any buffered events
@@ -58,7 +76,9 @@ export function GET({ request }) {
         closed = true;
         if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
         if (watcher) { watcher.close(); watcher = null; }
+        if (pluginWatcher) { pluginWatcher.close(); pluginWatcher = null; }
         if (rebuildTimer) { clearTimeout(rebuildTimer); rebuildTimer = null; }
+        if (pluginDebounce) { clearTimeout(pluginDebounce); pluginDebounce = null; }
       };
 
       request.signal.addEventListener('abort', cleanup);
@@ -67,6 +87,7 @@ export function GET({ request }) {
       closed = true;
       if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
       if (watcher) { watcher.close(); watcher = null; }
+      if (pluginWatcher) { pluginWatcher.close(); pluginWatcher = null; }
     },
   });
 
