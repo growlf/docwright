@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { afterNavigate } from '$app/navigation';
   import type { Snippet } from 'svelte';
   import * as d3 from 'd3';
   import type { ForceNode, ForceEdge, FilterControl, GapItem } from './force-graph.js';
@@ -136,7 +137,10 @@
     if (sim) { sim.stop(); sim = null; }
 
     const rect = canvasEl.getBoundingClientRect();
-    const w = rect.width || 900, h = rect.height || 540;
+    const w = rect.width, h = rect.height;
+    // No fallback — if layout hasn't settled yet, return and let ResizeObserver
+    // or afterNavigate re-trigger. Falling back to a fixed size causes nodes to
+    // seed at the wrong center when the canvas has different actual dimensions.
     if (w < 10 || h < 10) return;
 
     const fns = filteredNodes();
@@ -274,6 +278,14 @@
   });
 
   onDestroy(() => { sim?.stop(); ro?.disconnect(); });
+
+  // After SvelteKit client-side navigation, the canvas may have been sized
+  // by the browser before buildGraph ran (e.g. navigating from GovernancePanel
+  // "Open full dashboard →"). Re-measure and redraw once the layout settles.
+  afterNavigate(() => {
+    if (!ready || !svgEl || !canvasEl) return;
+    requestAnimationFrame(() => buildGraph());
+  });
 
   // Re-init filters and rebuild when nodes data changes
   $effect(() => {
