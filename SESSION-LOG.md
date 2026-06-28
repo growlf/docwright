@@ -800,3 +800,20 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - Step 2 layout wiring: import ViewContainerMount, remove old mountSidebar $effect, replace plugin div, add mobile VC strip CSS — see session note for exact edits
 
 **Session note:** `docs/session-notes/session_note_202606262000.md`
+
+---
+
+## Session: 2026-06-28 — csdocs Policy Reorganization + DocWright Fixes
+
+**Focus:** csdocs vault restructure, atoms_dir config, base view cross-folder fix
+
+**Completed:**
+- [x] Split `policies/infrastructure/` into `technology/`, `operations/`, `governance/`
+- [x] Added README index to every policies/ subfolder, atoms/, and docs/reference/
+- [x] Updated Policy List.base to exclude README files and cover all new folders
+- [x] Added `atoms_dir` config field to DocWright — vaults can now store atoms outside policies/
+- [x] csdocs now uses `atoms_dir: "atoms"` — atoms live cleanly in `atoms/` at vault root
+- [x] Fixed DocWright-ui /api/base to scan file.inFolder() paths instead of only the .base file's own folder
+- [x] Fixed BaseView.svelte evalCond to implement file.inFolder(), file.name, file.ext, and nested OR/AND filters
+
+**Session note:** `docs/session-notes/session_note_202606281200.md`
