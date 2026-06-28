@@ -3,13 +3,13 @@
     "dw-vault": {
       "command": "node",
       "args": [
-        "/home/netyeti/Projects/DocWright-kg/dist/mcp/server.js",
+        "/home/netyeti/Projects/DocWright/dist/mcp/server.js",
         "--mode",
         "vault"
       ],
       "env": {
-        "DOCWRIGHT_PATH": "/home/netyeti/Projects/DocWright-kg",
-        "DOCWRIGHT_VAULT_ROOT": "/home/netyeti/Projects/DocWright-kg"
+        "DOCWRIGHT_PATH": "/home/netyeti/Projects/DocWright",
+        "DOCWRIGHT_VAULT_ROOT": "/home/netyeti/Projects/DocWright"
       }
     }
   }

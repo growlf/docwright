@@ -14,7 +14,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: "NetYeti"
 depends_on:
-  - plans/plugin-system.md
+  - plans/completed/plugin-system.md
 author-role: operator
 ---
 
