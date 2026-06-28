@@ -1,6 +1,6 @@
 ---
 name: endsession
-description: Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status
+description: Automated session shutdown — saves session note, updates SESSION-LOG.md, commits all remaining changes, pushes all branches, reports status
 triggers: endsession, end session, shutdown, wrap up, session end
 required_permission: none
 distributable: true
@@ -23,7 +23,7 @@ Read `.env` (fallback git config). Machine is `$(hostname)`.
 Read:
 - SESSION-LOG.md (last 100 lines)
 - `git log --oneline --since="<last-session-timestamp>"` (from last session note date)
-- `git status --short`
+- `git status --short` across all known worktrees
 - Active plans via `dw-mcp_list_active_plans`
 - Session context via `dw-mcp_get_session_context`
 
@@ -77,7 +77,7 @@ Write `docs/session-notes/session_note_YYYYMMDDHHMM.md`:
 
 ## Uncommitted Changes
 
-<none or list>
+<none or list — will be committed in Step 6>
 
 ## Architecture State
 
@@ -107,6 +107,44 @@ Append a new entry after the last `---`:
 **Session note:** `docs/session-notes/session_note_YYYYMMDDHHMM.md`
 ```
 
-### 6. Report
+### 6. Commit all remaining changes
 
-Print a concise summary: session note path, plans active, git status, and any action items for next session.
+After all docs and logs are written, commit everything outstanding across all worktrees:
+
+For each worktree with uncommitted or untracked content:
+1. `git status --short` — identify what's pending
+2. Stage all relevant files (exclude: `.env`, `*.secret`, `node_modules/`, `dist/`,
+   screenshot directories, and any file the user has explicitly excluded)
+3. Commit with message: `docs: session note YYYY-MM-DD — <focus>`
+4. If a worktree has no changes, skip it silently
+
+Do NOT commit:
+- `.env` or any file that looks like it contains secrets or credentials
+- `node_modules/`, `dist/`, `.next/`, build artifacts
+- Screenshot directories (`test/webui/screenshots/`, `/tmp/`)
+- Files already in `.gitignore`
+
+### 7. Push all branches
+
+Push every local branch that has commits not yet on its remote tracking branch:
+
+```bash
+# For each worktree
+git push origin <current-branch>
+```
+
+If a branch has no remote tracking ref yet, push with `-u`:
+```bash
+git push -u origin <current-branch>
+```
+
+Report which branches were pushed and which were already up-to-date.
+
+### 8. Report
+
+Print a concise summary:
+- Session note path
+- Files committed and pushed (per worktree)
+- Active plans and their priorities
+- Branches pushed / already up-to-date
+- Action items for next session (top 3, ordered by priority)
