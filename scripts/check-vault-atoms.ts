@@ -3,17 +3,21 @@
  * scripts/check-vault-atoms.ts
  * Validate and report the policy atom set for any vault.
  * Usage: npm run atoms:check -- --vault /path/to/vault
- *        npm run atoms:check          (checks DocWright's own policies/)
+ *        npm run atoms:check          (checks DocWright's own atoms)
+ *
+ * The atoms directory is resolved from .docwright/config.json (atoms_dir field),
+ * defaulting to policies/ for vaults that don't set it.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { buildIndex } from '../src/policy-atoms-core/index-builder.js';
 import { syncCheck } from '../src/policy-atoms-core/sync-checker.js';
 import { SYNOPSIS_TOKEN_HARD, SYNOPSIS_TOKEN_SOFT } from '../src/policy-atoms-core/schema.js';
+import { resolveAtomsDir } from '../src/vault-config.js';
 
 function usage() {
   console.log('Usage: npm run atoms:check [-- --vault /path/to/vault]');
-  console.log('       Omit --vault to check DocWright\'s own policies/ directory.');
+  console.log('       Omit --vault to check DocWright\'s own atoms directory.');
   process.exit(0);
 }
 
@@ -25,15 +29,15 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--vault') vaultRoot = path.resolve(args[++i]);
 }
 
-const policiesDir = path.join(vaultRoot, 'policies');
+const policiesDir = resolveAtomsDir(vaultRoot);
 const label = vaultRoot === process.cwd() ? 'DocWright (self)' : vaultRoot;
 
 console.log(`\nPolicy atom check: ${label}`);
-console.log(`  policies dir: ${policiesDir}`);
+console.log(`  atoms dir: ${policiesDir}`);
 console.log(`  limit: ${SYNOPSIS_TOKEN_SOFT} soft / ${SYNOPSIS_TOKEN_HARD} hard\n`);
 
 if (!fs.existsSync(policiesDir)) {
-  console.log('  ⚠  No policies/ directory found — vault has no atoms yet.');
+  console.log('  ⚠  Atoms directory not found — vault has no atoms yet.');
   console.log('     Run: npm run adopt -- --dest <vault> --upgrade   to seed pilot atoms.');
   process.exit(0);
 }

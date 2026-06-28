@@ -7,10 +7,9 @@
  *   (a) atom equivalence tests pass
  *   (b) the flag has been enabled in CI for at least one full run
  *
- * Policies directory resolution (critical for Step 4 multi-vault):
- *   DOCWRIGHT_VAULT_ROOT/policies  — the vault being managed (primary)
- *   DOCWRIGHT_PATH/policies        — fallback (DocWright's own policies)
- *   process.cwd()/policies         — last resort
+ * Atoms directory resolution (critical for Step 4 multi-vault):
+ *   Reads atoms_dir from <vault>/.docwright/config.json (defaults to 'policies').
+ *   Vault root is resolved from DOCWRIGHT_VAULT_ROOT, then DOCWRIGHT_PATH, then cwd.
  *
  * This ensures the MCP server handling a secondary vault checks THAT vault's
  * atoms, not DocWright's own. For DocWright's own repo where
@@ -24,12 +23,11 @@ import { route } from '../../policy-atoms-core/router';
 import { resolve } from '../../policy-atoms-core/resolver';
 import { parseAtomYaml } from '../../policy-atoms-core/parse-yaml';
 import { logTransition } from '../lib/audit';
+import { resolveAtomsDir } from '../../vault-config';
 
-// Resolve policies dir at module load time from the correct vault root.
-const POLICIES_DIR = path.resolve(
-  process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_PATH ?? process.cwd(),
-  'policies',
-);
+// Resolve atoms dir at module load time from the correct vault root.
+const _vaultRoot = process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_PATH ?? process.cwd();
+const POLICIES_DIR = resolveAtomsDir(_vaultRoot);
 
 // Synopsis index cache — one per process (one process = one vault in DocWright's model).
 let _indexCache: ReturnType<typeof buildIndex>['index'] | null = null;
