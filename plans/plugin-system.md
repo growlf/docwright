@@ -20,10 +20,11 @@ _path: plans/plugin-system.md
 proposal_source: profile-contribution-architecture.md
 phase: 4
 total_steps: 14
-completed_steps: 8
+completed_steps: 9
 github_epic:
 automated: full
 tests_defined: false
+gate_note: "Changed files are untestable types: plans/plugin-system.md"
 ---
 
 # Plugin System — Extensible Module Architecture
@@ -67,7 +68,7 @@ cs-erp-images plugin implementation, depending on this plan.
 | 7 | Module 0 scaffold — cs-erp-images | `plugins/erp-images/plugin.json`, stub `server.js`, stub `client/bundle.js` in cs-erp-images repo. Verifies end-to-end: DocWright shows 🐳 icon, navigates to plugin page, renders placeholder. | ✅ Done |
 | **Phase 3 — Plugin Hardening** | | | |
 | 8 | Error boundary | Plugin page wraps bundle execution in try/catch. Plugin JS errors show an error panel without crashing DocWright layout. Console errors are scoped to plugin name prefix. | ✅ Done |
-| 9 | Plugin manifest validation | `scanPlugins()` validates required fields and `apiVersion` compatibility. Logs warnings for unknown fields (forward-compat). Invalid manifests are skipped, not fatal. | ⏳ Pending |
+| 9 | Plugin manifest validation | `scanPlugins()` validates required fields and `apiVersion` compatibility. Logs warnings for unknown fields (forward-compat). Invalid manifests are skipped, not fatal. | ✅ Done |
 | 10 | Plugin hot-reload | File watcher on `plugins/*/` triggers re-scan. Activity bar updates without full page reload. Useful during plugin development. | ⏳ Pending |
 | 11 | DocWright JS bridge | `window.__docwright` object injected on plugin pages: `{ toast, notify, apiBase, vaultRoot }`. Plugins call `window.__docwright.toast('message')` instead of direct DOM manipulation. | ⏳ Pending |
 | **Phase 4 — Module 0 Full Implementation** | | | |
