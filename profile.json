@@ -5,7 +5,6 @@
   "description": "DocWright vault adopted by adopt-vault",
   "profile": "org-operations",
   "extends": "src/profiles/org-operations/profile.json",
-  "documentTypes": [],
   "requiredFrontmatter": [],
   "optionalFrontmatter": [],
   "features": {}

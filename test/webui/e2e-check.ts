@@ -242,6 +242,15 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
     const name = await page.$eval('.gov-profile-name', el => el.textContent?.trim() ?? '').catch(() => '');
     return name.length > 0 || 'no .gov-profile-name or empty';
   }));
+  results.push(await check('governance profile: version shown', async () => {
+    const ver = await page.$eval('.gov-profile-meta', el => el.textContent?.trim() ?? '').catch(() => '');
+    return ver.length > 0 || 'no .gov-profile-meta or empty (profile-config API missing version?)';
+  }));
+  results.push(await check('governance profile: ≥1 document type listed', async () => {
+    const n = await page.$$eval('.gov-profile-type', els => els.length);
+    return n > 0 || 'no .gov-profile-type elements (profile-config API missing documentTypes?)';
+  }));
+  await shot(page, 'vc-01b-governance-profile');
 
   // ── Files VC ────────────────────────────────────────────────────────────
   await page.click('.act-btn[title="Files"]');

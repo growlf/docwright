@@ -91,29 +91,35 @@ describe('relativeTime', () => {
 
 describe('dayGroup', () => {
 
+  // Build a noon timestamp N calendar days ago — avoids midnight-crossing flakes.
+  function calDay(daysAgo: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(12, 0, 0, 0);
+    return d.toISOString();
+  }
+
   it('returns older for falsy input', () => {
     assert.equal(dayGroup(''), 'older');
     assert.equal(dayGroup(undefined), 'older');
   });
 
-  it('returns today for recent timestamp', () => {
-    const d = new Date().toISOString();
-    assert.equal(dayGroup(d), 'today');
+  it('returns today for a timestamp earlier today', () => {
+    const d = new Date();
+    d.setHours(0, 1, 0, 0); // 12:01 am today — always today
+    assert.equal(dayGroup(d.toISOString()), 'today');
   });
 
-  it('returns yesterday for 12h ago', () => {
-    const d = new Date(Date.now() - 43200000).toISOString();
-    assert.equal(dayGroup(d), 'today');
+  it('returns today for noon today', () => {
+    assert.equal(dayGroup(calDay(0)), 'today');
   });
 
-  it('returns yesterday for ~36h ago', () => {
-    const d = new Date(Date.now() - 86400000 * 1.5).toISOString();
-    assert.equal(dayGroup(d), 'yesterday');
+  it('returns yesterday for noon yesterday', () => {
+    assert.equal(dayGroup(calDay(1)), 'yesterday');
   });
 
-  it('returns older for >48h ago', () => {
-    const d = new Date(Date.now() - 86400000 * 3).toISOString();
-    assert.equal(dayGroup(d), 'older');
+  it('returns older for 3 days ago', () => {
+    assert.equal(dayGroup(calDay(3)), 'older');
   });
 });
 
