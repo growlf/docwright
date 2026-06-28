@@ -54,6 +54,7 @@ export async function POST({ url, request }) {
 
   const body = await request.json();
   const { content } = body;
+  if (content === undefined) return json({ error: 'missing content' }, { status: 400 });
 
   // OCC: if client sent If-Match, verify against current file content.
   const ifMatch = request.headers.get('If-Match');
@@ -63,7 +64,6 @@ export async function POST({ url, request }) {
       return json({ conflict: true, currentContent: current }, { status: 409 });
     }
   }
-  if (content === undefined) return json({ error: 'missing content' }, { status: 400 });
 
   const dir = path.dirname(resolved);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -83,5 +83,5 @@ export async function POST({ url, request }) {
     }, 0);
   }
 
-  return json({ ok: true, path: filePath });
+  return json({ ok: true, path: filePath, etag: etag(finalContent) });
 }
