@@ -24,7 +24,11 @@ import {
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
+  import UserBadge from '$lib/UserBadge.svelte';
   import { currentDoc } from '$lib/currentDoc';
+  import type { LayoutData } from './$types.js';
+
+  let { data }: { data: LayoutData } = $props();
 
   interface BrandConfig { name: string; logoPath: string | null; }
 
@@ -827,6 +831,7 @@ import {
         </select>
       {/if}
     </div>
+    <UserBadge user={data.user} />
     <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
   </div>
 </div>
