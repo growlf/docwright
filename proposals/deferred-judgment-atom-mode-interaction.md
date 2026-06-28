@@ -15,7 +15,7 @@ approved: false
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 related_to:
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+  - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - research/plan-execution-mode-enforcement.md
   - docs/policy-atom-hooks.md
 ---
@@ -84,4 +84,4 @@ for (const atom of judgmentAtoms) {
 
 - [[research/plan-execution-mode-enforcement.md]] — enforcement contract: mode interaction lives in Web UI write-intercept layer, not in the atom engine itself
 - [[docs/policy-atom-hooks.md]] — `evaluateJudgmentAtom()` call site and hook wiring
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan; Step 3 retirement phase is the trigger for this work
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — parent plan; Step 3 retirement phase is the trigger for this work

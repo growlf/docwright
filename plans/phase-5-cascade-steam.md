@@ -19,6 +19,7 @@ proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 5; no in
 phase: 5
 total_steps: 0
 completed_steps: 0
+github_epic: null
 ---
 
 # Phase 5 — Cascade STEAM Production Infrastructure
@@ -47,7 +48,7 @@ the ACL source of truth). Phase 3 (vault seed and `docwright init` work complete
 | 5 | AI stack connected — growlf/ai-stack (i9 Ultra + Xe iGPU) | ⏳ Planned | Local inference via Meshy/Ollama; replaces any remote inference used in Phase 3 |
 | 6 | growlf/meshy inference proxy configured | ⏳ Planned | OpenAI-compatible endpoint for OpenCode |
 | 7 | Web UI deployed and accessible to full Cascade STEAM team | ⏳ Planned | SvelteKit server behind Forgejo auth; includes CS-specific onboarding guide (thin layer on top of Phase 3 architecture doc) |
-| 8 | VSCodium extension distributed to developer team members | ⏳ Planned | .vsix from CI; depends on VSCodium extension work (phase-vscodium-extension plan) |
+| 8 | VSCodium extension distributed to developer team members | ⏳ Planned | .vsix from CI; depends on VSCodium extension work (vscodium-extension plan) |
 
 ## Phase Context
 

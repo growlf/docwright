@@ -14,7 +14,7 @@ assigned_to: NetYeti
 depends_on:
   - proposals/plan-execution-mode-rename.md
 _path: proposals/auto-plan-executor.md
-consumed_by: plans/auto-plan-executor.md
+consumed_by: plans/completed/auto-plan-executor.md
 ---
 
 ## Problem

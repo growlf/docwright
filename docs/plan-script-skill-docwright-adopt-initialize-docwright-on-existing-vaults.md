@@ -5,7 +5,7 @@ completed_date: 2026-06-17
 author: NetYeti
 created: 2026-06-17
 tags: [planning, tooling, adoption, vault-portability]
-proposal_source: proposals/approved/docwright-adopt-existing-vault
+proposal_source: proposals/approved/docwright-adopt-existing-vault.md
 ---
 
 # Plan: docwright-adopt — Initialize DocWright on Existing Vaults

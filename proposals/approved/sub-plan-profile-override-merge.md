@@ -12,10 +12,10 @@ created_by: NetYeti@phoenix
 assigned_to: netyeti
 priority: medium
 complexity: low
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 4
 _path: proposals/sub-plan-profile-override-merge.md
-consumed_by: plans/sub-plan-profile-override-merge.md
+consumed_by: plans/completed/sub-plan-profile-override-merge.md
 ---
 
 ## Problem
@@ -72,7 +72,7 @@ Validation errors surface as HTTP 400 with a descriptive message in the `profile
 
 ## Parent Reference
 
-This is sub-plan **#4** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 7). It enables vaults to extend DocWright's governance model without forking.
+This is sub-plan **#4** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 7). It enables vaults to extend DocWright's governance model without forking.
 
 ## Dependencies
 

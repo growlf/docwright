@@ -1,9 +1,7 @@
 {
   "enabledMcpjsonServers": [
     "dw-vault",
-    "dw-upstream",
-    "erpnext",
-    "technitium"
+    "dw-upstream"
   ],
   "hooks": {
     "PreToolUse": [

@@ -11,7 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/approved/bugs-features-and-thoughts.md
-consumed_by: plans/plan-bugs-features-and-thoughts.md
+consumed_by: plans/typed-proposals.md
 ---
 * * *
 

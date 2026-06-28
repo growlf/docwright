@@ -20,14 +20,14 @@ proposal_source: proposals/policy-atom-framework.md
 depends_on: []
 related_to:
   - docs/profile-contribution-architecture.md
-  - plans/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
+  - plans/completed/plan-ui-polish-bundle-panels-tags-navigation-wikilinks-and-deferred-polish.md
   - plans/completed/enforce-lifecycle-compliance.md
 tests_defined: true
 tests_human_reviewed: true
 total_steps: 5
 completed_steps: 5
-_path: plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
-consumed_by: plans/plan-ai-task-category-taxonomy-route-atoms-and-plan-steps-to-the-right-model-at-authorship-time.md
+_path: plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+consumed_by: plans/ai-model-routing.md
 ---
 # Policy Atom Framework — Generic Tiered Policy Engine
 

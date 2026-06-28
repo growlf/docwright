@@ -12,10 +12,10 @@ created_by: NetYeti@phoenix
 assigned_to: NetYeti
 priority: high
 complexity: high
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 1
 _path: proposals/sub-plan-ts-mcp-server.md
-consumed_by: plans/sub-plan-ts-mcp-server.md
+consumed_by: plans/completed/sub-plan-ts-mcp-server.md
 ---
 ## Problem
 
@@ -53,7 +53,7 @@ Key design decisions:
 
 ## Parent Reference
 
-This is sub-plan **#1** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 1). It is the foundational dependency for all subsequent Phase 3 sub-plans.
+This is sub-plan **#1** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 1). It is the foundational dependency for all subsequent Phase 3 sub-plans.
 
 ## Dependencies
 

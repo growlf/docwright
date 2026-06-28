@@ -16,7 +16,7 @@ assigned_to: NetYeti
 tests_defined: true
 phase: 3
 related_to:
-  - plans/phase-2-foundation.md
+  - plans/completed/phase-2-foundation.md
 scenario_synthesis: Dispatch module + MCP server changes; no infrastructure steps; dispatch unit-testable outside extension host
 total_steps: 9
 completed_steps: 9

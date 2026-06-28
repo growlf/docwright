@@ -17,8 +17,8 @@ created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
   - docs/deployment.md
-  - plans/phase-2-foundation.md
-_path: proposals/containerization.md
+  - plans/completed/phase-2-foundation.md
+_path: proposals/approved/containerization.md
 consumed_by: plans/completed/phase-1-containerization.md
 ---
 

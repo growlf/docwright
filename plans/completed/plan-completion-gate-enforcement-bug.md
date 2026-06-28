@@ -12,7 +12,7 @@ assigned_to: NetYeti
 scenario_synthesis: Fix completion gate enforcement — heading normalization in steps.ts, tests_human_reviewed gate, client-side Complete button blocker; targeted changes to steps.ts and PropertiesPane.svelte
 tests_defined: true
 tests_human_reviewed: true
-_path: plans/plan-completion-gate-enforcement-bug.md
+_path: plans/completed/plan-completion-gate-enforcement-bug.md
 ---
 
 # Bug: Plan Completion Gate Enforcement Has Multiple Critical Gaps
@@ -143,7 +143,7 @@ proposition of the governance system.
 
 ### Related
 
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — this plan itself has unchecked gate criteria that the current enforcement cannot block
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — this plan itself has unchecked gate criteria that the current enforcement cannot block
 - `src/mcp/lib/steps.ts` — `checkCompletionGate()` and `hasPendingSteps()`
 - `src/webui/src/lib/PropertiesPane.svelte` — Complete button visibility logic
 

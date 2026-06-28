@@ -15,10 +15,10 @@ author-role: contributor
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - proposals/approved/sub-plan-docwright-init-scaffold.md
-  - plans/phase-vault-portability-pilot.md
+  - proposals/sub-plan-docwright-init-scaffold.md
+  - plans/phase-3-vault-foundation.md
 _path: proposals/approved/docwright-adopt-existing-vault.md
-consumed_by: plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 ## Problem
 
@@ -385,13 +385,13 @@ All three must pass the pre-commit validation gate without manual frontmatter fi
 
 ## Real-World Validation
 
-This proposal was derived directly from the DAFO Infrastructure Vault adoption session (2026-06-16). The complete manual process that `adopt-vault.ts` would automate is documented in `plans/phase-vault-portability-pilot.md` under "Real-World Pilot: DAFO Infrastructure Vault."
+This proposal was derived directly from the DAFO Infrastructure Vault adoption session (2026-06-16). The complete manual process that `adopt-vault.ts` would automate is documented in `plans/phase-3-vault-foundation.md` under "Real-World Pilot: DAFO Infrastructure Vault."
 
 ## Related
 
-*   \[\[plans/phase-vault-portability-pilot.md\]\] — Phase 3 plan; DAFO pilot findings documented there
-*   \[\[proposals/approved/sub-plan-docwright-init-scaffold.md\]\] — the `init.ts` script this extends; also needs manifest/stamp changes
-*   \[\[proposals/sub-plan-cascade-steam-early-access.md\]\] — next planned vault adoption; required validation milestone
+*   \[\[plans/phase-3-vault-foundation.md\]\] — Phase 3 plan; DAFO pilot findings documented there
+*   \[\[proposals/sub-plan-docwright-init-scaffold.md\]\] — the `init.ts` script this extends; also needs manifest/stamp changes
+*   \[\[proposals/approved/sub-plan-cascade-steam-early-access.md\]\] — next planned vault adoption; required validation milestone
 *   \[\[scripts/vault-migrate.ts\]\] — existing schema migration script; `adopt --upgrade` delegates schema bumps to this
 *   \[\[scripts/install-hooks.sh\]\] — hook installer; js-yaml baked-path fix lands here before adopt-vault.ts ships
 *   \[\[policies/core/bugs-before-features.md\]\] — install-hooks.sh js-yaml fix is a pre-condition

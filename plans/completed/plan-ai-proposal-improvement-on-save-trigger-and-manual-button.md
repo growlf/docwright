@@ -6,7 +6,7 @@ author: NetYeti
 created: 2026-06-07
 created_by: NetYeti@phoenix
 tags: [planning]
-proposal_source: proposals/approved/ai-proposal-improve-on-save
+proposal_source: proposals/approved/ai-proposal-improve-on-save.md
 priority: medium
 mode: mentor
 waiting_reason: ""
@@ -28,7 +28,7 @@ gate_reviews: []
 gate_quorum: 1
 total_steps: 8
 completed_steps: 8
-_path: plans/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
+_path: plans/completed/plan-ai-proposal-improvement-on-save-trigger-and-manual-button.md
 ---
 
 # Plan: AI Proposal Improvement — On-Save Trigger and Manual Button

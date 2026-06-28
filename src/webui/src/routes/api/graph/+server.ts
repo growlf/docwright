@@ -22,6 +22,7 @@ interface GraphNode {
   tags: string[];
   author: string;
   approved?: boolean;
+  deferred?: boolean;
   contentHash: string;
 }
 
@@ -45,6 +46,7 @@ function toNode(entry: VaultEntry): GraphNode {
     tags,
     author: String(fm.author ?? ''),
     approved: fm.approved,
+    deferred: fm.deferred === true,
     contentHash,
   };
 }

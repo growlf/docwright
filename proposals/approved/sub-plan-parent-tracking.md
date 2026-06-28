@@ -16,9 +16,9 @@ created_by: NetYeti@phoenix
 assigned_to: netyeti
 priority: medium
 related_to:
-  - plans/phase-2-foundation.md
+  - plans/completed/phase-2-foundation.md
 _path: proposals/sub-plan-parent-tracking.md
-consumed_by: plans/sub-plan-parent-tracking.md
+consumed_by: plans/completed/sub-plan-parent-tracking.md
 ---
 ## Problem
 
@@ -139,7 +139,7 @@ Rejected: does not satisfy code-over-memory policy for the update itself.
   A phase is complete only when the phase gate is signed off, not when all
   sub-plans happen to be done. Auto-completion would skip the human review
   step. Deliberate gate crossing is a separate concern
-  (see `proposals/phase-gate-sign-off.md`).
+  (see `proposals/approved/phase-gate-sign-off.md`).
 
 - **Multi-parent plans (a sub-plan contributes to two parents).** A single
   sub-plan servicing two overview plans is ambiguous — which parent owns the

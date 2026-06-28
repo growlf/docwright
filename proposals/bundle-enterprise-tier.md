@@ -98,7 +98,7 @@ A server-side job scheduler running on configured cadences:
 - Reminder sent to `assigned_to`
 
 Connects to the scheduled trigger gate mechanism in
-[[proposals/bundle-lifecycle-gates-phase-2.md]].
+[[proposals/approved/bundle-lifecycle-gates-phase-2.md]].
 
 ## Deployment Context
 
@@ -113,7 +113,7 @@ enforcement + scheduled compliance.
 | Proposal / Plan | Relationship |
 |-----------------|-------------|
 | [[plans/phase-3-profile-acl-ai.md]] | Enterprise tier depends on dispatch module maturity |
-| [[proposals/bundle-lifecycle-gates-phase-2.md]] | Scheduled compliance scans connect to time-based gate triggers |
+| [[proposals/approved/bundle-lifecycle-gates-phase-2.md]] | Scheduled compliance scans connect to time-based gate triggers |
 | [[proposals/bundle-chat-session-panel.md]] | Chat dual-mode enterprise depends on server-side AI from this bundle |
 | [[plans/completed/phase-1-containerization.md]] | Server AI runs as a service alongside the existing containerized Web UI |
 

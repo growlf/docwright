@@ -12,10 +12,11 @@ created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 priority: medium
 complexity: medium
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "5"
 approved_date: 2026-06-11
 approved_by: agent
+consumed_by: plans/completed/sub-plan-vault-migration-system.md
 ---
 
 ## Problem
@@ -41,7 +42,7 @@ Define a `MIGRATION.md` format and a `vault:migrate` script:
 
 ## Parent Reference
 
-This is sub-plan **#5** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 6). It provides the safety net for vault schema evolution.
+This is sub-plan **#5** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 6). It provides the safety net for vault schema evolution.
 
 ## Dependencies
 

@@ -31,7 +31,7 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 | `docwright-session-start` | Automated session startup — resolves identity, gathers active plans, session history, git status, and sets up todo | [`.opencode/skills/docwright-session-start/SKILL.md`](.opencode/skills/docwright-session-start/SKILL.md) |
 | `docwright-templates` | Document format templates for audit plans, mitigation tracking, and assessment reports | [`.opencode/skills/docwright-templates/SKILL.md`](.opencode/skills/docwright-templates/SKILL.md) |
 | `docwright-tools` | Security audit and hardening tools reference — lynis, rkhunter, fail2ban, firewalld, OpenSCAP, auditd | [`.opencode/skills/docwright-tools/SKILL.md`](.opencode/skills/docwright-tools/SKILL.md) |
-| `endsession` | Automated session shutdown — saves session note, updates SESSION-LOG.md, reports status | [`.opencode/skills/endsession/SKILL.md`](.opencode/skills/endsession/SKILL.md) |
+| `endsession` | Automated session shutdown — saves session note, updates SESSION-LOG.md, commits all remaining changes, pushes all branches, reports status | [`.opencode/skills/endsession/SKILL.md`](.opencode/skills/endsession/SKILL.md) |
 
 <!-- skills-table-end -->
 
@@ -210,7 +210,7 @@ Key deliverables:
 ## VSCodium Extension (after alpha)
 
 Goal: working extension skeleton after web tool validated by real users.
-See `plans/phase-vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
+See `plans/vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
 
 ## Repo structure
 

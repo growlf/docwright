@@ -12,7 +12,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/session-start-automation.md
-consumed_by: plans/session-start-automation.md
+consumed_by: plans/completed/session-start-automation.md
 ---
 
 ## Problem

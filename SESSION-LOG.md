@@ -5,6 +5,104 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — PR Merges + Branch Cleanup
+
+**Focus:** Merge auth + ForceGraph PRs, clean up worktrees and branches
+
+**Completed:**
+- [x] Rebased `feat/multiuser-auth` onto develop, resolved SESSION-LOG.md conflict, merged PR #39
+- [x] Rebased `feat/knowledge-graph` in DocWright-kg worktree onto develop, merged PR #40
+- [x] Deleted merged branches: `feat/multiuser-auth`, `feat/knowledge-graph`, `feat/ui-layout-refactor`, `feat/plugin-system`, `dependabot/…multi-…`
+- [x] Removed worktree directories: `DocWright-kg`, `DocWright-plugin`
+- [x] One worktree remaining: `DocWright/` on develop
+
+**Session note:** `docs/session-notes/session_note_202606281800.md`
+
+---
+
+## Session: 2026-06-28 — Multi-User Auth + OCC
+
+**Focus:** Multi-user auth, Forgejo OAuth, OCC conflict dialog
+
+**Completed:**
+- [x] Drafted 12 implementation steps for `multiuser-auth-concurrent-sessions` plan
+- [x] Delivered all 12 steps: hooks.server.ts, session store, Forgejo OAuth client, local auth fallback, login/callback/logout routes, UserBadge in toolbar, +layout.server.ts, per-user git attribution, ETag on /api/read, OCC check on /api/write, .env.example auth vars, 11 unit tests
+- [x] Follow-up: client-side OCC conflict dialog — two-pane diff, Cancel/Take-server/Overwrite-mine
+- [x] Verified: API-layer (6 fetch checks, all pass) + Playwright UI (dialog renders and resolves correctly)
+
+**Session note:** `docs/session-notes/session_note_202606281600.md`
+
+---
+
+## Session: 2026-06-28 — UI Layout Refactor Complete, Governance Engine Vision
+
+**Focus:** UI layout refactor (18/18 steps), governance engine architecture, branch structure
+
+**Completed:**
+- [x] Steps 2-18 of ui-layout-view-container-refactor — shell is pure chrome, zero view-specific layout imports
+- [x] Governance Engine VC live as primary view (🏛) with 5 sub-views
+- [x] Activity bar registry-driven from CORE_VCS map + activePlugins
+- [x] External plugins lazy-load on first click (startup preload removed)
+- [x] 33/33 Playwright e2e checks pass — full regression suite added
+- [x] docs/plugins.md — complete plugin developer guide
+- [x] PR #37 merged to develop — plan lifecycle completed
+- [x] Two proposals approved and plans created: governance-engine-vc (high) + multiuser-auth (critical)
+- [x] Branch structure: feat/shell-core, feat/governance-plugin, feat/files-plugin, feat/git-plugin, feat/tags-plugin, feat/search-plugin, feat/multiuser-auth — all from develop
+- [x] ForceGraph client-nav sizing bug fixed in feat/knowledge-graph (afterNavigate + remove fallback dimensions)
+
+**Session note:** `docs/session-notes/session_note_202606280000.md`
+
+---
+
+## Session: 2026-06-25 — Phase 3 & AI Routing Closed, Worktree Setup
+
+**Focus:** Phase 3 transition, ai-model-routing closure, worktrees, hook fix
+
+**Completed:**
+- [x] Phase 3 transitioned to completed — v0.4.0 tagged and pushed
+- [x] ai-model-routing closed — DocWright-side done, steps 3+4 delegated
+- [x] Two proposals filed: phase-close Web UI, MCP stale dist detection
+- [x] Three worktrees set up: develop / DocWright-plugin / DocWright-kg
+- [x] install-hooks.sh js-yaml quoting bug fixed (worktree hook installs)
+- [ ] DocWright-plugin staged files — hook reinstall needed, resolve next session
+
+**Session note:** `docs/session-notes/session_note_202606251200.md`
+
+---
+
+## Session: 2026-06-25 — Phase 3 Closure Prep, Stale Dist Bug
+
+**Focus:** Phase 3 closure prep, stale dist bug discovery
+
+**Completed:**
+- [x] Checked off all Phase 3 Testing Plan items (Steps 2+10 noted as delegated)
+- [x] Closed dogfooding Phase Gate (ongoing through 1.0 by design)
+- [x] Fixed MCP tool corruption to frontmatter (total_steps, completed_steps, tests_defined)
+- [x] Created `feat/knowledge-graph` branch from develop for ongoing KG tuning
+- [x] Rebuilt `dist/` via `npm run compile` (stale since Jun 22, broke 6-column step counting)
+- [x] Phase 3 transition ready — blocked only by running MCP server needing restart
+
+**Session note:** `docs/session-notes/session_note_202606250720.md`
+
+---
+
+## Session: 2026-06-24 — Housekeeping, Plan Renames, Phase 3 Pilots
+
+**Focus:** PR/stash cleanup, naming coherence, Phase 3 pilot validation
+
+**Completed:**
+- [x] Merged PR #30 (research subfolder structure + orphan fixes)
+- [x] Cleared both stash entries — extracted .envrc + .gitignore adopt-vault entries (PR #31)
+- [x] Renamed 8 active plans for consistency + full cross-ref cascade across 47 files (PR #32)
+- [x] Archived canceled ui-polish-bundle plan to plans/completed/ (PR #33)
+- [x] Approved sub-plan-msp-pilot-vault + sub-plan-cascade-steam-early-access (HUMAN_APPROVED)
+- [x] Marked Phase 3 Steps 8+9 ✅ Done — bms-ai-cluster + csdocs validated as real-world pilots (PR #34)
+- [x] Phase 3 now 12/14 steps complete; formal closure deferred to next session
+
+**Session note:** `docs/session-notes/session_note_202606241400.md`
+
+---
+
 ## Session: 2026-06-02 — Web UI SSE Live Reload
 
 **Focus:** Wire SSE live reload for SvelteKit Web UI — file tree auto-refresh and
@@ -663,3 +761,88 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 **Session note:** `docs/session-notes/session_note_202606221500.md`
 **Discovery data:** `docs/session-notes/BMS_DISCOVERY_DATA.md`
+
+---
+
+## Session: 2026-06-24 — PRs, Plans, Orphans, Research Restructure
+
+**Focus:** PR cleanup, plan consolidation, critical path work, vault graph orphan fixes
+
+**Completed:**
+- [x] Cleared PRs #17–#29: Vite 8 upgrade, branch scheme docs, step-issue tooling, branch policy CI gate
+- [x] Branch policy enforced: feat|fix|chore/* → develop; release/v* → main; CI gate required
+- [x] Consolidated active plans: 74 → 34 pending items; 2 canceled, 1 completed, 4 steps corrected done
+- [x] Master Stack artifact: full portfolio analysis, 4 layers, critical path identified
+- [x] Phase 3 governance closures: Deliverables 11, 12, 13 marked ✅ Done (code already existed)
+- [x] Knowledge Graph proposal approved (user committed with HUMAN_APPROVED=1)
+- [x] promote.ts implemented — Phase 4 apex, 5 functions, 15 tests, wires gates.ts + audit.ts
+- [x] Fixed 141 broken cross-references (83+ graph orphans resolved)
+- [x] research/INDEX.md → research/index.md (lowercase, wikilinks, graph edges)
+- [x] research/execution-mode/ subfolder — 4 docs moved, cluster index created
+- [x] Graph gap detection: deferred proposals excluded from orphan/thematic detection
+- [x] PR #30 open (research subfolder + orphan fixes) — CI pending at session end
+
+**Open:** PR #30 (`chore/research-subfolder-structure` → develop) needs merge. Vault renaming work (active plans still use mixed naming) to continue next session.
+
+**Session note:** `docs/session-notes/session_note_202606240000.md`
+
+---
+
+## Session: 2026-06-25 — KG Launch Setup, Graph Views, Scanner Refactor
+
+**Focus:** DocWright-kg environment, KG graph UI, bms-ai-cluster scanner architecture
+
+**Completed:**
+- [x] DocWright-kg symlink + launcher `--vault` flag — all three repos; eliminates stale env var footgun
+- [x] `adopt-vault.ts` self-stomp fix — `.claude/settings.json` not overwritten when vault = installation
+- [x] Playwright e2e suite committed — `npm run test:e2e` mandatory before reporting UI changes
+- [x] erpnext/technitium MCP entries removed from all three DocWright repo configs
+- [x] `BaseView.svelte` — docwright.views surfaced as tabs (Nexus Graph, Container Hierarchy, Network Flow)
+- [x] `ForceGraph.svelte` — shared D3 engine; KnowledgeGraph + GraphView refactored to thin wrappers
+- [x] Graph pane height fixed (base-mode flex chain; root cause was `.page-wrap align-items: flex-start`)
+- [x] `enrich-uplinks.py` — bridge table + LLDP → uplink_host for all YetiCraft devices
+- [x] `DeviceRegistry` gather→resolve→write pipeline — eliminates scan-order relationship bugs
+- [x] `uplink_host` as first-class field: ref_fields, extra_fields, YAML sources, survives syncs
+- [x] Scanner: MAC dedup, IP conflict guard, placeholder marking, `--audit` mode
+- [x] Full sync: 56 YAML + 138 DHCP = 61 canonical devices; 28 aliases merged; 2 new devices found; ✓ all reach router
+
+**Open:**
+- Proxmox credentials needed for container topology
+- 14 MAC duplicates + 8 placeholders need human review/merge
+- `espressif` + `sterling` on YetiCraft network — unidentified
+- BMS sync deferred (router unreachable this session)
+
+**Session note:** `docs/session-notes/session_note_202606251800.md`
+
+---
+
+## Session: 2026-06-26 — UI Layout Refactor Plan + Steps 1–2
+
+**Focus:** UI plugin architecture plan overhaul, bridge unification, error boundary
+
+**Completed:**
+- [x] Overhauled `ui-layout-view-container-refactor.md` plan: 14→18 steps, Phase 0 API contract, unified bridge, lifecycle callbacks, priority right panel, mobile VC strip, TypeScript types, lazy loading
+- [x] Step 1: `window.__docwright` unified bridge (replaces dual `__dw_plugins`+`__docwright_host` globals), backward-compat shim, `plugin-api.d.ts` ambient type declarations
+- [x] Step 2 (partial): `ViewContainerMount.svelte` error boundary — mount/unmount lifecycle, try/catch isolation, old mountSidebar() backward-compat fallback
+
+**Open:**
+- Step 2 layout wiring: import ViewContainerMount, remove old mountSidebar $effect, replace plugin div, add mobile VC strip CSS — see session note for exact edits
+
+**Session note:** `docs/session-notes/session_note_202606262000.md`
+
+---
+
+## Session: 2026-06-28 — csdocs Policy Reorganization + DocWright Fixes
+
+**Focus:** csdocs vault restructure, atoms_dir config, base view cross-folder fix
+
+**Completed:**
+- [x] Split `policies/infrastructure/` into `technology/`, `operations/`, `governance/`
+- [x] Added README index to every policies/ subfolder, atoms/, and docs/reference/
+- [x] Updated Policy List.base to exclude README files and cover all new folders
+- [x] Added `atoms_dir` config field to DocWright — vaults can now store atoms outside policies/
+- [x] csdocs now uses `atoms_dir: "atoms"` — atoms live cleanly in `atoms/` at vault root
+- [x] Fixed DocWright-ui /api/base to scan file.inFolder() paths instead of only the .base file's own folder
+- [x] Fixed BaseView.svelte evalCond to implement file.inFolder(), file.name, file.ext, and nested OR/AND filters
+
+**Session note:** `docs/session-notes/session_note_202606281200.md`

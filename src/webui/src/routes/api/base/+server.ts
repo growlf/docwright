@@ -67,19 +67,41 @@ export function GET({ url }) {
     return json({ error: 'failed to parse .base file' }, { status: 500 });
   }
 
-  // Read all .md files in the same folder and extract frontmatter
-  const folder = path.dirname(resolved);
-  const notes: any[] = [];
-  try {
-    for (const name of fs.readdirSync(folder)) {
-      if (!name.endsWith('.md')) continue;
-      const notePath = path.join(folder, name);
-      const content = fs.readFileSync(notePath, 'utf-8');
-      const fm = parseFrontmatter(content);
-      const relPath = path.relative(REPO_ROOT, notePath).replace(/\\/g, '/');
-      notes.push({ path: relPath, filename: name.replace(/\.md$/, ''), frontmatter: fm });
+  // Collect all file.inFolder() paths declared in top-level filters (recursive).
+  function extractInFolderPaths(node: any): string[] {
+    if (!node) return [];
+    if (typeof node === 'string') {
+      const m = node.match(/file\.inFolder\("([^"]+)"\)/);
+      return m ? [m[1]] : [];
     }
-  } catch { /* ignore unreadable entries */ }
+    if (typeof node === 'object') {
+      return [...(node.and ?? []), ...(node.or ?? [])].flatMap(extractInFolderPaths);
+    }
+    return [];
+  }
+  const folderPaths = [...new Set(extractInFolderPaths(config.filters))];
+
+  // Read .md files: from declared inFolder paths (cross-folder base), or same
+  // directory as the .base file (legacy single-folder base).
+  const scanFolders = folderPaths.length > 0
+    ? folderPaths
+        .map(fp => path.resolve(REPO_ROOT, fp))
+        .filter(abs => abs.startsWith(REPO_ROOT) && fs.existsSync(abs))
+    : [path.dirname(resolved)];
+
+  const notes: any[] = [];
+  for (const scanDir of scanFolders) {
+    try {
+      for (const name of fs.readdirSync(scanDir)) {
+        if (!name.endsWith('.md')) continue;
+        const notePath = path.join(scanDir, name);
+        const content = fs.readFileSync(notePath, 'utf-8');
+        const fm = parseFrontmatter(content);
+        const relPath = path.relative(REPO_ROOT, notePath).replace(/\\/g, '/');
+        notes.push({ path: relPath, filename: name.replace(/\.md$/, ''), frontmatter: fm });
+      }
+    } catch { /* ignore unreadable entries */ }
+  }
 
   // Default sort by IP, then filename
   notes.sort((a, b) => {

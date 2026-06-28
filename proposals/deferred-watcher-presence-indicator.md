@@ -14,7 +14,7 @@ approved: false
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 related_to:
-  - plans/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+  - plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 ---
 
 ## Problem

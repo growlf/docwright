@@ -17,6 +17,7 @@ assigned_to: NetYeti@phoenix
 reviewed_by: NetYeti
 reviewed_date: 2026-06-14
 _path: plans/phoenix-arc-gpu-ai-stack-reliability.md
+github_epic: null
 ---
 
 ## Overview
@@ -43,6 +44,22 @@ update knowledge repos with known-good config.
 | 6 | Verify profile-full-local/auto routing through smart router | ⏳ Pending |
 | 7 | Update ai-stack docs with standalone-node Arc pattern | ⏳ Pending |
 | 8 | Update intel_nuc_skullcanyon_ollama_with_gpu with Meteor Lake Arc + xe driver notes | ⏳ Pending |
+
+## Parallelism Map
+
+Steps that share no overlapping files can be worked simultaneously on separate `feat/` branches.
+Fill in Depends On and Parallel With based on reviewing the step details above.
+
+| Step | Depends On | Parallel With | Notes |
+| --- | --- | --- | --- |
+| 1 | — | — | |
+| 2 | — | — | |
+| 3 | — | — | |
+| 4 | — | — | |
+| 5 | — | — | |
+| 6 | — | — | |
+| 7 | — | — | |
+| 8 | — | — | |
 
 ## Risks
 

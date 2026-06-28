@@ -18,13 +18,13 @@ priority: critical
 phase: 3
 assigned_to: NetYeti
 related_to:
-  - plans/phase-vault-portability-pilot.md
-  - proposals/sub-plan-vault-write-api.md
-  - proposals/knowledge-graph-cross-document-idea-linkage.md
+  - plans/phase-3-vault-foundation.md
+  - proposals/approved/sub-plan-vault-write-api.md
+  - proposals/approved/knowledge-graph-cross-document-idea-linkage.md
 depends_on:
-  - proposals/sub-plan-vault-write-api.md
-_path: proposals/sub-plan-vault-document-index.md
-consumed_by: plans/sub-plan-vault-document-index.md
+  - proposals/approved/sub-plan-vault-write-api.md
+_path: proposals/approved/sub-plan-vault-document-index.md
+consumed_by: plans/completed/sub-plan-vault-document-index.md
 ---
 
 ## Problem

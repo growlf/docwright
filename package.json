@@ -2,7 +2,7 @@
   "name": "docwright",
   "displayName": "docwright",
   "description": "Organizational operating system for policy-driven teams",
-  "version": "0.4.2",
+  "version": "0.4.1",
   "license": "MIT",
   "publisher": "growlf",
   "repository": {
@@ -48,6 +48,7 @@
     "init": "npx tsx scripts/init.ts",
     "open": "npx tsx scripts/open-vault.ts",
     "adopt": "npx tsx scripts/adopt-vault.ts",
+    "migrate:plan-steps": "npx tsx scripts/migrate-plan-steps.ts",
     "migrate:mode-field": "npx tsx scripts/migrate-mode-field.ts",
     "vault:migrate": "npx tsx scripts/vault-migrate.ts",
     "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
@@ -56,7 +57,9 @@
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile",
-    "test:webui": "mocha --require tsx/cjs test/webui/**/*.test.ts"
+    "test:webui": "mocha --require tsx/cjs test/webui/**/*.test.ts",
+    "test:e2e": "npx tsx test/webui/e2e-check.ts --screenshot",
+    "test:e2e:ci": "npx tsx test/webui/e2e-check.ts"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
@@ -68,6 +71,7 @@
     "@vscode/test-electron": "^2.3.0",
     "eslint": "^8.0.0",
     "mocha": "^10.0.0",
+    "playwright": "^1.61.1",
     "ts-node": "^10.9.0",
     "tsx": "^4.22.4",
     "typescript": "^5.3.0"

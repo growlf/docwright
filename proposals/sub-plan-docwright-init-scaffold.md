@@ -12,7 +12,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: high
 complexity: medium
-parent_plan: phase-vault-portability-pilot.md
+parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "3"
 ---
 
@@ -37,7 +37,7 @@ Implement `npm run init -- --dest /path/to/new-vault --profile org-operations` t
 
 ## Parent Reference
 
-This is sub-plan **#3** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-vault-portability-pilot.md`, Step 5). It is the primary user-facing output of the vault portability work.
+This is sub-plan **#3** of Phase 3 — Vault Portability, Real-World Pilot & Upstream Contribution Pipeline (`plans/phase-3-vault-foundation.md`, Step 5). It is the primary user-facing output of the vault portability work.
 
 ## Dependencies
 

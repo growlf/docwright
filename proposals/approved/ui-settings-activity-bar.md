@@ -12,7 +12,7 @@ tags:
 approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
-_path: proposals/ui-settings-activity-bar.md
+_path: proposals/approved/ui-settings-activity-bar.md
 consumed_by: plans/completed/phase-2-ui-polish-bundle.md
 ---
 
@@ -103,7 +103,7 @@ hardcoded exclusion list.
 
 | Idea | Why deferred | Deferred proposal |
 |------|-------------|-------------------|
-| Full-text search panel (🔍 activity bar slot) | Requires search backend (tobi/qmd planned) | [[proposals/ui-vault-search.md]] |
+| Full-text search panel (🔍 activity bar slot) | Requires search backend (tobi/qmd planned) | [[proposals/approved/ui-vault-search.md]] |
 | Custom activity bar icons per profile | Profile engine (Phase 3) prerequisite | Post-launch |
 | Drag-to-reorder activity bar sections | Not needed at launch | Post-launch |
 

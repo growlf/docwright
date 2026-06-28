@@ -18,8 +18,8 @@ created_by: NetYeti@phoenix
 assigned_to: NetYeti
 _path: proposals/split-agent-governance.md
 related_to:
-  - plans/phase-1-plan-step-enforcement.md
-  - proposals/skill-plan-critique.md
+  - plans/completed/phase-1-plan-step-enforcement.md
+  - proposals/approved/skill-plan-critique.md
 consumed_by: plans/completed/cross-tool-ai-compatibility-opencode-claude-code.md
 ---
 
@@ -849,7 +849,7 @@ planning begins.
 
 ## Related
 
-- `plans/phase-1-plan-step-enforcement.md` — bugs B1, B2 that motivated this proposal
+- `plans/completed/phase-1-plan-step-enforcement.md` — bugs B1, B2 that motivated this proposal
 - `AGENTS.md` — behavioral contracts (to be updated after approval)
 - `docs/ai-governance-enforcement.md` — five-layer enforcement model (to be updated)
 - `docs/governance_enforcement_layers.svg` — architecture diagram (to be updated)

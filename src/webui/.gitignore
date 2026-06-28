@@ -1,0 +1,9 @@
+
+# DocWright — managed entries (added by adopt-vault.ts)
+.env
+.dw-session.json
+node_modules
+.claude/skills/
+.opencode/skills/
+.gemini/agents/
+.gemini/settings.json

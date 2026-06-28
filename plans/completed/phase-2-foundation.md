@@ -18,7 +18,7 @@ mode: autonomous
 assigned_to: NetYeti
 tests_defined: true
 proposal_source:
-  - proposals/containerization.md
+  - proposals/approved/containerization.md
   - proposals/approved/research-stage-methodology.md
 depends_on:
   - phase-1-ui-polish
@@ -36,7 +36,7 @@ _path: plans/completed/phase-2-foundation.md
 
 Phase 1 delivered a complete, polished Web UI. Phase 2 built the foundation: profile engine, dispatch module CI, FOSS hygiene, TypeScript MCP server (→ Phase 3), and research methodology.
 
-**VSCodium extension:** deliberately deferred. See \[\[plans/phase-vscodium-extension.md\]\].
+**VSCodium extension:** deliberately deferred. See \[\[plans/vscodium-extension.md\]\].
 
 ## Deliverables
 

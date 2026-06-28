@@ -24,7 +24,7 @@ tags:
   - hooks
 total_steps: 21
 completed_steps: 21
-_path: plans/phase-1-plan-step-enforcement.md
+_path: plans/completed/phase-1-plan-step-enforcement.md
 ---
 # Phase 1 — Plan Step Completion Enforcement
 

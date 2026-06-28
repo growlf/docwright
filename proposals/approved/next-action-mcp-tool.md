@@ -11,7 +11,7 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: netyeti
 _path: proposals/next-action-mcp-tool.md
-consumed_by: plans/next-action-mcp-tool.md
+consumed_by: plans/completed/next-action-mcp-tool.md
 ---
 
 ## Problem
@@ -29,7 +29,7 @@ Add a `next_action` MCP tool that returns a structured recommendation:
 
 ```json
 {
-  "plan": "phase-vault-portability-pilot",
+  "plan": "phase-3-vault-foundation",
   "priority": "high",
   "completed_steps": 5,
   "total_steps": 11,

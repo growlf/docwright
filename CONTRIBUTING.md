@@ -61,15 +61,40 @@ gh pr create --base develop   # PR back to develop
 
 ```bash
 git config core.hooksPath .githooks   # activate commit hooks (once, after cloning)
+cp .env.example .env                  # fill in your name, email, vault path
 npm install
 npm run compile        # TypeScript compile check
 npm run lint           # ESLint + Prettier
 npm run test:dispatch  # dispatch module tests (run outside extension host)
+npm run test:webui     # Web UI unit tests (session store, OCC, local auth)
 ```
 
 The pre-commit hook validates frontmatter and records identity/network info.
 The commit-msg hook enforces conventional commit format. Both are required —
 `core.hooksPath` wires them in.
+
+### Running the Web UI
+
+```bash
+cd src/webui
+npm install
+npm run dev    # starts at http://localhost:5173
+```
+
+By default `AUTH_MODE=none` — no login required. To test with local auth:
+
+```bash
+# In your .env:
+AUTH_MODE=local
+SESSION_SECRET=$(openssl rand -hex 32)
+LOCAL_AUTH_USER=admin
+LOCAL_AUTH_PASSWORD=testpassword
+LOCAL_AUTH_EMAIL=admin@localhost
+LOCAL_AUTH_DISPLAY_NAME=Admin
+```
+
+Restart `npm run dev` after changing `.env`. See [docs/authentication.md](./docs/authentication.md)
+for the full auth setup guide including Forgejo OAuth.
 
 ---
 

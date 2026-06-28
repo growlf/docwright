@@ -25,6 +25,8 @@
   let frontmatter = $state<Record<string, any> | null>(null);
   let error = $state<string | null>(null);
   let mode = $state<'read' | 'edit' | 'source'>('read');
+  let loadedEtag = $state<string | null>(null);
+  let conflictDialog = $state<{ serverContent: string } | null>(null);
   let html = $state('');
   let showProps = $state(true);
   let propsCollapsed = $state(
@@ -174,6 +176,7 @@
       return;
     }
     error = null;
+    loadedEtag = res.headers.get('ETag');
     const data = await res.json();
     raw = data.content;
     const parsed = splitFrontmatter(data.content);
@@ -280,16 +283,25 @@
     try {
       if (mode === 'edit') syncHtmlToRaw();
       if (frontmatter) raw = buildRaw(frontmatter, content);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (loadedEtag) headers['If-Match'] = loadedEtag;
       const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ content: raw }),
       });
+      if (res.status === 409) {
+        const data = await res.json();
+        conflictDialog = { serverContent: data.currentContent ?? '' };
+        return;
+      }
       if (!res.ok) {
         showToast(`Save failed (${res.status}) — check the console`, 5000);
         return;
       }
       if (res.ok) {
+        const saved = await res.json();
+        loadedEtag = saved.etag ?? null;
         mode = 'read';
         const parsed = splitFrontmatter(raw);
         frontmatter = parsed.frontmatter;
@@ -495,6 +507,27 @@
 
   function cancel() { mode = 'read'; loadFile(); }
 
+  async function conflictKeepMine() {
+    // Force overwrite — send without If-Match so the server skips OCC check.
+    loadedEtag = null;
+    conflictDialog = null;
+    await save();
+  }
+
+  function conflictTakeTheirs() {
+    const serverContent = conflictDialog!.serverContent;
+    conflictDialog = null;
+    raw = serverContent;
+    const parsed = splitFrontmatter(serverContent);
+    frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
+    content = parsed.body;
+    html = md.render(content);
+    // Re-load to get the fresh ETag from the server
+    loadFile();
+    mode = 'read';
+    showToast('Reverted to server version', 3000);
+  }
+
   async function deleteFile() {
     const fp = filePath();
     if (!confirm('Delete ' + fp + '?\n\nThis can be undone within 5 seconds.')) return;
@@ -513,7 +546,7 @@
   }
 </script>
 
-<div class="page-wrap">
+<div class="page-wrap" class:base-mode={isBase}>
   <!-- Base view — rendered directly, no toolbar/editor chrome -->
   {#if isBase}
     <BaseView path={filePath()} />
@@ -600,11 +633,42 @@
 
 </div>
 
+{#if conflictDialog}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div class="dialog-overlay" role="dialog" aria-modal="true"
+       onkeydown={(e) => { if (e.key === 'Escape') conflictDialog = null; }}>
+    <div class="conflict-box" onclick={(e) => e.stopPropagation()}>
+      <div class="dialog-header">⚠ Write conflict</div>
+      <p class="conflict-hint">
+        This file was changed by someone else since you opened it.
+        Choose how to proceed:
+      </p>
+      <div class="conflict-panes">
+        <div class="conflict-pane">
+          <div class="conflict-pane-label">Your version</div>
+          <pre class="conflict-pre">{raw}</pre>
+        </div>
+        <div class="conflict-pane">
+          <div class="conflict-pane-label">Server version</div>
+          <pre class="conflict-pre">{conflictDialog.serverContent}</pre>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="dialog-cancel" onclick={() => conflictDialog = null}>Cancel — keep editing</button>
+        <button class="dialog-cancel" onclick={conflictTakeTheirs}>Take server version</button>
+        <button class="dialog-submit" onclick={conflictKeepMine}>Overwrite with mine</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style lang="scss">
   @use '../../lib/tokens' as *;
 
   /* page-wrap is always a flex row — Panel.svelte handles open/closed width */
   .page-wrap { display: flex; min-height: 100%; align-items: flex-start; }
+  /* base views need column layout so BaseView can flex-grow to fill the slot */
+  .page-wrap.base-mode { flex-direction: column; align-items: stretch; height: 100%; min-height: 0; }
   .page-body { flex: 1; min-width: 0; padding: 32px; overflow-y: auto; }
 
   /* Right panel tab bar */
@@ -697,5 +761,42 @@
     .doc-title { font-size: 1.1em; }
     .btn { min-height: 44px; padding: 8px 14px; font-size: 13px; }
     .fmt-btn { min-height: 44px; padding: 0 10px; }
+    .conflict-panes { flex-direction: column; }
+    .conflict-pane { max-height: 200px; }
   }
+
+  /* ── Conflict dialog ───────────────────────────────────────────────────── */
+  .dialog-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .conflict-box {
+    background: #1e1e2e; border: 1px solid #3a3a5c;
+    border-radius: 10px; padding: 1.25rem 1.5rem;
+    width: min(900px, 95vw); display: flex; flex-direction: column; gap: 0.75rem;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .dialog-header { font-size: 15px; font-weight: 700; color: #e0e0f0; }
+  .conflict-hint { font-size: 0.85rem; color: #a6adc8; margin: 0; }
+  .conflict-panes { display: flex; gap: 0.75rem; min-height: 0; }
+  .conflict-pane { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .conflict-pane-label { font-size: 0.75rem; font-weight: 600; color: #a6adc8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .conflict-pre {
+    flex: 1; background: #181825; border: 1px solid #313244;
+    border-radius: 6px; padding: 0.75rem; font-size: 0.75rem;
+    overflow: auto; max-height: 320px; white-space: pre-wrap; word-break: break-all;
+    color: #cdd6f4; margin: 0;
+  }
+  .dialog-actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+  .dialog-cancel {
+    padding: 0.4rem 0.9rem; border-radius: 5px; font-size: 0.85rem; cursor: pointer;
+    background: #313244; color: #cdd6f4; border: 1px solid #45475a;
+  }
+  .dialog-cancel:hover { background: #45475a; }
+  .dialog-submit {
+    padding: 0.4rem 0.9rem; border-radius: 5px; font-size: 0.85rem; cursor: pointer;
+    background: #f38ba8; color: #1e1e2e; border: none; font-weight: 600;
+  }
+  .dialog-submit:hover { filter: brightness(1.1); }
 </style>

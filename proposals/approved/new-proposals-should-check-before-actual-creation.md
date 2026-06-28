@@ -54,7 +54,7 @@ Only after the check passes (or the user explicitly chooses to continue despite 
 | Feature | Relationship |
 |---------|-------------|
 | [[proposals/need-a-way-to-quickly-discern-raw-proposals.md]] | Complements raw-proposal detection — prevent raw duplicates before they exist |
-| [[proposals/ai-proposal-improve-on-save.md]] | AI drafting runs after creation; this runs before creation |
+| [[proposals/approved/ai-proposal-improve-on-save.md]] | AI drafting runs after creation; this runs before creation |
 | [[proposals/approved/ux-new-proposal.md]] | Guided creation flow — this extends it with pre-creation validation |
 | [[proposals/related-docs-ux-improvements.md]] | Collation similarity scoring feeds the duplication check |
 

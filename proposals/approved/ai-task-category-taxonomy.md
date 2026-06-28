@@ -18,14 +18,14 @@ priority: high
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
+  - plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md
   - docs/ai-inference-routing-research.md
   - docs/policy-atom-model-routing.md
   - docs/profile-contribution-architecture.md
 depends_on: []
 blocks: []
 _path: proposals/ai-task-category-taxonomy.md
-consumed_by: plans/ai-task-category-taxonomy.md
+consumed_by: plans/ai-model-routing.md
 ---
 
 ## What Is Already Implemented
@@ -293,7 +293,7 @@ The TypeScript type extension (phase 1) is the new blocking dependency — it mu
 
 ## Related Documents
 
-- [[plans/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — completed prerequisite; atom schema and dispatch hook already implemented
+- [[plans/completed/plan-policy-atom-framework-generic-tiered-policy-engine-for-docwright-governance.md]] — completed prerequisite; atom schema and dispatch hook already implemented
 - [[docs/policy-atom-model-routing.md]] — existing routing reference for 4 categories; will be extended in phase 1
 - [[docs/policy-atom-hooks.md]] — `judgment_dispatch_hook` contract and LiteLLM extension path
 - [[docs/ai-inference-routing-research.md]] — prior routing research and Olla stack context

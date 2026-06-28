@@ -9,11 +9,11 @@ gate_reviewer: NetYeti
 gate_status: waived
 gate_note: "Waived retroactively — plan completed before strict gate enforcement; NetYeti authorized 2026-06-07"
 proposal_source:
-  - proposals/ui-sidebar-consistency.md
-  - proposals/ui-settings-activity-bar.md
-  - proposals/ui-lifecycle-graph-view.md
-  - proposals/ui-immutable-title-h1.md
-  - proposals/ui-document-title-in-toolbar.md
+  - proposals/approved/ui-sidebar-consistency.md
+  - proposals/approved/ui-settings-activity-bar.md
+  - proposals/approved/ui-lifecycle-graph-view.md
+  - proposals/approved/ui-immutable-title-h1.md
+  - proposals/approved/ui-document-title-in-toolbar.md
 priority: high
 mode: guided
 assigned_to: NetYeti
@@ -24,7 +24,7 @@ tags:
   - phase-1
   - ui
   - polish
-_path: plans/phase-1-ui-polish.md
+_path: plans/completed/phase-1-ui-polish.md
 ---
 
 # Phase 1 — UI Polish
@@ -75,7 +75,7 @@ They are recorded for the audit trail.
 
 ### Task 1 — Immutable H1 from frontmatter title ✅
 
-**Proposal:** [[proposals/ui-immutable-title-h1.md]]
+**Proposal:** [[proposals/approved/ui-immutable-title-h1.md]]
 **Commit:** 17551ca
 **Status:** ✅ Complete
 
@@ -87,7 +87,7 @@ Source mode unaffected. Styled with bottom border and 1.75em weight.
 
 ### Task 2 — Unified Panel System (Panel.svelte) ✅
 
-**Proposal:** [[proposals/ui-sidebar-consistency.md]]
+**Proposal:** [[proposals/approved/ui-sidebar-consistency.md]]
 **Commit:** b93756a
 **Status:** ✅ Complete
 
@@ -111,7 +111,7 @@ promoted to a tab on the right panel.
 
 ### Task 3 — Activity Bar and Always-Visible Toolbar ✅
 
-**Proposal:** [[proposals/ui-settings-activity-bar.md]]
+**Proposal:** [[proposals/approved/ui-settings-activity-bar.md]]
 **Commit:** 60874c4
 **Status:** ✅ Complete
 
@@ -134,7 +134,7 @@ Git. The mobile-only top bar becomes a permanent layout element.
 
 ### Task 4 — Funnel View (Lifecycle Swimlanes) ✅
 
-**Proposal:** [[proposals/ui-lifecycle-graph-view.md]]
+**Proposal:** [[proposals/approved/ui-lifecycle-graph-view.md]]
 **Commit:** a47887c
 **Status:** ✅ Complete
 
@@ -167,7 +167,7 @@ begins:
 **Gate reviewer:** NetYeti
 **Gate status:** `pending` (all tasks complete — awaiting NetYeti sign-off)
 
-See [[proposals/phase-gate-sign-off.md]].
+See [[proposals/approved/phase-gate-sign-off.md]].
 
 ## Out of Scope
 
@@ -180,7 +180,7 @@ These items were identified during Phase 1 but deferred:
 | Brand settings UI (in-app) | [[proposals/ui-white-label-brand-settings.md]] |
 | CSS variable foundation (Phase B) | [[proposals/ui-theming-system.md]] |
 | In-app theme picker | [[proposals/ui-theme-picker.md]] |
-| Full-text vault search | [[proposals/ui-vault-search.md]] |
+| Full-text vault search | [[proposals/approved/ui-vault-search.md]] |
 | WYSIWYG on mobile | [[proposals/mobile-wysiwyg-editing.md]] |
 
 ## Document History

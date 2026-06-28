@@ -3,6 +3,7 @@ complexity: high
 title: "Kubernetes / Helm Deployment"
 author: NetYeti
 created: 2026-06-04
+approved: false
 tags:
   - infrastructure
   - kubernetes
@@ -13,7 +14,7 @@ deferred_reason: "Docker compose covers all Phase 2 needs. Kubernetes adds signi
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
-  - proposals/containerization.md
+  - proposals/approved/containerization.md
 ---
 
 ## Problem
@@ -36,7 +37,7 @@ A Helm chart for DocWright that packages:
 
 Docker compose satisfies all Phase 2 deployment needs. Kubernetes adds
 operational complexity that is only justified at enterprise scale.
-See [[proposals/containerization.md]].
+See [[proposals/approved/containerization.md]].
 
 ## Document History
 

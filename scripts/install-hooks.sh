@@ -94,8 +94,8 @@ fi
 # without node_modules in the vault. Self-installs use plain cp so the integrity
 # check (diff source vs installed) still passes.
 if [ -n "$VAULT_TARGET" ]; then
-  sed "s|require('js-yaml')|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g;
-       s|require(\"js-yaml\")|require('$DOCWRIGHT_PATH/node_modules/js-yaml')|g" \
+  sed "s|require('js-yaml')|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g;
+       s|require(\"js-yaml\")|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g" \
     "$SOURCE_HOOK" > "$HOOK_TARGET"
 else
   cp "$SOURCE_HOOK" "$HOOK_TARGET"

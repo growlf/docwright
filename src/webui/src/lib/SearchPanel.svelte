@@ -1,5 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { searchFocusTrigger } from '$lib/searchFocus.js';
+  import { onMount } from 'svelte';
+
+  // Focus when the shell triggers Ctrl+K or clicking the Search activity bar button
+  onMount(() => searchFocusTrigger.subscribe(v => { if (v > 0) inputEl?.focus(); }));
 
   interface SearchResult {
     path: string;
