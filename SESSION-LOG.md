@@ -5,6 +5,26 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28 — UI Layout Refactor Complete, Governance Engine Vision
+
+**Focus:** UI layout refactor (18/18 steps), governance engine architecture, branch structure
+
+**Completed:**
+- [x] Steps 2-18 of ui-layout-view-container-refactor — shell is pure chrome, zero view-specific layout imports
+- [x] Governance Engine VC live as primary view (🏛) with 5 sub-views
+- [x] Activity bar registry-driven from CORE_VCS map + activePlugins
+- [x] External plugins lazy-load on first click (startup preload removed)
+- [x] 33/33 Playwright e2e checks pass — full regression suite added
+- [x] docs/plugins.md — complete plugin developer guide
+- [x] PR #37 merged to develop — plan lifecycle completed
+- [x] Two proposals approved and plans created: governance-engine-vc (high) + multiuser-auth (critical)
+- [x] Branch structure: feat/shell-core, feat/governance-plugin, feat/files-plugin, feat/git-plugin, feat/tags-plugin, feat/search-plugin, feat/multiuser-auth — all from develop
+- [x] ForceGraph client-nav sizing bug fixed in feat/knowledge-graph (afterNavigate + remove fallback dimensions)
+
+**Session note:** `docs/session-notes/session_note_202606280000.md`
+
+---
+
 ## Session: 2026-06-25 — Phase 3 & AI Routing Closed, Worktree Setup
 
 **Focus:** Phase 3 transition, ai-model-routing closure, worktrees, hook fix
