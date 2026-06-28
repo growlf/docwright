@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "dw-vault": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${DOCWRIGHT_PATH}/dist/mcp/server.js",
+        "--mode",
+        "vault"
+      ],
+      "env": {
+        "DOCWRIGHT_PATH": "${DOCWRIGHT_PATH}",
+        "DOCWRIGHT_VAULT_ROOT": "${DOCWRIGHT_VAULT_ROOT}"
+      }
+    },
+    "dw-upstream": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${DOCWRIGHT_PATH}/dist/mcp/server.js",
+        "--mode",
+        "upstream"
+      ],
+      "env": {
+        "DOCWRIGHT_PATH": "${DOCWRIGHT_PATH}"
+      }
+    }
+  }
+}
