@@ -1,8 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { onMount, onDestroy } from 'svelte';
-  import { showToast } from '$lib/toast.js';
-  import { notifications } from '$lib/notifications.js';
   import { rightPanelClaim } from '$lib/pluginPanel.js';
 
   interface PluginMeta { name: string; displayName: string; icon: string; description: string; }
@@ -15,43 +13,67 @@
 
   // Error boundary — catches runtime errors thrown inside the plugin bundle
   let errorHandler: (e: ErrorEvent) => void;
+  let rejectionHandler: (e: PromiseRejectionEvent) => void;
+  let originalConsole: { error: typeof console.error; warn: typeof console.warn; log: typeof console.log; info: typeof console.info } | null = null;
 
-  function setupBridge(name: string) {
-    (window as any).__docwright = {
-      pluginName: name,
-      apiBase: '',
-      toast: (msg: string, duration?: number) => showToast(msg, duration ?? 4000),
-      notify: (opts: {
-        type: 'info' | 'warning' | 'error' | 'success';
-        title: string;
-        message: string;
-        persistent?: boolean;
-      }) => notifications.add({ ...opts, persistent: opts.persistent ?? false }),
-      setRightPanel: (html: string, label?: string) => {
-        rightPanelClaim.set({ html, label: label ?? 'Info' });
-      },
-      clearRightPanel: () => {
-        rightPanelClaim.set(null);
-      },
+  function setPluginName(name: string) {
+    // Augment the layout bridge with the active plugin name; do not replace the bridge.
+    const dw = (window as any).__docwright;
+    if (dw?.bridge) dw.bridge.pluginName = name;
+  }
+
+  function setupConsoleScope(name: string) {
+    if (originalConsole) return;
+    const prefix = `[plugin:${name}]`;
+    originalConsole = {
+      error: console.error.bind(console),
+      warn:  console.warn.bind(console),
+      log:   console.log.bind(console),
+      info:  console.info.bind(console),
     };
+    console.error = (...args) => originalConsole!.error(prefix, ...args);
+    console.warn  = (...args) => originalConsole!.warn(prefix, ...args);
+    console.log   = (...args) => originalConsole!.log(prefix, ...args);
+    console.info  = (...args) => originalConsole!.info(prefix, ...args);
   }
 
   function setupErrorBoundary(name: string) {
     errorHandler = (e: ErrorEvent) => {
       if (e.filename && e.filename.includes(`/api/plugin/${name}/`)) {
-        e.preventDefault(); // suppress browser console error
+        e.preventDefault();
         status = 'error';
         errorMsg = e.message ?? 'Unknown plugin error';
         errorStack = e.filename ? `${e.filename}:${e.lineno}:${e.colno}` : '';
       }
     };
     window.addEventListener('error', errorHandler);
+
+    rejectionHandler = (e: PromiseRejectionEvent) => {
+      const reason = e.reason;
+      const sig = reason?.stack ?? String(reason ?? '');
+      if (sig.includes(`/api/plugin/${name}/`) || sig.includes(`plugin/${name}`)) {
+        e.preventDefault();
+        status = 'error';
+        errorMsg = reason?.message ?? String(reason) ?? 'Unhandled promise rejection';
+        errorStack = reason?.stack ? reason.stack.split('\n')[0] : '';
+      }
+    };
+    window.addEventListener('unhandledrejection', rejectionHandler);
   }
 
   function teardown() {
     if (typeof window === 'undefined') return;
     if (errorHandler) window.removeEventListener('error', errorHandler);
-    delete (window as any).__docwright;
+    if (rejectionHandler) window.removeEventListener('unhandledrejection', rejectionHandler);
+    if (originalConsole) {
+      console.error = originalConsole.error;
+      console.warn  = originalConsole.warn;
+      console.log   = originalConsole.log;
+      console.info  = originalConsole.info;
+      originalConsole = null;
+    }
+    const dw = (window as any).__docwright;
+    if (dw?.bridge) delete dw.bridge.pluginName;
     rightPanelClaim.set(null);
   }
 
@@ -80,8 +102,9 @@
       }
     }
 
-    // Wire bridge and error boundary before the bundle executes
-    setupBridge(pluginName);
+    // Wire plugin name into bridge, console scope, and error boundary before bundle executes
+    setPluginName(pluginName);
+    setupConsoleScope(pluginName);
     setupErrorBoundary(pluginName);
 
     // Skip injection if pre-load already registered the plugin

@@ -121,6 +121,10 @@ import {
         vcRegistryVersion.update(n => n + 1); // signals ViewContainerMount to retry
       },
     };
+    // Populate vaultRoot from server — non-blocking, bridge is usable before it resolves
+    fetch('/api/config').then(r => r.ok ? r.json() : null).then(cfg => {
+      if (cfg?.vaultRoot) bridge.vaultRoot = cfg.vaultRoot;
+    }).catch(() => {});
     // Register all core View Containers (Governance, Search, Tags, Git, Files).
     // All view-specific imports live in coreVCs.ts — layout stays view-agnostic.
     setupCoreVCs({
@@ -730,9 +734,18 @@ import {
       activePlugins = plugins;
     }).catch(() => {});
     let es = new EventSource('/api/watch');
+    const reloadPlugins = () => {
+      fetch('/api/plugins').then(r => r.ok ? r.json() : []).then(plugins => {
+        activePlugins = plugins;
+      }).catch(() => {});
+    };
+
     const attachWatch = (source: EventSource) => {
       source.addEventListener('filechange', (e: MessageEvent) => {
         fileChanged.set(JSON.parse(e.data));
+      });
+      source.addEventListener('pluginchange', () => {
+        reloadPlugins();
       });
       source.addEventListener('error', () => {
         source.close();
