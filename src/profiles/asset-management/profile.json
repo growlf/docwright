@@ -18,7 +18,8 @@
     "ipam",
     "service",
     "connection",
-    "rack"
+    "rack",
+    "research"
   ],
   "states": {
     "default": ["discovered", "provisioning", "active", "maintenance", "decommissioned", "retired"]
