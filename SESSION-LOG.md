@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Plan Close-outs, PR Merge, Branch Strategy Correction
+
+**Focus:** Close multiuser-auth + forcegraph plans; merge PR #58 into develop
+
+**Completed:**
+- [x] `multiuser-auth-concurrent-sessions` marked completed, moved to plans/completed/ (15/15 steps)
+- [x] `forcegraph-client-nav-sizing` marked completed, moved to plans/completed/ (3/3 steps)
+- [x] docs/ stubs generated for both completed plans
+- [x] PR #58 (`feat/typed-proposals` → `develop`) merged and branch deleted
+- [x] Branching strategy clarified: `feat/*` → `develop` always; `main` only via `release/*` or `hotfix/*`
+- [x] Memory updated: Forgejo is aspirational/recommendation, not current infrastructure; GitHub is the remote
+
+**Session note:** `docs/session-notes/session_note_202606291600.md`
+
+---
+
 ## Session: 2026-06-29 — ForceGraph Bug Root Cause & Lifecycle Transition
 
 **Focus:** ForceGraph connector pile-up — real root cause diagnosed and fixed
