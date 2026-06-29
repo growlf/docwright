@@ -261,6 +261,76 @@ validate_location_invariant() {
 }
 
 # =============================================================================
+# Lifecycle enforcement: in-progress plans must have filled steps
+# Mirrors MCP update_plan_status gate for direct-file-edit bypass prevention.
+# =============================================================================
+validate_plan_in_progress_steps() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && return 0
+    [[ "$FILE" =~ ^plans/completed/ ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "in-progress" ] && return 0
+
+    # Check whether any step row has a non-empty Action cell.
+    # Handles both headered (Action column) and legacy headerless tables.
+    local HAS_FILLED
+    HAS_FILLED=$(awk '
+        BEGIN { in_steps=0; header_found=0; action_col=-1; filled=0 }
+        /^## Implementation Steps/ { in_steps=1; next }
+        /^## / { in_steps=0; next }
+        in_steps && /^\|/ {
+            if ($0 ~ /^\|[[:space:]|:-]+\|$/) next
+            n = split($0, c, "|")
+            if (!header_found) {
+                for (i=2; i<n; i++) {
+                    v=c[i]; gsub(/^[[:space:]]+|[[:space:]]+$/,"",v)
+                    if (tolower(v)=="action") { action_col=i; header_found=1; next }
+                }
+            }
+            if (action_col>0) {
+                v=c[action_col]; gsub(/^[[:space:]]+|[[:space:]]+$/,"",v)
+                if (v!="" && v!="-" && v!="—") filled=1
+            } else {
+                v=c[3]; gsub(/^[[:space:]]+|[[:space:]]+$/,"",v)
+                if (v!="" && v!="-" && v!="—") filled=1
+            }
+        }
+        END { print filled }
+    ' "$FILE" 2>/dev/null)
+    if [ "$HAS_FILLED" = "0" ]; then
+        print_error "$FILE: status=in-progress but all Implementation Steps have empty Action cells. Fill in real steps first."
+        return 1
+    fi
+    return 0
+}
+
+# =============================================================================
+# Lifecycle enforcement: completed plans must have a real Testing Plan
+# Mirrors MCP update_plan_status gate for direct-file-edit bypass prevention.
+# =============================================================================
+validate_testing_plan_not_tbd() {
+    local FILE=$1
+    [[ ! "$FILE" =~ ^plans/[^/]+\.md$ ]] && return 0
+    local FM=$(get_frontmatter "$FILE"); [ -z "$FM" ] && return 0
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ "$STATUS" != "completed" ] && return 0
+
+    local BODY
+    BODY=$(awk '/^## Testing Plan/{in_t=1;next}/^## /{in_t=0}in_t{print}' "$FILE" 2>/dev/null \
+          | sed '/^[[:space:]]*$/d')
+    local LOWER
+    LOWER=$(echo "$BODY" | tr '[:upper:]' '[:lower:]' | xargs)
+    if [ -z "$LOWER" ] || \
+       [ "$LOWER" = "_testing plan tbd_" ] || \
+       [ "$LOWER" = "_add test plan during implementation._" ]; then
+        print_error "$FILE: status=completed but Testing Plan section is TBD or empty. Write a real testing plan first."
+        return 1
+    fi
+    return 0
+}
+
+# =============================================================================
 # Parent plan sync validation
 # =============================================================================
 validate_parent_plan_sync() {
@@ -387,6 +457,8 @@ for FILE in $STAGED; do
     if [[ "$FILE" =~ ^plans/[^/]+\.md$ ]] && [[ ! "$FILE" =~ ^plans/completed/ ]]; then
         validate_assigned_to "$FILE" "plan" || ((ERRORS++))
         validate_scenario_synthesis "$FILE" || ((ERRORS++))
+        validate_plan_in_progress_steps "$FILE" || ((ERRORS++))
+        validate_testing_plan_not_tbd "$FILE" || ((ERRORS++))
     fi
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
     validate_no_self_approval "$FILE" || ((ERRORS++))

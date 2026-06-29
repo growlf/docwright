@@ -89,6 +89,24 @@ architecture is fail-closed: no mutation is better than an unvalidated one.
 
 ---
 
+## Plan pre-flight checklist
+
+Before beginning work on any plan, verify all of the following. These rules are enforced
+by MCP gates and the pre-commit hook — violations produce hard errors, not warnings.
+
+1. **Steps are filled.** Every row in `## Implementation Steps` must have a non-empty
+   Action cell. Plans with all-empty steps MUST NOT be transitioned to `in-progress`.
+   Fill the steps table first, then call `update_plan_status(name, 'in-progress')`.
+2. **Testing Plan is not TBD.** Before calling `update_plan_status(name, 'completed')`,
+   the `## Testing Plan` section must contain real test descriptions — not `_Testing plan TBD_`.
+3. **Working the right plan.** If the task matches another approved plan's keywords or scope,
+   flag the overlap to the human before proceeding. Run `node scripts/plan-health.js` to
+   detect this automatically at session start.
+4. **Gate Criteria are met.** All `### Gate Criteria` checkboxes must be `[x]` before
+   completing. `update_plan_status` enforces this automatically.
+
+---
+
 ## Plan completion routine
 
 When asked to complete or close out a plan, follow these steps in order.
