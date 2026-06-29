@@ -2,15 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { stripFrontmatter } from '../../../../../dispatch/frontmatter';
+import { opencodeComplete } from '$lib/server/opencode-complete.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
-
-const AI_TIMEOUT = 180_000;
-const OLLA_BASE = process.env.OLLA_BASE || 'http://localhost:11434/v1';
-const OLLA_MODEL = process.env.OLLA_MODEL || 'llama3.1:8b';
-const OLLA_API_KEY = process.env.OLLA_API_KEY ?? '';
 
 interface StepRow {
   number: string;
@@ -87,37 +83,8 @@ function replaceSectionBody(body: string, sectionName: string, newBody: string):
   return body.replace(re, (match, header) => header + '\n' + newBody);
 }
 
-async function callOlla(prompt: string, retries = 1): Promise<string> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(`${OLLA_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(OLLA_API_KEY ? { 'Authorization': `Bearer ${OLLA_API_KEY}` } : {}) },
-        body: JSON.stringify({
-          model: OLLA_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          stream: false,
-          max_tokens: 4000,
-        }),
-        signal: AbortSignal.timeout(AI_TIMEOUT),
-      });
-      if (!res.ok && res.status === 502 && attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000));
-        continue;
-      }
-      if (!res.ok) throw new Error(`Olla: ${res.status}`);
-      const data = await res.json();
-      return data?.choices?.[0]?.message?.content?.trim() || '';
-    } catch (e: any) {
-      if (e?.name === 'AbortError' && attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000));
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw new Error('Olla: all retries exhausted');
-}
+// Thin alias so call sites don't need renaming.
+const callOlla = opencodeComplete;
 
 export async function POST({ request }) {
   const { path: filePath, steps: stepReviews, sections: sectionReviews, overview } = await request.json();
@@ -135,13 +102,6 @@ export async function POST({ request }) {
     const steps = extractSteps(body);
     const hadStepReviews = stepReviews && Object.keys(stepReviews).length > 0;
     const hadSectionReviews = sectionReviews && Object.keys(sectionReviews).length > 0;
-
-    // Warmup: first AI call is slow; do it upfront
-    if (hadStepReviews || hadSectionReviews) {
-      try {
-        await callOlla('Reply with just "ok"', 0);
-      } catch { /* intentionally empty */ }
-    }
 
     // Improve each step that has review feedback
     if (hadStepReviews) {

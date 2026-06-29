@@ -1,22 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
+import { opencodeComplete } from '$lib/server/opencode-complete.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
 
-const AI_TIMEOUT = 180_000;
-const OLLA_BASE = process.env.OLLA_BASE || 'http://localhost:11434/v1';
-const OLLA_MODEL = process.env.OLLA_MODEL || 'llama3.1:8b';
-const OLLA_API_KEY = process.env.OLLA_API_KEY ?? '';
-
 function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
-
-// --- Section extraction (local, no AI) ---
-
 
 function extractSteps(raw: string) {
   const lines = raw.split('\n');
@@ -29,9 +22,7 @@ function extractSteps(raw: string) {
     if (!line.startsWith('|')) { if (line.trim()) inTable = false; continue; }
     if (!headerPassed) { headerPassed = true; continue; }
     if (line.includes('---')) continue;
-    // Split on |, trim cells, but preserve empty cells (don't filter(Boolean))
     const cols = line.split('|').map(c => c.trim());
-    // Remove leading/trailing empty strings from the first/last |
     const dataCols = cols.slice(1, -1);
     if (dataCols.length >= 3) {
       stepRows.push({ number: dataCols[0], action: dataCols[1], details: dataCols[2] });
@@ -45,49 +36,6 @@ function extractSection(raw: string, sectionName: string) {
   const match = raw.match(re);
   return match ? match[1].trim() : '';
 }
-
-// --- AI backend (Olla load balancer via OpenAI-compatible API) ---
-
-async function callOlla(prompt: string, retries = 1): Promise<string> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(`${OLLA_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(OLLA_API_KEY ? { 'Authorization': `Bearer ${OLLA_API_KEY}` } : {}) },
-        body: JSON.stringify({
-          model: OLLA_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          stream: false,
-          max_tokens: 200,
-        }),
-        signal: AbortSignal.timeout(AI_TIMEOUT),
-      });
-      if (!res.ok && res.status === 502 && attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000));
-        continue;
-      }
-      if (!res.ok) throw new Error(`Olla: ${res.status}`);
-      const data = await res.json();
-      return data?.choices?.[0]?.message?.content?.trim() || '';
-    } catch (e: any) {
-      if (e?.name === 'AbortError' && attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000));
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw new Error('Olla: all retries exhausted');
-}
-
-async function warmupOlla(): Promise<boolean> {
-  try {
-    await callOlla('Reply with just "ok"', 0);
-    return true;
-  } catch { return false; }
-}
-
-// --- Main ---
 
 export async function POST({ request }) {
   const { path: planPath } = await request.json();
@@ -105,13 +53,6 @@ export async function POST({ request }) {
         controller.enqueue(new TextEncoder().encode(sse(event, data)));
       }
 
-      if (!OLLA_BASE) {
-        send('status', { message: 'AI not configured' });
-        send('done', {});
-        controller.close();
-        return;
-      }
-
       try {
         send('status', { message: 'Extracting plan sections...' });
 
@@ -124,13 +65,9 @@ export async function POST({ request }) {
         const nonEmptySteps = steps.filter(s => s.action.trim().length > 0);
         const noSteps = steps.length === 0 || nonEmptySteps.length === 0;
 
-        send('status', { message: 'Warming AI model...' });
-        await warmupOlla();
-
         if (noSteps) {
           send('status', { message: 'Analyzing plan holistically (no steps defined yet)...' });
 
-          // Extract plan body for context
           const bodyMatch = planRaw.match(/^---[\s\S]*?\n---\n([\s\S]*)$/);
           const planBody = bodyMatch ? bodyMatch[1].trim().slice(0, 3000) : '';
 
@@ -145,19 +82,17 @@ export async function POST({ request }) {
             `PLAN:\n${planBody}`;
 
           try {
-            const overviewText = await callOlla(holisticPrompt);
+            const overviewText = await opencodeComplete(holisticPrompt);
             send('overview', { text: overviewText });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
           }
         } else {
-          // Build micro-prompts for each step
           const stepCalls = nonEmptySteps.map(step => ({
             key: step.number,
             prompt: `Review this step (2-3 sentences). Concrete? Clear done? Missing preconditions?\n\nStep ${step.number}: ${step.action}\n${step.details ? `Details: ${step.details}` : ''}`,
           }));
 
-          // Build micro-prompts for each section
           const sectionCalls: Array<{ key: string; prompt: string }> = [];
           for (const sec of [
             { key: 'testing', body: testingSection },
@@ -177,10 +112,9 @@ export async function POST({ request }) {
             ...sectionCalls.map(sc => ({ ...sc, type: 'section' as const })),
           ];
 
-          // Fire micro-calls sequentially
           for (const call of allCalls) {
             try {
-              const text = await callOlla(call.prompt);
+              const text = await opencodeComplete(call.prompt);
               if (call.type === 'step') {
                 send('step-review', { number: call.key, text });
               } else {
@@ -196,7 +130,6 @@ export async function POST({ request }) {
             }
           }
 
-          // Overview synthesis
           const stepHeadlines = nonEmptySteps.map(s => `Step ${s.number}: ${s.action.slice(0, 80)}`).join('\n');
           const testingPreview = (testingSection || 'Not defined').slice(0, 150);
           const riskPreview = (riskSection || 'Not defined').slice(0, 150);
@@ -207,7 +140,7 @@ export async function POST({ request }) {
           send('status', { message: 'Synthesizing overview...' });
 
           try {
-            const overviewText = await callOlla(overviewPrompt);
+            const overviewText = await opencodeComplete(overviewPrompt);
             send('overview', { text: overviewText });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
