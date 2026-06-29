@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-28/29 — Unify AI via OpenCode, Chat Context + Write-back
+
+**Focus:** All AI routes through OpenCode; chat active-doc context + write-back system prompt
+
+**Completed:**
+- [x] `unify-ai-via-opencode` plan: 8 steps, OLLA routes replaced with `opencodeComplete()`, `/api/config` added
+- [x] Launcher sources `src/webui/.env` so ANTHROPIC_API_KEY reaches OpenCode on restart
+- [x] Chat context fix: `currentDocPath`/`currentDocContent` injected into first chat message
+- [x] Chat write-back: DocWright system prompt injected at session creation
+- [x] Two new proposals captured: AI model indicator (medium), chat context (high), chat write-back (high)
+- [x] Approved and planned: chat-active-document-context, chat-document-write-back
+
+**Session note:** `docs/session-notes/session_note_202606290130.md`
+
+---
+
 ## Session: 2026-06-28 — Plugin System Close-out, Bug Fixes, Claude API
 
 **Focus:** Plugin system verified and closed, apply-review bugs fixed, Claude wired as AI backend
