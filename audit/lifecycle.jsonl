@@ -35,3 +35,5 @@
 {"ts":"2026-06-29T08:24:04.226Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"7edaff1"}
 {"ts":"2026-06-29T08:24:16.865Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"7edaff1"}
 {"ts":"2026-06-29T08:24:16.870Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"7edaff1"}
+{"ts":"2026-06-29T08:27:26.350Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"02c4368"}
+{"ts":"2026-06-29T08:27:26.355Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"02c4368"}
