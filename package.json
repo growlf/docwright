@@ -59,7 +59,8 @@
     "vscode:prepublish": "npm run compile",
     "test:webui": "mocha --require tsx/cjs test/webui/**/*.test.ts",
     "test:e2e": "npx tsx test/webui/e2e-check.ts --screenshot",
-    "test:e2e:ci": "npx tsx test/webui/e2e-check.ts"
+    "test:e2e:ci": "npx tsx test/webui/e2e-check.ts",
+    "test:ai-gateway": "npx tsx test/webui/ai-gateway.test.ts"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
