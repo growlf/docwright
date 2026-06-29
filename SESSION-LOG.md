@@ -966,3 +966,24 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Released as v0.4.6 via release/v0.4.6 → main (PR #54)
 
 **Session note:** `docs/session-notes/session_note_202606291200.md`
+
+---
+
+## Session: 2026-06-29 — Apply Review Fix, ForceGraph Plan Close-Out
+
+**Focus:** Apply Review silent bug, apostrophe syntax fix, ForceGraph lifecycle
+
+**Completed:**
+- [x] Fixed Apply Review button silently doing nothing on well-written all-done plans — toasts added for no-improvements path and silent write failure
+- [x] Fixed apostrophe syntax error in proposal dialog placeholders (introduced in typed-proposals feat commit)
+- [x] ForceGraph pile-up root cause fully identified: $state proxy on rawEdges + d3 forceLink mutations; fixed in KnowledgeGraph.svelte
+- [x] ForceGraph plan created (plans/forcegraph-client-nav-sizing.md, status: active, all steps done)
+- [x] Lifecycle docs: proposal moved to proposals/approved/, plan created
+
+**Open:**
+- plans/forcegraph-client-nav-sizing.md needs close-out (status: active → completed)
+- multiuser-auth-concurrent-sessions.md (priority: critical, status: approved) — not started
+- governance-engine-view-container.md (priority: high, status: approved) — not started
+- 74a3e09 unpushed on feat/typed-proposals
+
+**Session note:** `docs/session-notes/session_note_202606291339.md`
