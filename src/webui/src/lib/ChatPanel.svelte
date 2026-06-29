@@ -656,7 +656,7 @@
             `Vault: ${vaultPath}`,
             `File: ${currentDocPath}`,
             `Absolute path: ${vaultPath}/${currentDocPath}`,
-            `Rules: read the file first, make changes directly on clear instructions, write the file using edit/write tools, never change approved:/status:completed/gate_status: fields`,
+            `Rules: read the file first, make changes directly on clear instructions. For removing or replacing sections use the write tool to rewrite the whole file — do NOT use edit/str_replace which fails on large files. Never change approved:/status:completed/gate_status: fields.`,
             `---`,
             ``,
           ].join('\n')
