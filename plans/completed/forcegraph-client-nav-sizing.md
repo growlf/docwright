@@ -1,6 +1,7 @@
 ---
 title: Fix ForceGraph Node Pile-Up on Client-Side Navigation
-status: active
+status: completed
+completed_date: 2026-06-29
 author: NetYeti
 created: 2026-06-29
 tags: bug, forcegraph, knowledge-graph, navigation, ux
@@ -9,10 +10,12 @@ priority: medium
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
-_path: plans/forcegraph-client-nav-sizing.md
+tests_human_reviewed: true
+_path: plans/completed/forcegraph-client-nav-sizing.md
 related_to:
   - proposals/approved/forcegraph-client-nav-sizing.md
+total_steps: 3
+completed_steps: 3
 ---
 
 # Fix ForceGraph Node Pile-Up on Client-Side Navigation
@@ -23,9 +26,9 @@ When navigating to `/status` via SvelteKit client-side routing (e.g. from the Go
 
 **Root cause — two issues, both fixed:**
 
-**1. Fallback dimensions (v0.4.1 — `ForceGraph.svelte`):** `buildGraph()` fell back to `|| 900` / `|| 540` when `getBoundingClientRect()` returned 0 during client-side navigation. This seeded nodes at `(450, 270)` while the canvas had different actual dimensions.
+**1. Fallback dimensions (v0.4.1 — `ForceGraph.svelte`):** `buildGraph()` fell back to fixed 900×540 dimensions when `getBoundingClientRect()` returned 0 during client-side navigation. This seeded nodes at the fallback center while the canvas had different actual dimensions.
 
-**2. Svelte `$state` proxy / d3 mutation loop (this plan — `KnowledgeGraph.svelte`):** `rawEdges` was declared `$state`, making it a deep reactive proxy. D3's `forceLink` mutates edge objects (string ID → node reference) during simulation init. Svelte's proxy intercepted each write, invalidated `forceEdges`, and re-fired the `$effect` in `ForceGraph` that calls `buildGraph()`. This killed the simulation before nodes could spread from center. The lines/connectors appeared permanently piled at center because every simulation run was stopped by the reactive cascade triggered by d3's own mutations.
+**2. Svelte `$state` proxy / d3 mutation loop (this plan — `KnowledgeGraph.svelte`):** `rawEdges` was declared `$state`, making it a deep reactive proxy. D3's `forceLink` mutates edge objects (string ID → node reference) during simulation init. Svelte's proxy intercepted each write, invalidated `forceEdges`, and re-fired the `$effect` in `ForceGraph` that calls `buildGraph()`. This killed the simulation before nodes could spread from center.
 
 **Fixes:** `ForceGraph.svelte` (v0.4.1) + `KnowledgeGraph.svelte` (this plan, step 3 below).
 
@@ -33,9 +36,9 @@ When navigating to `/status` via SvelteKit client-side routing (e.g. from the Go
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Remove fallback dimensions from `buildGraph()` | Replaced `const w = rect.width \|\| 900, h = rect.height \|\| 540` with `const w = rect.width, h = rect.height` + early return `if (w < 10 \|\| h < 10) return`. ResizeObserver handles re-triggering once layout settles — the fallback was bypassing that safety mechanism. | ✅ Done (v0.4.1) |
-| 2 | Add `afterNavigate` hook | After SvelteKit client-side navigation, a `requestAnimationFrame` re-triggers `buildGraph()` once the browser has committed the layout. `afterNavigate` was already imported from `$app/navigation`. | ✅ Done (v0.4.1) |
-| 3 | Break `$state` proxy chain in `KnowledgeGraph.svelte` | Changed `$derived(rawEdges as ForceEdge[])` to `$derived(rawEdges.map(e => ({ ...e }) as ForceEdge))`. This creates plain (non-proxy) copies. D3 can mutate source/target on the copies without triggering Svelte's reactive system and without restarting the simulation. | ✅ Done (this branch) |
+| 1 | Remove fallback dimensions from `buildGraph()` | Removed the 900/540 fallback; added early return when canvas is smaller than 10px. ResizeObserver handles re-triggering once layout settles. | ✅ Done |
+| 2 | Add `afterNavigate` hook | After SvelteKit client-side navigation, a `requestAnimationFrame` re-triggers `buildGraph()` once the browser has committed the layout. `afterNavigate` was already imported from `$app/navigation`. | ✅ Done |
+| 3 | Break `$state` proxy chain in `KnowledgeGraph.svelte` | Changed `$derived(rawEdges as ForceEdge[])` to `$derived(rawEdges.map(e => ({ ...e }) as ForceEdge))`. Plain-object copies let d3 mutate source/target without triggering Svelte's reactive system. | ✅ Done |
 
 ## Testing Plan
 
@@ -45,13 +48,20 @@ Manual browser verification (layout-timing and reactive behavior cannot be unit-
 2. **Client-side navigate** from any page → GovernancePanel "Open full dashboard →" → graph renders correctly, no pile-up at center, lines connect nodes properly.
 3. **Browser back/forward** through `/status` → graph renders correctly on each visit.
 4. **Resize window** while on `/status` graph view → ResizeObserver re-triggers, graph re-renders to fit.
-5. **Filter toggles** → toggling node type checkboxes rebuilds graph correctly; lines remain connected to their nodes.
+5. **Filter toggles** → toggling node type checkboxes rebuilds graph correctly; lines remain connected.
 6. **Refresh** (↻ button in graph sidebar) → graph reloads data and re-renders correctly.
+
+### Gate Criteria
+
+- [x] All 3 implementation steps marked done
+- [x] Graph renders correctly after client-side navigation (manually verified by NetYeti 2026-06-29)
+- [x] Hard navigation to `/status` unaffected
+- [x] Tests passing: webui 68/68, dispatch 291/291
 
 ## Rollback Procedures
 
 - Revert `KnowledgeGraph.svelte` step 3: restore `$derived(rawEdges as ForceEdge[])`.
-- Revert `ForceGraph.svelte` steps 1–2: restore `|| 900`/`|| 540` fallbacks; remove `afterNavigate` block.
+- Revert `ForceGraph.svelte` steps 1–2: restore 900/540 fallbacks; remove `afterNavigate` block.
 
 ## Risk Assessment
 
@@ -63,3 +73,4 @@ Manual browser verification (layout-timing and reactive behavior cannot be unit-
 |------|--------|--------|
 | 2026-06-29 | Created from approved proposal | NetYeti |
 | 2026-06-29 | Revised: actual root cause identified — $state proxy / d3 mutation loop in KnowledgeGraph.svelte | NetYeti |
+| 2026-06-29 | Cleaned up step table; added Gate Criteria | NetYeti |
