@@ -21,13 +21,48 @@
     completedCount?: number;
   } = $props();
 
-  const STAGES = [
-    { id: 'deferred',   label: 'Deferred Ideas',  items: () => deferred },
-    { id: 'open',       label: 'Open Proposals',  items: () => open },
-    { id: 'approved',   label: 'Approved',        items: () => approved },
-    { id: 'active',     label: 'Active Plans',    items: () => active },
-    { id: 'completed',  label: 'Completed',       items: () => [] },
-  ];
+  // ── Filters ──────────────────────────────────────────────────────────────────
+  let filterAssignee = $state('');
+  let filterTag      = $state('');
+  let hideDeferred   = $state(false);
+
+  // Collect unique assignees and tags from all docs
+  let allDocs = $derived([...deferred, ...open, ...approved, ...active]);
+
+  let assignees = $derived(
+    [...new Set(allDocs.map(d => d.assigned_to).filter(Boolean))].sort()
+  );
+
+  let tags = $derived(
+    [...new Set(allDocs.flatMap(d => [...(d.tags ?? []), ...(d.category ?? [])]))].filter(Boolean).sort()
+  );
+
+  function matchesFilters(d: DocEntry): boolean {
+    if (filterAssignee && d.assigned_to !== filterAssignee) return false;
+    if (filterTag && !d.tags?.includes(filterTag) && !d.category?.includes(filterTag)) return false;
+    return true;
+  }
+
+  let filteredDeferred  = $derived(deferred.filter(matchesFilters));
+  let filteredOpen      = $derived(open.filter(matchesFilters));
+  let filteredApproved  = $derived(approved.filter(matchesFilters));
+  let filteredActive    = $derived(active.filter(matchesFilters));
+
+  let STAGES = $derived([
+    { id: 'deferred',   label: 'Deferred Ideas',  items: () => filteredDeferred,  hidden: hideDeferred },
+    { id: 'open',       label: 'Open Proposals',  items: () => filteredOpen,      hidden: false },
+    { id: 'approved',   label: 'Approved',        items: () => filteredApproved,  hidden: false },
+    { id: 'active',     label: 'Active Plans',    items: () => filteredActive,    hidden: false },
+    { id: 'completed',  label: 'Completed',       items: () => [],                hidden: false },
+  ]);
+
+  function clearFilters() {
+    filterAssignee = '';
+    filterTag      = '';
+    hideDeferred   = false;
+  }
+
+  let hasFilters = $derived(!!filterAssignee || !!filterTag || hideDeferred);
 
   function navTo(entry: DocEntry) {
     goto('/' + entry.path.replace(/\.md$/, ''));
@@ -47,8 +82,33 @@
   }
 </script>
 
+<div class="funnel-wrap">
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    {#if assignees.length > 1}
+      <select class="filter-select" bind:value={filterAssignee} title="Filter by assignee">
+        <option value="">All assignees</option>
+        {#each assignees as a}<option value={a}>{a}</option>{/each}
+      </select>
+    {/if}
+    {#if tags.length > 0}
+      <select class="filter-select" bind:value={filterTag} title="Filter by tag">
+        <option value="">All tags</option>
+        {#each tags as t}<option value={t}>{t}</option>{/each}
+      </select>
+    {/if}
+    <label class="filter-toggle">
+      <input type="checkbox" bind:checked={hideDeferred} />
+      Hide deferred
+    </label>
+    {#if hasFilters}
+      <button class="filter-clear" onclick={clearFilters}>✕ Clear</button>
+    {/if}
+  </div>
+
 <div class="funnel">
   {#each STAGES as stage, i}
+    {#if !stage.hidden}
     {@const items = stage.items()}
     {@const count = stage.id === 'completed' ? completedCount : items.length}
 
@@ -83,13 +143,40 @@
 
     <!-- Arrow between stages -->
     {#if i < STAGES.length - 1}
-      <div class="arrow">›</div>
+      {@const nextVisible = STAGES.slice(i + 1).find(s => !s.hidden)}
+      {#if nextVisible}
+        <div class="arrow">›</div>
+      {/if}
+    {/if}
     {/if}
   {/each}
+</div>
 </div>
 
 <style lang="scss">
   @use 'tokens' as *;
+
+  .funnel-wrap { display: flex; flex-direction: column; }
+
+  .filter-bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+    background: $bg-2; border-bottom: 1px solid $border; flex-wrap: wrap;
+  }
+  .filter-select {
+    background: $bg-3; border: 1px solid $border; border-radius: 4px;
+    color: $fg-dim; font-size: 11px; padding: 3px 6px; cursor: pointer;
+    &:focus { outline: none; border-color: $blue-bdr; }
+  }
+  .filter-toggle {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: $muted; cursor: pointer; user-select: none;
+    input[type="checkbox"] { cursor: pointer; accent-color: $blue; }
+  }
+  .filter-clear {
+    background: none; border: 1px solid $border; border-radius: 4px;
+    color: $muted; font-size: 11px; padding: 2px 8px; cursor: pointer; margin-left: auto;
+    &:hover { border-color: $muted; color: $fg-dim; }
+  }
 
   .funnel { display: flex; align-items: flex-start; gap: 0; padding: 16px; overflow-x: auto; min-height: 300px; }
 
@@ -107,6 +194,10 @@
 
   // Light theme — readable pastels
   :global(html[data-theme="light"]) {
+    .filter-bar { background: #f0f0f0; border-bottom-color: #ccc; }
+    .filter-select { background: #fff; border-color: #ccc; color: #333; }
+    .filter-toggle { color: #666; }
+    .filter-clear { border-color: #ccc; color: #888; &:hover { border-color: #888; color: #333; } }
     .stage-deferred  { background: #e8e8e8; color: #666;    border-color: #ccc; }
     .stage-open      { background: #ddeeff; color: #2a6090; border-color: #aaccee; }
     .stage-approved  { background: #ddffdd; color: #2a6a2a; border-color: #aaddaa; }
