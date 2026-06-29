@@ -937,7 +937,10 @@ import {
         {#if $showMultiReview}
           <MultiReviewPanel />
         {:else}
-          <ChatPanel />
+          <ChatPanel
+            currentDocPath={$currentDoc.filePath}
+            currentDocContent={$currentDoc.body}
+          />
         {/if}
       </div>
     {/if}

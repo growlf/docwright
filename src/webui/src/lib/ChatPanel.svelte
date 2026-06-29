@@ -15,6 +15,10 @@
   import SessionSidebar from './SessionSidebar.svelte';
   import { flattenTree, detectMention, filterMention } from './chat-utils';
 
+  // ── Active document context (injected by layout) ─────────────────────────
+  interface Props { currentDocPath?: string; currentDocContent?: string; }
+  let { currentDocPath = '', currentDocContent = '' }: Props = $props();
+
   // ── Types ────────────────────────────────────────────────────────────────
 
   interface MessagePart { type: string; text?: string; }
@@ -476,6 +480,30 @@
       console.debug('[DocWright chat] Created session:', id);
       sessions = [{ id, title: s?.title ?? title }, ...sessions];
       await selectSession(id);
+
+      // Inject DocWright system prompt so the AI knows its role and vault location
+      if (vaultPath || currentDocPath) {
+        const vaultRoot = vaultPath;
+        const systemPrompt = [
+          `You are a DocWright document assistant. The user is working in a DocWright governance vault.`,
+          `Vault root: ${vaultRoot}`,
+          ``,
+          `When the user asks you to fix, update, or improve a document:`,
+          `1. Show the proposed change (a diff or the new content) before writing.`,
+          `2. After the user confirms, write the file to disk using your write/edit file tools.`,
+          `   Use the absolute path: ${vaultRoot}/<relative-path-from-context>.`,
+          `3. DocWright's file watcher will detect the change and refresh the UI automatically.`,
+          ``,
+          `Never modify these frontmatter fields — they require human approval:`,
+          `  approved:, status: completed, gate_status: approved, gate_status: waived`,
+        ].join('\n');
+        try {
+          await ocFetch('POST', `session/${id}/message`, {
+            parts: [{ type: 'text', text: systemPrompt }],
+            role: 'system',
+          });
+        } catch { /* system prompt injection is best-effort */ }
+      }
     } catch (e) {
       console.error('[DocWright chat] Session create failed:', e);
       statusText = 'Session create failed — check console';
@@ -538,11 +566,19 @@
     }, 60000);
 
     try {
+      // On the first user message in a session, prepend the active document as context
+      // so the AI knows which file the user is referring to.
+      const isFirstMessage = messages.filter(m => m.role === 'user').length === 1;
+      const hasDocContext = isFirstMessage && currentDocPath && currentDocPath.endsWith('.md');
+      const messageText = hasDocContext
+        ? `[Active document: ${currentDocPath}]\n\n${currentDocContent.slice(0, 8000)}\n\n---\n${text}`
+        : text;
+
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
       // text while we wait, but the response body is the source of truth.
       const res = await ocFetch('POST', `session/${currentID}/message`, {
-        parts: [{ type: 'text', text }],
+        parts: [{ type: 'text', text: messageText }],
       });
 
       if (!res.ok) {

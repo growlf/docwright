@@ -1,6 +1,6 @@
 ---
 title: Chat Panel — Inject Active Document as Context
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-06-28
 type: plan
