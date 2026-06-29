@@ -205,6 +205,19 @@ export async function deleteSession(
   if (!res.ok) throw new Error(`OpenCode DELETE session/${sessionId}: ${res.status}`);
 }
 
+
+/**
+ * Fetch the unified diff for a session (files changed by AI).
+ * Returns raw unified diff text, or empty string if no changes.
+ */
+export async function getSessionDiff(
+  baseUrl: string,
+  sessionId: string,
+  vaultPath?: string,
+): Promise<string> {
+  return ocApi<string>(baseUrl, 'GET', `session/${sessionId}/diff`, vaultPath);
+}
+
 /**
  * Retrieve all messages for a given session.
  */

@@ -14,6 +14,7 @@
   import { tables, strikethrough } from 'turndown-plugin-gfm';
   import markdownit from 'markdown-it';
   import taskLists from 'markdown-it-task-lists';
+  import DiffMatchPatch from 'diff-match-patch';
 
   const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
   td.use(tables);
@@ -27,6 +28,18 @@
   let mode = $state<'read' | 'edit' | 'source'>('read');
   let loadedEtag = $state<string | null>(null);
   let conflictDialog = $state<{ serverContent: string } | null>(null);
+
+  function buildDiffHtml(mine: string, theirs: string): string {
+    const dmp = new DiffMatchPatch();
+    const diffs = dmp.diff_main(theirs, mine);
+    dmp.diff_cleanupSemantic(diffs);
+    return diffs.map(([op, text]) => {
+      const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (op === 1) return `<ins>${escaped}</ins>`;
+      if (op === -1) return `<del>${escaped}</del>`;
+      return escaped;
+    }).join('');
+  }
   let html = $state('');
   let showProps = $state(true);
   let propsCollapsed = $state(
@@ -659,6 +672,11 @@
           <div class="conflict-pane-label">Server version</div>
           <pre class="conflict-pre">{conflictDialog.serverContent}</pre>
         </div>
+        <div class="conflict-pane">
+          <div class="conflict-pane-label">Changes (yours vs server)</div>
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          <pre class="conflict-pre conflict-diff">{@html buildDiffHtml(raw, conflictDialog.serverContent)}</pre>
+        </div>
       </div>
       <div class="dialog-actions">
         <button class="dialog-cancel" onclick={() => conflictDialog = null}>Cancel — keep editing</button>
@@ -794,6 +812,14 @@
     border-radius: 6px; padding: 0.75rem; font-size: 0.75rem;
     overflow: auto; max-height: 320px; white-space: pre-wrap; word-break: break-all;
     color: #cdd6f4; margin: 0;
+  }
+  .conflict-diff :global(ins) {
+    background: rgba(166, 227, 161, 0.25); color: #a6e3a1;
+    text-decoration: none; border-radius: 2px;
+  }
+  .conflict-diff :global(del) {
+    background: rgba(243, 139, 168, 0.25); color: #f38ba8;
+    text-decoration: line-through; border-radius: 2px;
   }
   .dialog-actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
   .dialog-cancel {

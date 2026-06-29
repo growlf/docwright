@@ -19,6 +19,13 @@ async function fetchJson(method: string, path: string, body?: unknown): Promise<
   return ct.includes('json') ? res.json() : res.text();
 }
 
+
+export async function getSessionDiff(baseUrl: string, sessionId: string, vaultPath?: string): Promise<string> {
+  let url = `${baseUrl.replace(/\/$/, '')}/session/${sessionId}/diff`;
+  if (vaultPath) url += `?directory=${encodeURIComponent(vaultPath)}`;
+  return fetchJson('GET', url);
+}
+
 export async function forkSession(baseUrl: string, sessionId: string, vaultPath?: string): Promise<SessionResult> {
   let url = `${baseUrl.replace(/\/$/, '')}/session/${sessionId}/fork`;
   if (vaultPath) url += `?directory=${encodeURIComponent(vaultPath)}`;

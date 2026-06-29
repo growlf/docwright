@@ -2,13 +2,14 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { json } from '@sveltejs/kit';
 import { moveDocument } from '../../../../../dispatch/vault-write';
+import { requireAuth } from '$lib/server/auth.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
   return path.resolve(process.cwd(), '../..');
 })();
 
-export async function POST({ request }) {
+export const POST = requireAuth(async ({ request }) => {
   const body = await request.json().catch(() => null);
   if (!body?.from || !body?.to)
     return json({ error: 'missing from/to' }, { status: 400 });
@@ -37,4 +38,4 @@ export async function POST({ request }) {
   } catch (e: any) {
     return json({ error: e.message }, { status: 500 });
   }
-}
+});

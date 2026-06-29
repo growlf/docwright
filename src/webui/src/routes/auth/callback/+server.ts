@@ -1,7 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { exchangeCode, getUserInfo, getUserTeams } from '$lib/server/forgejo-oauth.js';
-import { createSession } from '$lib/server/session.js';
+import { createSession, SESSION_COOKIE_MAX_AGE } from '$lib/server/session.js';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code');
@@ -14,24 +14,25 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	cookies.delete('oauth_state', { path: '/' });
 
-	try {
-		const redirectUri = `${url.origin}/auth/callback`;
-		const token = await exchangeCode(code, redirectUri);
-		const [info, teams] = await Promise.all([getUserInfo(token), getUserTeams(token)]);
-		const user = { ...info, teams };
+	const returnTo = cookies.get('oauth_return') || '/';
+	cookies.delete('oauth_return', { path: '/' });
 
-		const sessionId = createSession(user);
+	try {
+		const token = await exchangeCode(code, `${url.origin}/auth/callback`);
+		const [info, teams] = await Promise.all([getUserInfo(token), getUserTeams(token)]);
+
+		const sessionId = createSession({ ...info, teams });
 		cookies.set('dw_session', sessionId, {
 			path: '/',
 			httpOnly: true,
 			sameSite: 'strict',
-			maxAge: 8 * 60 * 60,
+			maxAge: SESSION_COOKIE_MAX_AGE,
 			secure: url.hostname !== 'localhost',
 		});
 
-		throw redirect(303, '/');
+		throw redirect(303, returnTo);
 	} catch (err) {
-		if (err instanceof Response) throw err; // rethrow SvelteKit redirects
+		if (err instanceof Response) throw err;
 		console.error('OAuth callback error:', err);
 		throw redirect(303, '/login?error=oauth_failed');
 	}

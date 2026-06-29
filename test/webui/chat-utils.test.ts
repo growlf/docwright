@@ -101,18 +101,24 @@ describe('dayGroup', () => {
     assert.equal(dayGroup(d), 'today');
   });
 
-  it('returns yesterday for 12h ago', () => {
-    const d = new Date(Date.now() - 43200000).toISOString();
+  it('returns today for 1 minute before midnight today', () => {
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const d = new Date(todayMidnight + 60000).toISOString(); // 1 min into today
     assert.equal(dayGroup(d), 'today');
   });
 
-  it('returns yesterday for ~36h ago', () => {
-    const d = new Date(Date.now() - 86400000 * 1.5).toISOString();
+  it('returns yesterday for 1 second before midnight today', () => {
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const d = new Date(todayMidnight - 1000).toISOString(); // 1s before today
     assert.equal(dayGroup(d), 'yesterday');
   });
 
-  it('returns older for >48h ago', () => {
-    const d = new Date(Date.now() - 86400000 * 3).toISOString();
+  it('returns older for 1 second before midnight yesterday', () => {
+    const now = new Date();
+    const yesterdayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - 86400000;
+    const d = new Date(yesterdayMidnight - 1000).toISOString();
     assert.equal(dayGroup(d), 'older');
   });
 });

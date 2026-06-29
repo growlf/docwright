@@ -13,6 +13,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { showChatPanel, showMultiReview } from './pane';
   import SessionSidebar from './SessionSidebar.svelte';
+  import SessionDiffPanel from './SessionDiffPanel.svelte';
   import { flattenTree, detectMention, filterMention } from './chat-utils';
 
   // ── Active document context (injected by layout) ─────────────────────────
@@ -229,6 +230,9 @@
   let es: EventSource | null = null;
   let sseRetries    = 0;
   let thinkingTimer: ReturnType<typeof setInterval> | null = null;
+
+  // ── Diff review state ───────────────────────────────────────────────────────
+  let reviewDiff = $state<{sessionId: string; diff: string; loading: boolean} | null>(null);
 
   // ── Reactive session switch on document navigation ───────────────────────
   // When the active document changes while the chat panel is open and connected,
@@ -816,6 +820,20 @@
     } catch { /* non-critical */ }
   }
 
+  async function handleReviewDiff(sessionId: string) {
+    reviewDiff = { sessionId, diff: '', loading: true };
+    try {
+      const diff = await api('GET', `session/${sessionId}/diff`);
+      reviewDiff = { sessionId, diff: (diff as string) || '', loading: false };
+    } catch {
+      reviewDiff = { sessionId, diff: '', loading: false };
+    }
+  }
+
+  function closeReviewDiff() {
+    reviewDiff = null;
+  }
+
   onMount(async () => {
     try {
       const r = await fetch('/api/brand');
@@ -1001,6 +1019,7 @@
       onnew={newSession}
       onrefresh={loadSessions}
       ontoggleall={toggleShowAll}
+      onreviewdiff={handleReviewDiff}
     />
     {#if !currentID}
       <div class="no-session-warn">No active session — click ＋ to create one</div>
@@ -1008,6 +1027,14 @@
       <div class="no-session-warn">Event stream connecting… responses may not appear yet</div>
     {/if}
 
+    {#if reviewDiff}
+      <!-- Diff review -->
+      {#if reviewDiff.loading}
+        <div class="state-msg muted">Loading diff…</div>
+      {:else}
+        <SessionDiffPanel diff={reviewDiff.diff} sessionId={reviewDiff.sessionId} onclose={closeReviewDiff} />
+      {/if}
+    {:else}
     <!-- Messages -->
     <div class="messages">
       {#each messages as msg (msg.id ?? msg)}
@@ -1069,6 +1096,7 @@
         {sending ? '…' : '↑'}
       </button>
     </div>
+  {/if}
   {/if}
 </div>
 

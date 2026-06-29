@@ -1,7 +1,15 @@
 <script lang="ts">
   import type { DocWrightUser } from '../../../app.js';
 
-  let { user }: { user: DocWrightUser | null } = $props();
+  let { user, sessionExpiresAt = null }: { user: DocWrightUser | null; sessionExpiresAt?: number | null } = $props();
+
+  function formatExpiry(ts: number): string {
+    const mins = Math.round((ts - Date.now()) / 60000);
+    if (mins <= 0) return 'expiring';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    return hrs < 24 ? `${hrs}h ${mins % 60}m` : `${Math.floor(hrs / 24)}d`;
+  }
 
   let open = $state(false);
 
@@ -26,6 +34,9 @@
       <div class="badge-menu">
         <div class="badge-name">{user.displayName}</div>
         <div class="badge-username">@{user.username}</div>
+        {#if sessionExpiresAt}
+          <div class="badge-expiry">Session: {formatExpiry(sessionExpiresAt)}</div>
+        {/if}
         <hr class="badge-sep" />
         <button class="badge-signout" onclick={signOut}>Sign out</button>
       </div>
@@ -100,6 +111,13 @@
     font-size: 0.75rem;
     color: var(--fg-muted, #a6adc8);
     padding: 0 0.25rem;
+  }
+
+  .badge-expiry {
+    font-size: 0.7rem;
+    color: var(--fg-muted, #a6adc8);
+    padding: 0 0.25rem;
+    opacity: 0.7;
   }
 
   .badge-sep {

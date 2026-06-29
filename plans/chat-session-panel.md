@@ -14,13 +14,13 @@ proposal_source: proposals/approved/bundle-chat-session-panel.md
 priority: medium
 mode: guided
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 phase: 5
 depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps
 total_steps: 17
-completed_steps: 8
+completed_steps: 9
 _path: plans/chat-session-panel.md
 github_epic:
 automated: full
@@ -66,7 +66,7 @@ specifications and the rationale for bundling.
 
 | Step | Action | Details | Status | Issue | Branch |
 |------|--------|---------|--------| --- | --- |
-| 9 | Session diff fetch | `GET /session/:id/diff` → raw unified diff string. New `SessionDiffPanel.svelte` renders a split view using a CSS-grid diff layout (no library needed for Markdown files; fallback to unified view for binary). Accessible from a "Review changes" button in the session sidebar row. | ⏳ Pending | — | — |
+| 9 | Session diff fetch | `GET /session/:id/diff` → raw unified diff string. New `SessionDiffPanel.svelte` renders a split view using a CSS-grid diff layout (no library needed for Markdown files; fallback to unified view for binary). Accessible from a "Review changes" button in the session sidebar row. | ✅ Done | — | — |
 | 10 | Governance annotation | For each changed file in the diff, call `dispatch/linter.ts` to identify: (a) frontmatter fields that changed, (b) lifecycle transitions triggered (`status` before → after), (c) gate rules that fired. Annotate each diff hunk with a governance badge. Requires `dispatch/linter.ts` to expose a `diffAnnotate(before, after)` function. | ⏳ Pending | — | — |
 | 11 | Selective staging + commit | File-level checkboxes: Accept / Reject each changed file. "Commit accepted" button: stages accepted files via `POST /api/git/stage` and commits via `POST /api/git/commit`. Rejected files are restored from `HEAD`. This is the human-in-the-loop gate for AI-driven edits in guided mode. | ⏳ Pending | — | — |
 | 12 | Tests — Tier 2 | `diffAnnotate()` unit test: given before/after YAML, returns correct field-change list and transition events. Selective staging integration: mock git API, verify only accepted files staged. | ⏳ Pending | — | — |
@@ -178,3 +178,4 @@ resets to single-endpoint mode.
 | 2026-06-22 | Step 6 complete: Model / provider picker — dropdown in chat header listing providers grouped by models from GET /api/provider + GET /api/model. PATCH session on change; fallback to new session with modelID/providerID. | NetYeti |
 | 2026-06-22 | Step 7 complete: Vault-scoped session history — session titles auto-prefixed with [vault-name], session list filtered to vault by default, toggle button (showAll) persisted to localStorage. | NetYeti |
 | 2026-06-22 | Step 8 complete: Tests — Tier 1 — extracted chat-utils.ts with pure functions (flattenTree, relativeTime, dayGroup, detectMention, filterMention, accumulateUsage, truncate). 36 tests passing. npm run test:webui added. | NetYeti |
+| 2026-06-29 | Step 9 complete: Session diff fetch — getSessionDiff() in dispatch/opencode.ts and opencode-bridge.ts, new SessionDiffPanel.svelte with CSS-grid side-by-side diff view, unified fallback, binary file handling, "Review changes" button in session sidebar context menu, integrated into ChatPanel.svelte. | NetYeti |

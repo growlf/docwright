@@ -889,7 +889,7 @@ import {
         </select>
       {/if}
     </div>
-    <UserBadge user={data.user} />
+    <UserBadge user={data.user} sessionExpiresAt={data.sessionExpiresAt} />
     <button class="gear-btn" onclick={() => { showRightPanel = !showRightPanel; }} aria-label="Toggle properties panel" title="Toggle properties">⊞</button>
   </div>
 </div>
