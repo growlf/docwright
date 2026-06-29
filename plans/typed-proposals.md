@@ -1,10 +1,11 @@
 ---
-title: Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System
+title: Typed Proposal Intake System
 status: draft
 author: NetYeti
 created: 2026-06-07
 created_by: NetYeti@phoenix
-tags: [planning]
+tags:
+  - planning
 proposal_source: proposals/bugs-features-and-thoughts.md
 priority: medium
 mode: mentor
@@ -21,7 +22,7 @@ reviewed_by:
 reviewed_date:
 canceled_date:
 cancellation_reason:
-template_version: 1.0
+template_version: 1
 tests_defined: true
 gate_reviewer:
 gate_status:
@@ -32,7 +33,7 @@ gate_quorum: 1
 total_steps: 7
 completed_steps: 0
 phase: 3
-github_epic: null
+github_epic:
 ---
 
 # Plan: Bugs, Features, and Thoughts — Typed Proposal Intake System

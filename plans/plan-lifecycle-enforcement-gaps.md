@@ -3,7 +3,7 @@ title: Plan Lifecycle Enforcement Gaps — MCP, Hook, and Agent Process Gaps
 status: approved
 author: NetYeti
 created: 2026-06-28
-tags: governance, mcp, lifecycle, enforcement, process, phase-4
+tags:
 proposal_source: proposals/approved/plan-lifecycle-enforcement-gaps.md
 priority: medium
 automated: full

@@ -20,9 +20,9 @@ tests_defined: false
 tests_human_reviewed: false
 _path: plans/chat-architecture-document-scoped-sessions.md
 total_steps: 6
-completed_steps: 5
+completed_steps: 6
 scenario_synthesis: "Happy path: user opens plan A, chats with AI — AI reads it on demand; navigates to plan B, opens chat — fresh session, separate history; navigates back to plan A, opens chat — previous conversation restored instantly from localStorage. Failure path: OpenCode restarts — stale session ID detected on reconnect, new session auto-created transparently; user conversation lost but UI recovers without error."
-gate_note: "Changed files are untestable types: plans/chat-architecture-document-scoped-sessions.md"
+gate_note: "Changed files are untestable types: plans/chat-architecture-document-scoped-sessions.md, plans/phoenix-arc-gpu-ai-stack-reliability.md, plans/plan-lifecycle-enforcement-gaps.md, plans/typed-proposals.md"
 ---
 
 # Chat Architecture — Document-Scoped Sessions and Specialist AI Roles
@@ -47,7 +47,7 @@ creation; `opencodeComplete()` separation of UI actions from chat.
 | 3 | Session indicator + new-chat button | In the ChatPanel header, show the filename (not full path) of the document the current session is bound to: e.g. `📄 multiuser-auth-concurrent-sessions.md`. Add a `↺` (new chat) button that clears the session for the current document from the map, creates a fresh one, and resets `messages`. Position near the model picker. Hide both when session is general-purpose (no document). | ✅ Done |
 | 4 | `ai-roles.ts` — typed specialist role config | Create `src/webui/src/lib/ai-roles.ts` with a `RoleConfig` interface and an `AI_ROLES` map for the four roles: `doc-reviewer`, `doc-improver`, `plan-executor`, `doc-assistant`. Each role has `systemPrompt: string` and `streaming: boolean`. Refactor the inline system prompts in `improve/+server.ts`, `plan-review/+server.ts`, and `apply-review/+server.ts` to reference the typed config rather than ad-hoc strings. | ✅ Done |
 | 5 | `aiSpecialist()` + `aiSpecialistStream()` bridge methods | Add two methods to `window.__docwright.bridge`: `aiSpecialist(role, prompt)` → `Promise<string>` (wraps `opencodeComplete()` with the role's system prompt prepended); `aiSpecialistStream(role, prompt)` → `EventEmitter`-like with `on('token')` and `on('done')` (wraps the OpenCode session SSE path for streaming/multi-turn use cases like plan-execute). Expose role names as `window.__docwright.bridge.aiRoles` — a string array so plugins can discover available roles. | ✅ Done |
-| 6 | Plugin API docs + e2e test | Document `aiSpecialist()` and `aiSpecialistStream()` in `docs/plugins.md` with usage examples. Add an e2e test that: (a) opens chat on two different documents and verifies they get different session IDs; (b) simulates a stale session (bad ID in localStorage) and verifies auto-recovery; (c) calls `window.__docwright.bridge.aiSpecialist('doc-reviewer', prompt)` in a Playwright page eval and verifies a non-empty string response. | ⏳ Pending |
+| 6 | Plugin API docs + e2e test | Document `aiSpecialist()` and `aiSpecialistStream()` in `docs/plugins.md` with usage examples. Add an e2e test that: (a) opens chat on two different documents and verifies they get different session IDs; (b) simulates a stale session (bad ID in localStorage) and verifies auto-recovery; (c) calls `window.__docwright.bridge.aiSpecialist('doc-reviewer', prompt)` in a Playwright page eval and verifies a non-empty string response. | ✅ Done |
 
 ## Testing Plan
 

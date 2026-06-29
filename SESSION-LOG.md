@@ -5,6 +5,25 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Chat Architecture: Document-Scoped Sessions + Specialist AI Roles
+
+**Focus:** Full chat architecture plan (6 steps) — per-doc sessions, ai-roles, aiSpecialist bridge
+
+**Completed:**
+- [x] ChatPanel: `Map<filePath, sessionId>` in localStorage (20-entry LRU cap)
+- [x] Stale session recovery — 404 → silent recreate, network errors → preserve
+- [x] Session indicator (📄 filename) + ↺ new-chat button in header
+- [x] `ai-roles.ts` — 4 typed specialist roles; plan-review + apply-review wired up
+- [x] `/api/ai-specialist` endpoint + `bridge.aiSpecialist()` / `aiSpecialistStream()` / `aiRoles`
+- [x] `docs/plugins.md` updated with Specialist AI roles section
+- [x] `npm run test:chat-sessions` e2e suite written (needs live server to run)
+- [x] Cancelled superseded chat-context and write-back partial plans
+- [x] Reverted naive document content dump from chat messages
+
+**Session note:** `docs/session-notes/session_note_202606290300.md`
+
+---
+
 ## Session: 2026-06-28/29 — Unify AI via OpenCode, Chat Context + Write-back
 
 **Focus:** All AI routes through OpenCode; chat active-doc context + write-back system prompt
