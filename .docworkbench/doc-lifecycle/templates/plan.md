@@ -29,3 +29,17 @@ ${10:How to undo if something goes wrong}
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | ${11} | ${12} | ${13} | ${14} |
+
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed
+- [ ] Deferred ideas captured as proposals before closing
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| ${3:$(date +%Y-%m-%d)} | Created | ${2:Your name} |

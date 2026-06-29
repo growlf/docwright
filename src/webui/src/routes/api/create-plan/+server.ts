@@ -257,6 +257,14 @@ ${overviewBody || '*Plan generated from proposal*'}
 |------|--------|---------|--------|
 ${stepsBody}
 ${testingSection}${riskSection}${rollbackSection}
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed (\`tests_human_reviewed: true\`)
+- [ ] Deferred ideas captured as proposals before closing
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
 ## Document History
 
 | Date | Change | Author |
