@@ -2,7 +2,8 @@
 title: Unify AI Access via OpenCode — Single Provider Gateway
 status: approved
 author: NetYeti
-created: 2026-06-29
+created: 2026-06-28
+type: plan
 tags:
   - ai
   - opencode
@@ -11,128 +12,91 @@ tags:
   - phase-4
 proposal_source: proposals/approved/unify-ai-via-opencode.md
 priority: medium
-automated: guided
+complexity: medium
+automated: full
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 _path: plans/unify-ai-via-opencode.md
+total_steps: 8
+completed_steps: 0
+scenario_synthesis: "Happy path: opencodeComplete() helper replaces callOlla() in all three routes; plan-review, apply-review, and synthesize use whichever model OpenCode has selected; OLLA_* env vars removed. Failure path: OpenCode unreachable — routes return a clear error rather than a silent AI failure; OPENCODE_DEFAULT_MODEL fallback pins a safe model when the picker has no selection."
 ---
 
 # Unify AI Access via OpenCode — Single Provider Gateway
 
 ## Overview
 
-_Plan generated from approved proposal: Unify AI Access via OpenCode — Single Provider Gateway_
+Route all AI calls in DocWright through OpenCode so provider selection (Anthropic Claude,
+local Ollama, LiteLLM, BigPickle, or any OpenAI-compatible endpoint) is controlled from
+a single place — OpenCode's model picker. Currently the plan-review, apply-review, and
+synthesize routes make direct HTTP calls to a hardcoded `OLLA_BASE` endpoint, splitting
+AI config across two places and making the active model invisible in the UI.
 
-### Problem
-
-DocWright currently has two separate AI call paths:
-
-1. **OpenCode** (`localhost:4096`) — chat, plan execution, proposal improvement. Provider
-   and model selected in the OpenCode UI (currently `big-pickle` / local stack).
-
-2. **Direct Anthropic API** (`OLLA_BASE=https://api.anthropic.com/v1`) — plan-review,
-   apply-review, synthesize. Hardcoded to whatever `OLLA_MODEL` is set to in `.env`.
-
-This split creates four concrete problems:
-
-- **Two sets of credentials** — OpenCode provider config must be kept in sync with
-  `OLLA_API_KEY`. Rotating the Anthropic key means updating two places, and there is
-  no automated check for drift between them.
-- **No unified model selection** — changing the model in OpenCode's picker has no
-  effect on the three OLLA review routes. The reviewer runs on a different model than
-  the chat panel, producing inconsistent critique quality and tone across features.
-- **No single source of truth** — to answer "what model is DocWright using right now,"
-  an operator must check the OpenCode UI *and* read `OLLA_MODEL` from `.env`. There is
-  no runtime endpoint that reports the active model for all AI features.
-- **Duplicate maintenance surface** — every new AI feature that needs model access
-  must either integrate with OpenCode or wire up its own `OLLA_*` env vars. The current
-  split doubles the integration surface area for each new feature.
-
-### Out of Scope
-
-- **Modifying OpenCode's session API** — the rewrite is entirely within DocWright's
-  OLLA routes. OpenCode's existing session interface is used as-is.
-- **Adding an OpenAI-compatible endpoint to OpenCode** — not required; the session API
-  already supports programmatic single-turn usage as demonstrated by `/api/improve`.
-- **Rewriting the chat panel** — the interactive chat in the sidebar continues to talk
-  directly to OpenCode via its existing SSE-based session. Only the three backend-only
-  OLLA routes are migrated.
-- **Support for multiple concurrent AI providers** — the gateway is a single provider
-  at a time, controlled by OpenCode's model picker. Multi-provider orchestration
-  (e.g., routing different features to different models) is a future concern.
-- **Migration of `OLLA_API_KEY` values** — operators must copy their Anthropic key from
-  `.env` to OpenCode's environment manually as part of this change. No automated secret
-  transfer is included.
-- **Metrics or observability on AI calls** — the rewrite does not introduce logging,
-  tracing, or usage tracking on the gateway path. That belongs in a separate proposal.
-
-### Alternatives Considered
-
-**Keep the two-path architecture but add a model selector for OLLA routes** — valid,
-but increases complexity rather than reducing it. Two credential stores, two UI
-surfaces, two places to debug.
-
-**Point `OLLA_BASE` at OpenCode's API** — impossible; OpenCode doesn't expose an
-OpenAI-compatible completion endpoint. It would require OpenCode to add that surface.
-
-**Use Meshy as the unified proxy** — Meshy already provides OpenAI-compatible access
-to multiple providers including Anthropic. Could set `OLLA_BASE=http://meshy-host/v1`
-and keep the current OLLA architecture with zero code changes, just a config update.
-Simpler short-term, but still leaves the chat panel using a separate code path from
-the review features. Deferred as a faster option if the session-API rewrite is too large.
-
-### Implementation Steps (sketch)
-
-1. Add `ANTHROPIC_API_KEY` to OpenCode's environment (shell profile or launcher script)
-2. Create `src/webui/src/lib/server/opencode-complete.ts` — thin helper that creates
-   a one-shot OpenCode session, sends a prompt, returns the text response. Modeled on
-   the existing `improve.ts` and extracted as a shared utility.
-3. Rewrite `plan-review/+server.ts`, `apply-review/+server.ts`, `synthesize/+server.ts`
-   to use `opencodeComplete()` instead of `callOlla()`. Each route drops its `OLLA_*`
-   imports and env reads.
-4. Remove `OLLA_BASE`, `OLLA_MODEL`, `OLLA_API_KEY` from `.env` and `.env.example`.
-5. Update `/api/config` to return the active OpenCode model so the UI badge works.
-6. Add a smoke test (`npm run test:ai-gateway` or similar) that exercises each of the
-   three rewritten routes with a known prompt and verifies a non-error response.
-
-### Future
-
-- `OPENCODE_DEFAULT_MODEL` env var lets operators pin the review model independently
-  of what's selected in the interactive chat.
-- The model indicator proposal (`ai-model-indicator-ui`) becomes simpler: one badge,
-  one source of truth.
-- If OpenCode later adds an OpenAI-compatible proxy endpoint, the session-based utility
-  can be swapped for a simpler HTTP client without changing the calling routes.
-
-### Document History
-
-| Date | Change | Author |
-|------|--------|--------|
-| 2026-06-29 | AI-improved via Improve | NetYeti |
-
+**Approach:** Create a shared `opencodeComplete(prompt)` utility that wraps OpenCode's
+existing session API for single-turn completions — the same pattern `/api/improve` already
+uses. Rewrite the three OLLA routes to call it. Remove `OLLA_*` env vars.
 
 ## Implementation Steps
 
-| 1 | Create a short-lived OpenCode session with the appropriate model | | ⏳ Pending |
-| 2 | Send the prompt as a user message | | ⏳ Pending |
-| 3 | Stream/collect the response | | ⏳ Pending |
-| 4 | Discard the session | | ⏳ Pending |
+| Step | Action | Details | Status |
+| --- | --- | --- | --- |
+| 1 | Survey `/api/improve` session pattern | Read `src/webui/src/routes/api/improve/+server.ts` and the OpenCode SDK to understand exactly how a one-shot session is created, a message sent, and the response collected. Document the call shape as comments in the new utility. | ⏳ Pending |
+| 2 | Add `ANTHROPIC_API_KEY` to OpenCode's environment | Update the shell profile or launcher that starts OpenCode (`opencode serve`) to export `ANTHROPIC_API_KEY`. OpenCode auto-detects it and adds `claude-*` models to the picker. Verify by opening the OpenCode model selector and confirming Claude models appear. | ⏳ Pending |
+| 3 | Create `src/webui/src/lib/server/opencode-complete.ts` | Thin async helper: `opencodeComplete(prompt: string, model?: string): Promise<string>`. Creates a short-lived OpenCode session, sends the prompt as a single user message, collects the streamed response text, returns it. Reads `OPENCODE_URL` and optional `OPENCODE_DEFAULT_MODEL` from env. Throws a clear error (not silent fail) when OpenCode is unreachable. | ⏳ Pending |
+| 4 | Rewrite `plan-review/+server.ts` | Replace `callOlla()` with `opencodeComplete()`. Remove `OLLA_BASE`, `OLLA_MODEL`, `OLLA_API_KEY` imports and env reads from this file. Preserve all existing SSE streaming behavior — only the AI call itself changes. | ⏳ Pending |
+| 5 | Rewrite `apply-review/+server.ts` | Same as Step 4. Replace `callOlla()` with `opencodeComplete()`. The `callOlla` helper and its retry logic are removed; `opencodeComplete` handles retries via OpenCode's own session management. | ⏳ Pending |
+| 6 | Rewrite `synthesize/+server.ts` | Same as Steps 4–5. Single `callOlla` call replaced with `opencodeComplete()`. This is the simplest of the three routes. | ⏳ Pending |
+| 7 | Remove `OLLA_*` from `.env` and `.env.example` | Delete `OLLA_BASE`, `OLLA_MODEL`, `OLLA_API_KEY` lines from `src/webui/.env` and `.env.example`. Add `OPENCODE_DEFAULT_MODEL` placeholder to `.env.example` with a comment explaining it. | ⏳ Pending |
+| 8 | Update `/api/config` + smoke tests | Extend `GET /api/config` to return `{ aiGateway: { url: OPENCODE_URL, defaultModel: OPENCODE_DEFAULT_MODEL \| null } }` so the UI model badge can display it. Add a test that calls each of the three rewritten routes with a minimal prompt and verifies a non-empty, non-error response. | ⏳ Pending |
 
 ## Testing Plan
 
-_Testing plan TBD_
+### Step Verification
+
+- [ ] Step 1: Pattern documented; `/api/improve` session flow understood
+- [ ] Step 2: OpenCode model picker shows Claude models after env update
+- [ ] Step 3: `opencodeComplete()` returns text for a simple prompt; throws clearly when OpenCode is down
+- [ ] Step 4: Plan review panel produces output; no `OLLA_*` refs in file
+- [ ] Step 5: Apply review runs end-to-end on a plan; no `OLLA_*` refs in file
+- [ ] Step 6: Synthesize returns a synthesis string; no `OLLA_*` refs in file
+- [ ] Step 7: `grep -r OLLA_ src/webui/src/` returns nothing
+- [ ] Step 8: `/api/config` returns `aiGateway` object; smoke tests pass
+
+### Integration & Regression
+
+- [ ] Existing e2e suite passes (`npm run test:e2e`)
+- [ ] TypeScript compiles cleanly (`npm run typecheck`)
+- [ ] Chat panel and plan execution unaffected (they already use OpenCode)
+- [ ] OpenCode model change propagates to review features without server restart
+
+### Gate Criteria
+
+- [ ] `tests_defined` set to `true` in frontmatter
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No regressions in chat, improve, or plan-execution flows
 
 ## Rollback Procedures
 
-_Rollback procedures TBD_
+Restore `OLLA_BASE`, `OLLA_MODEL`, `OLLA_API_KEY` to `src/webui/.env` and revert the
+three route files. The `callOlla()` helper is deleted in Step 5 — it can be restored
+from git history if needed. The `opencodeComplete.ts` utility is additive and can
+remain without breaking anything.
 
 ## Risk Assessment
 
-_Risk assessment TBD_
+**LOW** — The three OLLA routes are backend-only; the UI surfaces that call them
+(plan-review panel, apply-review button, multi-review synthesize) are unchanged. The
+main risk is OpenCode session overhead for single-turn calls (slightly higher latency
+than a direct HTTP completion). Mitigated by keeping sessions ephemeral and not blocking
+the UI thread.
+
+**MEDIUM** — OpenCode must be running for all AI features to work (currently only chat
+requires it). If OpenCode is down, plan-review/apply-review/synthesize fail. Mitigation:
+`opencodeComplete` returns a clear error message to the UI, not a silent empty response.
 
 ## Document History
 
 | Date | Change | Author |
 | --- | --- | --- |
-| 2026-06-29 | Created from approved proposal | NetYeti |
+| 2026-06-28 | Wrote full implementation steps (8 steps). | NetYeti |
