@@ -179,3 +179,4 @@ If a bad deploy locks out users via systemd:
 | 2026-06-29 | AI-improved via Review | NetYeti |
 | 2026-06-28 | Wrote full implementation steps (15 steps across 5 phases), testing plan, rollback, risk assessment | NetYeti |
 | 2026-06-27 | Created from approved proposal | NetYeti |
+| 2026-06-29 | Test: agent can write to plan via MCP append_history | NetYeti |

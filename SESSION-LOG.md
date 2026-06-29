@@ -5,6 +5,22 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Chat Write-back Fixed, Two Plans Closed
+
+**Focus:** OpenCode permission.asked was blocking tools; fixed via opencode.json config
+
+**Completed:**
+- [x] Root cause found: OpenCode fires permission.asked before bash/edit/write — ChatPanel never responded
+- [x] Fixed: `~/.config/opencode/opencode.json` — `bash/edit/write: "allow"`
+- [x] Chat write-back verified: AI successfully wrote to Document History ✅
+- [x] `chat-architecture-document-scoped-sessions` plan closed and archived
+- [x] `unify-ai-via-opencode` plan closed and archived
+- [x] Session note on collaboration: failure is as valuable as success; stop after 2 failed attempts
+
+**Session note:** `docs/session-notes/session_note_202606290700.md`
+
+---
+
 ## Session: 2026-06-29 — Chat Write-back Debugging
 
 **Focus:** AI reads file and uses tools — but edit tool fails on large files
