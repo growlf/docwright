@@ -559,26 +559,29 @@
       setDocSession(currentDocPath, id); // bind this session to the active document
       await selectSession(id);
 
-      // Inject DocWright system prompt so the AI knows its role and vault location
+      // Inject DocWright system prompt so the AI knows its role, vault, and active file
       if (vaultPath || currentDocPath) {
         const vaultRoot = vaultPath;
+        const absPath = currentDocPath ? `${vaultRoot}/${currentDocPath}` : '';
         const systemPrompt = [
           `You are a DocWright document assistant. The user is working in a DocWright governance vault.`,
           `Vault root: ${vaultRoot}`,
+          currentDocPath ? `Active document: ${currentDocPath}` : '',
+          currentDocPath ? `Absolute path for file tools: ${absPath}` : '',
           ``,
-          `When the user asks you to fix, update, or improve a document:`,
-          `1. Show the proposed change (a diff or the new content) before writing.`,
-          `2. After the user confirms, write the file to disk using your write/edit file tools.`,
-          `   Use the absolute path: ${vaultRoot}/<relative-path-from-context>.`,
-          `3. DocWright's file watcher will detect the change and refresh the UI automatically.`,
+          `When the user asks you to fix, update, or improve the document:`,
+          `1. Read the file first so you see its current content.`,
+          `2. Show the proposed change (a diff or the new content) before writing.`,
+          `3. Write the file to disk using your edit or write file tool at the absolute path above.`,
+          `4. DocWright's file watcher will detect the change and refresh the UI automatically.`,
           ``,
           `Never modify these frontmatter fields — they require human approval:`,
           `  approved:, status: completed, gate_status: approved, gate_status: waived`,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
         try {
+          // Send as a plain user message — OpenCode treats it as context before the conversation starts
           await ocFetch('POST', `session/${id}/message`, {
             parts: [{ type: 'text', text: systemPrompt }],
-            role: 'system',
           });
         } catch { /* system prompt injection is best-effort */ }
       }
