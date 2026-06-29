@@ -559,34 +559,8 @@
       setDocSession(currentDocPath, id); // bind this session to the active document
       await selectSession(id);
 
-      // Inject DocWright system prompt so the AI knows its role, vault, and active file
-      if (vaultPath || currentDocPath) {
-        const vaultRoot = vaultPath;
-        const absPath = currentDocPath ? `${vaultRoot}/${currentDocPath}` : '';
-        const systemPrompt = [
-          `You are a DocWright document assistant. The user is working in a DocWright governance vault.`,
-          `Vault root: ${vaultRoot}`,
-          currentDocPath ? `Active document: ${currentDocPath}` : '',
-          currentDocPath ? `Absolute path for file tools: ${absPath}` : '',
-          ``,
-          `When the user gives a clear instruction (remove X, fix Y, delete Z, add W):`,
-          `1. Read the file first so you see its current content.`,
-          `2. Make the change directly — do not ask for confirmation on clear instructions.`,
-          `3. Write the file to disk using your edit or write file tool at the absolute path above.`,
-          `4. Report briefly what you changed. DocWright's file watcher will auto-refresh the UI.`,
-          ``,
-          `Only ask for confirmation when the instruction is genuinely ambiguous (e.g. "improve this").`,
-          ``,
-          `Never modify these frontmatter fields — they require human approval:`,
-          `  approved:, status: completed, gate_status: approved, gate_status: waived`,
-        ].filter(Boolean).join('\n');
-        try {
-          // Send as a plain user message — OpenCode treats it as context before the conversation starts
-          await ocFetch('POST', `session/${id}/message`, {
-            parts: [{ type: 'text', text: systemPrompt }],
-          });
-        } catch { /* system prompt injection is best-effort */ }
-      }
+      // No pre-session message injection — context is prepended to the user's first message
+      // so the AI receives instruction + context together and acts immediately.
     } catch (e) {
       console.error('[DocWright chat] Session create failed:', e);
       statusText = 'Session create failed — check console';
@@ -673,11 +647,26 @@
     }, 60000);
 
     try {
+      // On the first user message in a new doc-scoped session, prepend a compact
+      // context header so the AI knows the file path and acts on the instruction directly.
+      const isFirstUserMsg = messages.filter(m => m.role === 'user').length === 1;
+      const docCtx = isFirstUserMsg && currentDocPath && currentDocPath.endsWith('.md')
+        ? [
+            `[DocWright context — act on the instruction below, do not just describe what you will do]`,
+            `Vault: ${vaultPath}`,
+            `File: ${currentDocPath}`,
+            `Absolute path: ${vaultPath}/${currentDocPath}`,
+            `Rules: read the file first, make changes directly on clear instructions, write the file using edit/write tools, never change approved:/status:completed/gate_status: fields`,
+            `---`,
+            ``,
+          ].join('\n')
+        : '';
+
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
       // text while we wait, but the response body is the source of truth.
       const res = await ocFetch('POST', `session/${currentID}/message`, {
-        parts: [{ type: 'text', text }],
+        parts: [{ type: 'text', text: docCtx + text }],
       });
 
       if (!res.ok) {
