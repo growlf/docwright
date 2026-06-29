@@ -28,8 +28,10 @@ variable. All modes use HttpOnly session cookies (8-hour TTL) once authenticated
 
 ## AUTH_MODE=none (default)
 
-No login required. All requests are treated as anonymous with full read/write access.
-This is the default for local development. Do not expose this mode on a network.
+No login required. The server creates a synthetic local-dev identity from
+`LOCAL_AUTH_USER` / `LOCAL_AUTH_EMAIL` / `LOCAL_AUTH_DISPLAY_NAME` (all optional,
+fall back to `dev` / `dev@localhost` / `Dev User`). Git commits are attributed to
+this identity. Do not expose this mode on a network.
 
 ```env
 AUTH_MODE=none
@@ -47,10 +49,16 @@ air-gapped systems where Forgejo is not available.
 ```env
 AUTH_MODE=local
 SESSION_SECRET=<generate with: openssl rand -hex 32>
+SESSION_TTL_SECONDS=86400
 LOCAL_AUTH_USER=admin
-LOCAL_AUTH_PASSWORD=yourpassword
+LOCAL_AUTH_PASSWORD=<bcrypt hash — see below>
 LOCAL_AUTH_EMAIL=admin@example.com
 LOCAL_AUTH_DISPLAY_NAME="Admin"
+```
+
+Generate a bcrypt hash for your password:
+```bash
+node -e "require('bcryptjs').hash('yourpassword', 10).then(console.log)"
 ```
 
 **Adding users:** Local mode supports exactly one account. If you need multiple users,
@@ -122,7 +130,7 @@ Sessions are stored in memory on the DocWright server process. Consequences:
 
 - Sessions are lost when the server restarts (users must log in again)
 - No cross-process session sharing — single-process only in the current implementation
-- TTL: 8 hours from last activity
+- TTL: configurable via `SESSION_TTL_SECONDS` (default: 86400s / 24h)
 - Cookie: `dw_session`, HttpOnly, SameSite=Strict, Secure flag set when served over HTTPS
 
 **Generating a secure SESSION_SECRET:**
@@ -141,7 +149,7 @@ When `AUTH_MODE != none`, file edits include ETag-based conflict detection:
 - `GET /api/read` returns an `ETag` header (SHA-256 prefix of the file content)
 - `POST /api/write` with `If-Match: <etag>` fails with `409 Conflict` if the file
   was modified since it was last read
-- The editor shows a two-pane diff dialog: **Cancel / Take server version / Overwrite with mine**
+- The editor shows a three-pane dialog: **Your version / Server version / Changes diff** (highlighted with diff-match-patch), with actions: Cancel / Take server version / Overwrite with mine
 
 This protects against two users (or a user + an AI agent) writing conflicting edits
 to the same file simultaneously. It is active for all users regardless of auth mode.

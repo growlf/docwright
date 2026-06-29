@@ -3,6 +3,7 @@ import { writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { json } from '@sveltejs/kit';
+import { requireAuth } from '$lib/server/auth.js';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? resolve(process.cwd(), '../..');
 
@@ -13,7 +14,7 @@ const MSG_RE = /^(feat|fix|docs|refactor|test|chore|policy|decision): .+/;
 // a conventional commit message would normally use
 const SAFE_RE = /^[\w\s:.,!?()[\]{}\-_@#/'"*+<>~`|&=]+$/;
 
-export async function POST({ request, locals }) {
+export const POST = requireAuth(async ({ request, locals }) => {
   const body = await request.json().catch(() => null);
   const message: string = body?.message?.trim() ?? '';
 
@@ -61,4 +62,4 @@ export async function POST({ request, locals }) {
   } finally {
     try { unlinkSync(msgFile); } catch { /* ignore */ }
   }
-}
+});

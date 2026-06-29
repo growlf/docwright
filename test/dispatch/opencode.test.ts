@@ -12,6 +12,7 @@ import {
   abortSession,
   listModels,
   listProviders,
+  getSessionDiff,
 } from '../../src/dispatch/opencode';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -462,6 +463,36 @@ describe('listProviders', () => {
     try {
       const providers = await listProviders(BASE);
       assert.deepStrictEqual(providers, []);
+    } finally { restore(); }
+  });
+});
+
+describe('getSessionDiff', () => {
+
+  it('returns diff text on success', async () => {
+    const diffText = 'diff --git a/file.md b/file.md\nindex abc..def\n--- a/file.md\n+++ b/file.md\n@@ -1,3 +1,4 @@\n unchanged\n-old line\n+new line\n';
+    const restore = mockFetch(() => mockRes({ text: diffText, headers: {} }));
+    try {
+      const result = await getSessionDiff(BASE, SES_ID, VAULT);
+      assert.strictEqual(result, diffText);
+    } finally { restore(); }
+  });
+
+  it('sends GET to /session/:id/diff', async () => {
+    captureFetch();
+    const restore = mockFetch(() => mockRes({ text: '', headers: {} }));
+    try {
+      await getSessionDiff(BASE, SES_ID, VAULT);
+      const call = lastFetch();
+      assert.ok(call.url.includes(`session/${SES_ID}/diff`));
+      assert.strictEqual(call.init.method ?? 'GET', 'GET');
+    } finally { restore(); }
+  });
+
+  it('throws on non-ok status', async () => {
+    const restore = mockFetch(() => mockRes({ ok: false, status: 404 }));
+    try {
+      await assert.rejects(() => getSessionDiff(BASE, SES_ID), /404/);
     } finally { restore(); }
   });
 });

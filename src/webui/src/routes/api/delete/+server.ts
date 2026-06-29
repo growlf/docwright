@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { requireAuth } from '$lib/server/auth.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
   return path.resolve(process.cwd(), '../..');
 })();
 
-export async function DELETE({ url }) {
+export const DELETE = requireAuth(async ({ url }) => {
   const filePath = url.searchParams.get('path');
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
@@ -17,4 +18,4 @@ export async function DELETE({ url }) {
 
   fs.unlinkSync(resolved);
   return json({ ok: true, path: filePath });
-}
+});

@@ -5,6 +5,7 @@ import { json } from '@sveltejs/kit';
 import { rebuildRelationships } from '../../../../../dispatch/relationships';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
+import { requireAuth } from '$lib/server/auth.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -45,7 +46,7 @@ function etag(content: string): string {
   return `"${createHash('sha256').update(content).digest('hex').slice(0, 16)}"`;
 }
 
-export async function POST({ url, request }) {
+export const POST = requireAuth(async ({ url, request }) => {
   const filePath = url.searchParams.get('path');
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
@@ -84,4 +85,4 @@ export async function POST({ url, request }) {
   }
 
   return json({ ok: true, path: filePath, etag: etag(finalContent) });
-}
+});

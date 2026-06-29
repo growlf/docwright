@@ -1,14 +1,18 @@
 import type { DocWrightUser } from '../../app.js';
+import bcrypt from 'bcryptjs';
 
 // Single-user local auth for air-gapped / dev deployments.
-// Set LOCAL_AUTH_USER and LOCAL_AUTH_PASSWORD in .env.
-// Not intended for multi-user production use.
-export function validateLocalAuth(username: string, password: string): DocWrightUser | null {
+// LOCAL_AUTH_PASSWORD must be a bcrypt hash: `npx bcryptjs-cli hash <password>`
+// or any bcrypt tool. Not intended for multi-user production use.
+export async function validateLocalAuth(username: string, password: string): Promise<DocWrightUser | null> {
 	const expectedUser = process.env.LOCAL_AUTH_USER || 'admin';
-	const expectedPass = process.env.LOCAL_AUTH_PASSWORD;
+	const expectedHash = process.env.LOCAL_AUTH_PASSWORD;
 
-	if (!expectedPass) return null;
-	if (username !== expectedUser || password !== expectedPass) return null;
+	if (!expectedHash) return null;
+	if (username !== expectedUser) return null;
+
+	const valid = await bcrypt.compare(password, expectedHash);
+	if (!valid) return null;
 
 	return {
 		id: 'local-admin',

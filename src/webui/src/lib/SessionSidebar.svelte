@@ -34,6 +34,7 @@
     onnew?: () => void;
     onrefresh?: () => void;
     ontoggleall?: () => void;
+    onreviewdiff?: (id: string) => void;
   } = $props();
 
   let collapsed = $state(false);
@@ -118,6 +119,10 @@
     }
     setTimeout(() => actionMsg = '', 2000);
   }
+  function handleReviewDiff(session: Session) {
+    closeMenu();
+    onreviewdiff?.(session.id);
+  }
 </script>
 
 <div class="session-sidebar" class:collapsed>
@@ -168,6 +173,7 @@
                 <button class="menu-item" onclick={() => handleFork(session)}>Fork</button>
                 <button class="menu-item" onclick={() => handleSummarise(session)}>Summarise</button>
                 <button class="menu-item" onclick={() => handleShare(session)}>Share</button>
+                <button class="menu-item" onclick={() => handleReviewDiff(session)}>Review changes</button>
                 <button class="menu-item danger" onclick={() => handleDelete(session)}>Delete</button>
               </div>
             {/if}

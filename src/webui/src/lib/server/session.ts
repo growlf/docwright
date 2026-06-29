@@ -1,7 +1,10 @@
 import type { DocWrightUser } from '../../app.js';
 import { randomBytes } from 'node:crypto';
 
-const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+const SESSION_TTL_S = parseInt(process.env.SESSION_TTL_SECONDS ?? '86400', 10);
+const SESSION_TTL_MS = SESSION_TTL_S * 1000;
+
+export const SESSION_COOKIE_MAX_AGE = SESSION_TTL_S;
 
 interface Session {
 	user: DocWrightUser;
@@ -30,6 +33,12 @@ export function getSession(id: string): DocWrightUser | null {
 
 export function deleteSession(id: string): void {
 	store.delete(id);
+}
+
+export function getSessionExpiry(id: string): number | null {
+	const session = store.get(id);
+	if (!session || Date.now() > session.expiresAt) return null;
+	return session.expiresAt;
 }
 
 // Prune expired sessions every hour to prevent unbounded growth.

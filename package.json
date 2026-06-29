@@ -57,7 +57,7 @@
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile",
-    "test:webui": "mocha --require tsx/cjs test/webui/**/*.test.ts",
+    "test:webui": "mocha --require tsx/cjs test/webui/auth.test.ts test/webui/chat-utils.test.ts",
     "test:e2e": "npx tsx test/webui/e2e-check.ts --screenshot",
     "test:e2e:ci": "npx tsx test/webui/e2e-check.ts",
     "test:ai-gateway": "npx tsx test/webui/ai-gateway.test.ts",
