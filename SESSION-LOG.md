@@ -948,3 +948,21 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Merged feature/plugin-system → develop, pushed to origin
 
 **Session note:** `docs/session-notes/session_note_202606282300.md`
+
+---
+
+## Session: 2026-06-29 — Chat Session Panel Tier 2 Complete
+
+**Focus:** Tier 2 diff panel, plan close-out, git workflow fix
+
+**Completed:**
+- [x] Step 10: `diffAnnotate()` in dispatch/linter.ts, `/api/diff-annotate` endpoint, governance badge row in SessionDiffPanel.svelte
+- [x] Step 11: Per-file Accept/Reject checkboxes, staging footer, `/api/git/restore`, selective `/api/git/stage`
+- [x] Step 12: 9 diffAnnotate() unit tests + 7 staging integration tests; fixed path injection bug (path.join vs path.resolve)
+- [x] Tiers 3 & 4 formally deferred — two deferred proposals created
+- [x] Plan completed and moved to plans/completed/
+- [x] Phase Gate section added to all three plan templates
+- [x] GitFlow lesson: feat/* → develop, release/* → main (CI-enforced)
+- [x] Released as v0.4.6 via release/v0.4.6 → main (PR #54)
+
+**Session note:** `docs/session-notes/session_note_202606291200.md`
