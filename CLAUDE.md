@@ -108,10 +108,12 @@ go through MCP tools (`update_step`, `update_plan_status`, `append_history`,
 file placement, required fields). See [[policies/core/workflow-layer-governance.md]]
 and [[docs/ai-governance-enforcement.md]].
 
-**Versioning is automatic.** `0.MINOR.PATCH` — minor = phase number, patch =
-completed plans in that phase. The pre-commit hook updates `VERSION` and
-`package.json` automatically when a plan is set to `status: completed`.
-No manual version bumping. See [[policies/core/versioning.md]].
+**Versioning is phase-driven.** `0.MINOR.PATCH` — minor = phase number, patch =
+completed plans in that phase. Version is bumped at **phase close** by
+`scripts/phase-close.ts` (`npm run phase:close -- N`), which counts
+`plans/completed/phase-N-*.md`, writes `0.{N+1}.0` to `VERSION` and
+`package.json`, then commits, tags, and pushes. There is **no** per-commit
+auto-bump hook. See [[policies/core/versioning.md]].
 
 **Keep good ideas for later.** Every plan and proposal that sets something aside MUST
 capture it as a deferred proposal before closing. Good ideas not captured are good ideas
