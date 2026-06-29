@@ -5,6 +5,21 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — gemini devdw persistent session setup
+
+**Focus:** Persistent mosh+tmux+claude session on gemini dev server
+
+**Completed:**
+- [x] Created `~/.local/bin/devdw` script — mosh-preferred, SSH fallback, named tmux session
+- [x] Fixed gemini locale: uncommented `en_US.UTF-8` in `/etc/locale.gen`, regenerated
+- [x] Installed Claude Code on gemini via npm, symlinked to `/usr/local/bin/claude`
+- [x] Fixed work directory typo (DocWrite → DocWright)
+- [x] Verified `devdw` connects, attaches, and starts claude in ~/Projects/DocWright
+
+**Session note:** `docs/session-notes/session_note_202606291619.md`
+
+---
+
 ## Session: 2026-06-29 — Plan Close-outs, PR Merge, Branch Strategy Correction
 
 **Focus:** Close multiuser-auth + forcegraph plans; merge PR #58 into develop
