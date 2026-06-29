@@ -35,9 +35,11 @@ export interface OpenCodeModel {
 /**
  * Run a single-turn completion through OpenCode.
  *
- * @param prompt  - The full prompt text to send.
- * @param model   - Optional model override. Falls back to OPENCODE_DEFAULT_MODEL,
- *                  then to whatever OpenCode has selected in its UI.
+ * @param prompt       - The full prompt text to send.
+ * @param model        - Optional model override.
+ * @param systemPrompt - Optional system prompt injected as a role:system message before
+ *                       the user prompt. Use AI_ROLES[roleId].systemPrompt to get the
+ *                       DocWright-standard prompt for a given specialist role.
  * @returns The assistant's text response (joining all text parts).
  * @throws  Error with a human-readable message when OpenCode is unreachable
  *          or returns an error status.
@@ -45,6 +47,7 @@ export interface OpenCodeModel {
 export async function opencodeComplete(
   prompt: string,
   model?: OpenCodeModel,
+  systemPrompt?: string,
 ): Promise<string> {
   const signal = AbortSignal.timeout(TIMEOUT_MS);
 
@@ -82,6 +85,18 @@ export async function opencodeComplete(
   const sess = await sessRes.json() as { id?: string; sessionID?: string };
   const sessionId = sess?.id ?? sess?.sessionID;
   if (!sessionId) throw new Error('OpenCode returned no session ID');
+
+  // --- 2b. Inject system prompt (best-effort) ---
+  if (systemPrompt) {
+    try {
+      await fetch(`${OPENCODE_URL}/session/${sessionId}/message?${DIR_PARAM}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parts: [{ type: 'text', text: systemPrompt }], role: 'system' }),
+        signal,
+      });
+    } catch { /* system prompt injection is best-effort */ }
+  }
 
   // --- 3. Send prompt ---
   let msgRes: Response;

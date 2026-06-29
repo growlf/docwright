@@ -3,6 +3,7 @@ import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { stripFrontmatter } from '../../../../../dispatch/frontmatter';
 import { opencodeComplete } from '$lib/server/opencode-complete.js';
+import { AI_ROLES } from '$lib/ai-roles.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -84,7 +85,8 @@ function replaceSectionBody(body: string, sectionName: string, newBody: string):
 }
 
 // Thin alias so call sites don't need renaming.
-const callOlla = opencodeComplete;
+const improverPrompt = AI_ROLES['doc-improver'].systemPrompt;
+const callOlla = (prompt: string) => opencodeComplete(prompt, undefined, improverPrompt);
 
 export async function POST({ request }) {
   const { path: filePath, steps: stepReviews, sections: sectionReviews, overview } = await request.json();
