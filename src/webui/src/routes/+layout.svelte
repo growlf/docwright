@@ -113,6 +113,48 @@ import {
       apiBase: '/api',
       vaultRoot: '',
       apiVersion: '1',
+      // ── Specialist AI roles ───────────────────────────────────────────────
+      // Single-turn specialist call. Returns the AI response as a string.
+      aiSpecialist: async (role: string, prompt: string): Promise<string> => {
+        const res = await fetch('/api/ai-specialist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role, prompt }),
+        });
+        if (!res.ok) throw new Error(`aiSpecialist(${role}) failed: ${res.status}`);
+        const data = await res.json() as { text?: string; error?: string };
+        if (data.error) throw new Error(data.error);
+        return data.text ?? '';
+      },
+      // Streaming-style interface backed by aiSpecialist (single emission).
+      // Real token-by-token streaming (for plan-executor) is a future enhancement.
+      aiSpecialistStream: (role: string, prompt: string) => {
+        type Handler = (data: unknown) => void;
+        const handlers: Record<string, Handler[]> = {};
+        const ee = {
+          on(event: string, fn: Handler) { handlers[event] = [...(handlers[event] ?? []), fn]; return ee; },
+        };
+        (async () => {
+          try {
+            const res = await fetch('/api/ai-specialist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role, prompt }),
+            });
+            if (!res.ok) throw new Error(`aiSpecialistStream(${role}) failed: ${res.status}`);
+            const data = await res.json() as { text?: string; error?: string };
+            if (data.error) throw new Error(data.error);
+            const text = data.text ?? '';
+            (handlers['token'] ?? []).forEach(fn => fn(text));
+            (handlers['done']  ?? []).forEach(fn => fn({ text }));
+          } catch (err) {
+            (handlers['error'] ?? []).forEach(fn => fn(err));
+          }
+        })();
+        return ee;
+      },
+      // List of available specialist role IDs — for plugin discovery.
+      aiRoles: ['doc-reviewer', 'doc-improver', 'plan-executor', 'doc-assistant'] as string[],
     };
     (window as any).__docwright = {
       bridge,
