@@ -5,6 +5,28 @@ All notable changes to docwright will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] — 2026-06-29
+
+### Added
+- Multi-user auth layer: SvelteKit session middleware, in-memory session store with configurable `SESSION_TTL_SECONDS`, bcrypt local auth, Forgejo OAuth with CSRF state and `returnTo` preservation
+- `requireAuth` / `requireRole` wrappers applied to all 7 mutable API routes
+- `AUTH_MODE=none` now sets a synthetic dev user so git commits are attributed in local dev
+- Session expiry display in UserBadge toolbar popover
+- `src/lib/server/auth.ts` and `src/lib/auth/constants.ts` — new files
+- `bcryptjs` and `diff-match-patch` added to webui dependencies
+
+### Changed
+- `GET /api/read` now returns an `ETag` header (SHA-256 prefix)
+- `POST /api/write` validates `If-Match` header; returns 409 on conflict with `currentContent` in body
+- Conflict resolution modal upgraded to three-pane view: your version / server version / diff-match-patch highlighted changes
+- Both `.env.example` files fully documented with all auth variables
+- `docs/authentication.md` updated: bcrypt requirement, `SESSION_TTL_SECONDS`, three-pane diff
+
+### Fixed
+- Stray `/**` in `opencode.ts` was silently commenting out `getSessionMessages` function
+- Time-dependent `dayGroup` tests replaced with deterministic midnight-anchored assertions
+- `forkSession` export in `opencode-bridge.ts` was missing `async function` keyword (Vite/OXC parse error)
+
 ## [Unreleased]
 
 ### Added
