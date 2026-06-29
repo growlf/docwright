@@ -581,15 +581,37 @@
     // Touch lastUsed so this session stays at the top of the LRU eviction order
     setDocSession(currentDocPath, id);
     try {
-      const data = await api('GET', `session/${id}/message`);
-      const list = Array.isArray(data) ? data : (data.messages ?? []);
+      // Use ocFetch directly so we can inspect the status code before throwing
+      const res = await ocFetch('GET', `session/${id}/message`);
+
+      if (!res.ok) {
+        // 404 / 410 = session no longer exists (OpenCode restarted or session archived)
+        // Clear the stale entry and create a fresh session transparently.
+        // Other 4xx/5xx = leave stored session in place (may recover on next attempt).
+        if (res.status === 404 || res.status === 410) {
+          console.debug('[DocWright chat] Stale session detected, recovering:', id);
+          clearDocSession(currentDocPath);
+          currentID = null;
+          messages = [];
+          await newSession();
+          return;
+        }
+        messages = [];
+        return;
+      }
+
+      const data = await res.json().catch(() => null);
+      const list = Array.isArray(data) ? data : (data?.messages ?? []);
       messages = list.map((m: any) => ({
         id: m.id ?? m.messageID,
         role: normalizeRole(m.role),
         parts: m.parts ?? [{ type: 'text', text: m.content ?? '' }],
       }));
       scrollToBottom();
-    } catch { messages = []; }
+    } catch {
+      // Network error — don't clear the stored session, it may still be valid
+      messages = [];
+    }
   }
 
   // ── Send ─────────────────────────────────────────────────────────────────
