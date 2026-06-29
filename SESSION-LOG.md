@@ -5,6 +5,23 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — ForceGraph Bug Root Cause & Lifecycle Transition
+
+**Focus:** ForceGraph connector pile-up — real root cause diagnosed and fixed
+
+**Completed:**
+- [x] Resumed in-flight lifecycle transition for `forcegraph-client-nav-sizing` after dropped connection
+- [x] Discovered graph bug survived the v0.4.1 fix — lines still piling at center
+- [x] Root cause: Svelte `$state` deep proxy on `rawEdges` — d3's `forceLink` mutations triggered reactive cascade killing the simulation
+- [x] Fixed: `KnowledgeGraph.svelte` — shallow-copy edges to plain objects before ForceGraph
+- [x] Fixed: `fix-stale-approvals` tests — unset `DOCWRIGHT_VAULT_ROOT` in spawned process env
+- [x] Plan created and filled in: `plans/forcegraph-client-nav-sizing.md` (active, all steps done)
+- [x] All tests passing: webui 68/68, dispatch 291/291
+
+**Session note:** `docs/session-notes/session_note_202606291400.md`
+
+---
+
 ## Session: 2026-06-29 — Chat Write-back Fixed, Two Plans Closed
 
 **Focus:** OpenCode permission.asked was blocking tools; fixed via opencode.json config
