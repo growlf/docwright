@@ -12,6 +12,9 @@ approved: true
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 priority: medium
+_path: proposals/approved/unify-ai-via-opencode.md
+related_to:
+  - plans/unify-ai-via-opencode.md
 ---
 ## Problem
 
