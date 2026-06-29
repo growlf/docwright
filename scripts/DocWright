@@ -145,6 +145,9 @@ native_mode() {
     }
 
     log "starting OpenCode serve..."
+    # Source webui .env so API keys (ANTHROPIC_API_KEY, etc.) reach OpenCode's environment.
+    # The file is gitignored — safe to source; missing file is silently skipped.
+    [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
     opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
     OC_PID=$!
 

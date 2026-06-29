@@ -15,6 +15,50 @@
   import SessionSidebar from './SessionSidebar.svelte';
   import { flattenTree, detectMention, filterMention } from './chat-utils';
 
+  // ── Active document context (injected by layout) ─────────────────────────
+  // currentDocPath: the filePath of the currently-open document (e.g. "plans/foo.md").
+  // Empty string when on a non-document page (status, settings).
+  interface Props { currentDocPath?: string; }
+  let { currentDocPath = '' }: Props = $props();
+
+  // ── Document-scoped session map ───────────────────────────────────────────
+  // Maps filePath → { sessionId, lastUsed } in localStorage so each document
+  // gets its own persistent chat history. Cap: MAX_DOC_SESSIONS entries (LRU eviction).
+  const LS_DOC_SESSIONS = 'dw-chat-sessions';
+  const MAX_DOC_SESSIONS = 20;
+
+  type DocSessionEntry = { sessionId: string; lastUsed: number };
+
+  function loadDocMap(): Record<string, DocSessionEntry> {
+    if (typeof localStorage === 'undefined') return {};
+    try { return JSON.parse(localStorage.getItem(LS_DOC_SESSIONS) ?? '{}'); }
+    catch { return {}; }
+  }
+
+  function saveDocMap(map: Record<string, DocSessionEntry>) {
+    if (typeof localStorage === 'undefined') return;
+    const entries = Object.entries(map).sort((a, b) => b[1].lastUsed - a[1].lastUsed);
+    localStorage.setItem(LS_DOC_SESSIONS, JSON.stringify(Object.fromEntries(entries.slice(0, MAX_DOC_SESSIONS))));
+  }
+
+  function docKey(filePath: string) { return filePath || '__general'; }
+
+  function getDocSession(filePath: string): string | null {
+    return loadDocMap()[docKey(filePath)]?.sessionId ?? null;
+  }
+
+  function setDocSession(filePath: string, sessionId: string) {
+    const map = loadDocMap();
+    map[docKey(filePath)] = { sessionId, lastUsed: Date.now() };
+    saveDocMap(map);
+  }
+
+  function clearDocSession(filePath: string) {
+    const map = loadDocMap();
+    delete map[docKey(filePath)];
+    saveDocMap(map);
+  }
+
   // ── Types ────────────────────────────────────────────────────────────────
 
   interface MessagePart { type: string; text?: string; }
@@ -186,6 +230,37 @@
   let sseRetries    = 0;
   let thinkingTimer: ReturnType<typeof setInterval> | null = null;
 
+  // ── Reactive session switch on document navigation ───────────────────────
+  // When the active document changes while the chat panel is open and connected,
+  // switch to that document's session (or create one). Skip on initial mount
+  // (checkHealth handles that) and skip when not connected.
+  let prevDocPath = '';
+  $effect(() => {
+    const docPath = currentDocPath;
+    if (!connected || docPath === prevDocPath) return;
+    prevDocPath = docPath;
+    const storedId = getDocSession(docPath);
+    if (storedId && storedId !== currentID) {
+      selectSession(storedId);
+    } else if (!storedId) {
+      newSession();
+    }
+  });
+
+  // ── Session indicator + new-chat ─────────────────────────────────────────
+
+  // Filename of the document the current session is bound to (empty = general session)
+  let boundDocName = $derived(
+    currentDocPath ? currentDocPath.split('/').filter(Boolean).pop() ?? currentDocPath : ''
+  );
+
+  async function newChat() {
+    clearDocSession(currentDocPath);
+    messages = [];
+    currentID = null;
+    await newSession();
+  }
+
   // ── Vault-scoped sessions ──────────────────────────────────────────────────
 
   let vaultName = $derived(vaultPath ? vaultPath.split('/').filter(Boolean).pop() ?? vaultPath : '');
@@ -302,8 +377,14 @@
       openEventStream();
       await loadSessions();
       await loadModels();
-      if (sessions.length > 0) await selectSession(sessions[0].id);
-      else await newSession();
+      // Use the document-scoped session map — reconnect to the stored session for
+      // the current document, or create a new one.
+      const storedId = getDocSession(currentDocPath);
+      if (storedId) {
+        await selectSession(storedId); // staleness handled in selectSession
+      } else {
+        await newSession();
+      }
     }
   }
 
@@ -475,7 +556,11 @@
       }
       console.debug('[DocWright chat] Created session:', id);
       sessions = [{ id, title: s?.title ?? title }, ...sessions];
+      setDocSession(currentDocPath, id); // bind this session to the active document
       await selectSession(id);
+
+      // No pre-session message injection — context is prepended to the user's first message
+      // so the AI receives instruction + context together and acts immediately.
     } catch (e) {
       console.error('[DocWright chat] Session create failed:', e);
       statusText = 'Session create failed — check console';
@@ -486,16 +571,40 @@
     currentID = id;
     messages = [];
     statusText = '';
+    // Touch lastUsed so this session stays at the top of the LRU eviction order
+    setDocSession(currentDocPath, id);
     try {
-      const data = await api('GET', `session/${id}/message`);
-      const list = Array.isArray(data) ? data : (data.messages ?? []);
+      // Use ocFetch directly so we can inspect the status code before throwing
+      const res = await ocFetch('GET', `session/${id}/message`);
+
+      if (!res.ok) {
+        // 404 / 410 = session no longer exists (OpenCode restarted or session archived)
+        // Clear the stale entry and create a fresh session transparently.
+        // Other 4xx/5xx = leave stored session in place (may recover on next attempt).
+        if (res.status === 404 || res.status === 410) {
+          console.debug('[DocWright chat] Stale session detected, recovering:', id);
+          clearDocSession(currentDocPath);
+          currentID = null;
+          messages = [];
+          await newSession();
+          return;
+        }
+        messages = [];
+        return;
+      }
+
+      const data = await res.json().catch(() => null);
+      const list = Array.isArray(data) ? data : (data?.messages ?? []);
       messages = list.map((m: any) => ({
         id: m.id ?? m.messageID,
         role: normalizeRole(m.role),
         parts: m.parts ?? [{ type: 'text', text: m.content ?? '' }],
       }));
       scrollToBottom();
-    } catch { messages = []; }
+    } catch {
+      // Network error — don't clear the stored session, it may still be valid
+      messages = [];
+    }
   }
 
   // ── Send ─────────────────────────────────────────────────────────────────
@@ -538,11 +647,26 @@
     }, 60000);
 
     try {
+      // On the first user message in a new doc-scoped session, prepend a compact
+      // context header so the AI knows the file path and acts on the instruction directly.
+      const isFirstUserMsg = messages.filter(m => m.role === 'user').length === 1;
+      const docCtx = isFirstUserMsg && currentDocPath && currentDocPath.endsWith('.md')
+        ? [
+            `[DocWright context — act on the instruction below, do not just describe what you will do]`,
+            `Vault: ${vaultPath}`,
+            `File: ${currentDocPath}`,
+            `Absolute path: ${vaultPath}/${currentDocPath}`,
+            `Rules: read the file first, then make changes using the bash tool with a python3 -c script that opens the file, makes the targeted change, and writes it back. NEVER use edit, write, or str_replace — they are unreliable. Never change approved:/status:completed/gate_status: fields.`,
+            `---`,
+            ``,
+          ].join('\n')
+        : '';
+
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
       // text while we wait, but the response body is the source of truth.
       const res = await ocFetch('POST', `session/${currentID}/message`, {
-        parts: [{ type: 'text', text }],
+        parts: [{ type: 'text', text: docCtx + text }],
       });
 
       if (!res.ok) {
@@ -710,6 +834,10 @@
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="chat-header">
     <span class="chat-title">AI Chat</span>
+    {#if boundDocName}
+      <span class="session-doc-badge" title="This chat session is bound to {currentDocPath}">📄 {boundDocName}</span>
+      <button class="icon-btn new-chat-btn" onclick={newChat} title="Start a new chat for this document">↺</button>
+    {/if}
     <span class="mode-badge" class:proxy={mode === 'proxy'}
       title={mode === 'direct' ? 'Direct — connecting to your local OpenCode' : 'Proxy — using server OpenCode'}>
       {mode}
@@ -952,6 +1080,8 @@
   // Header
   .chat-header { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid $border; flex-shrink: 0; }
   .chat-title  { @include section-header; padding: 0; flex: 1; }
+  .session-doc-badge { font-size: 10px; color: $fg-dim; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .new-chat-btn { opacity: 0.6; &:hover { opacity: 1; } }
   .mode-badge  { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: $blue-bg; color: $blue; border: 1px solid $blue-bdr; text-transform: uppercase; letter-spacing: 0.3px; &.proxy { background: $purple-bg; color: $purple; border-color: $purple-bdr; } }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .dot.green    { background: $green; box-shadow: 0 0 4px $green; }

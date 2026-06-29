@@ -5,6 +5,89 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Chat Write-back Fixed, Two Plans Closed
+
+**Focus:** OpenCode permission.asked was blocking tools; fixed via opencode.json config
+
+**Completed:**
+- [x] Root cause found: OpenCode fires permission.asked before bash/edit/write — ChatPanel never responded
+- [x] Fixed: `~/.config/opencode/opencode.json` — `bash/edit/write: "allow"`
+- [x] Chat write-back verified: AI successfully wrote to Document History ✅
+- [x] `chat-architecture-document-scoped-sessions` plan closed and archived
+- [x] `unify-ai-via-opencode` plan closed and archived
+- [x] Session note on collaboration: failure is as valuable as success; stop after 2 failed attempts
+
+**Session note:** `docs/session-notes/session_note_202606290700.md`
+
+---
+
+## Session: 2026-06-29 — Chat Write-back Debugging
+
+**Focus:** AI reads file and uses tools — but edit tool fails on large files
+
+**Status:** INCOMPLETE — resume from session_note_202606290500.md
+
+**Root cause found:** `edit` tool uses exact string matching (str_replace), fails silently on 196-line files. AI correctly reads file, identifies redundancy, calls edit — but string mismatch causes no-op. Fix: instruct AI to use `write` tool (full file rewrite) instead of `edit`.
+
+**Session note:** `docs/session-notes/session_note_202606290500.md`
+
+---
+
+## Session: 2026-06-29 — Chat Architecture: Document-Scoped Sessions + Specialist AI Roles
+
+**Focus:** Full chat architecture plan (6 steps) — per-doc sessions, ai-roles, aiSpecialist bridge
+
+**Completed:**
+- [x] ChatPanel: `Map<filePath, sessionId>` in localStorage (20-entry LRU cap)
+- [x] Stale session recovery — 404 → silent recreate, network errors → preserve
+- [x] Session indicator (📄 filename) + ↺ new-chat button in header
+- [x] `ai-roles.ts` — 4 typed specialist roles; plan-review + apply-review wired up
+- [x] `/api/ai-specialist` endpoint + `bridge.aiSpecialist()` / `aiSpecialistStream()` / `aiRoles`
+- [x] `docs/plugins.md` updated with Specialist AI roles section
+- [x] `npm run test:chat-sessions` e2e suite written (needs live server to run)
+- [x] Cancelled superseded chat-context and write-back partial plans
+- [x] Reverted naive document content dump from chat messages
+
+**Session note:** `docs/session-notes/session_note_202606290300.md`
+
+---
+
+## Session: 2026-06-28/29 — Unify AI via OpenCode, Chat Context + Write-back
+
+**Focus:** All AI routes through OpenCode; chat active-doc context + write-back system prompt
+
+**Completed:**
+- [x] `unify-ai-via-opencode` plan: 8 steps, OLLA routes replaced with `opencodeComplete()`, `/api/config` added
+- [x] Launcher sources `src/webui/.env` so ANTHROPIC_API_KEY reaches OpenCode on restart
+- [x] Chat context fix: `currentDocPath`/`currentDocContent` injected into first chat message
+- [x] Chat write-back: DocWright system prompt injected at session creation
+- [x] Two new proposals captured: AI model indicator (medium), chat context (high), chat write-back (high)
+- [x] Approved and planned: chat-active-document-context, chat-document-write-back
+
+**Session note:** `docs/session-notes/session_note_202606290130.md`
+
+---
+
+## Session: 2026-06-28 — Plugin System Close-out, Bug Fixes, Claude API
+
+**Focus:** Plugin system verified and closed, apply-review bugs fixed, Claude wired as AI backend
+
+**Completed:**
+- [x] Formally verified plugin-system plan — 21/21 Playwright e2e checks, all 14 steps confirmed
+- [x] Fixed `scanPlugins()` symlink traversal bug (`Dirent.isDirectory()` → `fs.statSync().isDirectory()`)
+- [x] Fixed 5 apply-review / SSE watch bugs: status demotion, `_path` drop, unquoted YAML, AI notes in plan files, silent edit-mode reload suppression
+- [x] Wrote 9 implementation steps for governance-engine-view-container plan
+- [x] Wrote 15 implementation steps (5 phases) for multiuser-auth-concurrent-sessions plan
+- [x] Captured critical proposal: plan-lifecycle-enforcement-gaps (6-layer fix for governance trail failures)
+- [x] Wired Anthropic Claude API as inference backend (OLLA_API_KEY in src/webui/.env)
+- [x] plugin-system plan archived to plans/completed/, v0.4.3 released to main
+- [x] develop reset to main via branch protection API (removed stuck merge commit)
+- [x] Lifecycle enforcement proposal approved, plan scaffolded
+
+**Session note:** `docs/session-notes/session_note_202606282330.md`
+
+---
+
 ## Session: 2026-06-28 — PR Merges + Branch Cleanup
 
 **Focus:** Merge auth + ForceGraph PRs, clean up worktrees and branches
