@@ -16,10 +16,48 @@
   import { flattenTree, detectMention, filterMention } from './chat-utils';
 
   // ── Active document context (injected by layout) ─────────────────────────
-  // currentDocPath: hints the AI which file the user is viewing via the session system message.
-  // Full document-scoped session architecture: see proposals/chat-architecture-document-scoped-sessions.md
+  // currentDocPath: the filePath of the currently-open document (e.g. "plans/foo.md").
+  // Empty string when on a non-document page (status, settings).
   interface Props { currentDocPath?: string; }
   let { currentDocPath = '' }: Props = $props();
+
+  // ── Document-scoped session map ───────────────────────────────────────────
+  // Maps filePath → { sessionId, lastUsed } in localStorage so each document
+  // gets its own persistent chat history. Cap: MAX_DOC_SESSIONS entries (LRU eviction).
+  const LS_DOC_SESSIONS = 'dw-chat-sessions';
+  const MAX_DOC_SESSIONS = 20;
+
+  type DocSessionEntry = { sessionId: string; lastUsed: number };
+
+  function loadDocMap(): Record<string, DocSessionEntry> {
+    if (typeof localStorage === 'undefined') return {};
+    try { return JSON.parse(localStorage.getItem(LS_DOC_SESSIONS) ?? '{}'); }
+    catch { return {}; }
+  }
+
+  function saveDocMap(map: Record<string, DocSessionEntry>) {
+    if (typeof localStorage === 'undefined') return;
+    const entries = Object.entries(map).sort((a, b) => b[1].lastUsed - a[1].lastUsed);
+    localStorage.setItem(LS_DOC_SESSIONS, JSON.stringify(Object.fromEntries(entries.slice(0, MAX_DOC_SESSIONS))));
+  }
+
+  function docKey(filePath: string) { return filePath || '__general'; }
+
+  function getDocSession(filePath: string): string | null {
+    return loadDocMap()[docKey(filePath)]?.sessionId ?? null;
+  }
+
+  function setDocSession(filePath: string, sessionId: string) {
+    const map = loadDocMap();
+    map[docKey(filePath)] = { sessionId, lastUsed: Date.now() };
+    saveDocMap(map);
+  }
+
+  function clearDocSession(filePath: string) {
+    const map = loadDocMap();
+    delete map[docKey(filePath)];
+    saveDocMap(map);
+  }
 
   // ── Types ────────────────────────────────────────────────────────────────
 
@@ -192,6 +230,23 @@
   let sseRetries    = 0;
   let thinkingTimer: ReturnType<typeof setInterval> | null = null;
 
+  // ── Reactive session switch on document navigation ───────────────────────
+  // When the active document changes while the chat panel is open and connected,
+  // switch to that document's session (or create one). Skip on initial mount
+  // (checkHealth handles that) and skip when not connected.
+  let prevDocPath = '';
+  $effect(() => {
+    const docPath = currentDocPath;
+    if (!connected || docPath === prevDocPath) return;
+    prevDocPath = docPath;
+    const storedId = getDocSession(docPath);
+    if (storedId && storedId !== currentID) {
+      selectSession(storedId);
+    } else if (!storedId) {
+      newSession();
+    }
+  });
+
   // ── Vault-scoped sessions ──────────────────────────────────────────────────
 
   let vaultName = $derived(vaultPath ? vaultPath.split('/').filter(Boolean).pop() ?? vaultPath : '');
@@ -308,8 +363,14 @@
       openEventStream();
       await loadSessions();
       await loadModels();
-      if (sessions.length > 0) await selectSession(sessions[0].id);
-      else await newSession();
+      // Use the document-scoped session map — reconnect to the stored session for
+      // the current document, or create a new one.
+      const storedId = getDocSession(currentDocPath);
+      if (storedId) {
+        await selectSession(storedId); // staleness handled in selectSession
+      } else {
+        await newSession();
+      }
     }
   }
 
@@ -481,6 +542,7 @@
       }
       console.debug('[DocWright chat] Created session:', id);
       sessions = [{ id, title: s?.title ?? title }, ...sessions];
+      setDocSession(currentDocPath, id); // bind this session to the active document
       await selectSession(id);
 
       // Inject DocWright system prompt so the AI knows its role and vault location
@@ -516,6 +578,8 @@
     currentID = id;
     messages = [];
     statusText = '';
+    // Touch lastUsed so this session stays at the top of the LRU eviction order
+    setDocSession(currentDocPath, id);
     try {
       const data = await api('GET', `session/${id}/message`);
       const list = Array.isArray(data) ? data : (data.messages ?? []);
