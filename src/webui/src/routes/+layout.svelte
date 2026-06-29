@@ -54,9 +54,13 @@ import {
   let showNewMenu  = $state(false);
   let showNewProposalDialog = $state(false);
   let newProposalDesc     = $state('');
+  let newProposalCategory = $state('feature');
   let newProposalPriority = $state('medium');
+  let newProposalTitle    = $state('');
+  let newProposalTitleGenerated = $state(false);
   const PRIORITY_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
-  type ProposalDialogStep = 'form' | 'checking' | 'matches';
+  const CATEGORY_LABELS: Record<string, string> = { feature: '✨ Feature', bug: '🐛 Bug', thought: '💭 Thought' };
+  type ProposalDialogStep = 'form' | 'checking' | 'matches' | 'confirm-title';
   let newProposalStep = $state<ProposalDialogStep>('form');
   let newProposalMatches = $state<Array<{path:string;title:string;score:number;type:string;reason:string}>>([]);
   let improveIsCritiqueOnly = $state(false);
@@ -672,7 +676,10 @@ import {
   function newProposal() {
     showNewMenu = false;
     newProposalDesc = '';
+    newProposalCategory = 'feature';
     newProposalPriority = 'medium';
+    newProposalTitle = '';
+    newProposalTitleGenerated = false;
     newProposalStep = 'form';
     newProposalMatches = [];
     showNewProposalDialog = true;
@@ -682,47 +689,69 @@ import {
     const desc = newProposalDesc.trim();
     if (!desc) return;
     newProposalStep = 'checking';
-    try {
-      const res = await fetch('/api/overlap/preview', {
+
+    // Run overlap check and title generation in parallel
+    const [overlapRes, titleRes] = await Promise.allSettled([
+      fetch('/api/overlap/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: desc }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.matches?.length > 0) {
-          newProposalMatches = data.matches;
-          newProposalStep = 'matches';
-          return;
-        }
-      }
-    } catch { /* non-fatal — proceed with creation */ }
-    await submitNewProposal();
+      }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/generate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc, category: newProposalCategory }),
+      }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+
+    const overlapData = overlapRes.status === 'fulfilled' ? overlapRes.value : null;
+    const titleData   = titleRes.status  === 'fulfilled' ? titleRes.value  : null;
+
+    newProposalTitle = titleData?.title ?? desc.split(/[.\n]/)[0].slice(0, 80);
+    newProposalTitleGenerated = titleData?.generated ?? false;
+
+    if (overlapData?.matches?.length > 0) {
+      newProposalMatches = overlapData.matches;
+      newProposalStep = 'matches';
+      return;
+    }
+
+    newProposalStep = 'confirm-title';
   }
 
   async function submitNewProposal() {
-    const desc = newProposalDesc.trim();
+    const desc  = newProposalDesc.trim();
+    const title = newProposalTitle.trim() || desc.split(/[.\n]/)[0].slice(0, 80);
     if (!desc) return;
     showNewProposalDialog = false;
-    const slug = desc.split(/\s+/).slice(0, 8).join('-').toLowerCase().replace(/[^\w-]+/g, '').replace(/^-+|-+$/g, '') + '.md';
-    const title = desc.length > 80 ? desc.slice(0, 77) + '…' : desc;
+    const slug = title.split(/\s+/).slice(0, 8).join('-').toLowerCase().replace(/[^\w-]+/g, '').replace(/^-+|-+$/g, '') + '.md';
     const date = new Date().toISOString().slice(0, 10);
     const user = 'NetYeti';
     const host = 'phoenix';
-    const content = '---\n' +
-      `title: "${title}"\n` +
+
+    const defaultPriority = newProposalCategory === 'bug' ? 'high' : newProposalPriority;
+
+    const bodyByCategory: Record<string, string> = {
+      feature: '## Problem\n\n' + desc + '\n\n## Proposed Solution\n\n\n\n## Out of Scope\n\n',
+      bug:     '## Problem\n\n' + desc + '\n\n## Steps to Reproduce\n\n1. \n\n## Expected vs Actual\n\n**Expected:** \n\n**Actual:** \n\n## Proposed Fix\n\n',
+      thought: '## Research Question\n\n' + desc + '\n\n## Initial Hypotheses\n\n\n\n## What Would Change Our Mind\n\n',
+    };
+
+    const content =
+      '---\n' +
+      `title: "${title.replace(/"/g, '\\"')}"\n` +
       `author: ${user}\n` +
+      `author-role: contributor\n` +
       `created: ${date}\n` +
-      `priority: ${newProposalPriority}\n` +
+      `category: ${newProposalCategory}\n` +
+      `priority: ${defaultPriority}\n` +
       'tags: []\n' +
-      'depends_on: []\n' +
       `approved: false\n` +
       `created_by: "${user}@${host}"\n` +
       'assigned_to: ""\n' +
       '---\n\n' +
-      '## Problem\n\n' +
-      desc + '\n\n' +
-      '## Proposed Solution\n\n';
+      (bodyByCategory[newProposalCategory] ?? bodyByCategory.feature);
+
     const r = await fetch('/api/write?path=proposals/' + slug, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1114,25 +1143,39 @@ import {
 
       {#if newProposalStep === 'form'}
         <div class="dialog-header">New Proposal</div>
-        <label class="dialog-label" for="new-proposal-desc">Describe the problem or idea</label>
+        <div class="dialog-category-row">
+          {#each Object.entries(CATEGORY_LABELS) as [val, label]}
+            <button class="category-chip" class:active={newProposalCategory === val}
+              onclick={() => newProposalCategory = val}>{label}</button>
+          {/each}
+        </div>
+        <label class="dialog-label" for="new-proposal-desc">
+          {newProposalCategory === 'bug' ? 'Describe the bug' : newProposalCategory === 'thought' ? 'What are you exploring?' : 'Describe the problem or idea'}
+        </label>
         <textarea
           id="new-proposal-desc"
           class="dialog-textarea"
-          placeholder="1–3 sentences: what's the problem, and roughly what would fix it?"
+          placeholder={newProposalCategory === 'bug'
+            ? 'What breaks, when, and what's the impact?'
+            : newProposalCategory === 'thought'
+            ? 'A question or hypothesis worth exploring…'
+            : '1–3 sentences: what's the problem, and roughly what would fix it?'}
           rows="4"
           bind:value={newProposalDesc}
           onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) checkAndSubmitProposal(); }}
         ></textarea>
-        <label class="dialog-label" for="new-proposal-priority">Priority</label>
-        <select id="new-proposal-priority" class="dialog-select" bind:value={newProposalPriority}>
-          {#each Object.entries(PRIORITY_LABELS) as [val, label]}
-            <option value={val}>{label}</option>
-          {/each}
-        </select>
+        {#if newProposalCategory !== 'bug'}
+          <label class="dialog-label" for="new-proposal-priority">Priority</label>
+          <select id="new-proposal-priority" class="dialog-select" bind:value={newProposalPriority}>
+            {#each Object.entries(PRIORITY_LABELS) as [val, label]}
+              <option value={val}>{label}</option>
+            {/each}
+          </select>
+        {/if}
         <div class="dialog-actions">
           <button class="dialog-cancel" onclick={() => showNewProposalDialog = false}>Cancel</button>
           <button class="dialog-submit" onclick={checkAndSubmitProposal} disabled={!newProposalDesc.trim()}>
-            Create Proposal
+            Continue →
           </button>
         </div>
 
@@ -1140,7 +1183,21 @@ import {
         <div class="dialog-header">New Proposal</div>
         <div class="dialog-checking">
           <span class="dialog-spinner">⟳</span>
-          Checking for similar proposals…
+          Checking for duplicates and generating title…
+        </div>
+
+      {:else if newProposalStep === 'confirm-title'}
+        <div class="dialog-header">Confirm title</div>
+        <div class="dialog-matches-hint">
+          {newProposalTitleGenerated ? 'AI-generated title — edit if needed.' : 'Title from your description — edit if needed.'}
+        </div>
+        <input class="dialog-title-input" type="text" bind:value={newProposalTitle}
+          placeholder="Proposal title…" maxlength="120" />
+        <div class="dialog-actions">
+          <button class="dialog-cancel" onclick={() => { newProposalStep = 'form'; }}>← Back</button>
+          <button class="dialog-submit" onclick={submitNewProposal} disabled={!newProposalTitle.trim()}>
+            Create Proposal
+          </button>
         </div>
 
       {:else if newProposalStep === 'matches'}
@@ -1163,7 +1220,7 @@ import {
         </div>
         <div class="dialog-actions">
           <button class="dialog-cancel" onclick={() => { newProposalStep = 'form'; }}>← Edit description</button>
-          <button class="dialog-submit" onclick={submitNewProposal}>Create Anyway</button>
+          <button class="dialog-submit" onclick={() => { newProposalStep = 'confirm-title'; }}>Create Anyway →</button>
         </div>
       {/if}
 
@@ -1534,6 +1591,19 @@ import {
   .dialog-match-score { font-size: 10px; font-weight: 700; color: #f39c12; background: #2a1a00; border: 1px solid #7a5000; border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
   .dialog-match-type  { font-size: 9px; color: #666; background: #111128; border: 1px solid #2a2a4a; border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
 
+  .dialog-category-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .category-chip {
+    background: #111128; border: 1px solid #2a2a4a; border-radius: 20px;
+    color: #888; font-size: 12px; padding: 4px 12px; cursor: pointer;
+    &:hover { border-color: #4a4a6a; color: #aaa; }
+    &.active { background: #1e3a6e; border-color: #2a5aba; color: #7ab0ff; font-weight: 600; }
+  }
+  .dialog-title-input {
+    background: #111128; border: 1px solid #2a2a4a; border-radius: 6px;
+    color: #e0e0f0; font-size: 14px; font-weight: 500; padding: 10px 12px; width: 100%; box-sizing: border-box;
+    &:focus { outline: none; border-color: #4a6aba; }
+  }
+
   :global(html[data-theme="light"]) {
     .dialog-box { background: #fff; border-color: #d0d0e8; }
     .dialog-header { color: #1a1a2e; }
@@ -1541,5 +1611,8 @@ import {
     .dialog-select   { background: #f5f5ff; border-color: #c0c0e0; color: #1a1a2e; }
     .dialog-cancel   { border-color: #c0c0e0; color: #555; &:hover { border-color: #8888aa; } }
     .dialog-submit   { background: #ddeeff; border-color: #6699cc; color: #1a4080; }
+    .category-chip { background: #f0f0f8; border-color: #c0c0e0; color: #555;
+      &:hover { border-color: #8888aa; } &.active { background: #ddeeff; border-color: #6699cc; color: #1a4080; } }
+    .dialog-title-input { background: #f5f5ff; border-color: #c0c0e0; color: #1a1a2e; }
   }
 </style>
