@@ -147,21 +147,6 @@ idiomatic approach and keeps all auth logic in one place.
 - [ ] Step 15: Implement session expiry TTL enforcement with re-auth redirect in `hooks.server.ts` (distinct from Step 2's raw TTL — this wires the 302 to `/login` when `getSession()` returns null). Add `session_expires_at` display field driving the identity badge (Step 8). Depends on: Steps 2 (session store with TTL), 3 (hooks.server.ts `handle()`), 8 (badge), and 6/7 (login page as redirect target).
 - [ ] **Concurrency isolation**: Simultaneous writes from two authenticated users to different files succeed; concurrent writes to the same file fail with conflict; User A cannot read User B's session cookie or data.
 - [ ] **OAuth error paths**: Forgejo unreachable returns readable "auth unavailable" error; user denying consent redirects gracefully; state nonce replay is rejected; expired token triggers refresh or clean re-auth.
-- [ ] Step 1: `app.d.ts` — extend App.Locals with `locals.user`
-- [ ] Step 2: `session.ts` — in-memory session store (get/set/delete, TTL expiry)
-- [ ] Step 3: `hooks.server.ts` — session middleware
-- [ ] Step 4: `forgejo-oauth.ts` — OAuth2 client
-- [ ] Step 5: `local-auth.ts` — local auth fallback
-- [ ] Step 6: Login page
-- [ ] Step 7: OAuth callback route
-- [ ] Step 8: Identity badge in app toolbar
-- [ ] Step 9: Authenticated git attribution
-- [ ] Step 10: `.env.example` — auth vars
-- [ ] Step 11: ETag on file reads
-- [ ] Step 12: `If-Match` check on writes
-- [ ] Step 13: Conflict UI in editor
-- [ ] Step 14: Route protection audit
-- [ ] Step 15: Session expiry + logout
 ## Rollback Procedures
 If auth breaks local dev:
 1. Set `AUTH_MODE=none` in `.env`

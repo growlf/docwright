@@ -656,7 +656,7 @@
             `Vault: ${vaultPath}`,
             `File: ${currentDocPath}`,
             `Absolute path: ${vaultPath}/${currentDocPath}`,
-            `Rules: read the file first, make changes directly on clear instructions. For removing or replacing sections use the write tool to rewrite the whole file — do NOT use edit/str_replace which fails on large files. Never change approved:/status:completed/gate_status: fields.`,
+            `Rules: read the file first, then make changes using the bash tool with a python3 -c script that opens the file, makes the targeted change, and writes it back. NEVER use edit, write, or str_replace — they are unreliable. Never change approved:/status:completed/gate_status: fields.`,
             `---`,
             ``,
           ].join('\n')
