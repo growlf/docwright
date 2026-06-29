@@ -236,6 +236,7 @@ bridge.openDocument('proposals/my-proposal.md');
 bridge.apiBase: string    // always '/api'
 bridge.vaultRoot: string  // absolute server path to the vault root
 bridge.apiVersion: string // '1' — bump on breaking API change
+bridge.aiRoles: string[]  // available specialist role IDs
 ```
 
 Use `bridge.apiBase` for all fetch calls so your plugin works regardless of deployment
@@ -244,6 +245,65 @@ path:
 ```javascript
 const res = await fetch(`${window.__docwright.bridge.apiBase}/status`);
 const data = await res.json();
+```
+
+---
+
+## Specialist AI roles
+
+DocWright exposes a set of pre-configured AI roles so your plugin can make high-quality
+AI calls without managing OpenCode sessions, system prompts, or provider config.
+
+### `bridge.aiSpecialist(role, prompt)` → `Promise<string>`
+
+Single-turn AI call using a named specialist role. The role's system prompt is
+automatically injected — you just provide the task-specific content.
+
+```javascript
+// Review a document for governance gaps
+const critique = await window.__docwright.bridge.aiSpecialist(
+  'doc-reviewer',
+  `Review this section for gaps:\n\n${sectionContent}`
+);
+console.log(critique); // structured critique text
+
+// Improve a sparse section
+const improved = await window.__docwright.bridge.aiSpecialist(
+  'doc-improver',
+  `Flesh out this sparse section:\n\n${sectionContent}`
+);
+```
+
+### `bridge.aiSpecialistStream(role, prompt)` → event emitter
+
+Same as `aiSpecialist` but with an event-emitter interface for use cases where
+you want to handle the response progressively. Currently emits the full response
+as a single `done` event; real token-by-token streaming is a future enhancement.
+
+```javascript
+window.__docwright.bridge.aiSpecialistStream('doc-reviewer', content)
+  .on('done', ({ text }) => {
+    displayReview(text);
+  })
+  .on('error', (err) => {
+    console.error('Review failed:', err);
+  });
+```
+
+### Available roles
+
+| Role | Purpose |
+|---|---|
+| `doc-reviewer` | Structured critique: gaps, weak reasoning, missing sections |
+| `doc-improver` | Flesh out sparse sections, preserve author intent |
+| `plan-executor` | Step-by-step plan implementation, safety-first |
+| `doc-assistant` | General document assistant, reads files on demand |
+
+Discover roles at runtime:
+
+```javascript
+const roles = window.__docwright.bridge.aiRoles;
+// ['doc-reviewer', 'doc-improver', 'plan-executor', 'doc-assistant']
 ```
 
 ---

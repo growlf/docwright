@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 import { opencodeComplete } from '$lib/server/opencode-complete.js';
+import { AI_ROLES } from '$lib/ai-roles.js';
+
+const reviewerPrompt = AI_ROLES['doc-reviewer'].systemPrompt;
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -82,7 +85,7 @@ export async function POST({ request }) {
             `PLAN:\n${planBody}`;
 
           try {
-            const overviewText = await opencodeComplete(holisticPrompt);
+            const overviewText = await opencodeComplete(holisticPrompt, undefined, reviewerPrompt);
             send('overview', { text: overviewText });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
@@ -114,7 +117,7 @@ export async function POST({ request }) {
 
           for (const call of allCalls) {
             try {
-              const text = await opencodeComplete(call.prompt);
+              const text = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
               if (call.type === 'step') {
                 send('step-review', { number: call.key, text });
               } else {
@@ -140,7 +143,7 @@ export async function POST({ request }) {
           send('status', { message: 'Synthesizing overview...' });
 
           try {
-            const overviewText = await opencodeComplete(overviewPrompt);
+            const overviewText = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
             send('overview', { text: overviewText });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
