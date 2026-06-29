@@ -5,6 +5,18 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Chat Write-back Debugging
+
+**Focus:** AI reads file and uses tools — but edit tool fails on large files
+
+**Status:** INCOMPLETE — resume from session_note_202606290500.md
+
+**Root cause found:** `edit` tool uses exact string matching (str_replace), fails silently on 196-line files. AI correctly reads file, identifies redundancy, calls edit — but string mismatch causes no-op. Fix: instruct AI to use `write` tool (full file rewrite) instead of `edit`.
+
+**Session note:** `docs/session-notes/session_note_202606290500.md`
+
+---
+
 ## Session: 2026-06-29 — Chat Architecture: Document-Scoped Sessions + Specialist AI Roles
 
 **Focus:** Full chat architecture plan (6 steps) — per-doc sessions, ai-roles, aiSpecialist bridge
