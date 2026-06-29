@@ -1,4 +1,5 @@
-import { ProfileConfig } from './profile';
+import type { ProfileConfig } from './profile';
+import { parseFrontmatter } from './frontmatter';
 
 export interface LintResult {
   field: string;
@@ -171,4 +172,56 @@ export function lintDocument(
   }
 
   return results;
+}
+
+// ── Diff annotation ────────────────────────────────────────────────────────
+
+export interface FieldChange {
+  field: string;
+  before: string;
+  after: string;
+}
+
+export type GovFlag = 'approval' | 'gate-status' | 'ai-stamp' | 'lifecycle' | 'priority';
+
+export interface DiffAnnotation {
+  changedFields: FieldChange[];
+  statusTransition?: { from: string; to: string };
+  gateFlags: GovFlag[];
+}
+
+const GOVERNANCE_FIELDS = new Set([
+  'status', 'approved', 'gate_status', 'priority', 'assigned_to',
+  'mode', 'automated', 'ai-last-action', 'author-role',
+]);
+
+export function diffAnnotate(_filePath: string, before: string, after: string): DiffAnnotation {
+  const fmBefore = parseFrontmatter(before);
+  const fmAfter  = parseFrontmatter(after);
+
+  const changedFields: FieldChange[] = [];
+  const flags = new Set<GovFlag>();
+  let statusTransition: { from: string; to: string } | undefined;
+
+  const allFields = new Set([...Object.keys(fmBefore), ...Object.keys(fmAfter)]);
+
+  for (const field of allFields) {
+    if (!GOVERNANCE_FIELDS.has(field)) continue;
+    const bv = fmBefore[field] !== undefined ? String(fmBefore[field]) : '';
+    const av = fmAfter[field]  !== undefined ? String(fmAfter[field])  : '';
+    if (bv === av) continue;
+
+    changedFields.push({ field, before: bv || '(empty)', after: av || '(empty)' });
+
+    if (field === 'status') {
+      statusTransition = { from: bv || '(none)', to: av || '(none)' };
+      flags.add('lifecycle');
+    }
+    if (field === 'approved' && fmAfter.approved === true) flags.add('approval');
+    if (field === 'gate_status')    flags.add('gate-status');
+    if (field === 'ai-last-action') flags.add('ai-stamp');
+    if (field === 'priority')       flags.add('priority');
+  }
+
+  return { changedFields, statusTransition, gateFlags: [...flags] };
 }
