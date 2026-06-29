@@ -5,6 +5,24 @@ in `docs/session-notes/`; this file is a chronological index.
 
 ---
 
+## Session: 2026-06-29 — Auth Plan Complete, v0.4.5 Shipped
+
+**Focus:** multiuser-auth-concurrent-sessions plan — all 15 steps implemented, tested, merged
+
+**Completed:**
+- [x] All 15 auth plan steps implemented (Phase 1–5: session store, bcrypt auth, Forgejo OAuth, OCC, requireAuth wrappers)
+- [x] Fixed 3 pre-existing bugs: opencode.ts stray comment, dayGroup time-dependent tests, forkSession parse error
+- [x] test:dispatch 277/277, test:webui 61/61
+- [x] Live-server verified: hooks, ETag/OCC, concurrency isolation, state nonce replay, logout
+- [x] PR #49 (stale) closed; release/v0.4.5 cut, CI green, PR #51 merged to main
+- [x] CHANGELOG.md updated
+
+**Still open:** Plan needs human to run `status: completed` transition (governance boundary)
+
+**Session note:** `docs/session-notes/session_note_202606290900.md`
+
+---
+
 ## Session: 2026-06-29 — Chat Write-back Fixed, Two Plans Closed
 
 **Focus:** OpenCode permission.asked was blocking tools; fixed via opencode.json config
