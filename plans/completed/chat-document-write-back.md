@@ -1,6 +1,6 @@
 ---
 title: Chat Panel — AI Should Apply Changes to the Active Document
-status: in-progress
+status: canceled
 author: NetYeti
 created: 2026-06-28
 type: plan
@@ -17,13 +17,15 @@ automated: full
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
-_path: plans/chat-document-write-back.md
+_path: plans/completed/chat-document-write-back.md
 total_steps: 3
 completed_steps: 1
 scenario_synthesis: "Happy path: user says 'fix the duplication in Testing Plan' — AI shows proposed changes, writes the file via OpenCode file tools, SSE watcher fires and the document page auto-reloads with the edit. Failure path: user asks a question rather than requesting a change — AI answers without writing; or AI proposes a change to a governance-gated field (approved:, status: completed) — system prompt blocks it."
 depends_on:
   - chat-active-document-context.md
 gate_note: "Changed files are untestable types: plans/chat-active-document-context.md, plans/chat-document-write-back.md"
+canceled_date: 2026-06-29
+cancellation_reason: Superseded by chat-architecture-document-scoped-sessions. Step 1 (system prompt injection) implemented and kept. Write-back capability is covered by the doc-assistant role in the architecture plan.
 ---
 
 # Chat Panel — AI Should Apply Changes to the Active Document

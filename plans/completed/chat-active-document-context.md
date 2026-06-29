@@ -1,6 +1,6 @@
 ---
 title: Chat Panel — Inject Active Document as Context
-status: in-progress
+status: canceled
 author: NetYeti
 created: 2026-06-28
 type: plan
@@ -17,11 +17,13 @@ automated: full
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
-_path: plans/chat-active-document-context.md
+_path: plans/completed/chat-active-document-context.md
 total_steps: 3
 completed_steps: 2
 scenario_synthesis: "Happy path: user opens a plan, types in chat — AI receives the file path and content prepended to the first message, responds with specific line-level suggestions. Failure path: no document open (status page, settings) — chat sends the message as-is with no context prefix; AI responds in general terms."
 gate_note: "Changed files are untestable types: plans/chat-active-document-context.md"
+canceled_date: 2026-06-29
+cancellation_reason: Superseded by chat-architecture-document-scoped-sessions. Steps 1-2 implemented and kept (currentDocPath prop, system prompt injection); Step 3 (test) absorbed into the architecture plan's e2e test step.
 ---
 
 # Chat Panel — Inject Active Document as Context
