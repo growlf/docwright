@@ -65,3 +65,15 @@
 {"ts":"2026-06-29T19:31:59.336Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"e485779"}
 {"ts":"2026-06-29T19:32:09.410Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"e485779"}
 {"ts":"2026-06-29T19:32:09.416Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"e485779"}
+{"ts":"2026-06-29T20:34:09.733Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"97f07f6"}
+{"ts":"2026-06-29T20:34:09.739Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"97f07f6"}
+{"ts":"2026-06-29T20:34:18.567Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:18.574Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:30.190Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:30.195Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:38.974Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:38.979Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"90095ec"}
+{"ts":"2026-06-29T20:34:47.875Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"99950c4"}
+{"ts":"2026-06-29T20:34:47.881Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"99950c4"}
+{"ts":"2026-06-29T20:37:33.563Z","doc_path":"plans/test.md","transition_from":"draft","transition_to":"in-progress","actor":"NetYeti","actor_type":"human","git_commit":"99950c4"}
+{"ts":"2026-06-29T20:37:33.568Z","doc_path":"plans/ai-plan.md","transition_from":"draft","transition_to":"in-progress","actor":"claude","actor_type":"ai","git_commit":"99950c4"}

@@ -131,7 +131,10 @@
       }));
   });
 
-  let forceEdges: ForceEdge[] = $derived(rawEdges as ForceEdge[]);
+  // Shallow-copy edges into plain objects so d3's forceLink can mutate
+  // source/target (string → node ref) without triggering Svelte's $state proxy,
+  // which would re-fire the ForceGraph $effect and kill the simulation prematurely.
+  let forceEdges: ForceEdge[] = $derived(rawEdges.map(e => ({ ...e }) as ForceEdge));
 
   let gaps: GapSets = $derived(detectGaps(rawNodes, rawEdges));
 

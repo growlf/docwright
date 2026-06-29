@@ -22,10 +22,12 @@ function writeProposal(dir: string, name: string, approved: boolean): string {
 }
 
 function run(dir: string, args = ''): { out: string; code: number } {
+  const env = { ...process.env };
+  delete env.DOCWRIGHT_VAULT_ROOT; // isolate from the shell env so the script uses cwd
   try {
     const out = execSync(
       `npx tsx "${SCRIPT}" ${args}`,
-      { cwd: dir, encoding: 'utf-8', env: { ...process.env } }
+      { cwd: dir, encoding: 'utf-8', env }
     );
     return { out, code: 0 };
   } catch (e: any) {
