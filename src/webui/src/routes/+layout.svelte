@@ -1163,10 +1163,10 @@ import {
           id="new-proposal-desc"
           class="dialog-textarea"
           placeholder={newProposalCategory === 'bug'
-            ? 'What breaks, when, and what's the impact?'
+            ? "What breaks, when, and what's the impact?"
             : newProposalCategory === 'thought'
             ? 'A question or hypothesis worth exploring…'
-            : '1–3 sentences: what's the problem, and roughly what would fix it?'}
+            : "1–3 sentences: what's the problem, and roughly what would fix it?"}
           rows="4"
           bind:value={newProposalDesc}
           onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) checkAndSubmitProposal(); }}
