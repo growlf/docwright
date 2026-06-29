@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { lintDocument } from '../../src/dispatch/linter';
+import { lintDocument, diffAnnotate } from '../../src/dispatch/linter';
 import { getActiveProfile } from '../../src/dispatch/profile';
 
 const profile = getActiveProfile('/nonexistent'); // uses default fallback
@@ -283,5 +283,109 @@ describe('Frontmatter linter — research documents', () => {
     const fm = { ...validResearch, status: 'invalid-for-research' };
     const results = lintDocument('proposals/test.md', fm, profile);
     assert.ok(!results.some(r => r.message.includes('Research status')));
+  });
+});
+
+// ── diffAnnotate ─────────────────────────────────────────────────────────────
+
+function doc(fields: Record<string, string | boolean | number>): string {
+  const fm = Object.entries(fields).map(([k, v]) => `${k}: ${v}`).join('\n');
+  return `---\n${fm}\n---\n\n# Body\n`;
+}
+
+describe('diffAnnotate', () => {
+  it('detects a status transition', () => {
+    const before = doc({ title: 'Plan', status: 'in-progress', author: 'A', created: '2026-01-01' });
+    const after  = doc({ title: 'Plan', status: 'completed',   author: 'A', created: '2026-01-01' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.deepEqual(ann.statusTransition, { from: 'in-progress', to: 'completed' });
+    assert.ok(ann.gateFlags.includes('lifecycle'));
+    const sf = ann.changedFields.find(f => f.field === 'status');
+    assert.ok(sf);
+    assert.strictEqual(sf?.before, 'in-progress');
+    assert.strictEqual(sf?.after, 'completed');
+  });
+
+  it('returns no statusTransition when status unchanged', () => {
+    const before = doc({ title: 'Plan', status: 'in-progress' });
+    const after  = doc({ title: 'Plan', status: 'in-progress' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.strictEqual(ann.statusTransition, undefined);
+    assert.strictEqual(ann.gateFlags.length, 0);
+    assert.strictEqual(ann.changedFields.length, 0);
+  });
+
+  it('flags approval when approved flips to true', () => {
+    const before = doc({ title: 'T', approved: false });
+    const after  = doc({ title: 'T', approved: true });
+    const ann = diffAnnotate('proposals/t.md', before, after);
+    assert.ok(ann.gateFlags.includes('approval'));
+    const af = ann.changedFields.find(f => f.field === 'approved');
+    assert.ok(af);
+  });
+
+  it('does not flag approval when approved stays false', () => {
+    const before = doc({ title: 'T', approved: false });
+    const after  = doc({ title: 'T', approved: false });
+    const ann = diffAnnotate('proposals/t.md', before, after);
+    assert.ok(!ann.gateFlags.includes('approval'));
+  });
+
+  it('flags gate-status when gate_status changes', () => {
+    const before = doc({ title: 'T', gate_status: 'pending' });
+    const after  = doc({ title: 'T', gate_status: 'approved' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(ann.gateFlags.includes('gate-status'));
+  });
+
+  it('flags ai-stamp when ai-last-action changes', () => {
+    const before = doc({ title: 'T' });
+    const after  = doc({ title: 'T', 'ai-last-action': 'update_step' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(ann.gateFlags.includes('ai-stamp'));
+  });
+
+  it('flags priority when priority changes', () => {
+    const before = doc({ title: 'T', priority: 3 });
+    const after  = doc({ title: 'T', priority: 1 });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(ann.gateFlags.includes('priority'));
+  });
+
+  it('ignores non-governance fields (title, created, tags)', () => {
+    const before = doc({ title: 'Old title', status: 'draft', created: '2026-01-01' });
+    const after  = doc({ title: 'New title', status: 'draft', created: '2026-06-01' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.strictEqual(ann.changedFields.length, 0);
+    assert.strictEqual(ann.gateFlags.length, 0);
+  });
+
+  it('handles new file (empty before)', () => {
+    const after = doc({ title: 'New', status: 'draft', approved: false });
+    const ann = diffAnnotate('plans/new.md', '', after);
+    // 'status' appears in after but not before → changedField
+    const sf = ann.changedFields.find(f => f.field === 'status');
+    assert.ok(sf);
+    assert.strictEqual(sf?.before, '(empty)');
+    assert.strictEqual(sf?.after, 'draft');
+  });
+
+  it('handles multiple simultaneous governance changes', () => {
+    const before = doc({ title: 'P', status: 'approved', priority: 3, assigned_to: 'Alice' });
+    const after  = doc({ title: 'P', status: 'in-progress', priority: 2, assigned_to: 'Bob' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.strictEqual(ann.gateFlags.filter(f => f === 'lifecycle').length, 1);
+    assert.ok(ann.gateFlags.includes('priority'));
+    assert.ok(ann.changedFields.some(f => f.field === 'assigned_to'));
+    assert.ok(ann.changedFields.some(f => f.field === 'priority'));
+    assert.ok(ann.changedFields.some(f => f.field === 'status'));
+  });
+
+  it('returns no flags when before and after are identical', () => {
+    const content = doc({ title: 'X', status: 'draft', approved: false, priority: 2 });
+    const ann = diffAnnotate('plans/p.md', content, content);
+    assert.strictEqual(ann.changedFields.length, 0);
+    assert.strictEqual(ann.gateFlags.length, 0);
+    assert.strictEqual(ann.statusTransition, undefined);
   });
 });
