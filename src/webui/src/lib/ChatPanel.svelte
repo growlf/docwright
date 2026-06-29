@@ -16,8 +16,10 @@
   import { flattenTree, detectMention, filterMention } from './chat-utils';
 
   // ── Active document context (injected by layout) ─────────────────────────
-  interface Props { currentDocPath?: string; currentDocContent?: string; }
-  let { currentDocPath = '', currentDocContent = '' }: Props = $props();
+  // currentDocPath: hints the AI which file the user is viewing via the session system message.
+  // Full document-scoped session architecture: see proposals/chat-architecture-document-scoped-sessions.md
+  interface Props { currentDocPath?: string; }
+  let { currentDocPath = '' }: Props = $props();
 
   // ── Types ────────────────────────────────────────────────────────────────
 
@@ -566,19 +568,11 @@
     }, 60000);
 
     try {
-      // On the first user message in a session, prepend the active document as context
-      // so the AI knows which file the user is referring to.
-      const isFirstMessage = messages.filter(m => m.role === 'user').length === 1;
-      const hasDocContext = isFirstMessage && currentDocPath && currentDocPath.endsWith('.md');
-      const messageText = hasDocContext
-        ? `[Active document: ${currentDocPath}]\n\n${currentDocContent.slice(0, 8000)}\n\n---\n${text}`
-        : text;
-
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
       // text while we wait, but the response body is the source of truth.
       const res = await ocFetch('POST', `session/${currentID}/message`, {
-        parts: [{ type: 'text', text: messageText }],
+        parts: [{ type: 'text', text }],
       });
 
       if (!res.ok) {

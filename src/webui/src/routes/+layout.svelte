@@ -939,7 +939,6 @@ import {
         {:else}
           <ChatPanel
             currentDocPath={$currentDoc.filePath}
-            currentDocContent={$currentDoc.body}
           />
         {/if}
       </div>
