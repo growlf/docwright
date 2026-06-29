@@ -20,7 +20,7 @@ depends_on:
   - proposals/approved/web-ui-ai-chat-panel.md
 scenario_synthesis: SvelteKit UI components + OpenCode API integration; no shell execution or infrastructure steps
 total_steps: 17
-completed_steps: 9
+completed_steps: 12
 _path: plans/chat-session-panel.md
 github_epic:
 automated: full
@@ -67,9 +67,9 @@ specifications and the rationale for bundling.
 | Step | Action | Details | Status | Issue | Branch |
 |------|--------|---------|--------| --- | --- |
 | 9 | Session diff fetch | `GET /session/:id/diff` → raw unified diff string. New `SessionDiffPanel.svelte` renders a split view using a CSS-grid diff layout (no library needed for Markdown files; fallback to unified view for binary). Accessible from a "Review changes" button in the session sidebar row. | ✅ Done | — | — |
-| 10 | Governance annotation | For each changed file in the diff, call `dispatch/linter.ts` to identify: (a) frontmatter fields that changed, (b) lifecycle transitions triggered (`status` before → after), (c) gate rules that fired. Annotate each diff hunk with a governance badge. Requires `dispatch/linter.ts` to expose a `diffAnnotate(before, after)` function. | ⏳ Pending | — | — |
-| 11 | Selective staging + commit | File-level checkboxes: Accept / Reject each changed file. "Commit accepted" button: stages accepted files via `POST /api/git/stage` and commits via `POST /api/git/commit`. Rejected files are restored from `HEAD`. This is the human-in-the-loop gate for AI-driven edits in guided mode. | ⏳ Pending | — | — |
-| 12 | Tests — Tier 2 | `diffAnnotate()` unit test: given before/after YAML, returns correct field-change list and transition events. Selective staging integration: mock git API, verify only accepted files staged. | ⏳ Pending | — | — |
+| 10 | Governance annotation | For each changed file in the diff, call `dispatch/linter.ts` to identify: (a) frontmatter fields that changed, (b) lifecycle transitions triggered (`status` before → after), (c) gate rules that fired. Annotate each diff hunk with a governance badge. Requires `dispatch/linter.ts` to expose a `diffAnnotate(before, after)` function. | ✅ Done | — | — |
+| 11 | Selective staging + commit | File-level checkboxes: Accept / Reject each changed file. "Commit accepted" button: stages accepted files via `POST /api/git/stage` and commits via `POST /api/git/commit`. Rejected files are restored from `HEAD`. This is the human-in-the-loop gate for AI-driven edits in guided mode. | ✅ Done | — | — |
+| 12 | Tests — Tier 2 | `diffAnnotate()` unit test: given before/after YAML, returns correct field-change list and transition events. Selective staging integration: mock git API, verify only accepted files staged. | ✅ Done | — | — |
 
 ### Tier 3 — Enterprise Dual Mode (gate: bundle-enterprise-tier approved)
 
@@ -179,3 +179,6 @@ resets to single-endpoint mode.
 | 2026-06-22 | Step 7 complete: Vault-scoped session history — session titles auto-prefixed with [vault-name], session list filtered to vault by default, toggle button (showAll) persisted to localStorage. | NetYeti |
 | 2026-06-22 | Step 8 complete: Tests — Tier 1 — extracted chat-utils.ts with pure functions (flattenTree, relativeTime, dayGroup, detectMention, filterMention, accumulateUsage, truncate). 36 tests passing. npm run test:webui added. | NetYeti |
 | 2026-06-29 | Step 9 complete: Session diff fetch — getSessionDiff() in dispatch/opencode.ts and opencode-bridge.ts, new SessionDiffPanel.svelte with CSS-grid side-by-side diff view, unified fallback, binary file handling, "Review changes" button in session sidebar context menu, integrated into ChatPanel.svelte. | NetYeti |
+| 2026-06-29 | Step 10 complete: Governance annotation — added `diffAnnotate(filePath, before, after): DiffAnnotation` to `src/dispatch/linter.ts` (detects status transitions, approval gates, gate-status, ai-stamp, priority changes from frontmatter diffs). New `POST /api/diff-annotate` endpoint reads before from `git show HEAD:<path>` and after from disk, returns per-file annotations. `SessionDiffPanel.svelte` fetches annotations reactively and renders governance badge row in each file header (status transition, approval, gate, priority, AI). Also fixed pre-existing `headerMatch` scoping bug and `import type` violation. Typecheck clean. | NetYeti |
+| 2026-06-29 | Step 11 complete: Selective staging + commit — per-file Accept/Reject checkboxes in SessionDiffPanel.svelte (default: all accepted). Staging footer bar shows accepted/rejected count, commit message input (pre-filled), and "Commit N" button. Workflow: restore rejected via new POST /api/git/restore (git checkout HEAD -- paths), stage accepted via updated POST /api/git/stage (now accepts optional { paths } for selective staging, falls back to git add -u when omitted), commit via existing POST /api/git/commit. Rejected files visually dimmed with strikethrough path. Success/error feedback inline. Typecheck clean. | NetYeti |
+| 2026-06-29 | Step 12 complete: Tests — Tier 2 — diffAnnotate() unit tests (9 cases) appended to test/dispatch/linter.test.ts: status transition detection, approval/gate-status/ai-stamp/priority flags, non-governance field ignored, new file (empty before), multiple simultaneous changes, identical content. Selective staging integration (7 cases) in new test/webui/diff-annotate.test.ts: real temp git repo; verifies stage-specific, restore-rejected, and path traversal/absolute security guards. Fixed path injection bug: path.join() on Unix doesn't override with absolute paths (unlike path.resolve), so added p.startsWith('/') guard in all three endpoints (stage, restore, diff-annotate). test:webui script updated to include new file. 68 webui passing, 288 dispatch passing. | NetYeti |
