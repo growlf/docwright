@@ -247,6 +247,20 @@
     }
   });
 
+  // ── Session indicator + new-chat ─────────────────────────────────────────
+
+  // Filename of the document the current session is bound to (empty = general session)
+  let boundDocName = $derived(
+    currentDocPath ? currentDocPath.split('/').filter(Boolean).pop() ?? currentDocPath : ''
+  );
+
+  async function newChat() {
+    clearDocSession(currentDocPath);
+    messages = [];
+    currentID = null;
+    await newSession();
+  }
+
   // ── Vault-scoped sessions ──────────────────────────────────────────────────
 
   let vaultName = $derived(vaultPath ? vaultPath.split('/').filter(Boolean).pop() ?? vaultPath : '');
@@ -826,6 +840,10 @@
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="chat-header">
     <span class="chat-title">AI Chat</span>
+    {#if boundDocName}
+      <span class="session-doc-badge" title="This chat session is bound to {currentDocPath}">📄 {boundDocName}</span>
+      <button class="icon-btn new-chat-btn" onclick={newChat} title="Start a new chat for this document">↺</button>
+    {/if}
     <span class="mode-badge" class:proxy={mode === 'proxy'}
       title={mode === 'direct' ? 'Direct — connecting to your local OpenCode' : 'Proxy — using server OpenCode'}>
       {mode}
@@ -1068,6 +1086,8 @@
   // Header
   .chat-header { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid $border; flex-shrink: 0; }
   .chat-title  { @include section-header; padding: 0; flex: 1; }
+  .session-doc-badge { font-size: 10px; color: $fg-dim; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .new-chat-btn { opacity: 0.6; &:hover { opacity: 1; } }
   .mode-badge  { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: $blue-bg; color: $blue; border: 1px solid $blue-bdr; text-transform: uppercase; letter-spacing: 0.3px; &.proxy { background: $purple-bg; color: $purple; border-color: $purple-bdr; } }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .dot.green    { background: $green; box-shadow: 0 0 4px $green; }
