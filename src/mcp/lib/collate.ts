@@ -16,6 +16,12 @@ export function tokenize(text: string): Set<string> {
   return new Set(words.filter(w => !STOP_WORDS.has(w)));
 }
 
+export interface OverlapPair {
+  planA: string;
+  planB: string;
+  score: number;
+}
+
 export function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0.0;
   
@@ -28,4 +34,30 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
   
   const unionCount = a.size + b.size - intersectionCount;
   return intersectionCount / unionCount;
+}
+
+/**
+ * Find plans with significant keyword overlap.
+ * `docs` is a list of { name, status, text } objects; the caller supplies them
+ * so this function stays pure (no filesystem reads).
+ * Returns pairs where an in-progress plan overlaps an approved plan above `threshold`.
+ */
+export function planOverlapReport(
+  docs: Array<{ name: string; status: string; text: string }>,
+  threshold = 0.12,
+): OverlapPair[] {
+  const inProgress = docs.filter(d => d.status === 'in-progress');
+  const approved   = docs.filter(d => d.status === 'approved');
+
+  const pairs: OverlapPair[] = [];
+  for (const ip of inProgress) {
+    const ipTok = tokenize(ip.text);
+    for (const ap of approved) {
+      const score = jaccard(ipTok, tokenize(ap.text));
+      if (score >= threshold) {
+        pairs.push({ planA: ip.name, planB: ap.name, score: Math.round(score * 1000) / 1000 });
+      }
+    }
+  }
+  return pairs.sort((a, b) => b.score - a.score);
 }

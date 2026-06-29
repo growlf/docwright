@@ -150,3 +150,24 @@
 {"ts":"2026-06-28T16:08:37.607Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
 {"ts":"2026-06-28T16:08:37.608Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
 {"ts":"2026-06-28T16:08:37.609Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:30:28.718Z","host":"phoenix","event":"STEP_UPDATE","user":"netyeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-29T19:30:28.748Z","host":"phoenix","event":"STATUS_CHANGE","user":"netyeti","details":"plan/test.md: approved -> in-progress"}
+{"ts":"2026-06-29T19:30:28.754Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-29T19:30:28.756Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-29T19:30:28.758Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:30:28.759Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:30:28.760Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:04.816Z","host":"phoenix","event":"STEP_UPDATE","user":"netyeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-29T19:31:04.842Z","host":"phoenix","event":"STATUS_CHANGE","user":"netyeti","details":"plan/test.md: approved -> in-progress"}
+{"ts":"2026-06-29T19:31:04.849Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-29T19:31:04.852Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-29T19:31:04.855Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:04.856Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:04.858Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:08.205Z","host":"phoenix","event":"STEP_UPDATE","user":"netyeti","details":"plan/test.md: 'Step one' -> ✅ Done"}
+{"ts":"2026-06-29T19:31:08.232Z","host":"phoenix","event":"STATUS_CHANGE","user":"netyeti","details":"plan/test.md: approved -> in-progress"}
+{"ts":"2026-06-29T19:31:08.240Z","host":"phoenix","event":"HISTORY_APPEND","user":"netyeti","details":"plan/test.md: Something changed"}
+{"ts":"2026-06-29T19:31:08.242Z","host":"phoenix","event":"FIELD_SET","user":"netyeti","details":"plan/test.md: priority = high"}
+{"ts":"2026-06-29T19:31:08.245Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:08.246Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}
+{"ts":"2026-06-29T19:31:08.247Z","host":"phoenix","event":"PLAN_REWRITE","user":"netyeti","details":"plan/test.md: structural rewrite"}

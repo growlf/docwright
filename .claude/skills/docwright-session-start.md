@@ -52,6 +52,20 @@ grep -c "\- \[x\]" <path>   # steps done
 grep -c "\- \[ \]" <path>   # steps open
 ```
 
+### 2.5. Plan health check
+
+Run the plan health script. Any warnings must appear **before** the session summary:
+
+```bash
+node scripts/plan-health.js
+```
+
+If warnings are found, include them in the summary under a `Plan health warnings:` header.
+Warnings indicate governance issues that should be resolved before starting new work:
+- `[placeholder-steps]` — an approved plan has no real steps; fill them before starting
+- `[tbd-testing]` — an in-progress plan has no testing plan; write one before completing
+- `[overlap]` — two plans share significant keyword overlap; verify they aren't duplicating scope
+
 ### 3. Adoption health check
 
 If `.docwright/config.json` exists, read `adopt_version` and compare to

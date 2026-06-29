@@ -8,7 +8,8 @@ import {
   replaceStepStatus,
   hasPendingSteps,
   checkCompletionGate,
-  hasTestingPlan
+  hasTestingPlan,
+  hasPlaceholderSteps
 } from '../lib/steps';
 import { atomRoutingCheck } from './atom-routing';
 
@@ -97,8 +98,16 @@ export async function updatePlanStatus(planName: string, newStatus: string): Pro
 
   const current = extractFrontmatterField(text, 'status');
 
+  if (newStatus === 'in-progress' && hasPlaceholderSteps(text)) {
+    return `ERROR: Plan '${planName}' has only placeholder steps (empty Action cells). Fill in real steps before moving to in-progress.`;
+  }
+
   if (newStatus === 'completed' && hasPendingSteps(text)) {
     return `ERROR: Plan '${planName}' has ⏳ pending steps. Mark all step rows ✅ Done before completing.`;
+  }
+
+  if (newStatus === 'completed' && !hasTestingPlan(text)) {
+    return `ERROR: Plan '${planName}' Testing Plan section is TBD or empty. Write a real testing plan before completing.`;
   }
 
   if (newStatus === 'completed') {
@@ -199,9 +208,13 @@ export async function writePlan(planName: string, content: string): Promise<stri
   let final = updateStepCounts(content);
   const hasTests = hasTestingPlan(final);
   final = setFrontmatterField(final, 'tests_defined', hasTests);
-  
+
   writeFile(`plans/${safe}`, final);
   logTransition('PLAN_REWRITE', `plan/${safe}: structural rewrite`);
   await atomRoutingCheck(`plans/${safe}`, final, 'plan');
-  return `✅ Plan '${safe}' rewritten successfully.`;
+
+  const warning = hasPlaceholderSteps(final)
+    ? '\n⚠ Warning: This plan has placeholder steps (empty Action cells). Fill in real steps before transitioning to in-progress.'
+    : '';
+  return `✅ Plan '${safe}' rewritten successfully.${warning}`;
 }

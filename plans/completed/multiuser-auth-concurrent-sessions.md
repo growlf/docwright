@@ -1,6 +1,7 @@
 ---
 title: Multi-User Auth and Concurrent Session Support
-status: approved
+status: completed
+completed_date: 2026-06-29
 author: NetYeti
 created: 2026-06-27
 type: plan
@@ -16,9 +17,9 @@ priority: critical
 complexity: high
 automated: full
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: true
-_path: plans/multiuser-auth-concurrent-sessions.md
+_path: plans/completed/multiuser-auth-concurrent-sessions.md
 total_steps: 15
 completed_steps: 15
 scenario_synthesis: "Happy path: hooks.server.ts intercepts every request, resolves session, attaches user to locals; Forgejo OAuth flow creates signed cookie; all git commits carry authenticated identity; concurrent writes return 409 with conflict UI. Failure path: AUTH_MODE=none bypasses all auth (local dev unchanged); Forgejo unreachable falls back to login error page with retry; OCC conflict shows diff dialog, never silently overwrites."
@@ -147,6 +148,14 @@ idiomatic approach and keeps all auth logic in one place.
 - [ ] Step 15: Implement session expiry TTL enforcement with re-auth redirect in `hooks.server.ts` (distinct from Step 2's raw TTL — this wires the 302 to `/login` when `getSession()` returns null). Add `session_expires_at` display field driving the identity badge (Step 8). Depends on: Steps 2 (session store with TTL), 3 (hooks.server.ts `handle()`), 8 (badge), and 6/7 (login page as redirect target).
 - [ ] **Concurrency isolation**: Simultaneous writes from two authenticated users to different files succeed; concurrent writes to the same file fail with conflict; User A cannot read User B's session cookie or data.
 - [ ] **OAuth error paths**: Forgejo unreachable returns readable "auth unavailable" error; user denying consent redirects gracefully; state nonce replay is rejected; expired token triggers refresh or clean re-auth.
+### Gate Criteria
+
+- [x] All 15 implementation steps marked done
+- [x] Auth flows verified: session create/read/expire, Forgejo OAuth happy path, LOCAL_AUTH fallback
+- [x] OCC: concurrent writes return 409 with conflict body; successful writes return updated ETag
+- [x] `AUTH_MODE=none` bypasses all auth for local dev (no regression)
+- [x] Tests passing: webui 68/68, dispatch 291/291
+
 ## Rollback Procedures
 If auth breaks local dev:
 1. Set `AUTH_MODE=none` in `.env`

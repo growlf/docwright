@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import { getSessionContext, listActivePlans, getPlan, getStatus, resetStatusCache } from '../../src/mcp/tools/query';
 import { getFacts, collate, runDryRun, auditLog } from '../../src/mcp/tools/utility';
 import { setRepoRoot } from '../../src/mcp/lib/paths';
+import { planOverlapReport } from '../../src/mcp/lib/collate';
 
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures', 'query-vault');
 
@@ -80,5 +81,52 @@ describe('Query and Utility Tools', () => {
     const res = await auditLog();
     assert.ok(res.includes('2026-06-09'));
     assert.ok(res.includes('TEST'));
+  });
+});
+
+describe('planOverlapReport', () => {
+  it('returns pairs above threshold for overlapping in-progress vs approved plans', () => {
+    const docs = [
+      {
+        name: 'auth-refactor.md',
+        status: 'in-progress',
+        text: 'Authentication system refactor. Migrate session tokens to HttpOnly cookies. Update login flow and logout handler. Security audit of authentication middleware.',
+      },
+      {
+        name: 'auth-middleware.md',
+        status: 'approved',
+        text: 'Authentication middleware overhaul. Replace session token storage. HttpOnly cookie migration. Login and logout flow security review.',
+      },
+      {
+        name: 'unrelated.md',
+        status: 'approved',
+        text: 'Completely different topic about database schema migration and indexing strategy.',
+      },
+    ];
+
+    const pairs = planOverlapReport(docs, 0.1);
+    assert.ok(pairs.length >= 1, `Expected at least one overlap pair, got ${pairs.length}`);
+    const pair = pairs[0];
+    assert.strictEqual(pair.planA, 'auth-refactor.md');
+    assert.strictEqual(pair.planB, 'auth-middleware.md');
+    assert.ok(pair.score >= 0.1, `Score ${pair.score} should be >= 0.1`);
+  });
+
+  it('returns empty when no plans overlap above threshold', () => {
+    const docs = [
+      { name: 'alpha.md', status: 'in-progress', text: 'WebSocket integration and real-time push notifications.' },
+      { name: 'beta.md',  status: 'approved',    text: 'Database indexing strategy for large table scans.' },
+    ];
+    const pairs = planOverlapReport(docs, 0.12);
+    assert.strictEqual(pairs.length, 0);
+  });
+
+  it('ignores pairs where both plans are approved (no in-progress)', () => {
+    const docs = [
+      { name: 'a.md', status: 'approved', text: 'Authentication session token migration HttpOnly cookies login.' },
+      { name: 'b.md', status: 'approved', text: 'Authentication session token migration HttpOnly cookies login.' },
+    ];
+    const pairs = planOverlapReport(docs, 0.1);
+    assert.strictEqual(pairs.length, 0, 'Should not flag approved-vs-approved pairs');
   });
 });

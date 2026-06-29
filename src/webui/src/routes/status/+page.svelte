@@ -434,14 +434,15 @@
           <div class="empty">No open proposals</div>
         {:else}
           <table class="items-table">
-            <thead><tr><th>Pri</th><th>Title</th><th>Complexity</th><th>Tags</th></tr></thead>
+            <thead><tr><th>Pri</th><th>Title</th><th>Type</th><th>Complexity</th></tr></thead>
             <tbody>
               {#each data.proposals.open as p}
+                {@const catLabel = p.category?.[0] === 'feature' ? '✨' : p.category?.[0] === 'bug' ? '🐛' : p.category?.[0] === 'thought' ? '💭' : ''}
                 <tr class="item-row" onclick={() => navTo(p)}>
                   <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
                   <td class="item-title">{p.title}</td>
+                  <td>{#if catLabel}<span class="cat-badge cat-{p.category?.[0]}">{catLabel} {p.category?.[0]}</span>{:else}—{/if}</td>
                   <td>{#if p.complexity}<span class="complexity">{p.complexity}</span>{/if}</td>
-                  <td>{#each p.category.slice(0, 3) as c}<span class="tag">{c}</span>{/each}</td>
                 </tr>
               {/each}
             </tbody>
@@ -712,6 +713,10 @@
   .item-date    { color: $muted; font-size: 11px; }
 
   // ── Tags & complexity chips ──────────────────────────────────────────────────
+  .cat-badge    { display: inline-block; border-radius: 8px; padding: 0 6px; font-size: 10px; border: 1px solid transparent; }
+  .cat-feature  { background: #1a2f4a; color: #58a6ff; border-color: #2b5b84; }
+  .cat-bug      { background: #2a1010; color: #e87; border-color: #5a2020; }
+  .cat-thought  { background: #1a2a1a; color: #6d6; border-color: #2a4a2a; }
   .tag        { display: inline-block; background: $tag-bg; border: 1px solid $tag-bdr; border-radius: 8px; padding: 0 6px; font-size: 10px; color: $tag; margin-right: 3px; }
   .complexity { display: inline-block; background: $bg-3; border: 1px solid $border; border-radius: 4px; padding: 0 5px; font-size: 10px; color: $muted; }
 

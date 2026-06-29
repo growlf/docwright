@@ -172,13 +172,69 @@ export function checkCompletionGate(text: string, planName: string): string | nu
   return null;
 }
 
+const TESTING_PLAN_PLACEHOLDERS = new Set([
+  '_testing plan tbd_',
+  '_add test plan during implementation._',
+  '{{value:testing}}',
+]);
+
 export function hasTestingPlan(content: string): boolean {
   const match = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=\n##\s|\n*$)/m);
   if (!match) return false;
   const section = match[1].trim();
-  return section !== '' &&
-         section !== '_Add test plan during implementation._' &&
-         section !== '{{VALUE:testing}}';
+  return section !== '' && !TESTING_PLAN_PLACEHOLDERS.has(section.toLowerCase());
+}
+
+/**
+ * Returns true if the Implementation Steps table has no step with a non-empty Action cell.
+ * A plan scaffold with only `| 1 | | | ⏳ Pending |` rows is considered placeholder.
+ */
+export function hasPlaceholderSteps(text: string): boolean {
+  const lines = text.split('\n');
+  let inSection = false;
+  let dataRowCount = 0;
+  let filledCount = 0;
+  let actionColIdx = -1;
+  let headerFound = false;
+
+  for (const line of lines) {
+    if (/^##\s/.test(line)) {
+      inSection = /^##\s+Implementation Steps\b/i.test(line);
+      actionColIdx = -1;
+      headerFound = false;
+      continue;
+    }
+    if (!inSection || !line.startsWith('|')) continue;
+    if (/^\|[\s|:-]+\|$/.test(line)) continue;
+
+    const parts = line.split('|');
+    const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
+
+    if (!headerFound) {
+      const aIdx = cells.findIndex(c => /^action$/i.test(c));
+      if (aIdx >= 0) {
+        actionColIdx = aIdx;
+        headerFound = true;
+        continue;
+      }
+      // Headerless table — treat cells[1] as Action (legacy 4-col)
+      const firstNum = parseInt(cells[0], 10);
+      if (firstNum > 0) {
+        dataRowCount++;
+        const action = cells[1] ?? '';
+        if (action !== '' && action !== '-' && action !== '—') filledCount++;
+      }
+      continue;
+    }
+
+    const firstNum = parseInt(cells[0], 10);
+    if (!(firstNum > 0)) continue;
+    dataRowCount++;
+    const action = actionColIdx >= 0 ? (cells[actionColIdx] ?? '') : (cells[1] ?? '');
+    if (action !== '' && action !== '-' && action !== '—') filledCount++;
+  }
+
+  return dataRowCount === 0 || filledCount === 0;
 }
 
 export function updateParentDeliverable(text: string, safeName: string): string {

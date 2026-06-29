@@ -43,7 +43,7 @@
   };
 
   const PREDEFINED_CHIPS: Record<string, string[]> = {
-    category: ['ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'infrastructure', 'profiles', 'security', 'testing', 'documentation'],
+    category: ['feature', 'bug', 'thought', 'ui', 'ux', 'governance', 'engine', 'dispatch', 'ai', 'mcp', 'infrastructure', 'profiles', 'security', 'testing', 'documentation'],
     tags:     [], // populated dynamically from vault
   };
 

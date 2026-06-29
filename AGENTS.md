@@ -19,6 +19,13 @@ or declare an explicit exception in the plan. See `policies/core/bugs-before-fea
 
 **No active work before plan approval.** Gathering data and evaluating feasibility is fine from a proposal. Implementation code, infrastructure changes, or any system state mutation is STRICTLY FORBIDDEN until a plan has `status: approved` or `status: in-progress` and non-empty `assigned_to`. See `.opencode/rules/no-work-before-approval.md`.
 
+**Plan pre-flight checklist.** Before beginning work on any plan, verify all of the following. These are enforced by MCP gates and the pre-commit hook — violations are hard errors:
+
+1. **Steps are filled.** Every step in `## Implementation Steps` must have a non-empty Action cell. Plans with all-empty steps must NOT be transitioned to `in-progress`. Fill the steps table first, then transition.
+2. **Testing Plan is not TBD.** Before marking `status: completed`, the `## Testing Plan` section must contain real test descriptions — not `_Testing plan TBD_`. Write the testing plan before calling `update_plan_status('completed')`.
+3. **Working the right plan.** If the current task matches another approved plan's keywords or scope, flag the overlap to the human before proceeding. Run `node scripts/plan-health.js` at session start to detect this automatically.
+4. **Gate Criteria are met.** All `### Gate Criteria` checkboxes must be `[x]` before completing. The MCP `update_plan_status` tool enforces this.
+
 **Offer choices, don't guess.** When there are multiple valid paths forward, present options for the human to choose from. Guessing instead of asking upsets them.
 
 **Multi-system operation.** This repo may operate from many machines. NEVER assume any specific host. Check connectivity before infrastructure operations.
