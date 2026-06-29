@@ -1,6 +1,7 @@
 ---
 title: Plan Lifecycle Enforcement Gaps — MCP, Hook, and Agent Process Gaps
-status: in-progress
+status: completed
+completed_date: 2026-06-29
 author: NetYeti
 created: 2026-06-28
 tags:
@@ -9,8 +10,8 @@ priority: medium
 automated: full
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
-_path: plans/plan-lifecycle-enforcement-gaps.md
+tests_human_reviewed: true
+_path: plans/completed/plan-lifecycle-enforcement-gaps.md
 scenario_synthesis: "Happy path: MCP update_plan_status rejects in-progress transition when steps are placeholder; rejects completed transition when testing plan is TBD; pre-commit hook mirrors both checks at the git layer. Failure path: direct file edits with placeholder steps or TBD sections are blocked at commit time; session-start flags offending plans upfront so the gap is visible before work begins."
 total_steps: 6
 completed_steps: 6
@@ -118,10 +119,10 @@ Each layer must be independently verifiable:
 ### Gate Criteria
 
 - [x] All six Step Verification checkboxes are marked done with evidence above
-- [ ] Pre-commit hook rejects a `TBD` Testing Plan in `plans/` path (note: check does not apply to `proposals/` — proposals have no Testing Plan section; gate criterion wording was aspirational)
-- [ ] MCP `update_plan_status` rejects `completed` when `## Testing Plan` is `TBD` and rejects `in-progress` when steps contain placeholder text
-- [ ] Session-start reports plan health warnings for all active plans that violate the step/TBD rules
-- [ ] No false-positive warnings for valid, scaffolded plans that simply have empty steps at creation time (Layer 3 warning, not gate rejection)
+- [x] Pre-commit hook rejects a `TBD` Testing Plan in `plans/` path — `validate_testing_plan_not_tbd` added and wired; does not apply to `proposals/` (no Testing Plan section there)
+- [x] MCP `update_plan_status` rejects `completed` when Testing Plan is TBD and rejects `in-progress` when steps are placeholder — verified by unit tests in `npm run test:mcp` (12/12 passing)
+- [x] Session-start reports plan health warnings — `node scripts/plan-health.js` produced `[overlap]` warnings against live vault; Step 2.5 wired into session-start skill
+- [x] No false-positive warnings for valid plans — `write_plan` warns but does not block on placeholder steps; `update_plan_status('in-progress')` blocks only when ALL action cells are empty
 
 ## Rollback Procedures
 
