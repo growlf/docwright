@@ -594,7 +594,12 @@ import {
 
       // If the server returned structural notes but no improved body, show them in the panel
       if (!data.improved) {
-        if (data.structuralNotes) planReviewOverview.set('**Structural notes (not applied):**\n\n' + data.structuralNotes);
+        if (data.structuralNotes) {
+          planReviewOverview.set('**Structural notes (not applied):**\n\n' + data.structuralNotes);
+          showToast('Step text already optimal — structural notes updated in review panel', 4000);
+        } else {
+          showToast('No text improvements generated', 3000);
+        }
         return;
       }
 
@@ -637,6 +642,8 @@ import {
         } else {
           planReviewOverview.set('');
         }
+      } else {
+        showToast('Failed to save plan improvements', 3000);
       }
     } finally {
       applyingReview = false;
