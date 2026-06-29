@@ -26,7 +26,7 @@ export async function getSessionDiff(baseUrl: string, sessionId: string, vaultPa
   return fetchJson('GET', url);
 }
 
-export(baseUrl: string, sessionId: string, vaultPath?: string): Promise<SessionResult> {
+export async function forkSession(baseUrl: string, sessionId: string, vaultPath?: string): Promise<SessionResult> {
   let url = `${baseUrl.replace(/\/$/, '')}/session/${sessionId}/fork`;
   if (vaultPath) url += `?directory=${encodeURIComponent(vaultPath)}`;
   const raw = await fetchJson('POST', url);
