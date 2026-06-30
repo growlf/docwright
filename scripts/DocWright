@@ -1,27 +1,129 @@
 #!/usr/bin/env bash
-# DocWright launcher — native dev mode or Docker
+# DocWright launcher — native dev mode (foreground or detached), or Docker
+#
 # Usage:
-#   DocWright                       run native Vite + OpenCode + MCP (dev, hot reload)
-#   DocWright --vault /path/to/vault  serve a specific vault (default: $PWD)
+#   DocWright                       run native Vite + OpenCode in the foreground
+#                                   (hot reload; Ctrl+C stops everything)
+#   DocWright start [--web-only]    start services DETACHED in the background and return
+#   DocWright stop                  stop the detached services
+#   DocWright restart [--web-only]  stop then start (detached)
+#   DocWright status                show what is running
+#   DocWright logs [vite|opencode] [-f]   show (or follow) service logs
+#   DocWright --vault /path/to/vault      serve a specific vault (default: $PWD)
 #   DocWright --docker              run via docker compose (uses .env in repo root)
+#
+# The detached subcommands (start/stop/status/restart/logs) are designed for use
+# from non-interactive contexts (e.g. `!scripts/DocWright start` inside Claude Code):
+# they return immediately and manage the services via PID files under .logs/.
 
 REPO="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
 WEBUI="$REPO/src/webui"
 VITE_PORT="${VITE_PORT:-5173}"
 OC_PORT="${OC_PORT:-4096}"
 LOG_DIR="$REPO/.logs"
+VITE_PIDFILE="$LOG_DIR/vite.pid"
+OC_PIDFILE="$LOG_DIR/opencode.pid"
 VITE_PID=""
 OC_PID=""
 VAULT_ARG=""
+WEB_ONLY=0
 
 # ── output helpers ────────────────────────────────────────────────────────────
 _c() { printf "\033[${1}m${2}\033[0m"; }
 log()  { printf "  %s\n" "$*"; }
 ok()   { printf "  $(_c 32 ✓) %s\n" "$*"; }
+warn() { printf "  $(_c 33 !) %s\n" "$*"; }
 err()  { printf "  $(_c 31 ✗) %s\n" "$*" >&2; }
 die()  { err "$*"; exit 1; }
 hdr()  { printf "\n  $(_c '1;36' "$*")\n"; }
 rule() { printf "  %s\n" "────────────────────────────────────────"; }
+
+# ── shared helpers (used by both foreground and detached paths) ────────────────
+wait_for_port() {
+    local port=$1 label=$2 tries=0
+    printf "  waiting for %-20s" "$label"
+    while ! ss -tlnp 2>/dev/null | grep -q ":${port} "; do
+        sleep 0.5; printf "."; tries=$((tries + 1))
+        [ "$tries" -ge 40 ] && printf " timed out\n" && return 1
+    done
+    printf " $(_c 32 ready)\n"
+}
+
+port_in_use() { ss -tlnp 2>/dev/null | grep -q ":${1} "; }
+
+preflight() {
+    [ -d "$REPO" ]               || die "repo not found: $REPO"
+    [ -d "$WEBUI/node_modules" ] || die "run: cd '$WEBUI' && npm install"
+    # OpenCode is optional: when absent we fall back to web-only.
+    if [ "$WEB_ONLY" -eq 0 ] && ! command -v opencode >/dev/null 2>&1; then
+        warn "opencode not found on PATH — starting web-only (AI features disabled)"
+        WEB_ONLY=1
+    fi
+}
+
+prepare_vault() {
+    # Vault root: --vault arg wins; fall back to $PWD. Never inherit a stale env var.
+    export DOCWRIGHT_VAULT_ROOT="${VAULT_ARG:-$PWD}"
+    if [ -f "$DOCWRIGHT_VAULT_ROOT/.docwright/manifest.json" ]; then
+        log "upgrading vault: $DOCWRIGHT_VAULT_ROOT"
+        npx --prefix "$REPO" tsx "$REPO/scripts/adopt-vault.ts" \
+            --dest "$DOCWRIGHT_VAULT_ROOT" --docwright-path "$REPO" --upgrade \
+            || die "vault upgrade failed"
+    else
+        log "adopting vault: $DOCWRIGHT_VAULT_ROOT"
+        npx --prefix "$REPO" tsx "$REPO/scripts/adopt-vault.ts" \
+            --dest "$DOCWRIGHT_VAULT_ROOT" --docwright-path "$REPO" \
+            || die "vault adoption failed"
+    fi
+}
+
+clear_port() {
+    local port=$1
+    port_in_use "$port" || return 0
+    local stale
+    stale=$(ss -tlnp 2>/dev/null | awk -F'pid=' "/:${port} /{print \$2}" | cut -d, -f1)
+    if [ -n "$stale" ]; then
+        die "port $port already in use (pid $stale) — 'scripts/DocWright stop' or kill it first"
+    fi
+    # orphaned socket (no PID) — try to clear it
+    fuser -k "${port}/tcp" 2>/dev/null
+    sleep 1
+    port_in_use "$port" && die "port $port still in use after cleanup — check for stale connections"
+    ok "port $port cleared"
+}
+
+compute_net() {
+    TAILSCALE_IP=$(ip -4 addr 2>/dev/null | awk '/inet 100\./{print $2}' | cut -d/ -f1 | head -1)
+    LAN_IP=$(ip -4 addr 2>/dev/null | awk '!/127\.|100\./ && /inet /{print $2}' | cut -d/ -f1 | head -1)
+    CORS_ARGS=(--cors "http://localhost:${VITE_PORT}")
+    [ -n "$TAILSCALE_IP" ] && CORS_ARGS+=(--cors "http://${TAILSCALE_IP}:${VITE_PORT}")
+    [ -n "$LAN_IP"       ] && CORS_ARGS+=(--cors "http://${LAN_IP}:${VITE_PORT}")
+}
+
+ensure_logdir() {
+    mkdir -p "$LOG_DIR"
+    grep -qxF '.logs/' "$REPO/.gitignore" 2>/dev/null || echo ".logs/" >> "$REPO/.gitignore"
+}
+
+print_endpoints() {
+    printf "  %-22s %s\n" "Web UI (local):"    "http://localhost:${VITE_PORT}"
+    [ -n "$TAILSCALE_IP" ] && printf "  %-22s %s\n" "Web UI (tailscale):" "http://${TAILSCALE_IP}:${VITE_PORT}"
+    [ -n "$LAN_IP"       ] && printf "  %-22s %s\n" "Web UI (LAN):"       "http://${LAN_IP}:${VITE_PORT}"
+    [ "$WEB_ONLY" -eq 0 ] && printf "  %-22s %s\n" "OpenCode API:"       "http://localhost:${OC_PORT}"
+    printf "\n"
+    printf "  %-22s %s\n" "Vite log:"      "$LOG_DIR/vite.log"
+    [ "$WEB_ONLY" -eq 0 ] && printf "  %-22s %s\n" "OpenCode log:"  "$LOG_DIR/opencode.log"
+}
+
+# Launch a command fully detached in its own session, recording its PID.
+# The inner bash writes its own PID (which becomes the session/group leader after
+# exec) so stop can signal the whole process group. Args: <pidfile> <logfile> cmd...
+start_detached() {
+    local pidfile="$1" logfile="$2"; shift 2
+    setsid bash -c 'pf="$1"; shift; echo $$ > "$pf"; exec "$@"' _ "$pidfile" "$@" \
+        >"$logfile" 2>&1 </dev/null &
+    disown 2>/dev/null || true
+}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Docker mode
@@ -53,10 +155,9 @@ docker_mode() {
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Native mode
+# Native foreground mode (blocks until Ctrl+C) — the default with no subcommand
 # ──────────────────────────────────────────────────────────────────────────────
 native_mode() {
-    # ── cleanup on exit ───────────────────────────────────────────────────────
     cleanup() {
         printf "\n"
         log "shutting down..."
@@ -65,148 +166,189 @@ native_mode() {
     }
     trap cleanup EXIT INT TERM
 
-    wait_for_port() {
-        local port=$1 label=$2 tries=0
-        printf "  waiting for %-20s" "$label"
-        while ! ss -tlnp 2>/dev/null | grep -q ":${port} "; do
-            sleep 0.5; printf "."; tries=$((tries + 1))
-            [ "$tries" -ge 40 ] && printf " timed out\n" && return 1
-        done
-        printf " $(_c 32 ready)\n"
-    }
-
     hdr "DocWright dev launcher"
     rule
 
-    [ -d "$REPO" ]               || die "repo not found: $REPO"
-    [ -d "$WEBUI/node_modules" ] || die "run: cd '$WEBUI' && npm install"
-    command -v opencode >/dev/null 2>&1 || die "opencode not found on PATH"
-
-    # Vault root: --vault arg wins; fall back to $PWD. Never inherit a stale env var.
-    export DOCWRIGHT_VAULT_ROOT="${VAULT_ARG:-$PWD}"
-
-    # ── vault adopt / upgrade (idempotent) ────────────────────────────────────
-    if [ -f "$DOCWRIGHT_VAULT_ROOT/.docwright/manifest.json" ]; then
-        log "upgrading vault: $DOCWRIGHT_VAULT_ROOT"
-        npx --prefix "$REPO" tsx "$REPO/scripts/adopt-vault.ts" \
-            --dest "$DOCWRIGHT_VAULT_ROOT" --docwright-path "$REPO" --upgrade \
-            || die "vault upgrade failed"
-    else
-        log "adopting vault: $DOCWRIGHT_VAULT_ROOT"
-        npx --prefix "$REPO" tsx "$REPO/scripts/adopt-vault.ts" \
-            --dest "$DOCWRIGHT_VAULT_ROOT" --docwright-path "$REPO" \
-            || die "vault adoption failed"
-    fi
-
-    if ss -tlnp 2>/dev/null | grep -q ":${VITE_PORT} "; then
-        STALE=$(ss -tlnp 2>/dev/null | awk -F'pid=' "/:${VITE_PORT} /{print \$2}" | cut -d, -f1)
-        if [ -n "$STALE" ]; then
-            die "port $VITE_PORT already in use (pid $STALE) — kill it first"
-        fi
-        # orphaned socket (no PID) — try to clear it
-        fuser -k "${VITE_PORT}/tcp" 2>/dev/null
-        sleep 1
-        if ss -tlnp 2>/dev/null | grep -q ":${VITE_PORT} "; then
-            die "port $VITE_PORT still in use after cleanup — check for stale Chrome connections"
-        fi
-        ok "port $VITE_PORT cleared"
-    fi
-    if ss -tlnp 2>/dev/null | grep -q ":${OC_PORT} "; then
-        STALE=$(ss -tlnp 2>/dev/null | awk -F'pid=' "/:${OC_PORT} /{print \$2}" | cut -d, -f1)
-        if [ -n "$STALE" ]; then
-            die "port $OC_PORT already in use (pid $STALE) — kill it first"
-        fi
-        fuser -k "${OC_PORT}/tcp" 2>/dev/null
-        sleep 1
-        if ss -tlnp 2>/dev/null | grep -q ":${OC_PORT} "; then
-            die "port $OC_PORT still in use after cleanup — check for stale processes"
-        fi
-        ok "port $OC_PORT cleared"
-    fi
-
-    mkdir -p "$LOG_DIR"
-    grep -qxF '.logs/' "$REPO/.gitignore" 2>/dev/null || echo ".logs/" >> "$REPO/.gitignore"
-
-    TAILSCALE_IP=$(ip -4 addr 2>/dev/null | awk '/inet 100\./{print $2}' | cut -d/ -f1 | head -1)
-    LAN_IP=$(ip -4 addr 2>/dev/null | awk '!/127\.|100\./ && /inet /{print $2}' | cut -d/ -f1 | head -1)
-
-    CORS_ARGS=(--cors "http://localhost:${VITE_PORT}")
-    [ -n "$TAILSCALE_IP" ] && CORS_ARGS+=(--cors "http://${TAILSCALE_IP}:${VITE_PORT}")
-    [ -n "$LAN_IP"       ] && CORS_ARGS+=(--cors "http://${LAN_IP}:${VITE_PORT}")
+    preflight
+    prepare_vault
+    clear_port "$VITE_PORT"
+    [ "$WEB_ONLY" -eq 0 ] && clear_port "$OC_PORT"
+    ensure_logdir
+    compute_net
 
     log "starting Vite dev server..."
     OPENCODE_URL="http://localhost:${OC_PORT}" \
     DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-$PWD}" \
     npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT" >"$LOG_DIR/vite.log" 2>&1 &
     VITE_PID=$!
+    wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; exit 1; }
 
-    wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || {
-        err "Vite failed — check $LOG_DIR/vite.log"; exit 1
-    }
-
-    log "starting OpenCode serve..."
-    # Source webui .env so API keys (ANTHROPIC_API_KEY, etc.) reach OpenCode's environment.
-    # The file is gitignored — safe to source; missing file is silently skipped.
-    [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
-    opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
-    OC_PID=$!
-
-    wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || {
-        err "OpenCode failed — check $LOG_DIR/opencode.log"; exit 1
-    }
+    if [ "$WEB_ONLY" -eq 0 ]; then
+        log "starting OpenCode serve..."
+        # Source webui .env so API keys (ANTHROPIC_API_KEY, etc.) reach OpenCode.
+        [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
+        opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
+        OC_PID=$!
+        wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || { err "OpenCode failed — check $LOG_DIR/opencode.log"; exit 1; }
+    fi
 
     hdr "All services running"
     rule
-    printf "  %-22s %s\n" "Web UI (local):"    "http://localhost:${VITE_PORT}"
-    [ -n "$TAILSCALE_IP" ] && printf "  %-22s %s\n" "Web UI (tailscale):" "http://${TAILSCALE_IP}:${VITE_PORT}"
-    [ -n "$LAN_IP"       ] && printf "  %-22s %s\n" "Web UI (LAN):"       "http://${LAN_IP}:${VITE_PORT}"
-    printf "  %-22s %s\n" "OpenCode API:"       "http://localhost:${OC_PORT}"
-    printf "\n"
-    printf "  %-22s %s\n" "Vite log:"      "$LOG_DIR/vite.log"
-    printf "  %-22s %s\n" "OpenCode log:"  "$LOG_DIR/opencode.log"
-    printf "\n"
-    rule
-    printf "\n  Resume sessions:\n\n"
-
-    OC_SESSION=$(ls -t ~/.opencode/storage/session/*/info.json 2>/dev/null | head -1 | xargs dirname 2>/dev/null | xargs basename 2>/dev/null || true)
-    [ -n "$OC_SESSION" ] && printf "  %-22s %s\n" "opencode (latest):" "opencode -s $OC_SESSION" \
-                         || printf "  %-22s %s\n" "opencode:" "opencode"
-
-    PROJ_KEY=$(echo "$REPO" | sed 's|/|-|g' | sed 's/^-//')
-    LATEST_CLAUDE=$(ls -t "$HOME/.claude/projects/${PROJ_KEY}/"*.jsonl 2>/dev/null | head -1 | xargs -I{} basename {} .jsonl 2>/dev/null || true)
-    [ -n "$LATEST_CLAUDE" ] && printf "  %-22s %s\n" "claude (latest):" "claude --resume $LATEST_CLAUDE" \
-                             || printf "  %-22s %s\n" "claude:" "claude"
-
+    print_endpoints
     printf "\n"
     rule
     printf "\n  Press $(_c '1;37' 'Ctrl+C') to stop all services.\n\n"
-
     wait
 }
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Detached subcommands: start / stop / status / restart / logs
+# ──────────────────────────────────────────────────────────────────────────────
+cmd_start() {
+    hdr "DocWright — starting (detached)"
+    rule
+
+    if port_in_use "$VITE_PORT"; then
+        warn "Vite already listening on :${VITE_PORT} — already running?"
+        cmd_status
+        return 0
+    fi
+
+    preflight
+    prepare_vault
+    clear_port "$VITE_PORT"
+    [ "$WEB_ONLY" -eq 0 ] && clear_port "$OC_PORT"
+    ensure_logdir
+    compute_net
+
+    log "starting Vite dev server..."
+    export OPENCODE_URL="http://localhost:${OC_PORT}"
+    export DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-${VAULT_ARG:-$PWD}}"
+    start_detached "$VITE_PIDFILE" "$LOG_DIR/vite.log" \
+        npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT"
+    wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; return 1; }
+
+    if [ "$WEB_ONLY" -eq 0 ]; then
+        log "starting OpenCode serve..."
+        [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
+        start_detached "$OC_PIDFILE" "$LOG_DIR/opencode.log" \
+            opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT"
+        wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || { err "OpenCode failed — check $LOG_DIR/opencode.log"; return 1; }
+    fi
+
+    hdr "Services running (detached)"
+    rule
+    print_endpoints
+    printf "\n"
+    log "Stop with:   scripts/DocWright stop"
+    log "Status with: scripts/DocWright status"
+    printf "\n"
+}
+
+stop_service() {
+    local pidfile="$1" port="$2" label="$3" killed=0
+    if [ -f "$pidfile" ]; then
+        local pid; pid="$(cat "$pidfile" 2>/dev/null)"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null
+            for _ in $(seq 1 10); do kill -0 "$pid" 2>/dev/null || break; sleep 0.3; done
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null
+            fi
+            killed=1
+        fi
+        rm -f "$pidfile"
+    fi
+    # fallback: free the port regardless of pidfile state
+    if port_in_use "$port"; then
+        fuser -k "${port}/tcp" 2>/dev/null && killed=1
+        sleep 1
+    fi
+    [ "$killed" -eq 1 ] && ok "$label stopped" || log "$label not running"
+}
+
+cmd_stop() {
+    hdr "DocWright — stopping"
+    rule
+    stop_service "$VITE_PIDFILE" "$VITE_PORT" "Vite"
+    stop_service "$OC_PIDFILE" "$OC_PORT" "OpenCode"
+    printf "\n"
+}
+
+cmd_status() {
+    hdr "DocWright — status"
+    rule
+    local any=0
+    if port_in_use "$VITE_PORT"; then
+        local pid=""; [ -f "$VITE_PIDFILE" ] && pid="$(cat "$VITE_PIDFILE" 2>/dev/null)"
+        ok "Vite     up   :${VITE_PORT}${pid:+  (pid $pid)}  http://localhost:${VITE_PORT}"
+        any=1
+    else
+        log "Vite     down :${VITE_PORT}"
+    fi
+    if port_in_use "$OC_PORT"; then
+        local pid=""; [ -f "$OC_PIDFILE" ] && pid="$(cat "$OC_PIDFILE" 2>/dev/null)"
+        ok "OpenCode up   :${OC_PORT}${pid:+  (pid $pid)}  http://localhost:${OC_PORT}"
+        any=1
+    else
+        log "OpenCode down :${OC_PORT}"
+    fi
+    printf "\n"
+    [ "$any" -eq 1 ] && return 0 || return 1
+}
+
+cmd_logs() {
+    local which="${1:-all}" follow=""
+    [ "${2:-}" = "-f" ] && follow="-f"
+    [ "${1:-}" = "-f" ] && { follow="-f"; which="all"; }
+    case "$which" in
+        vite)     tail -n 100 $follow "$LOG_DIR/vite.log" ;;
+        opencode) tail -n 100 $follow "$LOG_DIR/opencode.log" ;;
+        all)      tail -n 100 $follow "$LOG_DIR/vite.log" "$LOG_DIR/opencode.log" 2>/dev/null ;;
+        *)        die "unknown log target: $which (use vite|opencode|all [-f])" ;;
+    esac
+}
+
 # ── argument parsing + dispatch ───────────────────────────────────────────────
-MODE_ARG=""
+ACTION=""
+LOG_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        start|stop|status|restart|logs|fg|foreground)
+            ACTION="$1" ;;
         --vault|-v)
             shift
             [[ $# -gt 0 ]] || die "--vault requires a path argument"
             VAULT_ARG="$(cd "$1" 2>/dev/null && pwd)" || die "--vault path does not exist: $1"
             ;;
-        --docker|-d|--help|-h) MODE_ARG="$1" ;;
-        *) die "unknown option: $1 (try --vault /path, --docker, or --help)" ;;
+        --web-only) WEB_ONLY=1 ;;
+        --docker|-d) ACTION="docker" ;;
+        --help|-h) ACTION="help" ;;
+        vite|opencode|all|-f) LOG_ARGS+=("$1") ;;   # operands for `logs`
+        *) die "unknown option: $1 (try a subcommand, --vault /path, --web-only, --docker, or --help)" ;;
     esac
     shift
 done
 
-case "${MODE_ARG:-}" in
-    --docker|-d) docker_mode ;;
-    --help|-h)
-        printf "Usage: DocWright [--vault /path] [--docker]\n"
-        printf "  (no flag)          native Vite + OpenCode + MCP (dev mode, hot reload)\n"
+case "${ACTION:-}" in
+    start)        cmd_start ;;
+    stop)         cmd_stop ;;
+    status)       cmd_status ;;
+    restart)      cmd_stop; cmd_start ;;
+    logs)         cmd_logs "${LOG_ARGS[@]}" ;;
+    docker)       docker_mode ;;
+    fg|foreground|"") native_mode ;;
+    help)
+        printf "Usage: DocWright [subcommand] [--vault /path] [--web-only] [--docker]\n\n"
+        printf "  (no subcommand)    native Vite + OpenCode in the FOREGROUND (Ctrl+C to stop)\n"
+        printf "  start              start services DETACHED and return\n"
+        printf "  stop               stop the detached services\n"
+        printf "  restart            stop then start (detached)\n"
+        printf "  status             show what is running\n"
+        printf "  logs [vite|opencode|all] [-f]   show or follow logs\n\n"
         printf "  --vault /path      serve a specific vault directory (default: \$PWD)\n"
+        printf "  --web-only         start Vite only, skip OpenCode (no AI features)\n"
         printf "  --docker           docker compose up (reads \$REPO/.env)\n"
         ;;
-    "") native_mode ;;
-    *) die "unknown option: ${MODE_ARG} (try --vault /path, --docker, or --help)" ;;
+    *) die "unknown action: ${ACTION}" ;;
 esac
