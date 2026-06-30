@@ -123,9 +123,39 @@ previous `PoliciesPanel.svelte` remains on disk and can be re-registered if need
 registry. The `ViewContainerMount` error boundary isolates any failures. No existing
 routes or API endpoints are changed.
 
+## Closure — Superseded
+
+**This plan never executed; its work shipped under another plan.** The Governance
+Engine VC was built as **Step 11 of `ui-layout-view-container-refactor`** (commit
+`c9ab97c`, released in v0.4.1 / `2711e82`). This document was created and had its
+9 steps authored in parallel, describing work that was already being built — so
+its checkboxes were never ticked (`completed_steps: 0` = orphaned, not pending).
+
+**Verified done (2026-06-30):** all 9 steps confirmed implemented in code
+(`GovernancePanel.svelte`, `govVc.ts`, `coreVCs.ts` order 10, `+layout.svelte`
+default `governance`); `typecheck` clean; e2e **33/33 pass** incl. 12 governance
+checks.
+
+### Deferred scope (captured before close — nothing lost)
+
+The 9 steps were an MVP slice of [[proposals/approved/governance-engine-view-container]].
+Richer scope from that proposal was deliberately not built and is preserved in:
+
+- [[proposals/policy-hook-execution-engine]] — full hook engine (Step 6 shipped a placeholder only)
+- [[proposals/governance-engine-vc-deferred-enhancements]] — profile-driven rendering, in-view profile switching, right-panel policy detail, policy-chain-browser enrichment
+- [[proposals/approved/ui-lifecycle-graph-view]] — already covers the Proposal→Plan→Outcome lineage idea
+
+### Pending human-gated close
+
+AI cannot set `status: completed`/`canceled` or `tests_human_reviewed: true`.
+Recommended: mark **`canceled` (superseded by ui-layout-refactor Step 11)** — more
+accurate than `completed`, since this doc never executed — and move to
+`plans/completed/`.
+
 ## Document History
 
 | Date | Change | Author |
 | --- | --- | --- |
+| 2026-06-30 | Verified 9/9 already implemented via ui-layout-refactor Step 11; captured deferred scope to 3 proposals; prepped for superseded-close. | NetYeti (AI-assisted) |
 | 2026-06-28 | Wrote full implementation steps (9 steps) from proposal scope and existing code reference. | NetYeti |
 | 2026-06-27 | Created from approved proposal | NetYeti |
