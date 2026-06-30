@@ -1035,3 +1035,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - 74a3e09 unpushed on feat/typed-proposals
 
 **Session note:** `docs/session-notes/session_note_202606291339.md`
+
+---
+
+## Session: 2026-06-30 — version tooling, launcher daemon, endsession-as-code
+
+**Focus:** version tooling, launcher daemon, endsession-as-code
+
+**Completed:**
+- [x] feat: automate endsession via scripts/end-session.ts
+- [x] fix: reconcile version files to 0.4.5
+- [x] feat: add start/stop/status/restart/logs subcommands to DocWright launcher
+- [x] fix: retire scripts/version.js and correct versioning docs
+- [x] feat: propose fixing or retiring scripts/version.js
+- [x] fix: ForceGraph connector pile-up on client-side navigation — lifecycle transition
+- [x] fix: unescaped apostrophes in proposal dialog placeholder strings
+- [x] fix: Apply Review button silently did nothing on well-written plans
+- [x] feat: typed proposal intake — feature/bug/thought categories, AI title generation
+- [x] feat: lifecycle graph funnel view — filter controls, close plan
+
+**Session note:** `docs/session-notes/session_note_202606300328.md`
