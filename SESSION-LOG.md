@@ -1055,3 +1055,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: lifecycle graph funnel view — filter controls, close plan
 
 **Session note:** `docs/session-notes/session_note_202606300328.md`
+
+---
+
+## Session: 2026-06-30 — dogfooding pivot: 6 PRs merged, 4 bugs found, guardrails recalibrated
+
+**Focus:** dogfooding pivot: 6 PRs merged, 4 bugs found, guardrails recalibrated
+
+**Completed:**
+- [x] docs: capture bug — pre-commit HUMAN-APPROVED check reads stale COMMIT_EDITMSG
+- [x] On develop: wip: cascade-steam UI approval (next session)
+- [x] index on develop: 94380f0 feat: propose fixing or retiring scripts/version.js
+- [x] untracked files on develop: 94380f0 feat: propose fixing or retiring scripts/version.js
+- [x] feat: propose fixing or retiring scripts/version.js
+- [x] chore: approve fix-or-retire-version-js proposal
+- [x] docs: complete governance-engine-view-container + capture dogfooding bug findings
+- [x] docs: capture dogfooding bug findings (WYSIWYG corruption, Complete-action defects)
+- [x] docs: complete governance-engine-view-container plan
+- [x] fix: profile-config endpoint returns name/version/documentTypes (completes governance Step 7)
+
+**Session note:** `docs/session-notes/session_note_202606302058.md`
