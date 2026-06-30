@@ -15,128 +15,58 @@ Triggered by: "endsession", "end session", "shutdown"
 
 > **Invocation note:** This is a DocWright local skill, NOT a harness-registered skill.
 > Do NOT call `Skill("endsession")` — that will fail with "Unknown skill".
-> Instead, read this file and execute the steps below directly using Bash and Write tools.
+> Read this file and run the command below.
 
-Do NOT ask for permission. Execute all steps automatically.
+The shutdown procedure is **code, not a manual checklist**. It lives in
+`scripts/end-session.ts` (run via `npm run session:end`) so it is deterministic
+and identical every time. The script resolves identity, collects the session's
+commits and `git status`, runs the phase close-out gate, writes the session
+note, appends to `SESSION-LOG.md`, then commits and pushes outstanding work
+across every worktree — and reports what it did.
 
-## Steps
+## How to run it
 
-### 1. Resolve identities
+Your only job is to supply judgement the script can't derive — the focus, a
+short narrative summary, key decisions, and next-session action items. Compose
+those from the conversation, then run:
 
-Read `.env` (fallback: `git config user.name` / `git config user.email`).
-Machine is always `$(hostname)` — never user-supplied.
+```bash
+npm run session:end -- \
+  --focus "<2-5 word focus>" \
+  --summary "<3-5 sentence summary>" \
+  --decision "<a key decision>" \
+  --decision "<another>" \
+  --next "<top next-session action>" \
+  --next "<second>"
+```
 
-### 2. Collect session data
+All flags are optional — with none, the script derives the focus and summary
+from the session's commits and still completes the full shutdown. Run it once;
+do **not** perform the steps by hand.
 
-- Read `SESSION-LOG.md` (last 100 lines) to find last session timestamp
-- Run `git log --oneline --since="<last-session-date>"` for commits this session
-- Run `git status --short` across the main worktree and any known sibling worktrees
-  (`../DocWright-kg`, `../DocWright-plugin`, etc. — check if they exist)
-- List active plans: any `.md` in `plans/` with `status: in-progress` or `status: approved`
+### Flags
 
-### 3. Phase close-out check
-
-Scan `plans/completed/` for any `phase-N-*.md` completed this session (check
-git log or mtime vs session start). Also read `VERSION`.
-
-If a phase plan completed AND VERSION has not been bumped past that phase, emit
-a BLOCKING WARNING and do not proceed until the user runs `npm run phase:close -- <N>`
-or explicitly defers.
-
-### 4. Create session note
-
-Write `docs/session-notes/session_note_YYYYMMDDHHMM.md`:
-
-```markdown
-# Session Note: YYYY-MM-DD — <focus>
-
-**Date:** YYYY-MM-DD
-**Author:** <human> @ <machine>
-**Focus:** <2-5 word summary>
-
-## Summary
-
-<3-5 sentence summary of what was accomplished>
-
-## Decisions Made
-
-- <bullet points of key decisions>
-
-## Plans Worked On
-
-| Plan | Status |
+| Flag | Effect |
 |------|--------|
-| <plan> | <in-progress/completed> |
+| `--focus <text>` | 2-5 word session focus (default: derived from commits) |
+| `--summary <text>` | Narrative summary (default: bullet list of commit subjects) |
+| `--decision <text>` | A key decision; repeat for several |
+| `--next <text>` | A next-session action item; repeat for several |
+| `--since <date>` | Override session-start date (default: last `SESSION-LOG.md` entry) |
+| `--defer-phase-close` | Acknowledge and skip the phase close-out BLOCKING gate |
+| `--no-commit` | Write docs but don't commit |
+| `--no-push` | Commit but don't push |
+| `--dry-run` | Print intended actions and the rendered note; change nothing |
 
-## Commits This Session
+## The phase close-out gate
 
-<git log output>
+If a `plans/completed/phase-N-*.md` plan was completed this session but `VERSION`
+has not been bumped past phase N, the script **exits with a blocking error**.
+Resolve it by running `npm run phase:close -- <N>`, then re-run `session:end`
+(or pass `--defer-phase-close` to skip intentionally).
 
-## Uncommitted Changes
+## Never auto-committed
 
-<none or list — will be committed in Step 6>
-
-## Architecture State
-
-<brief note on current architecture state>
-
-## Next Session Should Start With
-
-```bash
-<commands to run>
-```
-```
-
-### 5. Update SESSION-LOG.md
-
-Append a new entry after the last `---`:
-
-```markdown
----
-
-## Session: YYYY-MM-DD — <focus>
-
-**Focus:** <2-5 word summary>
-
-**Completed:**
-- [x] <what was done>
-
-**Session note:** `docs/session-notes/session_note_YYYYMMDDHHMM.md`
-```
-
-### 6. Commit all remaining changes
-
-After all docs and logs are written, commit everything outstanding across all worktrees.
-
-For each worktree with uncommitted or untracked content:
-1. `git status --short` — identify what's pending
-2. Stage all relevant files. Exclude:
-   - `.env` and any file that looks like credentials/secrets
-   - `node_modules/`, `dist/`, `.next/`, build artifacts
-   - Screenshot directories (`test/webui/screenshots/`, `/tmp/`)
-   - Files already in `.gitignore`
-3. If anything to commit: `git commit -m "docs: session note YYYY-MM-DD — <focus>"`
-4. If a worktree has no changes, skip it silently
-
-### 7. Push all branches
-
-Push every branch that has unpushed commits:
-
-```bash
-# For each worktree / branch with commits ahead of remote
-git push origin <current-branch>
-
-# If no remote tracking ref yet:
-git push -u origin <current-branch>
-```
-
-Report which branches were pushed and which were already up-to-date.
-
-### 8. Report
-
-Print a concise summary:
-- Session note path
-- Files committed and pushed (per worktree/branch)
-- Active plans and their priorities
-- Branches pushed / already up-to-date
-- Top 3 action items for next session, ordered by priority
+The script stages everything outstanding except secrets and machine-local churn
+(`.env*`, `.gemini/settings.json`) and anything already in `.gitignore`. If you
+need one of those committed, do it manually and explain why.

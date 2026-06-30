@@ -54,6 +54,7 @@
     "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
     "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
     "phase:close": "npx tsx scripts/phase-close.ts",
+    "session:end": "npx tsx scripts/end-session.ts",
     "release:tag": "bash scripts/release-tag.sh",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile",
