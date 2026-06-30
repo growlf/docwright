@@ -11,6 +11,9 @@ export async function GET() {
   try {
     const profile = getActiveProfile(REPO_ROOT);
     return json({
+      name: profile.name,
+      version: profile.version,
+      documentTypes: profile.documentTypes ?? [],
       features: profile.features ?? {},
       relationshipEngine: profile.relationshipEngine ?? {
         auto_detect_on_create: true,
