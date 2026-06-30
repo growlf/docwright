@@ -1075,3 +1075,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: profile-config endpoint returns name/version/documentTypes (completes governance Step 7)
 
 **Session note:** `docs/session-notes/session_note_202606302058.md`
+
+---
+
+## Session: 2026-06-30 — Process redesign + trunk migration
+
+**Focus:** Process redesign + trunk migration
+
+**Completed:**
+- [x] docs: flesh out the beta-channel lifecycle and gate (§5)
+- [x] docs: cross-link proposal to discussion issue #68
+- [x] docs: propose dev-tracking split, milestones, and beta channel (urgent)
+- [x] chore: migrate to trunk-based branching (retire develop)
+- [x] docs: capture bug — pre-commit HUMAN-APPROVED check is broken
+- [x] docs: capture bug — pre-commit HUMAN-APPROVED check reads stale COMMIT_EDITMSG
+- [x] On develop: wip: cascade-steam UI approval (next session)
+- [x] index on develop: 94380f0 feat: propose fixing or retiring scripts/version.js
+- [x] untracked files on develop: 94380f0 feat: propose fixing or retiring scripts/version.js
+- [x] feat: propose fixing or retiring scripts/version.js
+
+**Session note:** `docs/session-notes/session_note_202606302339.md`
