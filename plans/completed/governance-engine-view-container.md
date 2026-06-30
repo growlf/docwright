@@ -1,6 +1,7 @@
 ---
 title: Governance Engine View Container — Primary Shell Experience
-status: approved
+status: completed
+completed_date: 2026-06-30
 author: NetYeti
 created: 2026-06-27
 type: plan
@@ -17,8 +18,8 @@ complexity: high
 automated: full
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
-_path: plans/governance-engine-view-container.md
+tests_human_reviewed: true
+_path: plans/completed/governance-engine-view-container
 total_steps: 9
 completed_steps: 9
 scenario_synthesis: "Happy path: build GovernancePanel.svelte with sub-views (Status, Policies, Lifecycle, Hooks, Profile), wire as primary VC at order 10, Status page becomes its default content, PoliciesPanel retired. Failure path: a sub-view fails to load — GovernancePanel shows that sub-view in error state, other sub-views unaffected; ViewContainerMount error boundary prevents shell crash."
@@ -89,6 +90,15 @@ lineage, and the profile configuration are all expressions of the same governanc
 ## Testing Plan
 
 ### Step Verification
+- [ ] Step 1: `govVc.ts` — shared search store
+- [ ] Step 2: `GovernancePanel.svelte` — scaffold + tab bar
+- [ ] Step 3: Status sub-view
+- [ ] Step 4: Policies sub-view
+- [ ] Step 5: Lifecycle sub-view
+- [ ] Step 6: Hooks sub-view (MVP placeholder)
+- [ ] Step 7: Profile sub-view
+- [ ] Step 8: Register as primary VC at order 10
+- [ ] Step 9: Playwright e2e coverage
 
 - [x] Step 1: `govVc.ts` exports `govSearchQuery`; layout wires it to VC registration
 - [x] Step 2: GovernancePanel mounts; 5 tabs visible in activity bar
@@ -109,7 +119,7 @@ lineage, and the profile configuration are all expressions of the same governanc
 ### Gate Criteria
 
 - [x] `tests_defined` set to `true` in frontmatter
-- [ ] Human reviewer has verified step outcomes above
+- [x] Human reviewer has verified step outcomes above
 - [x] No regressions introduced to adjacent workflows
 
 ## Rollback Procedures
