@@ -138,6 +138,15 @@ between Claude, BigPickle (OpenCode's configured LLM), and the BDFL — each cat
 what the others missed. This practice must be preserved and made easy for every
 organization that adopts DocWright. See [[policies/core/multi-perspective-review.md]].
 
+## Branching (trunk-based)
+
+`main` is the trunk — always the latest integrated code. Branch features off it
+and PR back into it; **never** base off or wait for a `develop` branch (retired
+2026-06-30). Canonical: `git fetch origin && git checkout -b <prefix>/<slug> origin/main`,
+then `gh pr create --base main`. Typed prefixes (CI-enforced): `feat|fix|docs|chore|refactor|test|policy|decision`.
+Releases are cut as `release/v*.*.*` branches and tagged from `main`; `main` HEAD
+is not guaranteed deployable — consume tagged releases. See CONTRIBUTING.md.
+
 ## Key architectural invariants — never break these
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.

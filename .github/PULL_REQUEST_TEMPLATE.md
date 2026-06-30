@@ -4,8 +4,8 @@
 
 ## Branch info
 
-- **Base branch:** `develop` (features) or `release/v*.*.*` (milestones) or `main` (releases)
-- **Branch naming:** `feat/*`, `plan/*`, `fix/*`, `chore/*`
+- **Base branch:** `main` (features/fixes — the trunk) or `release/v*.*.*` (milestone bump-backs)
+- **Branch naming:** `feat/*`, `fix/*`, `docs/*`, `chore/*`, `refactor/*`, `test/*`, `policy/*`, `decision/*` (or `release/v*.*.*`, `hotfix/*`)
 
 ## Checklists
 

@@ -26,35 +26,39 @@ discussion happens in `proposals/` before it happens in pull requests.
 
 ## Branching and release workflow
 
-DocWright uses a **feature-branch → develop → release → main** workflow:
+DocWright uses a **trunk-based** workflow: `main` is the trunk — always the
+latest integrated code. Features branch off `main` and PR back into `main`.
+Releases are cut as `release/v*.*.*` branches and tagged from there.
 
 ```
-feature/plan branch  ──PR──→  develop  ──PR──→  release/v*.*.*  ──PR──→  main
+feat/fix/chore branch  ──PR──→  main  ──cut──→  release/v*.*.*  ──tag──→  v*.*.*
 ```
 
-**Feature / plan branches** — branched from `develop`, named by convention:
+**Feature / fix / chore branches** — branched from `main`, named by a typed
+prefix (enforced by the branch-policy CI check):
 - `feat/<short-description>` — new features
-- `plan/<plan-name>` — work tracked under a DocWright plan
 - `fix/<short-description>` — bug fixes
+- `docs/<short-description>` — documentation
 - `chore/<short-description>` — maintenance
+- also accepted: `refactor/`, `test/`, `policy/`, `decision/`
 
-**`develop`** — integration branch. All feature branches merge here via PR.
-Protected: requires 1 approving review, CI passing, and code owner sign-off.
+**`main`** — the trunk and integration branch. All typed-prefix branches merge
+here via PR. Protected: CI passing, linear history (squash merges), and the
+branch-policy check. **`main` HEAD is not guaranteed deployable — consume tagged
+releases, not `main` HEAD.**
 
-**`release/v*.*.*`** — branched from `develop` when a milestone is ready.
-Version bumps and changelog updates happen here. PR goes to `main`.
-
-**`main`** — release branch. Only accepts PRs from release branches.
-Protected: requires 1 approving review, CI passing, code owner review,
-and linear history. Tags on `main` trigger Docker deployment to ghcr.io.
+**`release/v*.*.*`** — cut from `main` when a milestone is ready. Version bumps
+and changelog updates happen here; tagging `v*.*.*` triggers the Docker
+deployment to ghcr.io. The bump is merged back to `main` via PR. Urgent fixes
+use `hotfix/*`.
 
 ### Quick start
 
 ```bash
-git checkout develop          # start from develop
-git checkout -b feat/my-thing # create feature branch
+git fetch origin
+git checkout -b feat/my-thing origin/main   # branch off the trunk
 # ... work, commit, push ...
-gh pr create --base develop   # PR back to develop
+gh pr create --base main                     # PR back to the trunk
 ```
 
 ## Development setup
