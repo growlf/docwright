@@ -1115,3 +1115,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: propose fixing or retiring scripts/version.js
 
 **Session note:** `docs/session-notes/session_note_202606301925.md`
+
+---
+
+## Session: 2026-06-30 — urgent-issue visibility gap + #68 kickoff
+
+**Focus:** urgent-issue visibility gap + #68 kickoff
+
+**Completed:**
+- [x] docs: land base process-flow proposal on trunk (#68)
+- [x] fix: repair HUMAN-APPROVED approval gate (assert in commit-msg, not pre-commit)
+- [x] docs: capture two hook-deployment bugs found fixing the approval gate
+- [x] fix: repair HUMAN-APPROVED gate — assert marker in commit-msg, not pre-commit
+- [x] docs: flesh out the beta-channel lifecycle and gate (§5)
+- [x] docs: cross-link proposal to discussion issue #68
+- [x] docs: propose dev-tracking split, milestones, and beta channel (urgent)
+- [x] chore: migrate to trunk-based branching (retire develop)
+- [x] docs: capture bug — pre-commit HUMAN-APPROVED check is broken
+- [x] docs: capture bug — pre-commit HUMAN-APPROVED check reads stale COMMIT_EDITMSG
+
+**Session note:** `docs/session-notes/session_note_202606301940.md`
