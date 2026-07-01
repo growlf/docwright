@@ -1155,3 +1155,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: capture bug — pre-commit HUMAN-APPROVED check reads stale COMMIT_EDITMSG
 
 **Session note:** `docs/session-notes/session_note_202606301940.md`
+
+---
+
+## Session: 2026-07-01 — Process-flow unblock + cleanup
+
+**Focus:** Process-flow unblock + cleanup
+
+**Completed:**
+- [x] fix: resolve MCP vault root when DOCWRIGHT_VAULT_ROOT is unset/unexpanded
+- [x] fix: resolve MCP vault root when DOCWRIGHT_VAULT_ROOT is unset/unexpanded
+- [x] fix: sort status lists by priority across all schemes; empty sinks last
+- [x] fix: sort status lists by priority across all schemes; empty sinks last
+- [x] fix: surface parked (unmerged-branch) work at session start
+- [x] docs: capture bug — session:end pushes directly to protected main
+- [x] docs: capture bug — session-start blind to unmerged branches + open issues
+- [x] docs: land base process-flow proposal on trunk (#68)
+- [x] docs: capture bug — session-start blind to unmerged branches + open issues
+- [x] fix: repair HUMAN-APPROVED approval gate (assert in commit-msg, not pre-commit)
+
+**Session note:** `docs/session-notes/session_note_202607010339.md`
