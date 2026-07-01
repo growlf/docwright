@@ -1,6 +1,6 @@
 ---
 title: "Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-07-01
 created_by: NetYeti@cluster-llm
@@ -18,13 +18,14 @@ phase: 2
 mode: guided
 automated: guided
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 template_version: 1.0
 total_steps: 8
-completed_steps: 0
+completed_steps: 1
 _path: plans/separate-dev-tracking-milestones-and-beta-channel.md
 scenario_synthesis: "Umbrella governance/process plan (no product code itself). Sequences and authorizes eight deliverables in a dependency chain: docwright-dev profile (grammar), in-vault issues/ store + backlog migration, milestone frontmatter field + lint, derived roadplan view, the first milestone-determination cycle, release-channel/beta gate, user bug-reporting bridge, and empty-image deployment. Each row becomes its own sub-plan/code-issue once the issues/ store exists, dogfooding the code-issue/governance split. Guided mode: agent drafts, human approves. No VS Code or IDE-specific steps."
+gate_note: "Changed files are untestable types: plans/separate-dev-tracking-milestones-and-beta-channel.md"
 ---
 
 # Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel
@@ -75,7 +76,7 @@ remaining rows migrate into `issues/` — dogfooding the split.
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | **`docwright-dev` profile (grammar)** | New profile under `src/profiles/docwright-dev/`: `profile.json`, `schema.json`, `opencode-instructions.md`, and templates for first-class document types `code-issue`, `bug`, `proposal`, `plan`, `policy`, `decision` (all templates carry `author-role:`, default `contributor`). Additive; dogfoods the Phase-2 profile engine. No existing document is forced to migrate. | ⏳ Pending |
+| 1 | **`docwright-dev` profile (grammar)** | New profile under `src/profiles/docwright-dev/`: `profile.json`, `schema.json`, `opencode-instructions.md`, and templates for first-class document types `code-issue`, `bug`, `proposal`, `plan`, `policy`, `decision` (all templates carry `author-role:`, default `contributor`). Additive; dogfoods the Phase-2 profile engine. No existing document is forced to migrate. | ✅ Done |
 | 2 | **`issues/` store + templates + backlog migration** | Create in-vault `issues/` markdown store (git-canonical, no DB, no telemetry — invariants intact). Add `code-issue`/`bug` templates. Migrate existing `bug-*.md` out of `proposals/` into `issues/`, cross-linking governance halves back to their proposals per the "is the deliverable a diff?" sorting test. GitHub Issues becomes public intake → `inbox → issue`. | ⏳ Pending |
 | 3 | **`milestone:` frontmatter field + lint** | Add `milestone:` to issue/plan schema. Lint: every open item has a milestone — a real one or the literal `future` (no orphans; `code-over-memory`). Milestone sits **below** a phase; phases stay `phase-close`-owned. | ⏳ Pending |
 | 4 | **Derived roadplan view** | Generated view (never hand-maintained) computed from `milestone:` fields: current milestone, next milestone, `future` pool. Replaces hand-maintained sections of `docs/roadmap.md`. Resolves [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] and feeds [[proposals/formalize-roadmap-sequencing-enforcement]]. (Also the durable fix for the "no prioritized/hierarchical list" finding that the `/status` priority-sort patch only bandaged.) | ⏳ Pending |
@@ -156,3 +157,4 @@ each deliverable; dispatch retains **zero** VS Code API dependencies (invariant 
 |------|--------|--------|
 | 2026-07-01 | Reset to `draft` and restored the reviewed 8-step body after the Web UI Approve button generated a divergent, prematurely-`approved` plan. Generator bugs captured in [[proposals/bug-plan-generator-from-approved-proposal]] + [[proposals/bug-approve-not-idempotent-stale-consumed-by]]. | NetYeti |
 | 2026-07-01 | Drafted (AI, for review) from proposal #68's §Implementation + §bootstrap; status `draft` pending proposal approval. | NetYeti |
+| 2026-07-01 | Step 1 delivered: docwright-dev profile (profile.json, schema.json, opencode-instructions.md, 6 templates with author-role, unit test). tsc clean, 297 dispatch tests pass. Plan → in-progress. | NetYeti |
