@@ -210,6 +210,7 @@ export function executeTransition(
     actor.actor,
     actor.actorType,
     gateId && gatePassed ? { gate_id: gateId, gate_status: 'passed' } : undefined,
+    vaultRoot,
   );
 
   return { success: true, newStatus: toStatus };

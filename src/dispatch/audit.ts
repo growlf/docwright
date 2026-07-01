@@ -60,19 +60,19 @@ function getRepoRoot(): string {
     : process.cwd();
 }
 
-function getAuditDir(): string {
-  return path.join(getRepoRoot(), 'audit');
+function getAuditDir(repoRoot?: string): string {
+  return path.join(repoRoot ?? getRepoRoot(), 'audit');
 }
 
-function getAuditFile(): string {
-  return path.join(getAuditDir(), 'lifecycle.jsonl');
+function getAuditFile(repoRoot?: string): string {
+  return path.join(getAuditDir(repoRoot), 'lifecycle.jsonl');
 }
 
 // ── Git helper ─────────────────────────────────────────────────────────────
 
-function getGitCommit(): string {
+function getGitCommit(repoRoot?: string): string {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: getRepoRoot(), encoding: 'utf-8' }).trim();
+    return execSync('git rev-parse --short HEAD', { cwd: repoRoot ?? getRepoRoot(), encoding: 'utf-8' }).trim();
   } catch {
     return '';
   }
@@ -83,10 +83,19 @@ function getGitCommit(): string {
 /**
  * Append an audit entry to audit/lifecycle.jsonl.
  * Auto-fills ts and git_commit if not provided.
+ *
+ * `repoRoot` MUST be passed by callers that operate on a specific vault (e.g.
+ * executeTransition) so the audit write lands in the same tree as the document
+ * write. When omitted, it falls back to DOCWRIGHT_ROOT/cwd — which in a test
+ * without an isolated root would pollute the real repo. Threading the root is
+ * the fix for that test-isolation leak (see issues/bug-tests-pollute-real-audit-log).
  */
-export function writeAuditEntry(entry: Omit<AuditEntry, 'ts' | 'git_commit'> & { ts?: string; git_commit?: string }): void {
-  const auditDir = getAuditDir();
-  const auditFile = getAuditFile();
+export function writeAuditEntry(
+  entry: Omit<AuditEntry, 'ts' | 'git_commit'> & { ts?: string; git_commit?: string },
+  repoRoot?: string,
+): void {
+  const auditDir = getAuditDir(repoRoot);
+  const auditFile = getAuditFile(repoRoot);
   if (!fs.existsSync(auditDir)) fs.mkdirSync(auditDir, { recursive: true });
 
   const full: AuditEntry = {
@@ -98,7 +107,7 @@ export function writeAuditEntry(entry: Omit<AuditEntry, 'ts' | 'git_commit'> & {
     actor_type: entry.actor_type,
     gate_id: entry.gate_id,
     gate_status: entry.gate_status,
-    git_commit: entry.git_commit ?? getGitCommit(),
+    git_commit: entry.git_commit ?? getGitCommit(repoRoot),
   };
 
   fs.appendFileSync(auditFile, JSON.stringify(full) + '\n', 'utf-8');
@@ -114,6 +123,7 @@ export function logTransition(
   actor: string,
   actorType: 'human' | 'ai' = 'human',
   gateInfo?: { gate_id: string; gate_status: string },
+  repoRoot?: string,
 ): void {
   writeAuditEntry({
     doc_path: docPath,
@@ -123,7 +133,7 @@ export function logTransition(
     actor_type: actorType,
     gate_id: gateInfo?.gate_id,
     gate_status: gateInfo?.gate_status,
-  });
+  }, repoRoot);
 }
 
 // ── Reader / Query ─────────────────────────────────────────────────────────
