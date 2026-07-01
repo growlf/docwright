@@ -1,48 +1,45 @@
 ---
 title: "Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel"
-status: draft
+status: approved
 author: NetYeti
-created: "2026-07-01"
-created_by: "NetYeti@cluster-llm"
-tags: [governance, process, lifecycle, milestones, dogfooding, deployment, roadmap]
-proposal_source: "proposals/separate-dev-tracking-milestones-and-beta-channel.md"
+created: 2026-07-01
+created_by: NetYeti@cluster-llm
+tags:
+  - governance
+  - process
+  - lifecycle
+  - milestones
+  - dogfooding
+  - deployment
+  - roadmap
+proposal_source: proposals/approved/separate-dev-tracking-milestones-and-beta-channel.md
 priority: high
 phase: 2
+mode: guided
 automated: guided
-waiting_reason:
-assigned_to: ["NetYeti"]
-related_to:
-  - docs/roadmap.md
-  - proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md
-  - proposals/formalize-roadmap-sequencing-enforcement.md
-  - policies/core/bugs-before-features.md
-  - policies/core/code-over-memory.md
-  - policies/core/versioning.md
-depends_on: []
-blocks: []
-reviewed_by:
-reviewed_date:
-canceled_date:
-cancellation_reason:
-template_version: "1.0"
+assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
-gate_reviewer:
-gate_status:
-gate_date:
-gate_note:
-gate_reviews: []
-gate_quorum: 1
+template_version: 1.0
 total_steps: 8
 completed_steps: 0
+_path: plans/separate-dev-tracking-milestones-and-beta-channel.md
+scenario_synthesis: "Umbrella governance/process plan (no product code itself). Sequences and authorizes eight deliverables in a dependency chain: docwright-dev profile (grammar), in-vault issues/ store + backlog migration, milestone frontmatter field + lint, derived roadplan view, the first milestone-determination cycle, release-channel/beta gate, user bug-reporting bridge, and empty-image deployment. Each row becomes its own sub-plan/code-issue once the issues/ store exists, dogfooding the code-issue/governance split. Guided mode: agent drafts, human approves. No VS Code or IDE-specific steps."
 ---
 
 # Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel
 
-> **DRAFT — pending approval of [[proposals/separate-dev-tracking-milestones-and-beta-channel]] (GitHub #68).**
-> This plan is a review artifact. It stays `draft` until the BDFL approves the umbrella
-> proposal; only then does it promote to `approved`/`in-progress`. AI drafted it; no
-> approval, gate, or completion field is set by AI.
+> **DRAFT — pending BDFL approval of this plan's content.**
+> The umbrella proposal [[proposals/approved/separate-dev-tracking-milestones-and-beta-channel]]
+> (GitHub #68) is approved; **this plan is not**. It stays `draft` until the BDFL reviews and
+> approves *this plan's* steps; only then does it promote to `approved`/`in-progress`. AI drafted
+> it; no approval, gate, or completion field is set by AI.
+>
+> **Provenance note (2026-07-01):** the Web UI Approve button auto-generated a plan that dumped
+> the whole proposal into Overview, mangled frontmatter, and mis-stamped it `approved`. That
+> content was replaced with this reviewed 8-step body (recovered from #80); the generator bugs
+> are captured in [[proposals/bug-plan-generator-from-approved-proposal]] and
+> [[proposals/bug-approve-not-idempotent-stale-consumed-by]].
 
 ## Mode
 
@@ -73,7 +70,8 @@ remaining rows migrate into `issues/` — dogfooding the split.
 ## Implementation Steps
 
 > Each row is a deliverable that will be split into its own sub-plan (`parent_plan:
-> base-process-flow.md`). Statuses here track the sub-plan's lifecycle, not code steps.
+> separate-dev-tracking-milestones-and-beta-channel.md`). Statuses here track the sub-plan's
+> lifecycle, not code steps.
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
@@ -156,4 +154,5 @@ each deliverable; dispatch retains **zero** VS Code API dependencies (invariant 
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2026-07-01 | Drafted (AI, for review) from proposal #68's §Implementation + §bootstrap; status `draft` pending proposal approval. Written via dw-upstream after dw-vault MCP root misconfig (DOCWRIGHT_VAULT_ROOT unexpanded) was found and fixed in code. | NetYeti |
+| 2026-07-01 | Reset to `draft` and restored the reviewed 8-step body after the Web UI Approve button generated a divergent, prematurely-`approved` plan. Generator bugs captured in [[proposals/bug-plan-generator-from-approved-proposal]] + [[proposals/bug-approve-not-idempotent-stale-consumed-by]]. | NetYeti |
+| 2026-07-01 | Drafted (AI, for review) from proposal #68's §Implementation + §bootstrap; status `draft` pending proposal approval. | NetYeti |
