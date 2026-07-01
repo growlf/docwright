@@ -1,5 +1,6 @@
 ---
 title: "Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -12,7 +13,6 @@ tags:
   - lifecycle
   - data-integrity
   - reactivity
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---
