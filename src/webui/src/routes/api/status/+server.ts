@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGatesForDocument, isOverdue, getLastGateDate, parseCadence } from '../../../../../dispatch/gates';
+import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -77,25 +78,6 @@ function readDir(dir: string): Array<{ path: string; fm: Record<string, any> }> 
 // Word priorities map onto the same scale as numeric ones (lower = more urgent),
 // so mixed schemes (e.g. `high` and `4`) sort together instead of numeric/`highest`
 // values silently collapsing to the bottom. Unknown/empty sinks last.
-const PRIORITY_RANK: Record<string, number> = {
-  highest: -1, critical: 0, high: 1, medium: 2, low: 3,
-};
-function priorityRank(p: string): number {
-  const s = String(p ?? '').trim().toLowerCase();
-  if (s === '') return 99;          // empty → bottom (note: Number('') === 0, so guard first)
-  if (s in PRIORITY_RANK) return PRIORITY_RANK[s];
-  const n = Number(s);
-  if (Number.isFinite(n)) return n; // numeric scale: lower = higher priority
-  return 99;                        // unknown → bottom
-}
-function byPriority(
-  a: { priority: string; title?: string },
-  b: { priority: string; title?: string },
-): number {
-  const d = priorityRank(a.priority) - priorityRank(b.priority);
-  return d !== 0 ? d : (a.title ?? '').localeCompare(b.title ?? ''); // stable, alpha within a tier
-}
-
 function asList(val: unknown): string[] {
   if (Array.isArray(val)) return val.map(String);
   if (typeof val === 'string' && val) return [val];
@@ -120,6 +102,7 @@ function entry(p: string, fm: Record<string, any>) {
     phase: fm.phase !== undefined && fm.phase !== '' ? String(fm.phase) : null,
     parentPlan: String(fm.parent_plan ?? ''),
     parentDeliverable: String(fm.parent_deliverable ?? ''),
+    milestone: String(fm.milestone ?? ''),
   };
 }
 
@@ -425,6 +408,14 @@ export function GET() {
       }
     : null;
 
+  const openIssues = readDir(path.join(REPO_ROOT, 'issues'))
+    .filter(({ path: p, fm }) =>
+      !p.endsWith('README.md') &&
+      !['resolved', 'wont-fix'].includes(String(fm.status ?? 'open'))
+    )
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort(byPriority);
+
   const vaultName = path.basename(REPO_ROOT);
 
   const data = {
@@ -437,6 +428,8 @@ export function GET() {
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,
+    issues: { open: openIssues },
+    roadplan: buildRoadplan(active, openIssues),
   };
   cache = { data, at: Date.now() };
   return json(data);

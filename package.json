@@ -56,6 +56,7 @@
     "phase:close": "npx tsx scripts/phase-close.ts",
     "session:end": "npx tsx scripts/end-session.ts",
     "release:tag": "bash scripts/release-tag.sh",
+    "generate-roadplan": "npx tsx scripts/generate-roadplan.ts",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile",
     "test:webui": "mocha --require tsx/cjs test/webui/auth.test.ts test/webui/chat-utils.test.ts test/webui/diff-annotate.test.ts",

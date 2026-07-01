@@ -55,12 +55,18 @@
       no_research_proposals: { path: string; title: string }[];
     };
     phaseReview: PhaseReview | null;
+    issues?: { open: DocEntry[] };
+    roadplan?: {
+      current: { name: string; items: any[] };
+      next: { name: string; items: any[] };
+      future: { name: string; items: any[] };
+    };
   }
 
   let data = $state<StatusData | null>(null);
   let loading = $state(true);
 
-  type ViewMode = 'list' | 'funnel' | 'graph';
+  type ViewMode = 'list' | 'funnel' | 'graph' | 'roadplan';
   function getViewMode(): ViewMode {
     if (typeof sessionStorage === 'undefined') return 'list';
     return (sessionStorage.getItem('status-view') as ViewMode) ?? 'list';
@@ -179,6 +185,7 @@
       <button class="view-btn" class:active={viewMode === 'list'}   onclick={() => setView('list')}   title="List view">≡ List</button>
       <button class="view-btn" class:active={viewMode === 'funnel'} onclick={() => setView('funnel')} title="Funnel view">⊙ Funnel</button>
       <button class="view-btn" class:active={viewMode === 'graph'}  onclick={() => setView('graph')}  title="Knowledge graph">⬡ Graph</button>
+      <button class="view-btn" class:active={viewMode === 'roadplan'} onclick={() => setView('roadplan')} title="Roadplan view">🗺 Roadplan</button>
       <a class="view-btn" href="/audit" title="Audit log">📊 Audit</a>
     </div>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
@@ -200,6 +207,78 @@
         active={data.plans.active}
         completedCount={data.plans.completed_count}
       />
+    {:else if viewMode === 'roadplan'}
+      <div class="roadplan-container">
+        {#each ['current', 'next', 'future'] as bucketKey}
+          {@const bucket = data.roadplan?.[bucketKey]}
+          {#if bucket}
+            <div class="roadplan-bucket-section">
+              <div class="roadplan-bucket-header">
+                <h2>
+                  {#if bucketKey === 'current'}
+                    🎯 Current Milestone: {bucket.name}
+                  {:else if bucketKey === 'next'}
+                    🚀 Next Milestone: {bucket.name}
+                  {:else}
+                    🗺 {bucket.name}
+                  {/if}
+                </h2>
+                <span class="badge">{bucket.items.length} item{bucket.items.length === 1 ? '' : 's'}</span>
+              </div>
+              
+              {#if bucket.items.length === 0}
+                <div class="empty">No items assigned to this milestone</div>
+              {:else}
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 80px;">Type</th>
+                      <th style="width: 60px;">Pri</th>
+                      <th>Title</th>
+                      <th>Phase</th>
+                      <th>Status</th>
+                      <th>Assigned</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each bucket.items as item}
+                      <tr class="item-row" onclick={() => goto('/' + item.path.replace(/\.md$/, ''))}>
+                        <td>
+                          <span class="cat-badge cat-{item.itemType === 'plan' ? 'feature' : 'bug'}">
+                            {item.itemType === 'plan' ? '✨ Plan' : '🐛 Issue'}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="pri {priorityClass(item.priority)}">{item.priority || '—'}</span>
+                        </td>
+                        <td class="item-title-cell">
+                          <span class="item-title">{item.title}</span>
+                          {#if item.depends_on && item.depends_on.length > 0}
+                            <span class="item-deps">↳ needs: {item.depends_on.map((d: string) => d.replace(/^plans\/(completed\/)?/, '').replace(/\.md$/, '')).join(', ')}</span>
+                          {/if}
+                        </td>
+                        <td>
+                          {#if item.phase}
+                            <span class="phase-tag">Phase {item.phase}</span>
+                          {:else}
+                            <span class="muted">—</span>
+                          {/if}
+                        </td>
+                        <td>
+                          <span class="badge {statusBadgeClass(item.status)}">{item.status}</span>
+                        </td>
+                        <td class="item-date">
+                          {item.assigned_to || '—'}
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              {/if}
+            </div>
+          {/if}
+        {/each}
+      </div>
     {:else}
 
     <!-- Phase gate review banner -->
@@ -764,6 +843,43 @@
   .audit-link-row { padding: 12px 0 4px; text-align: center; }
   .audit-link { font-size: 11px; color: $muted; text-decoration: none; padding: 4px 12px; border: 1px solid $border; border-radius: 4px; &:hover { color: $blue; border-color: $blue-bdr; } }
 
+  .roadplan-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .roadplan-bucket-section {
+    border: 1px solid $border;
+    border-radius: 6px;
+    background: $bg-2;
+    overflow: hidden;
+  }
+  .roadplan-bucket-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: $bg-3;
+    border-bottom: 1px solid $border;
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: $fg;
+      margin: 0;
+    }
+  }
+  .phase-tag {
+    display: inline-block;
+    background: rgba(88, 166, 255, 0.08);
+    color: #58a6ff;
+    border: 1px solid rgba(88, 166, 255, 0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
   // ── Light theme — scoped via :global so Svelte appends the scope hash ────────
   // Pattern: :global(html[data-theme="light"]) .scoped-class compiles to
   //   html[data-theme="light"] .scoped-class.s-hash — beats the base rule.
@@ -785,5 +901,8 @@
     .gate-badge { background: #fff8cc; color: #7a6000; border-color: #e8c84a; }
     .audit-link { color: #888; border-color: #ccc; &:hover { color: #4a6cf7; border-color: #4a6cf7; } }
     .empty, .muted { color: #888; }
+    .roadplan-bucket-section { border-color: #d0d0d0; background: #fff; }
+    .roadplan-bucket-header { background: #e8e8e8; border-bottom-color: #d0d0d0; h2 { color: #1a1a1a; } }
+    .phase-tag { background: rgba(74, 108, 247, 0.08); color: #4a6cf7; border-color: rgba(74, 108, 247, 0.15); }
   }
 </style>
