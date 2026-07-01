@@ -1,7 +1,7 @@
 ---
 title: "Separate DocWright self-development from vault governance: code-issues, milestones, and a beta channel"
-author: "NetYeti"
-created: "2026-06-30"
+author: NetYeti
+created: 2026-06-30
 tags:
   - governance
   - process
@@ -13,10 +13,10 @@ tags:
 category:
   - governance
 complexity: high
-approved: false
+approved: true
 priority: high
-created_by: "NetYeti@cluster-llm"
-assigned_to: []
+created_by: NetYeti@cluster-llm
+assigned_to: NetYeti
 related_to:
   - docs/roadmap.md
   - proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md
@@ -30,6 +30,8 @@ related_to:
 depends_on: []
 blocks: []
 author-role: contributor
+_path: proposals/approved/separate-dev-tracking-milestones-and-beta-channel
+consumed_by: plans/separate-dev-tracking-milestones-and-beta-channel.md
 ---
 
 # Separate DocWright self-development from vault governance: code-issues, milestones, and a beta channel
