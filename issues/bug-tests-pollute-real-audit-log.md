@@ -17,6 +17,7 @@ created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 closed_by_pr: ""
 cross_link: ""
+milestone: future
 ---
 
 > The inaugural native code-issue in the `issues/` store — captured while dogfooding #68

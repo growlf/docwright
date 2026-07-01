@@ -20,6 +20,7 @@ completed_steps: 0
 _path: plans/contribution-pipeline.md
 github_epic:
 automated: full
+milestone: next
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 

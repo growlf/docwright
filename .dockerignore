@@ -15,6 +15,7 @@ docs/
 policies/
 inbox/
 example-vault/
+issues/
 
 # Host-local config — contains hardcoded paths specific to the dev machine
 opencode.json

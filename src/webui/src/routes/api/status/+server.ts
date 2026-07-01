@@ -3,6 +3,7 @@ import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGatesForDocument, isOverdue, getLastGateDate, parseCadence } from '../../../../../dispatch/gates';
 import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
+import { getReleaseReadiness } from '../../../../../dispatch/release';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -418,6 +419,9 @@ export function GET() {
 
   const vaultName = path.basename(REPO_ROOT);
 
+  const roadplan = buildRoadplan(active, openIssues);
+  const releaseReadiness = getReleaseReadiness(REPO_ROOT, roadplan.current.name);
+
   const data = {
     vaultName,
     version,
@@ -429,7 +433,8 @@ export function GET() {
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,
     issues: { open: openIssues },
-    roadplan: buildRoadplan(active, openIssues),
+    roadplan,
+    releaseReadiness,
   };
   cache = { data, at: Date.now() };
   return json(data);

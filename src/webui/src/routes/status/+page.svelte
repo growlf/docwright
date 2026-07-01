@@ -61,6 +61,7 @@
       next: { name: string; items: any[] };
       future: { name: string; items: any[] };
     };
+    releaseReadiness?: any;
   }
 
   let data = $state<StatusData | null>(null);
@@ -140,6 +141,72 @@
     aiPreReviewLoading = { ...aiPreReviewLoading, [key]: false };
   }
 
+  let promoting = $state(false);
+  async function promoteChannel(targetChannel: 'beta' | 'stable') {
+    if (!data?.releaseReadiness) return;
+    promoting = true;
+    const res = await fetch('/api/release/channel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        milestone: data.releaseReadiness.milestone,
+        channel: targetChannel,
+      }),
+    });
+    promoting = false;
+    if (res.ok) {
+      load();
+    } else {
+      const err = await res.json();
+      alert('Promotion failed: ' + (err.error || 'Unknown error'));
+    }
+  }
+
+  let showReportBugModal = $state(false);
+  let bugTitle = $state('');
+  let bugDesc = $state('');
+  let bugReporter = $state('NetYeti');
+  let bugPriority = $state<'low' | 'medium' | 'high'>('medium');
+  let bugSysInfo = $state('');
+  let reportSubmitting = $state(false);
+
+  async function submitBugReport(e: Event) {
+    e.preventDefault();
+    if (!bugTitle.trim() || !bugDesc.trim() || !bugReporter.trim()) return;
+    reportSubmitting = true;
+    const res = await fetch('/api/issues/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: bugTitle,
+        description: bugDesc,
+        reporter: bugReporter,
+        priority: bugPriority,
+        system_info: bugSysInfo,
+        milestone: data?.releaseReadiness?.milestone || 'v0.5.0',
+      }),
+    });
+    reportSubmitting = false;
+    if (res.ok) {
+      const result = await res.json();
+      if (result.isDuplicate) {
+        alert(`Duplicate bug detected! Incremented demand count on existing bug at ${result.path} (Total demand: ${result.demandCount}).`);
+      } else {
+        alert(`Bug report successfully created at ${result.path}!`);
+      }
+      showReportBugModal = false;
+      // Reset form
+      bugTitle = '';
+      bugDesc = '';
+      bugPriority = 'medium';
+      bugSysInfo = '';
+      load();
+    } else {
+      const err = await res.json();
+      alert('Failed to report bug: ' + (err.error || 'Unknown error'));
+    }
+  }
+
   function statusBadgeClass(status: string): string {
     if (status === 'in-progress') return 'badge-active';
     if (status === 'approved')    return 'badge-approved';
@@ -188,6 +255,7 @@
       <button class="view-btn" class:active={viewMode === 'roadplan'} onclick={() => setView('roadplan')} title="Roadplan view">🗺 Roadplan</button>
       <a class="view-btn" href="/audit" title="Audit log">📊 Audit</a>
     </div>
+    <button class="report-bug-btn" onclick={() => showReportBugModal = true} title="Report a Bug">🐞 Report Bug</button>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
   </div>
 
@@ -209,6 +277,88 @@
       />
     {:else if viewMode === 'roadplan'}
       <div class="roadplan-container">
+        {#if data.releaseReadiness}
+          <div class="release-readiness-card">
+            <div class="card-header">
+              <div class="title-section">
+                <h3>📦 Release Readiness & Governance Dashboard</h3>
+                <span class="milestone-badge">{data.releaseReadiness.milestone}</span>
+              </div>
+              <div class="channel-section">
+                <span class="channel-label">Channel:</span>
+                <span class="channel-badge {data.releaseReadiness.channel}">
+                  {data.releaseReadiness.channel.toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div class="metrics-grid">
+              <div class="metric-card" class:passed={data.releaseReadiness.blockers.count === 0}>
+                <div class="metric-value">{data.releaseReadiness.blockers.count}</div>
+                <div class="metric-label">Open Blockers (High/Critical)</div>
+                {#if data.releaseReadiness.blockers.count > 0}
+                  <div class="metric-sublist">
+                    {#each data.releaseReadiness.blockers.items as item}
+                      <a href="/{item.path.replace(/\.md$/, '')}" class="item-link">⚠️ {item.title}</a>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+
+              <div class="metric-card" class:passed={data.releaseReadiness.majors.count === 0}>
+                <div class="metric-value">{data.releaseReadiness.majors.count}</div>
+                <div class="metric-label">Open Majors (Demand ≥ 5)</div>
+                {#if data.releaseReadiness.majors.count > 0}
+                  <div class="metric-sublist">
+                    {#each data.releaseReadiness.majors.items as item}
+                      <a href="/{item.path.replace(/\.md$/, '')}" class="item-link">🚨 {item.title} (Demand: {item.demandCount})</a>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+
+              <div class="metric-card" class:passed={data.releaseReadiness.dogfoodWindow.passed}>
+                <div class="metric-value">{data.releaseReadiness.dogfoodWindow.actualDays}d / {data.releaseReadiness.dogfoodWindow.requiredDays}d</div>
+                <div class="metric-label">Dogfood Window ({data.releaseReadiness.dogfoodWindow.startDate})</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {Math.min(100, (data.releaseReadiness.dogfoodWindow.actualDays / data.releaseReadiness.dogfoodWindow.requiredDays) * 100)}%"></div>
+                </div>
+              </div>
+
+              <div class="metric-card" class:passed={data.releaseReadiness.burndown.passed}>
+                <div class="metric-value">{data.releaseReadiness.burndown.resolved} / {data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open}</div>
+                <div class="metric-label">Milestone Burn-down Trend</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {(data.releaseReadiness.burndown.resolved / (data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open || 1)) * 100}%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              {#if data.releaseReadiness.ready}
+                <div class="status-msg success">✨ Milestone satisfies all release criteria! Ready for promotion.</div>
+              {:else}
+                <div class="status-msg warning">⏳ Awaiting all release criteria checks (Blockers, Majors, Dogfood, Burn-down).</div>
+              {/if}
+
+              <div class="action-buttons">
+                {#if data.releaseReadiness.channel === 'dev'}
+                  <button class="promote-btn beta" disabled={promoting} onclick={() => promoteChannel('beta')}>
+                    {promoting ? 'Promoting...' : '🚀 Promote to Beta (1/2)'}
+                  </button>
+                {:else if data.releaseReadiness.channel === 'beta'}
+                  <button class="promote-btn stable" 
+                          disabled={!data.releaseReadiness.ready || promoting}
+                          class:disabled={!data.releaseReadiness.ready}
+                          onclick={() => promoteChannel('stable')}>
+                    {promoting ? 'Promoting...' : '🏆 Release to Stable (2/2)'}
+                  </button>
+                {/if}
+              </div>
+            </div>
+          </div>
+        {/if}
+
         {#each ['current', 'next', 'future'] as bucketKey}
           {@const bucket = data.roadplan?.[bucketKey]}
           {#if bucket}
@@ -623,6 +773,51 @@
 
     {/if} <!-- end {:else} list view -->
   {/if}
+
+  {#if showReportBugModal}
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>🐞 Report a Bug</h3>
+          <button class="close-btn" onclick={() => showReportBugModal = false}>&times;</button>
+        </div>
+        <form onsubmit={submitBugReport}>
+          <div class="form-group">
+            <label for="bug-title">Bug Title</label>
+            <input id="bug-title" type="text" bind:value={bugTitle} required placeholder="e.g. Database connection pool timeout" />
+          </div>
+          <div class="form-group">
+            <label for="bug-desc">Description</label>
+            <textarea id="bug-desc" bind:value={bugDesc} required rows="4" placeholder="Detail the steps to reproduce, actual vs expected outcomes..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bug-reporter">Reporter</label>
+              <input id="bug-reporter" type="text" bind:value={bugReporter} required />
+            </div>
+            <div class="form-group">
+              <label for="bug-priority">Priority</label>
+              <select id="bug-priority" bind:value={bugPriority}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="bug-sysinfo">System Info</label>
+            <input id="bug-sysinfo" type="text" bind:value={bugSysInfo} placeholder="e.g. Linux x86_64, Node v20" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-cancel" onclick={() => showReportBugModal = false}>Cancel</button>
+            <button type="submit" class="btn btn-submit" disabled={reportSubmitting}>
+              {reportSubmitting ? 'Reporting...' : 'Submit Bug'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {/if}
 </div>
 
 
@@ -878,6 +1073,199 @@
     padding: 1px 6px;
     font-size: 10px;
     font-weight: 500;
+  }
+
+  // ── Release Readiness Dashboard ──────────────────────────────────────────────
+  .release-readiness-card {
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .release-readiness-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid $border;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .release-readiness-card .title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: $fg;
+      margin: 0;
+    }
+  }
+  .release-readiness-card .milestone-badge {
+    background: rgba(88, 166, 255, 0.1);
+    color: #58a6ff;
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: monospace;
+  }
+  .release-readiness-card .channel-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: $muted;
+  }
+  .release-readiness-card .channel-badge {
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+    &.dev {
+      background: #8f5fe8;
+      border: 1px solid #7d4cd1;
+    }
+    &.beta {
+      background: #ff9f1a;
+      border: 1px solid #e08300;
+    }
+    &.stable {
+      background: #2ed573;
+      border: 1px solid #20b85a;
+    }
+  }
+  .release-readiness-card .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .release-readiness-card .metric-card {
+    background: $bg-3;
+    border: 1px solid $border;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s, background 0.2s;
+    &.passed {
+      border-color: rgba(46, 213, 115, 0.3);
+      background: rgba(46, 213, 115, 0.03);
+    }
+  }
+  .release-readiness-card .metric-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: $fg;
+  }
+  .release-readiness-card .metric-label {
+    font-size: 11px;
+    color: $muted;
+    font-weight: 500;
+  }
+  .release-readiness-card .metric-sublist {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 11px;
+    border-top: 1px solid $border;
+    padding-top: 6px;
+    margin-top: 4px;
+  }
+  .release-readiness-card .item-link {
+    color: $fg-dim;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    &:hover {
+      color: #58a6ff;
+      text-decoration: underline;
+    }
+  }
+  .release-readiness-card .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: $border;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .release-readiness-card .progress-fill {
+    height: 100%;
+    background: #58a6ff;
+    border-radius: 3px;
+    .passed & {
+      background: #2ed573;
+    }
+  }
+  .release-readiness-card .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid $border;
+    padding-top: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .release-readiness-card .status-msg {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 4px;
+    &.success {
+      background: rgba(46, 213, 115, 0.1);
+      color: #2ed573;
+      border: 1px solid rgba(46, 213, 115, 0.2);
+    }
+    &.warning {
+      background: rgba(255, 159, 26, 0.1);
+      color: #ff9f1a;
+      border: 1px solid rgba(255, 159, 26, 0.2);
+    }
+  }
+  .release-readiness-card .promote-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    transition: opacity 0.2s, transform 0.1s;
+    &:hover {
+      opacity: 0.9;
+    }
+    &:active {
+      transform: scale(0.98);
+    }
+    &.beta {
+      background: #ff9f1a;
+    }
+    &.stable {
+      background: #2ed573;
+    }
+    &.disabled {
+      background: #444;
+      color: #777;
+      cursor: not-allowed;
+      border: 1px solid #555;
+      opacity: 0.6;
+      &:hover {
+        opacity: 0.6;
+      }
+      &:active {
+        transform: none;
+      }
+    }
   }
 
   // ── Light theme — scoped via :global so Svelte appends the scope hash ────────

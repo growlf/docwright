@@ -15,6 +15,7 @@ tags:
   - fail-safe
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
+milestone: v0.5.0
 ---
 
 > Observed at session start on 2026-07-01: a burst of
