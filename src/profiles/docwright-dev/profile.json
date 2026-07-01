@@ -1,0 +1,38 @@
+{
+  "docwrightProfileVersion": "1",
+  "name": "docwright-dev",
+  "displayName": "DocWright Dev",
+  "description": "DocWright's own self-development grammar. Separates code-issues (deliverable is a diff, closed by a PR) from governance (durable rules/decisions: proposal → plan → policy/decision). See proposals/approved/separate-dev-tracking-milestones-and-beta-channel.md (GitHub #68).",
+  "principles": ["Security first", "Policy driven", "Test verified at every stage", "Bugs before features"],
+  "proposalCategories": ["feature", "bug", "governance", "architecture"],
+  "effortSizes": { "XS": "~1d", "S": "~3d", "M": "~1w", "L": "~2w", "XL": "~1mo" },
+  "version": "0.1.0",
+  "documentTypes": ["code-issue", "bug", "proposal", "plan", "policy", "decision"],
+  "states": {
+    "code-issue": ["open", "in-progress", "resolved", "wont-fix"],
+    "bug":        ["open", "in-progress", "resolved", "wont-fix"],
+    "proposal":   ["proposed", "approved", "rejected"],
+    "plan":       ["draft", "approved", "in-progress", "completed", "canceled"],
+    "policy":     ["draft", "active", "superseded", "archived"],
+    "decision":   ["draft", "final"]
+  },
+  "requiredFrontmatter": ["title", "status", "created", "author", "author-role"],
+  "optionalFrontmatter": ["tags", "category", "complexity", "estimated_effort", "priority",
+    "depends_on", "blocks", "related_to", "created_by", "assigned_to", "ai-last-action",
+    "closed_by_pr", "cross_link", "proposal_source", "phase"],
+  "sidebarExcludePatterns": ["AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "NOTICE.md", "SECURITY.md", "SESSION-LOG.md"],
+  "hiddenDirectories": ["proposals/approved", "plans/completed", "issues/resolved"],
+  "features": {
+    "wikilinks": true,
+    "graph": true,
+    "naming": true,
+    "llmWiki": false
+  },
+  "relationshipEngine": {
+    "auto_detect_on_create": true,
+    "auto_detect_on_update": true,
+    "auto_detect_on_approval": true,
+    "similarity_threshold": 0.35,
+    "show_plan_button": true
+  }
+}
