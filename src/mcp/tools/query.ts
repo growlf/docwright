@@ -269,7 +269,41 @@ export function getSessionContextStructured(): Record<string, unknown> {
     result['git_status'] = { staged: 0, modified: 0, total: 0, porcelain: [] };
   }
 
+  // Parked work — remote branches with committed-but-unmerged work. Local git
+  // only (cached remote-tracking refs), no network. Under trunk-based flow this
+  // is where in-progress work lives, so it MUST be surfaced or it silently
+  // vanishes from "what's next". Degrades to [] if git/origin-main is absent.
+  result['parked_branches'] = parkedBranches(root);
+
   return result;
+}
+
+function parkedBranches(root: string | null): Array<Record<string, unknown>> {
+  if (!root) return [];
+  const git = (args: string): string => {
+    try {
+      return execSync(`git ${args}`, {
+        cwd: root, encoding: 'utf8', timeout: 5000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim();
+    } catch { return ''; }
+  };
+  const raw = git("branch -r --no-merged origin/main --format='%(refname:short)'");
+  if (!raw) return [];
+  return raw.split('\n')
+    .map(b => b.trim())
+    .filter(b => b && b !== 'origin/main' && !b.endsWith('/HEAD'))
+    .map(b => {
+      let ahead = 0, behind = 0;
+      const counts = git(`rev-list --left-right --count origin/main...${b}`);
+      if (counts) {
+        const [bh, ah] = counts.split(/\s+/);
+        behind = Number(bh) || 0;
+        ahead  = Number(ah) || 0;
+      }
+      return { branch: b.replace(/^origin\//, ''), ahead, behind, last_commit: git(`log -1 --format=%s ${b}`) };
+    })
+    .sort((a, b) => (b.ahead as number) - (a.ahead as number));
 }
 
 export interface NextAction {
