@@ -4,6 +4,18 @@
     "dw-upstream"
   ],
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-session-start-hook.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for urgent issues…"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
