@@ -10,19 +10,21 @@ export interface Config {
   logLevel: LogLevel;
 }
 
-export function loadConfig(): Config {
-  const docwrightPath = process.env.DOCWRIGHT_PATH
-    ? path.resolve(process.env.DOCWRIGHT_PATH)
-    : process.env.DOCWRIGHT_ROOT
-      ? path.resolve(process.env.DOCWRIGHT_ROOT)
-      : '';
+// Treat an unexpanded shell template as unset. When .mcp.json references an env var
+// that isn't set in the environment, the launcher passes the literal "${VAR}" string
+// rather than an empty value; path.resolve() would then create a bogus "${VAR}"
+// directory under cwd. Guard against that here.
+function cleanEnv(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const t = v.trim();
+  return t === '' || /^\$\{[^}]*\}$/.test(t) ? undefined : t;
+}
 
-  const vaultRootEnv = process.env.DOCWRIGHT_VAULT_ROOT || process.env.DOCWRIGHT_ROOT;
-  
-  // The plan allows it to throw or return an error if missing when mode=vault,
-  // but for pure config parsing, we can just resolve it or throw if entirely absent.
-  // "Missing DOCWRIGHT_VAULT_ROOT -> graceful error message (not crash)"
-  // Wait, if it doesn't crash, we just return the config and let the caller handle it.
+export function loadConfig(): Config {
+  const docwrightPathEnv = cleanEnv(process.env.DOCWRIGHT_PATH) || cleanEnv(process.env.DOCWRIGHT_ROOT);
+  const docwrightPath = docwrightPathEnv ? path.resolve(docwrightPathEnv) : '';
+
+  const vaultRootEnv = cleanEnv(process.env.DOCWRIGHT_VAULT_ROOT) || cleanEnv(process.env.DOCWRIGHT_ROOT);
   const vaultRoot = vaultRootEnv ? path.resolve(vaultRootEnv) : '';
 
   const portStr = process.env.DOCWRIGHT_MCP_PORT;

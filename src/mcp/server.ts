@@ -7,6 +7,7 @@ import { setRepoRoot } from './lib/paths';
 import { allTools } from './tools/index';
 import * as http from 'node:http';
 import * as path from 'node:path';
+import * as fs from 'node:fs';
 
 // Define expected args
 const args = process.argv.slice(2);
@@ -50,12 +51,23 @@ async function main() {
     }
     repoRoot = config.docwrightPath;
   } else {
-    // vault mode
-    if (!config.vaultRoot) {
-      console.error('Error: DOCWRIGHT_VAULT_ROOT is required when --mode=vault');
+    // vault mode: prefer an explicit vault root, but fall back to the DocWright repo
+    // itself (dogfooding: the repo IS the vault) when DOCWRIGHT_VAULT_ROOT is unset or
+    // was passed unexpanded. Erroring out — or worse, writing into a literal "${...}"
+    // directory — is a strictly worse failure than operating on the repo.
+    repoRoot = config.vaultRoot || config.docwrightPath;
+    if (!repoRoot) {
+      console.error('Error: set DOCWRIGHT_VAULT_ROOT (or DOCWRIGHT_PATH) when --mode=vault');
       process.exit(1);
     }
-    repoRoot = config.vaultRoot;
+    if (!config.vaultRoot) {
+      console.error(`Warning: DOCWRIGHT_VAULT_ROOT unset; using DocWright repo as vault: ${repoRoot}`);
+    }
+  }
+
+  if (!fs.existsSync(repoRoot) || !fs.statSync(repoRoot).isDirectory()) {
+    console.error(`Error: resolved root is not a directory: ${repoRoot}`);
+    process.exit(1);
   }
 
   setRepoRoot(repoRoot);
