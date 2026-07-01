@@ -29,9 +29,15 @@ function hasTestingPlan(content: string): boolean {
 
 function updateTestsDefined(filePath: string, resolved: string, content: string): void {
   if (!isPlanDoc(filePath)) return;
-  const testsVal = hasTestingPlan(content) ? 'true' : 'false';
+  // DEMOTE-ONLY. `tests_defined: true` is a completion-gate input and must only be set by
+  // the explicit run-tests flow (/api/lifecycle/run-tests) or the deliberate toggle — never
+  // as a side effect of saving an unrelated field. Auto-promoting it just because a
+  // "## Testing Plan" heading exists conflates "has a section" with "tests are verified" and
+  // silently mutates governance state (see issues/bug-webui-save-silently-flips-tests-defined).
+  // A save may still DEMOTE to false when the section is gone (safety), but never promote.
+  if (hasTestingPlan(content)) return;
   const raw = fs.readFileSync(resolved, 'utf-8');
-  const updated = raw.replace(/^(tests_defined:\s*).+$/m, `$1${testsVal}`);
+  const updated = raw.replace(/^(tests_defined:\s*)true\s*$/m, `$1false`);
   if (updated !== raw) fs.writeFileSync(resolved, updated);
 }
 
