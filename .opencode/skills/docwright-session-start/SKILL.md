@@ -22,6 +22,15 @@ Call `dw-mcp_session_context` to get structured JSON with:
 - Pending proposals (unapproved and approved counts)
 - Last session entry from SESSION-LOG.md
 - Git status (staged, modified, total files)
+- `parked_branches` — remote branches with committed-but-unmerged work
+  (`branch`, `ahead`, `behind`, `last_commit`)
+
+**Never** build a "what's next" recommendation from plans and proposals alone.
+Under trunk-based flow, in-progress work lives on branches and is invisible to the
+filesystem scan — surface `parked_branches` or that work silently vanishes (this
+has happened before). If `gh` is available, also run
+`gh pr list --state open` and `gh issue list --state open` and fold them in;
+degrade gracefully (skip, don't fail) when `gh` is missing or offline.
 
 ### 2. Resolve network identity
 
@@ -37,10 +46,16 @@ Human: <name> | Identity: matched|discrepancy
 Active plans:
 - <title> (<file>) [<status>] — <steps_done>/<steps_total> steps ✅
 
+Parked work (<N> unmerged branches · <N> open PRs · <N> open issues):
+- <branch> (+<ahead>/-<behind>) — <last_commit>
+  (omit this block only when all counts are zero)
+
 Pending proposals: <N> unapproved, <M> approved
 Git: <staged> staged, <modified> modified
 
 Last session: <date> — <summary>
+
+Next: <recommendation — must account for parked work, not just plans/proposals>
 
 TODOs set from active plan state.
 ```

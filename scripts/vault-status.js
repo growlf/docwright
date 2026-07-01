@@ -9,9 +9,51 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT   = process.env.DOCWRIGHT_ROOT || path.resolve(__dirname, '..');
 const asJson = process.argv.includes('--json');
+
+// ---------------------------------------------------------------------------
+// Local git helpers — NO network. Uses cached remote-tracking refs only, so
+// this stays within the "no network calls" contract that CI and /status rely
+// on. Any failure (not a repo, no origin/main ref) degrades to empty output.
+// ---------------------------------------------------------------------------
+function git(args) {
+  try {
+    return execSync(`git ${args}`, {
+      cwd: ROOT, encoding: 'utf8', timeout: 5000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch { return ''; }
+}
+
+// Remote branches carrying committed-but-unmerged work ("parked work").
+// Under trunk-based flow this is the normal home of in-progress work, so it
+// MUST be surfaced at session start or it silently vanishes from "what's next".
+function parkedBranches() {
+  const raw = git("branch -r --no-merged origin/main --format='%(refname:short)'");
+  if (!raw) return [];
+  return raw.split('\n')
+    .map(b => b.trim())
+    .filter(b => b && b !== 'origin/main' && !b.endsWith('/HEAD'))
+    .map(b => {
+      let ahead = 0, behind = 0;
+      // left-right count vs origin/main: left = behind, right = ahead
+      const counts = git(`rev-list --left-right --count origin/main...${b}`);
+      if (counts) {
+        const [bh, ah] = counts.split(/\s+/);
+        behind = Number(bh) || 0;
+        ahead  = Number(ah) || 0;
+      }
+      return {
+        branch:      b.replace(/^origin\//, ''),
+        ahead, behind,
+        last_commit: git(`log -1 --format=%s ${b}`),
+      };
+    })
+    .sort((a, b) => b.ahead - a.ahead);
+}
 
 // ---------------------------------------------------------------------------
 // Frontmatter parser — strings, booleans, block arrays
@@ -100,6 +142,10 @@ const result = {
     active:          active.map(p => ({ path: p.path, title: p.title, status: p.fm.status || '', priority: p.fm.priority || '', assigned_to: p.fm.assigned_to || '' })),
     completed_count: allCompleted.length,
   },
+  git: {
+    current_branch:  git('rev-parse --abbrev-ref HEAD'),
+    parked_branches: parkedBranches(),
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -117,6 +163,9 @@ function section(title, items, fmt) {
 }
 
 console.log('=== Vault Status ===');
+if (result.git.parked_branches.length)
+  section('⚠ Parked work — unmerged branches', result.git.parked_branches,
+    b => `- ${b.branch} (+${b.ahead}/-${b.behind}): ${b.last_commit}`);
 section('Open proposals',          result.proposals.open,             p => `- ${p.title}${p.complexity ? ' [' + p.complexity + ']' : ''}`);
 section('Active plans',            result.plans.active,               p => `- [${p.status}] ${p.title}${p.priority ? ' (' + p.priority + ')' : ''}`);
 section('Approved — awaiting plan', result.proposals.approved_pending, p => `- ${p.title}`);

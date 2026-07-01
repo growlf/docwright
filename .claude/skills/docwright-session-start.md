@@ -43,6 +43,30 @@ traceroute -n -m 5 8.8.8.8 2>/dev/null | tail -3
 
 Read the last 40 lines of `SESSION-LOG.md` to find the most recent session entry.
 
+### 1.5. Surface parked and in-flight work
+
+`vault-status.js --json` now returns a `git.parked_branches` array — remote
+branches with committed-but-unmerged work (each with `ahead`/`behind` counts and
+`last_commit`). This is where in-progress work lives under trunk-based flow, so it
+MUST be reported. **Never** build a "what's next" recommendation from proposals and
+plans alone — parked work is invisible to the filesystem scan and has silently
+been lost this way before.
+
+Then layer in GitHub state (network; degrade gracefully — if `gh` is missing,
+unauthenticated, or offline, skip these two without failing the session):
+
+```bash
+gh pr list --state open --json number,title,headRefName,mergeable 2>/dev/null
+```
+
+```bash
+gh issue list --state open --json number,title,labels 2>/dev/null
+```
+
+Cross-reference: a parked branch that already has a **merged/closed** PR is landed,
+not parked — mention it only as a cleanup candidate (delete the stale branch). A
+parked branch with **no** PR, or an **open** PR, is live work to account for.
+
 ### 2. Per-plan progress
 
 For each active plan path returned by vault-status, run:
@@ -90,12 +114,17 @@ Human: NetYeti | garth.johnson@cascadesteam.org
 Active plans (<N>):
   - <title> [<status>] (<priority>) — <done>/<done+open> steps · <file>
 
+Parked work (<N> unmerged branches · <N> open PRs · <N> open issues):
+  - <branch> (+<ahead>/-<behind>) <PR #/issue link if any> — <last_commit>
+  (omit this block entirely only when all three counts are zero)
+
 Pending proposals: <open> open, <approved_pending> approved-pending
 Git: <N staged> staged, <N modified> modified
 
 Last session: <date from SESSION-LOG.md> — <focus line>
 
-Next: <1-sentence recommendation for where to start>
+Next: <1-sentence recommendation for where to start — must account for parked work,
+      not just active plans and proposals>
 ```
 
 ### 5. Set up todo list
