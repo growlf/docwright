@@ -1,5 +1,6 @@
 ---
 title: "Session-start is blind to unmerged branches and open issues — parked work silently vanishes"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -13,7 +14,6 @@ tags:
   - tooling
   - code-over-memory
   - roadmap
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

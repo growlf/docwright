@@ -1,5 +1,6 @@
 ---
 title: "Web UI lifecycle actions write to the working tree but never commit to git — the root of the approval-flow friction"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -13,7 +14,6 @@ tags:
   - approval
   - governance
   - git
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

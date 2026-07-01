@@ -1,5 +1,6 @@
 ---
 title: "Approve button silently no-ops when a stale consumed_by points at a missing plan"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -12,7 +13,6 @@ tags:
   - lifecycle
   - approval
   - idempotency
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

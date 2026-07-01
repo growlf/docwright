@@ -1,5 +1,6 @@
 ---
 title: "Hook source drift — .githooks diverged from scripts/pre-commit.sh, and commit-msg is never installed for vaults"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -12,7 +13,6 @@ tags:
   - hooks
   - install
   - data-integrity
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

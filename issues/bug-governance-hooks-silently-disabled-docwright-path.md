@@ -1,5 +1,6 @@
 ---
 title: "Governance hooks silently disabled when DOCWRIGHT_PATH is unset (non-interactive shells)"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -12,7 +13,6 @@ tags:
   - hooks
   - claude-code
   - fail-safe
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---
