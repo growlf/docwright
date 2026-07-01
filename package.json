@@ -40,7 +40,7 @@
     "test:executor": "mocha --require tsx/cjs 'test/executor/**/*.test.ts'",
     "test:mcp": "mocha --require tsx/cjs test/mcp/config.test.ts && mocha --require tsx/cjs test/mcp/mutation.test.ts && mocha --require tsx/cjs test/mcp/transitions.test.ts && mocha --require tsx/cjs test/mcp/query_utility.test.ts && mocha --require tsx/cjs test/mcp/parity.test.ts",
     "test:hooks:pending": "node test/hooks/test-pending-steps.js",
-    "test:hooks": "bash test/hooks/test-lifecycle-hook.sh && bash test/hooks/test-research-hook.sh",
+    "test:hooks": "bash test/hooks/test-lifecycle-hook.sh && bash test/hooks/test-research-hook.sh && bash test/hooks/test-human-approved-hook.sh",
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
     "test:integration": "mocha --require tsx/cjs 'test/integration/**/*.test.ts'",
     "test": "npm run test:atoms && npm run atoms:isolation && npm run test:dispatch && npm run test:executor && npm run test:mcp && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration",

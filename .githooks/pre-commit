@@ -70,6 +70,11 @@ print_status "$(detect_network)"
 # 2. Gather staged markdown files
 # =============================================================================
 STAGED=$(git diff --cached --name-only)
+# Reset the human-approval flag at the start of every run. validate_no_self_approval
+# re-arms it when a proposal's `approved` flips false→true in this commit, and the
+# commit-msg hook consumes it. Resetting here stops a flag left over from a prior
+# aborted commit attempt from leaking into an unrelated commit.
+rm -f "$(git rev-parse --git-dir)/dw-needs-human-approval"
 [ -z "$STAGED" ] && print_warning "No staged files to validate" && exit 0
 
 # =============================================================================
@@ -232,11 +237,14 @@ validate_no_self_approval() {
     OLD=$(git show "HEAD:$FILE" 2>/dev/null | grep "^approved:" | sed 's/^approved: *//')
     NEW=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
     [ "$OLD" = "false" ] && [ "$NEW" = "true" ] || return 0
-    if [ -f ".git/COMMIT_EDITMSG" ] && ! grep -q "HUMAN-APPROVED:" .git/COMMIT_EDITMSG; then
-        print_error "$FILE: approved changed false→true without HUMAN-APPROVED: marker in commit message"
-        print_error "  Only humans can approve proposals. Add HUMAN-APPROVED:<name> to commit message if you approved this."
-        return 1
-    fi
+    # A proposal's `approved` flipped false→true. The HUMAN-APPROVED:<name> marker
+    # that authorizes this lives in the commit MESSAGE, which pre-commit cannot
+    # read reliably: at this stage .git/COMMIT_EDITMSG still holds the PREVIOUS
+    # commit's message (see the note near the top of this file). So we only DETECT
+    # the approval here and arm a flag; the commit-msg hook — which git hands the
+    # real message file as $1 — asserts the marker. Arming (not asserting) here is
+    # the fix for the stale-COMMIT_EDITMSG bug.
+    touch "$(git rev-parse --git-dir)/dw-needs-human-approval"
     return 0
 }
 
