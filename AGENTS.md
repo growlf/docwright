@@ -177,9 +177,19 @@ Profiles live in `src/profiles/[name]/` and contain:
 - `templates/[type].md` — scaffolding templates (ALL must include `author-role:`)
 
 ### ACL model
-
+ 
 Four tiers: Observer / Contributor / Steward / Governance
 Source of truth: Forgejo team membership (not frontmatter)
 Frontmatter `author-role:` is an audit record of the tier at time of action.
 Web UI enforces via Forgejo OAuth + team API.
 VSCodium uses `docworkbench.userRole` workspace setting (honor system for devs).
+
+## Multi-Agent & Multi-Session Collaboration
+
+To ensure smooth integration when multiple AI agents or developers work across different platforms and sessions, follow these workflow constraints:
+
+1. **Workspace Synchronicity**: Always pull the latest trunk before starting any work (`git fetch origin && git checkout main && git pull`). Do not work on stale branches.
+2. **Branch Convention Compliance**: Every branch must use a validated prefix (`feat/`, `fix/`, `docs/`, `chore/`, `refactor/`, `test/`, `policy/`, `decision/`). Non-conforming branches will fail pre-commit verification.
+3. **Session Handoffs**: At the end of every session, run the shutdown script (`npm run session:end` or corresponding git/commit command) to document accomplishments in `SESSION-LOG.md` and push branches. This leaves a clean trail for the next agent/developer.
+4. **Validation Hygiene**: Do not skip pre-commit hooks or local lint/test cycles. Running the full validation suite locally keeps the repository state canonical and regression-free.
+

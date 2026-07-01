@@ -147,6 +147,8 @@ then `gh pr create --base main`. Typed prefixes (CI-enforced): `feat|fix|docs|ch
 Releases are cut as `release/v*.*.*` branches and tagged from `main`; `main` HEAD
 is not guaranteed deployable — consume tagged releases. See CONTRIBUTING.md.
 
+For guidelines on multi-agent/multi-session collaboration and sync, see [[AGENTS.md#multi-agent--multi-session-collaboration]].
+
 ## Key architectural invariants — never break these
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.
