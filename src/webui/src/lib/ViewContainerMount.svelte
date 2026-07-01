@@ -78,6 +78,7 @@
       try { vc.onDeactivate?.(); vc.unmount?.(); } catch { /* non-fatal */ }
       // Auto-release any right panel claim this VC may have set.
       try { (window as any).__docwright?.bridge?.releaseRightPanel?.(); } catch { /* non-fatal */ }
+      el.innerHTML = '';
     };
   });
 </script>
