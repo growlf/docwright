@@ -389,3 +389,67 @@ describe('diffAnnotate', () => {
     assert.strictEqual(ann.statusTransition, undefined);
   });
 });
+
+describe('Milestone rule + issues/ handling', () => {
+  const mfn = (r: any) => r.field === 'milestone';
+
+  it('warns when an active plan has no milestone', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', phase: 2, proposal_source: 'proposals/approved/x.md',
+    };
+    const results = lintDocument('plans/x.md', fm, profile);
+    const w = results.find(mfn);
+    assert.ok(w && w.severity === 'warn', 'active plan without milestone should warn');
+  });
+
+  it('does not warn when an active plan has a milestone', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', phase: 2, proposal_source: 'proposals/approved/x.md', milestone: 'future',
+    };
+    const results = lintDocument('plans/x.md', fm, profile);
+    assert.ok(!results.find(mfn), "milestone: 'future' satisfies the rule");
+  });
+
+  it('does not warn on a completed plan without milestone', () => {
+    const fm = { title: 'P', status: 'completed', author: 'A', created: '2026-01-01' };
+    const results = lintDocument('plans/completed/x.md', fm, profile);
+    assert.ok(!results.find(mfn), 'completed plans are not open items');
+  });
+
+  it('warns when an open issue has no milestone', () => {
+    const fm = {
+      title: 'Bug', status: 'open', author: 'A', created: '2026-01-01', 'author-role': 'contributor',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    assert.ok(results.find(mfn), 'open issue without milestone should warn');
+  });
+
+  it('does not warn on a resolved issue without milestone', () => {
+    const fm = {
+      title: 'Bug', status: 'resolved', author: 'A', created: '2026-01-01', 'author-role': 'contributor',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    assert.ok(!results.find(mfn), 'resolved issues are not open items');
+  });
+
+  it('flags unknown issue status', () => {
+    const fm = {
+      title: 'Bug', status: 'bogus', author: 'A', created: '2026-01-01', 'author-role': 'contributor',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    assert.ok(results.find(r => r.field === 'status' && r.severity === 'warn'), 'bad issue status should warn');
+  });
+
+  it('flags missing required fields on an issue', () => {
+    const results = lintDocument('issues/bug-x.md', { title: 'Bug' }, profile);
+    const fields = results.filter(r => r.severity === 'error').map(r => r.field);
+    assert.ok(fields.includes('status') && fields.includes('author'), 'issue missing required fields should error');
+  });
+
+  it('skips README files entirely', () => {
+    const results = lintDocument('issues/README.md', {}, profile);
+    assert.strictEqual(results.length, 0, 'README is documentation, not a governed doc');
+  });
+});

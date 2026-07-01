@@ -12,6 +12,7 @@ const REQUIRED_BY_PREFIX: Array<[string, string[]]> = [
   ['proposals/',          ['title', 'author', 'created', 'approved', 'created_by']],
   ['plans/completed/',    ['title', 'status', 'author', 'created']],
   ['plans/',              ['title', 'status', 'author', 'created', 'assigned_to']],
+  ['issues/',             ['title', 'status', 'author', 'created', 'author-role']],
   ['research/',           ['title', 'status', 'question', 'author', 'created', 'author-role']],
   ['docs/SOPs/',          ['title', 'category', 'created', 'status']],
   ['docs/',               ['title', 'status']],
@@ -22,6 +23,11 @@ const VALID_COMPLEXITY        = new Set(['', 'XS', 'S', 'M', 'L', 'XL']);
 const VALID_AUTOMATED         = new Set(['off', 'guided', 'full']);
 const VALID_MODE              = new Set(['mentor', 'guided', 'autonomous']);
 const VALID_PLAN_STATUS       = new Set(['draft', 'approved', 'in-progress', 'completed', 'canceled']);
+const VALID_ISSUE_STATUS      = new Set(['open', 'in-progress', 'resolved', 'wont-fix']);
+// A milestone is a real milestone id or the literal 'future' (the anti-paralysis bucket).
+// Any non-empty value satisfies the "no orphans" rule; only presence is enforced.
+const MILESTONE_OPEN_PLAN_STATUSES  = new Set(['approved', 'in-progress']);
+const MILESTONE_OPEN_ISSUE_STATUSES = new Set(['open', 'in-progress']);
 const VALID_RESEARCH_STATUS   = new Set(['active', 'concluded', 'archived']);
 const VALID_RESEARCH_CONCLUSION = new Set(['open', 'recommends', 'inconclusive', 'superseded']);
 
@@ -32,6 +38,10 @@ export function lintDocument(
   parentStatuses?: Record<string, string>,
 ): LintResult[] {
   const results: LintResult[] = [];
+  const basename = filePath.replace(/^.*\//, '');
+
+  // README/index files are documentation, not governed documents — skip field rules.
+  if (/(?:^|\/)README\.md$/i.test(filePath)) return results;
 
   // Required fields by path prefix
   for (const [prefix, fields] of REQUIRED_BY_PREFIX) {
@@ -71,6 +81,32 @@ export function lintDocument(
   if (filePath.startsWith('plans/') && fm.status !== undefined && !VALID_PLAN_STATUS.has(String(fm.status))) {
     results.push({ field: 'status', severity: 'warn', message: `Unknown plan status '${fm.status}'` });
   }
+  if (filePath.startsWith('issues/') && fm.status !== undefined && !VALID_ISSUE_STATUS.has(String(fm.status))) {
+    results.push({ field: 'status', severity: 'warn', message: `Unknown issue status '${fm.status}' — expected open | in-progress | resolved | wont-fix` });
+  }
+
+  // Milestone rule (no orphans): every OPEN issue/plan carries a milestone — a real one or
+  // the literal 'future'. Enforced in code per code-over-memory. WARN during rollout (the
+  // backlog isn't stamped until the Step 5 determination cycle); hardens to error afterward.
+  {
+    const status = String(fm.status ?? '');
+    const isOpenPlan =
+      filePath.startsWith('plans/') &&
+      !filePath.startsWith('plans/completed/') &&
+      !/^phase-/.test(basename) &&
+      MILESTONE_OPEN_PLAN_STATUSES.has(status);
+    const isOpenIssue =
+      filePath.startsWith('issues/') && MILESTONE_OPEN_ISSUE_STATUSES.has(status);
+    const missingMilestone =
+      fm.milestone === undefined || fm.milestone === null || String(fm.milestone).trim() === '';
+    if ((isOpenPlan || isOpenIssue) && missingMilestone) {
+      results.push({
+        field: 'milestone',
+        severity: 'warn',
+        message: "Open item has no milestone — set milestone: to a real milestone id or 'future'",
+      });
+    }
+  }
 
   // Approved proposal should have assigned_to
   if (fm.approved === true && (fm.assigned_to === undefined || fm.assigned_to === '')) {
@@ -78,7 +114,6 @@ export function lintDocument(
   }
 
   // Active plans should be assigned to a phase (skip phase overview plans themselves)
-  const basename = filePath.replace(/^.*\//, '');
   if (
     filePath.startsWith('plans/') &&
     ['approved', 'in-progress'].includes(String(fm.status ?? '')) &&

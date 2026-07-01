@@ -18,6 +18,7 @@
         "estimated_effort": { "type": "string", "enum": ["XS", "S", "M", "L", "XL"] },
         "closed_by_pr":     { "type": "string", "description": "PR number/URL that closes this code-issue" },
         "cross_link":       { "type": "string", "description": "Governance doc (proposal/policy/decision) this code-issue implements" },
+        "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -36,6 +37,7 @@
         "estimated_effort": { "type": "string", "enum": ["XS", "S", "M", "L", "XL"] },
         "closed_by_pr":     { "type": "string" },
         "cross_link":       { "type": "string" },
+        "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -67,6 +69,7 @@
         "proposal_source":  { "type": "string", "description": "Path to the approved proposal this plan delivers" },
         "priority":         { "type": "string", "enum": ["low", "medium", "high"] },
         "phase":            { "type": "integer" },
+        "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
         "parent_plan":      { "type": "string" },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }
