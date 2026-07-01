@@ -106,6 +106,7 @@ const allProposals = scanDir('proposals');
 const allApproved  = scanDir('proposals/approved');
 const allPlans     = scanDir('plans');
 const allCompleted = scanDir('plans/completed');
+const allIssues    = scanDir('issues').filter(i => i.file !== 'README.md');
 
 const planSources = new Set(
   [...allPlans, ...allCompleted].flatMap(p => {
@@ -132,6 +133,10 @@ const active = allPlans.filter(p =>
   ['approved', 'in-progress'].includes(String(p.fm.status || ''))
 );
 
+const openIssues = allIssues.filter(i =>
+  !['resolved', 'wont-fix'].includes(String(i.fm.status || 'open'))
+);
+
 const result = {
   proposals: {
     open:             open.map(p => ({ path: p.path, title: p.title, complexity: p.fm.complexity || '', category: p.fm.category || [] })),
@@ -141,6 +146,10 @@ const result = {
   plans: {
     active:          active.map(p => ({ path: p.path, title: p.title, status: p.fm.status || '', priority: p.fm.priority || '', assigned_to: p.fm.assigned_to || '' })),
     completed_count: allCompleted.length,
+  },
+  issues: {
+    open:  openIssues.map(i => ({ path: i.path, title: i.title, category: i.fm.category || '', priority: i.fm.priority || '', milestone: i.fm.milestone || '' })),
+    total: allIssues.length,
   },
   git: {
     current_branch:  git('rev-parse --abbrev-ref HEAD'),
@@ -172,3 +181,5 @@ section('Approved — awaiting plan', result.proposals.approved_pending, p => `-
 console.log(`\nCompleted plans: ${result.plans.completed_count}`);
 if (result.proposals.deferred.length)
   section('Deferred', result.proposals.deferred, p => `- ${p.title}`);
+
+section('Open code-issues', result.issues.open, i => `- ${i.title}${i.priority ? ' (' + i.priority + ')' : ''}`);

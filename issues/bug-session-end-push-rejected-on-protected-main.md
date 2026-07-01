@@ -1,5 +1,6 @@
 ---
 title: "scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -12,7 +13,6 @@ tags:
   - automation
   - session-shutdown
   - trunk-migration
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

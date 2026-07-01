@@ -1,5 +1,6 @@
 ---
 title: "WYSIWYG editor corrupts documents and clobbers frontmatter on save"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -13,7 +14,6 @@ tags:
   - wysiwyg
   - governance
   - data-integrity
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

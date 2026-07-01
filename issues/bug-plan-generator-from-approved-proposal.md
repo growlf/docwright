@@ -1,5 +1,6 @@
 ---
 title: "Plan generator (approve → plan) dumps the whole proposal, mangles frontmatter, and mints an unreviewed 'approved' plan"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -13,7 +14,6 @@ tags:
   - plan-generation
   - governance
   - data-integrity
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

@@ -1,5 +1,6 @@
 ---
 title: "Approving by moving a proposal to proposals/approved/ bypasses the HUMAN-APPROVED gate"
+status: open
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -13,7 +14,6 @@ tags:
   - approval
   - security
   - data-integrity
-approved: false
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---
