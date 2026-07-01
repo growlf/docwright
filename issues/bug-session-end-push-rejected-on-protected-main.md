@@ -15,6 +15,7 @@ tags:
   - trunk-migration
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
+milestone: next
 ---
 
 > Hit twice in one session (2026-06-30, PRs #74 and #75) — same manual

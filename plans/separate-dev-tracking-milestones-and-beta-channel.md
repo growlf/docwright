@@ -1,6 +1,6 @@
 ---
 title: "Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel"
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-01
 created_by: NetYeti@cluster-llm
@@ -18,14 +18,15 @@ phase: 2
 mode: guided
 automated: guided
 assigned_to: NetYeti
-tests_defined: false
-tests_human_reviewed: false
+tests_defined: true
+tests_human_reviewed: true
 template_version: 1.0
 total_steps: 8
-completed_steps: 3
+completed_steps: 8
 _path: plans/separate-dev-tracking-milestones-and-beta-channel.md
 scenario_synthesis: "Umbrella governance/process plan (no product code itself). Sequences and authorizes eight deliverables in a dependency chain: docwright-dev profile (grammar), in-vault issues/ store + backlog migration, milestone frontmatter field + lint, derived roadplan view, the first milestone-determination cycle, release-channel/beta gate, user bug-reporting bridge, and empty-image deployment. Each row becomes its own sub-plan/code-issue once the issues/ store exists, dogfooding the code-issue/governance split. Guided mode: agent drafts, human approves. No VS Code or IDE-specific steps."
 gate_note: "Changed files are untestable types: plans/separate-dev-tracking-milestones-and-beta-channel.md"
+milestone: v0.5.0
 ---
 
 # Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel
@@ -79,11 +80,11 @@ remaining rows migrate into `issues/` — dogfooding the split.
 | 1 | **`docwright-dev` profile (grammar)** | New profile under `src/profiles/docwright-dev/`: `profile.json`, `schema.json`, `opencode-instructions.md`, and templates for first-class document types `code-issue`, `bug`, `proposal`, `plan`, `policy`, `decision` (all templates carry `author-role:`, default `contributor`). Additive; dogfoods the Phase-2 profile engine. No existing document is forced to migrate. | ✅ Done |
 | 2 | **`issues/` store + templates + backlog migration** | Create in-vault `issues/` markdown store (git-canonical, no DB, no telemetry — invariants intact). Add `code-issue`/`bug` templates. Migrate existing `bug-*.md` out of `proposals/` into `issues/`, cross-linking governance halves back to their proposals per the "is the deliverable a diff?" sorting test. GitHub Issues becomes public intake → `inbox → issue`. | ✅ Done |
 | 3 | **`milestone:` frontmatter field + lint** | Add `milestone:` to issue/plan schema. Lint: every open item has a milestone — a real one or the literal `future` (no orphans; `code-over-memory`). Milestone sits **below** a phase; phases stay `phase-close`-owned. | ✅ Done |
-| 4 | **Derived roadplan view** | Generated view (never hand-maintained) computed from `milestone:` fields: current milestone, next milestone, `future` pool. Replaces hand-maintained sections of `docs/roadmap.md`. Resolves [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] and feeds [[proposals/formalize-roadmap-sequencing-enforcement]]. (Also the durable fix for the "no prioritized/hierarchical list" finding that the `/status` priority-sort patch only bandaged.) | ⏳ Pending |
-| 5 | **First milestone-determination cycle** | The first real use of the new machinery: sort the existing backlog into current / next / `future`, assign `milestone:` to every open item, and generate the roadplan. Recurring cadence thereafter (re-run at each milestone close, analogous to `phase-close`). | ⏳ Pending |
-| 6 | **Release-channel field + beta gate** | `channel: dev\|beta\|stable` field, orthogonal to version number. Readiness dashboard: `0 open in-scope blockers` + `0 in-scope majors above demand-threshold` + minimum dogfood window + non-negative burn-down. `beta → stable` is **BDFL-only, never AI-automated** — code surfaces the dashboard; the human flips the switch. Enforces `bugs-before-features` at release level. | ⏳ Pending |
-| 7 | **User bug-reporting bridge** | Capture surface + suggest-style dedup (reuse the Phase-1 collation/overlap stub, not a new subsystem). Exact dupe → `+1` demand count; related → association only. Harvest repro/context. **Explicit reports only — passive detection is telemetry and is forbidden.** Never auto-send private context; redaction + explicit confirm; offline queue. | ⏳ Pending |
-| 8 | **Empty-image deployment** | `.dockerignore` excludes DocWright-project content (`proposals/`, `plans/`, `policies/`, `issues/`) from the image; engine + bundled profiles + templates stay baked in. Verify the image boots empty of project content and mounts the user's folder as the vault. | ⏳ Pending |
+| 4 | **Derived roadplan view** | Generated view (never hand-maintained) computed from `milestone:` fields: current milestone, next milestone, `future` pool. Replaces hand-maintained sections of `docs/roadmap.md`. Resolves [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] and feeds [[proposals/formalize-roadmap-sequencing-enforcement]]. (Also the durable fix for the "no prioritized/hierarchical list" finding that the `/status` priority-sort patch only bandaged.) | ✅ Done |
+| 5 | **First milestone-determination cycle** | The first real use of the new machinery: sort the existing backlog into current / next / `future`, assign `milestone:` to every open item, and generate the roadplan. Recurring cadence thereafter (re-run at each milestone close, analogous to `phase-close`). | ✅ Done |
+| 6 | **Release-channel field + beta gate** | `channel: dev\|beta\|stable` field, orthogonal to version number. Readiness dashboard: `0 open in-scope blockers` + `0 in-scope majors above demand-threshold` + minimum dogfood window + non-negative burn-down. `beta → stable` is **BDFL-only, never AI-automated** — code surfaces the dashboard; the human flips the switch. Enforces `bugs-before-features` at release level. | ✅ Done |
+| 7 | **User bug-reporting bridge** | Capture surface + suggest-style dedup (reuse the Phase-1 collation/overlap stub, not a new subsystem). Exact dupe → `+1` demand count; related → association only. Harvest repro/context. **Explicit reports only — passive detection is telemetry and is forbidden.** Never auto-send private context; redaction + explicit confirm; offline queue. | ✅ Done |
+| 8 | **Empty-image deployment** | `.dockerignore` excludes DocWright-project content (`proposals/`, `plans/`, `policies/`, `issues/`) from the image; engine + bundled profiles + templates stay baked in. Verify the image boots empty of project content and mounts the user's folder as the vault. | ✅ Done |
 
 ## Sub-Plan Breakdown & Sequencing
 
@@ -160,3 +161,9 @@ each deliverable; dispatch retains **zero** VS Code API dependencies (invariant 
 | 2026-07-01 | Step 1 delivered: docwright-dev profile (profile.json, schema.json, opencode-instructions.md, 6 templates with author-role, unit test). tsc clean, 297 dispatch tests pass. Plan → in-progress. | NetYeti |
 | 2026-07-01 | Step 2 delivered: issues/ store + README; migrated all 11 bug-*.md from proposals/ to issues/ (code-issue schema); captured native bug-tests-pollute-real-audit-log; vault-status now scans issues/. 297 tests pass. | NetYeti |
 | 2026-07-01 | Step 3 delivered: milestone frontmatter field + no-orphans lint (WARN during rollout; open issues/plans must carry a milestone or 'future'). Added issues/ required-fields + status enum. 305 dispatch tests pass. | NetYeti |
+| 2026-07-01 | Step 4 delivered: derived roadplan view, computed from milestones. | NetYeti |
+| 2026-07-01 | Step 5 delivered: first milestone-determination cycle backlog sorting. | NetYeti |
+| 2026-07-01 | Step 6 delivered: release-channel calculations, dashboard UI, and promotion API. | NetYeti |
+| 2026-07-01 | Step 7 delivered: bug-reporting bridge, duplicate check, and UI reporting modal. | NetYeti |
+| 2026-07-01 | Step 8 delivered: empty-image deployment configuration in `.dockerignore`. | NetYeti |
+

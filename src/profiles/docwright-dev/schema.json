@@ -19,6 +19,7 @@
         "closed_by_pr":     { "type": "string", "description": "PR number/URL that closes this code-issue" },
         "cross_link":       { "type": "string", "description": "Governance doc (proposal/policy/decision) this code-issue implements" },
         "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
+        "channel":          { "type": "string", "enum": ["dev", "beta", "stable"], "default": "dev" },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -38,6 +39,7 @@
         "closed_by_pr":     { "type": "string" },
         "cross_link":       { "type": "string" },
         "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
+        "channel":          { "type": "string", "enum": ["dev", "beta", "stable"], "default": "dev" },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -70,6 +72,7 @@
         "priority":         { "type": "string", "enum": ["low", "medium", "high"] },
         "phase":            { "type": "integer" },
         "milestone":        { "type": "string", "description": "Milestone id, or the literal 'future'. Every open item carries one (lint-enforced)." },
+        "channel":          { "type": "string", "enum": ["dev", "beta", "stable"], "default": "dev" },
         "parent_plan":      { "type": "string" },
         "tags":             { "type": "array", "items": { "type": "string" } }
       }

@@ -18,17 +18,15 @@ current phase gate.
 
 <!-- START_ROADPLAN -->
 
-### 🎯 Current Milestone (v0.5.0)
+### 🎯 Current Milestone (next)
 
 | Type | Title | Phase | Priority | Status | Assigned |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| ✨ Plan | [[plans/roadplan-view.md\|Step 4: Derived roadplan view]] | Phase 4 | high | in-progress | netyeti |
+| 🐛 Issue | [[issues/bug-session-start-blind-to-unmerged-work.md\|Session-start is blind to unmerged branches and open issues — parked work silently vanishes]] | — | high | open | — |
+| ✨ Plan | [[plans/contribution-pipeline.md\|Sub-Plan: Contribution Pipeline & Friction Log]] | Phase 5 | medium | in-progress | NetYeti |
+| 🐛 Issue | [[issues/bug-session-end-push-rejected-on-protected-main.md\|scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead]] | — | low | open | — |
 
-### 🚀 Next Milestone (Next)
-
-_No items assigned to this milestone_
-
-### 🗺 Future Pool Milestone (Future Pool)
+### 🚀 Next Milestone (v0.5.0)
 
 | Type | Title | Phase | Priority | Status | Assigned |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -36,18 +34,20 @@ _No items assigned to this milestone_
 | ✨ Plan | [[plans/separate-dev-tracking-milestones-and-beta-channel.md\|Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel]] | Phase 2 | high | in-progress | NetYeti |
 | 🐛 Issue | [[issues/bug-complete-plan-stray-copy-and-no-refresh.md\|Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-governance-hooks-silently-disabled-docwright-path.md\|Governance hooks silently disabled when DOCWRIGHT_PATH is unset (non-interactive shells)]] | — | high | open | — |
+| 🐛 Issue | [[issues/bug-research-smoke-profile-coverage-fails.md\|research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles']] | — | medium | open | — |
+
+### 🗺 Future Pool Milestone (Future Pool)
+
+| Type | Title | Phase | Priority | Status | Assigned |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | 🐛 Issue | [[issues/bug-hook-source-divergence-and-commit-msg-not-installed.md\|Hook source drift — .githooks diverged from scripts/pre-commit.sh, and commit-msg is never installed for vaults]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-plan-generator-from-approved-proposal.md\|Plan generator (approve → plan) dumps the whole proposal, mangles frontmatter, and mints an unreviewed 'approved' plan]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-human-approved-precommit-check-broken.md\|Pre-commit HUMAN-APPROVED check is broken — reads stale COMMIT_EDITMSG]] | — | high | open | — |
-| 🐛 Issue | [[issues/bug-session-start-blind-to-unmerged-work.md\|Session-start is blind to unmerged branches and open issues — parked work silently vanishes]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-webui-lifecycle-actions-not-committed-to-git.md\|Web UI lifecycle actions write to the working tree but never commit to git — the root of the approval-flow friction]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-webui-save-silently-flips-tests-defined.md\|Web UI save silently flips tests_defined and reruns syncTestCriteria as a side effect]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-wysiwyg-editor-corrupts-documents.md\|WYSIWYG editor corrupts documents and clobbers frontmatter on save]] | — | high | open | — |
 | 🐛 Issue | [[issues/bug-approve-not-idempotent-stale-consumed-by.md\|Approve button silently no-ops when a stale consumed_by points at a missing plan]] | — | medium | open | — |
-| 🐛 Issue | [[issues/bug-research-smoke-profile-coverage-fails.md\|research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles']] | — | medium | open | — |
-| ✨ Plan | [[plans/contribution-pipeline.md\|Sub-Plan: Contribution Pipeline & Friction Log]] | Phase 5 | medium | in-progress | NetYeti |
 | 🐛 Issue | [[issues/bug-tests-pollute-real-audit-log.md\|Test suite writes to the real audit/lifecycle.jsonl instead of an isolated temp store]] | — | medium | open | — |
-| 🐛 Issue | [[issues/bug-session-end-push-rejected-on-protected-main.md\|scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead]] | — | low | open | — |
 
 <!-- END_ROADPLAN -->
 
