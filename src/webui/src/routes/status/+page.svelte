@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { fileChanged } from '$lib/fileChanges';
   import FunnelView from '$lib/FunnelView.svelte';
@@ -275,6 +276,24 @@
       return a.localeCompare(b);
     });
     return keys.map(k => ({ phase: k, plans: groups.get(k)! }));
+  });
+
+  $effect(() => {
+    const focusSection = $page.url.searchParams.get('section');
+    if (focusSection && SECTIONS.includes(focusSection)) {
+      const nextCollapsed: Record<string, boolean> = {};
+      for (const k of SECTIONS) {
+        nextCollapsed[k] = (k !== focusSection);
+      }
+      collapsed = nextCollapsed;
+
+      setTimeout(() => {
+        const el = document.getElementById('section-' + focusSection);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+    }
   });
 </script>
 
@@ -613,7 +632,7 @@
     {/if}
 
     <!-- Active plans -->
-    <section class="section">
+    <section id="section-active-plans" class="section">
       <button class="section-header" onclick={() => toggleSection('active-plans')}>
         <span class="section-title">Active Plans</span>
         <span class="badge">{data.plans.active.length}</span>
@@ -658,7 +677,7 @@
     </section>
 
     <!-- Approved, pending plan -->
-    <section class="section">
+    <section id="section-approved-pending" class="section">
       <button class="section-header" onclick={() => toggleSection('approved-pending')}>
         <span class="section-title">Approved — Awaiting Plan</span>
         <span class="badge {data.proposals.approved_pending.length > 0 ? 'badge-warn' : ''}">{data.proposals.approved_pending.length}</span>
@@ -685,7 +704,7 @@
     </section>
 
     <!-- Open proposals -->
-    <section class="section">
+    <section id="section-open-proposals" class="section">
       <button class="section-header" onclick={() => toggleSection('open-proposals')}>
         <span class="section-title">Open Proposals</span>
         <span class="badge">{data.proposals.open.length}</span>
@@ -786,7 +805,7 @@
     {/if}
 
     <!-- Completed plans -->
-    <section class="section">
+    <section id="section-completed" class="section">
       <button class="section-header" onclick={() => toggleSection('completed')}>
         <span class="section-title">Completed Plans</span>
         <span class="badge badge-done">{data.plans.completed_count}</span>
