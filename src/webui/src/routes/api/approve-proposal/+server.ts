@@ -7,7 +7,7 @@ import { buildIndex } from '../../../../../policy-atoms-core/index-builder';
 import { route } from '../../../../../policy-atoms-core/router';
 import { resolve } from '../../../../../policy-atoms-core/resolver';
 import { parseAtomYaml } from '../../../../../policy-atoms-core/parse-yaml';
-import { generatePlanSections } from './plan-generator';
+import { generatePlanSections, assemblePlan } from './plan-generator';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -23,13 +23,6 @@ function getIndex() {
 }
 
 const AUDIT_LOG = path.join(REPO_ROOT, '.docwright', 'audit.jsonl');
-
-function hasTestingPlan(content: string): boolean {
-  const m = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=^##\s|\n*$)/m);
-  if (!m) return false;
-  const section = m[1].trim();
-  return section !== '' && section !== '_Add test plan during implementation._';
-}
 
 function logAudit(action: string, detail: string) {
   const dir = path.dirname(AUDIT_LOG);
@@ -107,7 +100,8 @@ export async function POST({ request }) {
 
   const title = fm.title || norm.replace('.md', '');
   const author = fm.author || 'NetYeti';
-  const tags = Array.isArray(fm.tags) ? fm.tags.join(', ') : (fm.tags || '');
+  const tagList = Array.isArray(fm.tags) ? fm.tags : (fm.tags ? [String(fm.tags)] : []);
+  const priority = fm.priority || 'medium';
   const now = new Date().toISOString().slice(0, 10);
   const planSlug = norm;
   const planRel = `plans/${planSlug}`;
@@ -143,14 +137,12 @@ export async function POST({ request }) {
 
   const KNOWN = ['testing plan', 'risk assessment', 'rollback procedures', 'implementation steps', 'proposed solution', 'proposed approach'];
   const mapped: Record<string, { name: string; content: string }> = {};
-  const context: { name: string; content: string }[] = [];
   for (const s of proposalSections) {
-    if (KNOWN.includes(s.name.toLowerCase())) {
-      mapped[s.name.toLowerCase()] = s;
-    } else {
-      context.push(s);
-    }
+    if (KNOWN.includes(s.name.toLowerCase())) mapped[s.name.toLowerCase()] = s;
   }
+  // Overview is a brief summary + link to the proposal — NOT a dump of the proposal body
+  // (see #108). We surface only the proposal's own Summary section, if it has one.
+  const summary = proposalSections.find(s => s.name.toLowerCase() === 'summary')?.content ?? '';
 
   // --- Atomic plan generation (Step 0 of AI Task Category Taxonomy plan) ---
   // Try generating plan sections via sequential OpenCode calls (classification +
@@ -200,11 +192,6 @@ export async function POST({ request }) {
     stepsBody = '| Step | Action | Details | Status |\n|------|--------|---------|--------|\n| 1 | | | ⏳ Pending |';
   }
 
-  let contextBody = '';
-  for (const s of context) {
-    if (s.content) contextBody += `\n### ${s.name}\n\n${s.content}\n`;
-  }
-
   const testingBody = atomicSections?.testingPlan
     ?? (mapped['testing plan'] ? mapped['testing plan'].content : '_Testing plan TBD_');
   const rollbackBody = atomicSections?.rollback
@@ -212,59 +199,17 @@ export async function POST({ request }) {
   const riskBody = atomicSections?.riskAssessment
     ?? (mapped['risk assessment'] ? mapped['risk assessment'].content : '_Risk assessment TBD_');
 
-  const planContent = `---
-title: ${title}
-status: approved
-author: ${author}
-created: ${now}
-tags: ${tags}
-proposal_source: ${approvedRel}
-priority: medium
-automated: guided
-assigned_to: ${assigned}
-tests_defined: false
-tests_human_reviewed: false
----
-
-# ${title}
-
-## Overview
-
-*Plan generated from approved proposal: ${title}*
-${contextBody}
-
-## Implementation Steps
-
-${stepsBody}
-
-## Testing Plan
-
-${testingBody}
-
-## Rollback Procedures
-
-${rollbackBody}
-
-## Risk Assessment
-
-${riskBody}
-
-## Document History
-
-| Date | Change | Author |
-|------|--------|--------|
-| ${now} | Created from approved proposal | ${author} |
-`;
+  const planContent = assemblePlan({
+    title, author, created: now, tags: tagList, priority,
+    proposalSource: approvedRel, assigned, summary,
+    steps: stepsBody, testingPlan: testingBody, rollback: rollbackBody, riskAssessment: riskBody,
+  });
   const planPath = path.join(REPO_ROOT, planRel);
   if (!fs.existsSync(path.dirname(planPath))) fs.mkdirSync(path.dirname(planPath), { recursive: true });
   fs.writeFileSync(planPath, planContent, 'utf-8');
 
-  // Auto-detect tests_defined from proposal body
-  if (proposalBody && hasTestingPlan(proposalBody)) {
-    const planRaw = fs.readFileSync(planPath, 'utf-8');
-    const updated = planRaw.replace(/^(tests_defined:\s*).+$/m, `$1true`);
-    if (updated !== planRaw) fs.writeFileSync(planPath, updated);
-  }
+  // tests_defined stays false — it's a completion gate input, set only by the explicit
+  // run-tests flow / toggle, never auto-promoted here (#108, mirrors the /api/write fix #86).
 
   // Move proposal to proposals/approved/ using canonical vault-write API.
   // This updates _path:, cascades wikilinks, and updates cross-refs atomically.
