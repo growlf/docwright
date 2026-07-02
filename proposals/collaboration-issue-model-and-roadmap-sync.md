@@ -92,7 +92,29 @@ to at most one plan.
   that would have prevented the #89 collision. Enforce via convention now; automate later
   (code-over-memory) if it recurs.
 
-### 3. Roadmap / milestone mapping
+### 3. Execution lifecycle & source of truth
+
+A plan moves through three phases; collaboration is open early and **frozen** once code is in motion.
+
+1. **Discuss** — proposal → plan. Direction is open; refine freely. No issues yet.
+2. **Start** (`plan status → in-progress`) — the trigger to **generate the plan's issues** from its
+   deliverables (one issue per deliverable; the plan lists them in `tracked_by:`). Scope is now set.
+3. **Execute** — code in motion. Scope is **frozen**: the direction is not re-litigated ad hoc.
+
+**Source of truth = the issues.** Once issues exist, the in-vault `issues/` files (git-canonical)
+own execution state — status, assignee, closing PR. GitHub/Forgejo issues **mirror** them for dev
+UX. The **plan** becomes the frozen **scope/spec**, and its progress is a **derived** view of issue
+state (like the roadplan) — the plan's step-table is **no longer hand-updated** once its issues
+exist. One source of truth; no plan↔issue drift.
+
+**Change control once in motion.** A scope/direction change after Start is not a quiet edit:
+- it is recorded as a **`decision`** document (what changed and why);
+- the affected **issue(s) and the plan's `tracked_by:` list are updated together** (kept in sync);
+- the change is **annotated / history-stamped**, so the audit trail shows work was already in motion.
+
+This is `bugs-before-features` + `code-over-memory` applied to *scope*: execution never drifts silently.
+
+### 4. Roadmap / milestone mapping
 
 - `milestone:` frontmatter (#68 Step 3) is the source of truth; **GitHub/Forgejo milestones
   mirror it**. The derived roadplan view (#89) already renders current / next / `future`.
@@ -106,8 +128,14 @@ to at most one plan.
 - **Verification:** a round-trip test (markdown issue → tracker → back) with no drift; a lint
   that every open issue has priority + milestone + (if part of a plan) an epic link.
 
-## Out of scope / follow-ups (become issues once this is approved)
+## Out of scope / follow-ups (become the plan's issues once this is approved)
 
-- Build the `issues/` ⇄ tracker sync tool.
-- Formalize the "assign before start" and "epic per plan" conventions (lint/CI).
+- **Issue generation at plan-start:** on `plan status → in-progress`, scaffold one issue per
+  deliverable and populate the plan's `tracked_by:` list (+ each issue's back-link).
+- **Derived plan progress:** compute the plan's completion from its issues' state (retire the
+  hand-updated step-table + the single-scalar `github_epic`).
+- **Scope-change control:** a `decision`-backed flow for changing scope after Start (updates
+  issue(s) + plan `tracked_by:` together, history-stamped).
+- Build the `issues/` ⇄ tracker sync tool (issues = source of truth; tracker = mirror).
+- Formalize the "assign before start" and "one epic per plan" conventions (lint/CI).
 - Decide Forgejo parity for self-hosters (mirror of the GitHub projection).
