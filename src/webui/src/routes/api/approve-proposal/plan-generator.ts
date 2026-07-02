@@ -244,3 +244,77 @@ export async function generatePlanSections(
     return null; // fall back to template
   }
 }
+
+// ── Pure plan assembler (extracted for testability — see #108) ────────────────
+export interface AssemblePlanInput {
+  title: string;
+  author: string;
+  created: string;          // YYYY-MM-DD
+  tags: string[];           // inherited from the proposal, emitted as a YAML list
+  priority: string;         // inherited from the proposal
+  proposalSource: string;   // proposals/approved/<slug>.md
+  assigned: string;
+  summary: string;          // the proposal's own Summary section (bounded — NOT the whole body)
+  steps: string;
+  testingPlan: string;
+  rollback: string;
+  riskAssessment: string;
+}
+
+/**
+ * Build the plan markdown from an approved proposal. Pure + deterministic.
+ *
+ * Guarantees the #108 fixes: the Overview is a summary + link (never a dump of the
+ * proposal body), status is `draft` (not `approved`), priority/tags are inherited from
+ * the proposal (tags as a YAML list), and tests_defined stays false.
+ */
+export function assemblePlan(i: AssemblePlanInput): string {
+  const tagsYaml = i.tags.length
+    ? 'tags:\n' + i.tags.map(t => `  - ${t}`).join('\n')
+    : 'tags: []';
+  return `---
+title: ${i.title}
+status: draft
+author: ${i.author}
+created: ${i.created}
+${tagsYaml}
+proposal_source: ${i.proposalSource}
+priority: ${i.priority}
+automated: guided
+assigned_to: ${i.assigned}
+tests_defined: false
+tests_human_reviewed: false
+---
+
+# ${i.title}
+
+## Overview
+
+Delivers the approved proposal [[${i.proposalSource}]] — see it for the full *what & why*.
+Held at \`status: draft\`; fill in the implementation steps below before moving to \`in-progress\`.
+
+${i.summary}
+
+## Implementation Steps
+
+${i.steps}
+
+## Testing Plan
+
+${i.testingPlan}
+
+## Rollback Procedures
+
+${i.rollback}
+
+## Risk Assessment
+
+${i.riskAssessment}
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| ${i.created} | Created from approved proposal | ${i.author} |
+`;
+}
