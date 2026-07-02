@@ -27,9 +27,10 @@ author-role: contributor
 
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
 
-> **Tracked by:** [GitHub #104](https://github.com/growlf/docwright/issues/104) (priority:high) —
-> the gated checklist for approving and building this direction. Approving this proposal is that
-> issue's first step.
+> **Coordination:** [GitHub #104](https://github.com/growlf/docwright/issues/104) (priority:high)
+> is the gated checklist for approving this direction and standing up the plan it becomes.
+> (Per §2, proposals themselves aren't issue-tracked — #104 tracks the resulting *plan*.)
+> Approving this proposal is that issue's first step.
 >
 > **Discussion proposal.** Filed via the proposal → plan → issue flow: the *direction* is
 > discussed and approved here before it is broken into issues and added to the roadmap /
@@ -75,11 +76,19 @@ Alternatives to weigh:
 
 ### 2. The ticket hierarchy (prevents collisions)
 
+**Issues track *plans*, not proposals.** A proposal is a discussion artifact — it is *not*
+issue-tracked. Once approved it becomes a **plan**, and the plan's deliverables become
+**issues**. A plan is tracked by **one or many** issues (its deliverables); an issue belongs
+to at most one plan.
+
 - **Chunk:** every workable unit is one issue with a clear deliverable + acceptance criteria.
 - **Priority:** `priority:high|medium|low` labels (created 2026-07-01).
-- **Hierarchy:** an **epic** (tracking) issue links its children as an ordered checklist
-  (see #98). Epics come from an approved **plan**; children are the plan's deliverables.
-- **Coordination rule:** **assign yourself before starting** a child issue — the missing signal
+- **Plan → issues (one-to-many):** the linkage field lives on the **plan** as a *list* of
+  tracking issues (e.g. `tracked_by: [#NN, #MM]`), superseding the vestigial single-scalar
+  `github_epic:`. Each issue names its plan (`plan:` / `cross_link:`) — a bidirectional link.
+- **Hierarchy:** an **epic** (tracking) issue may group a plan's children as an ordered
+  checklist (see #98) when a plan has several deliverables; the epic corresponds to the plan.
+- **Coordination rule:** **assign yourself before starting** an issue — the missing signal
   that would have prevented the #89 collision. Enforce via convention now; automate later
   (code-over-memory) if it recurs.
 
