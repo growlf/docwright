@@ -71,6 +71,12 @@ build/
 .docwright/executor-checkpoints/
 .docwright/executor-locks/
 
+# docwright MCP audit log (transient test/runtime output — never commit).
+# **/ so it also covers test fixture vaults (test/**/.docwright/audit.jsonl),
+# which were being committed with test-run entries (#95).
+**/.docwright/audit.jsonl
+**/.docworkbench/audit.jsonl
+
 # Phase 0 spike — throwaway code
 spike/
 
