@@ -27,6 +27,10 @@ author-role: contributor
 
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
 
+> **Tracked by:** [GitHub #104](https://github.com/growlf/docwright/issues/104) (priority:high) —
+> the gated checklist for approving and building this direction. Approving this proposal is that
+> issue's first step.
+>
 > **Discussion proposal.** Filed via the proposal → plan → issue flow: the *direction* is
 > discussed and approved here before it is broken into issues and added to the roadmap /
 > milestones. Not a code change — a durable process decision.
