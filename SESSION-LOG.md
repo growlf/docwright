@@ -1175,3 +1175,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: repair HUMAN-APPROVED approval gate (assert in commit-msg, not pre-commit)
 
 **Session note:** `docs/session-notes/session_note_202607010339.md`
+
+---
+
+## Session: 2026-07-02 — Post-merge review, collaboration model, dogfood deploy
+
+**Focus:** Post-merge review, collaboration model, dogfood deploy
+
+**Completed:**
+- [x] docs: approve collaboration-issue-model-and-roadmap-sync (proposal → plan)
+- [x] fix: auto-commit Web UI approve→plan so it isn't left uncommitted; guard behind auth (#110)
+- [x] fix: approve→plan generator no longer dumps the proposal or mints an approved plan (#108)
+- [x] docs: collaboration model — execution lifecycle, source of truth, scope-freeze
+- [x] docs: refine collaboration model — issues track plans (1-to-many), not proposals
+- [x] docs: link collaboration proposal to its tracking issue #104
+- [x] fix: gitignore MCP fixture audit logs so tests stop polluting git (#95)
+- [x] fix: bridge — suggest-style two-phase dedup, harvest context, never auto-reject (#92)
+- [x] fix: gate + auth-guard beta→stable channel promotion (#91)
+- [x] docs: add multi-agent and multi-session collaboration guidelines
+
+**Session note:** `docs/session-notes/session_note_202607022004.md`
