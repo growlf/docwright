@@ -21,6 +21,7 @@ _path: plans/contribution-pipeline.md
 github_epic:
 automated: full
 milestone: next
+channel: beta
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 

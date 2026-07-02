@@ -23,6 +23,7 @@ completed_steps: 4
 phase: 4
 github_epic: null
 milestone: next
+channel: beta
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log
