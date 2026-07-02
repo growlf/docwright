@@ -48,7 +48,7 @@
     currentPhase: number;
     phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
-    plans: { active: DocEntry[]; completed_count: number };
+    plans: { active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
     gates: { pending: PendingGate[]; waived: WaivedGate[]; overdue: OverdueGate[] };
     research: {
       active: ResearchEntry[];
@@ -812,9 +812,30 @@
         <span class="chevron">{collapsed['completed'] ? '▸' : '▾'}</span>
       </button>
       {#if !collapsed['completed']}
-        <div class="empty muted">{data.plans.completed_count} plan{data.plans.completed_count === 1 ? '' : 's'} completed —
-          <a href="/plans/completed" class="link">browse completed plans</a>
-        </div>
+        {#if !data.plans.completed || data.plans.completed.length === 0}
+          <div class="empty muted">No completed plans found</div>
+        {:else}
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Phase</th>
+                <th>Title</th>
+                <th style="width: 150px;">Completed Date</th>
+                <th style="width: 150px;">Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each data.plans.completed as p}
+                <tr class="item-row" onclick={() => navTo(p)}>
+                  <td>{#if p.phase}<span class="phase-badge">Phase {p.phase}</span>{:else}—{/if}</td>
+                  <td class="item-title">{p.title}</td>
+                  <td style="color: var(--muted); font-size: 13px;">{p.completed_date || '—'}</td>
+                  <td>{#if p.assigned_to}<span class="assignee">{p.assigned_to}</span>{:else}—{/if}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {/if}
       {/if}
     </section>
 
