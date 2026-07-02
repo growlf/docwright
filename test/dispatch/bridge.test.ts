@@ -1,71 +1,75 @@
 import assert from 'assert';
-import { reportBug } from '../../src/dispatch/bridge';
+import { suggestDuplicates, confirmDuplicate, createReportedBug } from '../../src/dispatch/bridge';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 
-describe('Bug Reporting Bridge', () => {
+describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
   let tmpDir = '';
 
-  function setupVault(): string {
+  beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-test-'));
     fs.mkdirSync(path.join(tmpDir, 'issues'));
-    return tmpDir;
-  }
+  });
+  afterEach(() => { if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
-  function teardownVault(): void {
-    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
-  }
-
-  beforeEach(() => setupVault());
-  afterEach(() => teardownVault());
-
-  it('creates a new bug document when no duplicate exists', () => {
-    const report = {
-      title: 'Database connection timeout in production',
-      description: 'The DB connection pool times out after 10 seconds under load.',
-      reporter: 'NetYeti',
-      priority: 'high' as const,
-      system_info: 'Linux x86_64, Node v20',
-    };
-
-    const res = reportBug(tmpDir, report);
-    assert.strictEqual(res.isDuplicate, false);
-    assert.strictEqual(res.demandCount, 1);
-    assert.ok(fs.existsSync(path.join(tmpDir, res.path)));
-
-    const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
-    assert.ok(content.includes('title: Database connection timeout in production'));
-    assert.ok(content.includes('status: open'));
-    assert.ok(content.includes('category: bug'));
-    assert.ok(content.includes('priority: high'));
-    assert.ok(content.includes('demand_count: 1'));
+  const report = (over: Partial<any> = {}) => ({
+    title: 'UI alignment issue on settings panel',
+    description: 'Save button is cut off on mobile.',
+    reporter: 'User A',
+    ...over,
   });
 
-  it('detects a duplicate bug and increments the demand_count', () => {
-    const report1 = {
-      title: 'UI alignment issue on settings panel',
-      description: 'The save button is cut off on mobile views.',
-      reporter: 'User A',
-      priority: 'low' as const,
-    };
+  it('createReportedBug files a new bug with milestone: future and no auto v0.5.0', () => {
+    const res = createReportedBug(tmpDir, report({ priority: 'high', system_info: 'Linux, Node 20' }));
+    assert.strictEqual(res.demandCount, 1);
+    const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
+    assert.ok(content.includes('category: bug'));
+    assert.ok(content.includes('milestone: future'), 'defaults to future, not v0.5.0');
+    assert.ok(content.includes('priority: high'));
+  });
 
-    const res1 = reportBug(tmpDir, report1);
-    assert.strictEqual(res1.isDuplicate, false);
+  it('suggestDuplicates is read-only and returns similar open bugs (no write, no auto-merge)', () => {
+    createReportedBug(tmpDir, report());
+    const before = fs.readdirSync(path.join(tmpDir, 'issues')).length;
+    const suggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!');
+    const after = fs.readdirSync(path.join(tmpDir, 'issues')).length;
+    assert.strictEqual(before, after, 'suggest must not write');
+    assert.ok(suggestions.length >= 1);
+    assert.ok(suggestions[0].score >= 0.5);
+    assert.ok(suggestions[0].demandCount === 1);
+  });
 
-    // Report a similar bug
-    const report2 = {
-      title: 'UI alignment issue on settings panel!',
-      description: 'Button cut off on mobile screen.',
+  it('does NOT suggest a genuinely different bug (never swallow distinct reports)', () => {
+    createReportedBug(tmpDir, report());
+    const suggestions = suggestDuplicates(tmpDir, 'Database replication lag under heavy write load');
+    assert.strictEqual(suggestions.length, 0);
+  });
+
+  it('confirmDuplicate increments demand AND harvests the new report context', () => {
+    const first = createReportedBug(tmpDir, report());
+    const res = confirmDuplicate(tmpDir, first.path, report({
       reporter: 'User B',
-    };
-
-    const res2 = reportBug(tmpDir, report2);
-    assert.strictEqual(res2.isDuplicate, true);
-    assert.strictEqual(res2.demandCount, 2);
-    assert.strictEqual(res2.path, res1.path);
-
-    const content = fs.readFileSync(path.join(tmpDir, res2.path), 'utf-8');
+      description: 'Also happens on tablet in landscape.',
+      system_info: 'iPad Safari',
+    }));
+    assert.strictEqual(res.demandCount, 2);
+    const content = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
     assert.ok(content.includes('demand_count: 2'));
+    assert.ok(content.includes('Additional reports'), 'context section added');
+    assert.ok(content.includes('User B'), 'reporter harvested');
+    assert.ok(content.includes('tablet in landscape'), 'description harvested');
+    assert.ok(content.includes('iPad Safari'), 'environment harvested');
+  });
+
+  it('createReportedBug records related associations without incrementing demand', () => {
+    const first = createReportedBug(tmpDir, report());
+    const res = createReportedBug(tmpDir, report({ title: 'Different but related layout glitch' }), [first.path]);
+    const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
+    assert.ok(content.includes('related:'));
+    assert.ok(content.includes(first.path));
+    // the related canonical's demand is untouched (association, not a +1 lie)
+    const firstContent = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
+    assert.ok(firstContent.includes('demand_count: 1'));
   });
 });

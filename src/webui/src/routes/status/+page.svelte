@@ -169,42 +169,75 @@
   let bugPriority = $state<'low' | 'medium' | 'high'>('medium');
   let bugSysInfo = $state('');
   let reportSubmitting = $state(false);
+  // Two-phase suggest flow (#68 §3 / #92): 'form' collects the report; 'suggest' shows
+  // similar open bugs so the reporter answers "is one of these yours?" — never auto-rejected.
+  interface DupSuggestion { path: string; title: string; score: number; demandCount: number; }
+  let reportStep = $state<'form' | 'suggest'>('form');
+  let bugSuggestions = $state<DupSuggestion[]>([]);
 
+  function reportPayload() {
+    return {
+      title: bugTitle, description: bugDesc, reporter: bugReporter,
+      priority: bugPriority, system_info: bugSysInfo,
+    };
+  }
+
+  function resetReport() {
+    showReportBugModal = false;
+    reportStep = 'form';
+    bugSuggestions = [];
+    bugTitle = ''; bugDesc = ''; bugPriority = 'medium'; bugSysInfo = '';
+  }
+
+  // Phase 1 — ask for suggestions (read-only). If any, show them; if none, file directly.
   async function submitBugReport(e: Event) {
     e.preventDefault();
     if (!bugTitle.trim() || !bugDesc.trim() || !bugReporter.trim()) return;
     reportSubmitting = true;
-    const res = await fetch('/api/issues/report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: bugTitle,
-        description: bugDesc,
-        reporter: bugReporter,
-        priority: bugPriority,
-        system_info: bugSysInfo,
-        milestone: data?.releaseReadiness?.milestone || 'v0.5.0',
-      }),
-    });
-    reportSubmitting = false;
-    if (res.ok) {
-      const result = await res.json();
-      if (result.isDuplicate) {
-        alert(`Duplicate bug detected! Incremented demand count on existing bug at ${result.path} (Total demand: ${result.demandCount}).`);
+    try {
+      const res = await fetch('/api/issues/report', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: bugTitle }),
+      });
+      if (!res.ok) { alert('Failed to check for duplicates: ' + ((await res.json()).error || 'Unknown')); return; }
+      const { suggestions } = await res.json();
+      if (suggestions && suggestions.length > 0) {
+        bugSuggestions = suggestions;
+        reportStep = 'suggest';
       } else {
-        alert(`Bug report successfully created at ${result.path}!`);
+        await fileNewBug([]);
       }
-      showReportBugModal = false;
-      // Reset form
-      bugTitle = '';
-      bugDesc = '';
-      bugPriority = 'medium';
-      bugSysInfo = '';
-      load();
-    } else {
-      const err = await res.json();
-      alert('Failed to report bug: ' + (err.error || 'Unknown error'));
+    } finally {
+      reportSubmitting = false;
     }
+  }
+
+  // Phase 2a — reporter picked an existing bug: +1 demand + harvest context.
+  async function confirmExisting(canonicalPath: string) {
+    reportSubmitting = true;
+    try {
+      const res = await fetch('/api/issues/report/confirm', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canonicalPath, ...reportPayload() }),
+      });
+      const r = await res.json();
+      if (res.ok) { alert(`Thanks — added your context to ${r.path} (demand now ${r.demandCount}).`); resetReport(); load(); }
+      else alert('Failed: ' + (r.error || 'Unknown error'));
+    } finally { reportSubmitting = false; }
+  }
+
+  // Phase 2b — none matched: file a new bug, associating the near-misses shown.
+  async function fileNewBug(related: string[]) {
+    reportSubmitting = true;
+    try {
+      const res = await fetch('/api/issues/report/create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...reportPayload(), related }),
+      });
+      const r = await res.json();
+      if (res.ok) { alert(`Bug report filed at ${r.path}.`); resetReport(); load(); }
+      else alert('Failed to file bug: ' + (r.error || 'Unknown error'));
+    } finally { reportSubmitting = false; }
   }
 
   function statusBadgeClass(status: string): string {
@@ -779,42 +812,64 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3>🐞 Report a Bug</h3>
-          <button class="close-btn" onclick={() => showReportBugModal = false}>&times;</button>
+          <button class="close-btn" onclick={resetReport}>&times;</button>
         </div>
-        <form onsubmit={submitBugReport}>
-          <div class="form-group">
-            <label for="bug-title">Bug Title</label>
-            <input id="bug-title" type="text" bind:value={bugTitle} required placeholder="e.g. Database connection pool timeout" />
-          </div>
-          <div class="form-group">
-            <label for="bug-desc">Description</label>
-            <textarea id="bug-desc" bind:value={bugDesc} required rows="4" placeholder="Detail the steps to reproduce, actual vs expected outcomes..."></textarea>
-          </div>
-          <div class="form-row">
+
+        {#if reportStep === 'form'}
+          <form onsubmit={submitBugReport}>
             <div class="form-group">
-              <label for="bug-reporter">Reporter</label>
-              <input id="bug-reporter" type="text" bind:value={bugReporter} required />
+              <label for="bug-title">Bug Title</label>
+              <input id="bug-title" type="text" bind:value={bugTitle} required placeholder="e.g. Database connection pool timeout" />
             </div>
             <div class="form-group">
-              <label for="bug-priority">Priority</label>
-              <select id="bug-priority" bind:value={bugPriority}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+              <label for="bug-desc">Description</label>
+              <textarea id="bug-desc" bind:value={bugDesc} required rows="4" placeholder="Detail the steps to reproduce, actual vs expected outcomes..."></textarea>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="bug-sysinfo">System Info</label>
-            <input id="bug-sysinfo" type="text" bind:value={bugSysInfo} placeholder="e.g. Linux x86_64, Node v20" />
-          </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bug-reporter">Reporter</label>
+                <input id="bug-reporter" type="text" bind:value={bugReporter} required />
+              </div>
+              <div class="form-group">
+                <label for="bug-priority">Priority</label>
+                <select id="bug-priority" bind:value={bugPriority}>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="bug-sysinfo">System Info</label>
+              <input id="bug-sysinfo" type="text" bind:value={bugSysInfo} placeholder="e.g. Linux x86_64, Node v20" />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-cancel" onclick={resetReport}>Cancel</button>
+              <button type="submit" class="btn btn-submit" disabled={reportSubmitting}>
+                {reportSubmitting ? 'Checking…' : 'Continue'}
+              </button>
+            </div>
+          </form>
+        {:else}
+          <p class="suggest-intro">These look similar — is one of them yours? Confirming adds your context and bumps its demand count. Nothing is auto-merged.</p>
+          <ul class="suggest-list">
+            {#each bugSuggestions as s (s.path)}
+              <li class="suggest-item">
+                <div class="suggest-meta">
+                  <span class="suggest-title">{s.title}</span>
+                  <span class="suggest-sub">demand {s.demandCount} · {(s.score * 100).toFixed(0)}% match</span>
+                </div>
+                <button type="button" class="btn btn-submit" disabled={reportSubmitting} onclick={() => confirmExisting(s.path)}>This is mine</button>
+              </li>
+            {/each}
+          </ul>
           <div class="modal-actions">
-            <button type="button" class="btn btn-cancel" onclick={() => showReportBugModal = false}>Cancel</button>
-            <button type="submit" class="btn btn-submit" disabled={reportSubmitting}>
-              {reportSubmitting ? 'Reporting...' : 'Submit Bug'}
+            <button type="button" class="btn btn-cancel" onclick={() => (reportStep = 'form')}>← Back</button>
+            <button type="button" class="btn btn-submit" disabled={reportSubmitting} onclick={() => fileNewBug(bugSuggestions.map((s) => s.path))}>
+              {reportSubmitting ? 'Filing…' : 'None of these — file new'}
             </button>
           </div>
-        </form>
+        {/if}
       </div>
     </div>
   {/if}
@@ -1293,4 +1348,12 @@
     .roadplan-bucket-header { background: #e8e8e8; border-bottom-color: #d0d0d0; h2 { color: #1a1a1a; } }
     .phase-tag { background: rgba(74, 108, 247, 0.08); color: #4a6cf7; border-color: rgba(74, 108, 247, 0.15); }
   }
+
+  // Two-phase bug-report suggestions
+  .suggest-intro { font-size: 0.9rem; opacity: 0.85; margin: 0 0 0.75rem; }
+  .suggest-list { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .suggest-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid rgba(128,128,128,0.25); border-radius: 6px; }
+  .suggest-meta { display: flex; flex-direction: column; min-width: 0; }
+  .suggest-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .suggest-sub { font-size: 0.75rem; opacity: 0.7; }
 </style>
