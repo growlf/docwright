@@ -7,6 +7,7 @@
 
 import { mount as svelteMount, unmount as svelteUnmount } from 'svelte';
 import type { Writable } from 'svelte/store';
+import { goto } from '$app/navigation';
 
 import GovernancePanel from '$lib/GovernancePanel.svelte';
 import FileTree        from '../routes/FileTree.svelte';
@@ -29,6 +30,7 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     mount(el: HTMLElement) { govApp = svelteMount(GovernancePanel, { target: el }); },
     unmount()              { if (govApp) { svelteUnmount(govApp); govApp = null; } },
     onSearch(q: string)    { opts.govSearchQuery.set(q); },
+    onActivate()           { if (window.location.pathname !== '/status' && window.location.pathname !== '/status/') goto('/status'); },
     onDeactivate()         { opts.govSearchQuery.set(''); },
   });
 
