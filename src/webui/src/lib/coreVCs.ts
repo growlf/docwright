@@ -12,7 +12,6 @@ import { goto } from '$app/navigation';
 import GovernancePanel from '$lib/GovernancePanel.svelte';
 import FileTree        from '../routes/FileTree.svelte';
 import GitPanel        from '$lib/GitPanel.svelte';
-import TagsPanel       from '$lib/TagsPanel.svelte';
 import SearchPanel     from '$lib/SearchPanel.svelte';
 
 export interface CoreVCOptions {
@@ -42,12 +41,7 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     onActivate()           { if (window.location.pathname !== '/search' && window.location.pathname !== '/search/') goto('/search'); },
   });
 
-  // ── Tags (order: 30) ──────────────────────────────────────────────────
-  let tagsApp: any = null;
-  dw.registerView('tags', {
-    mount(el: HTMLElement) { tagsApp = svelteMount(TagsPanel, { target: el }); },
-    unmount()              { if (tagsApp) { svelteUnmount(tagsApp); tagsApp = null; } },
-  });
+
 
   // ── Git (order: 40) ───────────────────────────────────────────────────
   // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth)

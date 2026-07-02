@@ -77,6 +77,12 @@
     'sop': 'var(--accent-5, #06b6d4)',
     'doc': 'var(--muted, #888)',
   };
+
+  function filterByTag(tag: string) {
+    const params = new URLSearchParams($page.url.searchParams);
+    params.set('q', '#' + tag);
+    goto(`?${params.toString()}`);
+  }
 </script>
 
 <div class="search-page-container">
@@ -130,6 +136,13 @@
                 <h3 class="card-title">{r.title}</h3>
                 <span class="card-path">{r.path}</span>
                 <p class="card-excerpt">{@html r.excerpt}</p>
+                {#if r.tags && r.tags.length > 0}
+                  <div class="card-tags">
+                    {#each r.tags as tag}
+                      <span class="tag-pill" onclick={(e) => { e.stopPropagation(); filterByTag(tag); }}>#{tag}</span>
+                    {/each}
+                  </div>
+                {/if}
               </div>
             {/each}
           </div>
@@ -392,5 +405,31 @@
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--accent-2, #7c6af7);
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .tag-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-2, #7c6af7);
+    background: rgba(124, 106, 247, 0.08);
+    border: 1px solid rgba(124, 106, 247, 0.15);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-family: monospace;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+
+  .tag-pill:hover {
+    background: rgba(124, 106, 247, 0.18);
+    border-color: var(--accent-2, #7c6af7);
+    transform: scale(1.03);
   }
 </style>

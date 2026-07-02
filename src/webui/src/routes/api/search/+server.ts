@@ -40,6 +40,25 @@ interface SearchResult {
   score: number;
   badge?: string;
   badgeColor?: string;
+  tags?: string[];
+}
+
+function parseTags(raw: string): string[] {
+  const m = raw.match(/^---\n[\s\S]*?\n---/);
+  if (!m) return [];
+  const fm = m[0];
+  const tagsBlock = fm.match(/^tags:\s*\n((?:\s+-\s+.+\n?)*)/m);
+  if (tagsBlock) {
+    return tagsBlock[1]
+      .split('\n')
+      .map(l => l.replace(/^\s+-\s*/, '').trim())
+      .filter(Boolean);
+  }
+  const inline = fm.match(/^tags:\s*\[(.+)\]/m);
+  if (inline) {
+    return inline[1].split(',').map(t => t.replace(/["'\s]/g, '')).filter(Boolean);
+  }
+  return [];
 }
 
 function extractTitle(content: string, filename: string): string {
@@ -75,6 +94,11 @@ function scoreMatch(content: string, title: string, query: string): number {
 export async function GET({ url, fetch }: { url: URL; fetch: typeof window.fetch }) {
   const q = (url.searchParams.get('q') || '').trim();
   if (q.length < 2) return json({ results: [] });
+
+  const isTagSearch = q.startsWith('#') || q.startsWith('tag:');
+  const targetTag = isTagSearch 
+    ? (q.startsWith('#') ? q.slice(1) : q.slice(4)).trim().toLowerCase()
+    : '';
 
   const results: SearchResult[] = [];
 
@@ -113,15 +137,27 @@ export async function GET({ url, fetch }: { url: URL; fetch: typeof window.fetch
       try { content = fs.readFileSync(fullPath, 'utf-8'); } catch { continue; }
 
       const title = extractTitle(content, file);
-      const score = scoreMatch(content, title, q);
-      if (score === 0) continue;
+      const fileTags = parseTags(content);
+
+      let score = 0;
+      if (isTagSearch) {
+        if (fileTags.map(t => t.toLowerCase()).includes(targetTag)) {
+          score = 100;
+        } else {
+          continue;
+        }
+      } else {
+        score = scoreMatch(content, title, q);
+        if (score === 0) continue;
+      }
 
       results.push({
         path: path.join(dir, file),
         title,
         type: TYPE_MAP[dir] ?? 'doc',
-        excerpt: extractExcerpt(content, q),
+        excerpt: extractExcerpt(content, isTagSearch ? targetTag : q),
         score,
+        tags: fileTags,
       });
     }
   }

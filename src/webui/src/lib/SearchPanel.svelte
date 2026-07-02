@@ -1,114 +1,75 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { searchFocusTrigger } from '$lib/searchFocus.js';
-  import { onMount } from 'svelte';
 
-  // Focus when the shell triggers Ctrl+K or clicking the Search activity bar button
-  onMount(() => searchFocusTrigger.subscribe(v => { if (v > 0) inputEl?.focus(); }));
+  interface TagEntry { tag: string; count: number; }
 
-  interface SearchResult {
-    path: string;
-    title: string;
-    type: string;
-    excerpt: string;
-    score: number;
-  }
+  let tags = $state<TagEntry[]>([]);
+  let loading = $state(true);
+  let filter = $state('');
+  let filterInput: HTMLInputElement;
 
-  let query = $state('');
-  let results = $state<SearchResult[]>([]);
-  let loading = $state(false);
-  let searched = $state(false);
-  let inputEl: HTMLInputElement;
-  let debounceTimer: ReturnType<typeof setTimeout>;
+  // Focus when Ctrl+K or Search panel clicked
+  onMount(() => searchFocusTrigger.subscribe(v => { if (v > 0) filterInput?.focus(); }));
 
-  export function focusSearch() {
-    inputEl?.focus();
-  }
-
-  const TYPE_LABELS: Record<string, string> = {
-    'proposal': 'Proposal',
-    'approved-proposal': 'Approved',
-    'plan': 'Plan',
-    'completed-plan': 'Done',
-    'policy': 'Policy',
-    'sop': 'SOP',
-    'doc': 'Doc',
-  };
-
-  const TYPE_COLORS: Record<string, string> = {
-    'proposal': 'var(--accent-2, #7c6af7)',
-    'approved-proposal': 'var(--accent-1, #4caf50)',
-    'plan': 'var(--accent-3, #f59e0b)',
-    'completed-plan': 'var(--muted, #888)',
-    'policy': 'var(--accent-4, #ef4444)',
-    'sop': 'var(--accent-5, #06b6d4)',
-    'doc': 'var(--muted, #888)',
-  };
-
-  async function search(q: string) {
-    if (q.length < 2) { results = []; searched = false; return; }
+  async function load() {
     loading = true;
-    searched = true;
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      results = data.results ?? [];
-    } catch { results = []; }
+      const res = await fetch('/api/tags');
+      const d = await res.json();
+      tags = d.tags ?? [];
+    } catch { tags = []; }
     loading = false;
   }
 
-  function onInput() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => search(query), 200);
-  }
+  onMount(load);
 
-  function open(result: SearchResult) {
-    goto('/' + result.path.replace(/\.md$/, ''));
-  }
+  const visible = $derived(
+    filter.trim()
+      ? tags.filter(t => t.tag.includes(filter.trim().toLowerCase()))
+      : tags
+  );
 
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') { query = ''; results = []; searched = false; }
+  function searchTag(tag: string) {
+    goto(`/search?q=${encodeURIComponent('#' + tag)}`);
   }
 </script>
 
 <div class="search-panel">
   <div class="search-input-wrap">
-    <span class="search-icon">🔍</span>
+    <span class="search-icon">🏷️</span>
     <input
-      bind:this={inputEl}
-      bind:value={query}
-      oninput={onInput}
-      onkeydown={onKeydown}
+      bind:this={filterInput}
+      bind:value={filter}
       class="search-input"
       type="search"
-      placeholder="Search vault…"
+      placeholder="Filter tags…"
       autocomplete="off"
       spellcheck="false"
     />
-    {#if query}
-      <button class="clear-btn" onclick={() => { query = ''; results = []; searched = false; inputEl?.focus(); }}>✕</button>
+    {#if filter}
+      <button class="clear-btn" onclick={() => { filter = ''; filterInput?.focus(); }}>✕</button>
     {/if}
   </div>
 
   {#if loading}
-    <div class="search-status">Searching…</div>
-  {:else if searched && results.length === 0}
-    <div class="search-status empty">No results for <em>{query}</em></div>
-  {:else if results.length > 0}
+    <div class="search-status">Loading tags…</div>
+  {:else if visible.length === 0}
+    <div class="search-status empty">No tags found</div>
+  {:else}
+    <div class="tags-header-row">
+      <span class="tags-label-col">Tag</span>
+      <span class="tags-count-col">Docs</span>
+    </div>
     <ul class="results">
-      {#each results as r}
-        <li class="result" onclick={() => open(r)}>
-          <div class="result-header">
-            <span class="result-title">{r.title}</span>
-            <span class="result-badge" style="background:{TYPE_COLORS[r.type] ?? '#888'}">{TYPE_LABELS[r.type] ?? r.type}</span>
-          </div>
-          <div class="result-path">{r.path}</div>
-          <div class="result-excerpt">{r.excerpt}</div>
+      {#each visible as { tag, count }}
+        <li class="result-row" onclick={() => searchTag(tag)}>
+          <span class="tag-name">#{tag}</span>
+          <span class="tag-count">{count}</span>
         </li>
       {/each}
     </ul>
-  {:else if !searched}
-    <div class="search-hint">Type at least 2 characters to search</div>
   {/if}
 </div>
 
@@ -136,38 +97,32 @@
   }
   .clear-btn:hover { color: var(--fg, #ddd); }
 
-  .search-status, .search-hint {
+  .search-status {
     padding: 16px 12px; font-size: 12px; color: var(--muted, #666);
     text-align: center;
   }
-  .search-status.empty em { color: var(--fg, #ddd); font-style: normal; }
+
+  .tags-header-row {
+    display: flex; justify-content: space-between;
+    padding: 6px 12px; font-size: 10px; font-weight: 600;
+    color: var(--muted, #555); text-transform: uppercase; letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border, #222); flex-shrink: 0;
+  }
 
   .results {
-    list-style: none; margin: 0; padding: 4px 0;
+    list-style: none; margin: 0; padding: 0;
     overflow-y: auto; flex: 1;
   }
-  .result {
-    padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border, #2a2a2a);
+  .result-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; cursor: pointer; font-size: 12px;
+    border-bottom: 1px solid var(--border, #1a1a1a);
     transition: background 0.1s;
   }
-  .result:hover { background: var(--bg-hover, #252525); }
-  .result-header { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-  .result-title {
-    font-size: 12px; font-weight: 600; color: var(--fg, #ddd);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
-  }
-  .result-badge {
-    font-size: 9px; font-weight: 700; padding: 1px 5px;
-    border-radius: 3px; color: #fff; white-space: nowrap; opacity: 0.85;
-    flex-shrink: 0;
-  }
-  .result-path {
-    font-size: 10px; color: var(--muted, #666); margin-bottom: 3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .result-excerpt {
-    font-size: 11px; color: var(--fg-dim, #999); line-height: 1.4;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden;
+  .result-row:hover { background: var(--bg-hover, #252525); }
+  .tag-name { color: var(--accent, #7c9ef7); font-family: monospace; font-weight: 600; }
+  .tag-count {
+    font-size: 10px; color: var(--muted, #888);
+    background: var(--bg-3, #2a2a2a); padding: 1px 6px; border-radius: 8px;
   }
 </style>

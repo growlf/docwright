@@ -77,7 +77,6 @@ import {
     ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true  }],
     ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true  }],
     ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false }],
-    ['tags',       { order: 30, icon: '🏷', label: 'Tags',              searchable: false }],
     ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: false }],
   ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
