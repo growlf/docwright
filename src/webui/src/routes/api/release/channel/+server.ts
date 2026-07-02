@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { setDocumentField } from '../../../../../../dispatch/vault-write';
+import { getReleaseReadiness } from '../../../../../../dispatch/release';
+import { requireAuth } from '$lib/server/auth.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -56,7 +58,11 @@ function readDir(dir: string): Array<{ path: string; fm: Record<string, any> }> 
   return results;
 }
 
-export async function POST({ request }) {
+// Channel promotion is a governance action: BDFL-only, gated on release readiness.
+// requireAuth ensures only an authenticated human reaches this handler — which is also
+// what makes the `'human'` actor stamp below truthful (an anonymous/AI caller can no
+// longer forge it). See issue #91.
+export const POST = requireAuth(async ({ request }) => {
   const { milestone, channel } = await request.json();
   if (!milestone || !channel) {
     return json({ error: 'missing milestone or channel' }, { status: 400 });
@@ -64,6 +70,20 @@ export async function POST({ request }) {
 
   if (!['dev', 'beta', 'stable'].includes(channel)) {
     return json({ error: 'invalid channel value' }, { status: 400 });
+  }
+
+  // Gate: promotion INTO stable requires computed readiness (0 in-scope blockers,
+  // 0 high-demand majors, dogfood window, non-negative burn-down). Demotions and
+  // dev/beta moves are unrestricted. Plan §5: readiness is necessary; the human click
+  // (requireAuth) is the sufficient BDFL sign-off. Never AI-automated.
+  if (channel === 'stable') {
+    const readiness = getReleaseReadiness(REPO_ROOT, milestone);
+    if (!readiness.ready) {
+      return json({
+        error: `milestone '${milestone}' is not ready for stable`,
+        readiness,
+      }, { status: 409 });
+    }
   }
 
   // Find the plans for the milestone
@@ -87,4 +107,4 @@ export async function POST({ request }) {
   }
 
   return json({ ok: true });
-}
+});
