@@ -1,7 +1,7 @@
 ---
 title: "Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy"
-author: "NetYeti"
-created: "2026-07-01"
+author: NetYeti
+created: 2026-07-01
 tags:
   - governance
   - process
@@ -12,10 +12,10 @@ tags:
 category:
   - governance
 complexity: medium
-approved: false
+approved: true
 priority: high
-created_by: "NetYeti@cluster-llm"
-assigned_to: []
+created_by: NetYeti@cluster-llm
+assigned_to: NetYeti
 related_to:
   - proposals/approved/separate-dev-tracking-milestones-and-beta-channel.md
   - policies/core/code-over-memory.md
@@ -23,6 +23,8 @@ related_to:
 depends_on: []
 blocks: []
 author-role: contributor
+_path: proposals/approved/collaboration-issue-model-and-roadmap-sync
+consumed_by: plans/collaboration-issue-model-and-roadmap-sync.md
 ---
 
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
