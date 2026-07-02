@@ -33,7 +33,7 @@ import {
   interface BrandConfig { name: string; logoPath: string | null; }
 
   let brand = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
-  let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean }[]>([]);
+  let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean; defaultRoute: string }[]>([]);
 
   // AI model picker
   let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
@@ -948,7 +948,11 @@ import {
       {#each activePlugins as plugin}
         <button class="act-btn"
           class:active={leftView === `plugin-${plugin.name}`}
-          onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
+          onclick={() => {
+            leftView = `plugin-${plugin.name}`;
+            showSidebar = true;
+            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+          }}
           title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     {/if}
@@ -967,7 +971,10 @@ import {
       {/each}
       {#each activePlugins as plugin}
         <button class="mobile-act-btn" class:active={leftView === `plugin-${plugin.name}`}
-          onclick={() => leftView = `plugin-${plugin.name}`} title={plugin.displayName}>{plugin.icon}</button>
+          onclick={() => {
+            leftView = `plugin-${plugin.name}`;
+            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+          }} title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     </div>
 

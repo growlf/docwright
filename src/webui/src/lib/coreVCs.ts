@@ -39,6 +39,7 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
   dw.registerView('search', {
     mount(el: HTMLElement) { searchApp = svelteMount(SearchPanel, { target: el }); },
     unmount()              { if (searchApp) { svelteUnmount(searchApp); searchApp = null; } },
+    onActivate()           { if (window.location.pathname !== '/search' && window.location.pathname !== '/search/') goto('/search'); },
   });
 
   // ── Tags (order: 30) ──────────────────────────────────────────────────

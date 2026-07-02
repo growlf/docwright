@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { scanPlugins } from '$lib/server/plugins.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -37,6 +38,8 @@ interface SearchResult {
   type: string;
   excerpt: string;
   score: number;
+  badge?: string;
+  badgeColor?: string;
 }
 
 function extractTitle(content: string, filename: string): string {
@@ -69,11 +72,35 @@ function scoreMatch(content: string, title: string, query: string): number {
   return score;
 }
 
-export function GET({ url }: { url: URL }) {
+export async function GET({ url, fetch }: { url: URL; fetch: typeof window.fetch }) {
   const q = (url.searchParams.get('q') || '').trim();
   if (q.length < 2) return json({ results: [] });
 
   const results: SearchResult[] = [];
+
+  // Query active plugins that have search capability
+  try {
+    const activePlugins = scanPlugins().filter(p => p.manifest.hasSearch);
+    for (const plugin of activePlugins) {
+      const res = await fetch(`/api/plugin/${plugin.manifest.name}/api/search?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const pluginResults = await res.json();
+        for (const pr of pluginResults) {
+          results.push({
+            path: pr.route,
+            title: pr.title,
+            type: plugin.manifest.name,
+            excerpt: pr.excerpt,
+            score: 8, // Set a solid priority score for plugin matches
+            badge: pr.badge,
+            badgeColor: pr.badgeColor,
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[DocWright] Failed to search plugins:', e);
+  }
 
   for (const dir of SEARCH_DIRS) {
     const fullDir = path.join(REPO_ROOT, dir);
