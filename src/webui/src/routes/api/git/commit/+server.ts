@@ -1,9 +1,7 @@
-import { execSync, spawnSync } from 'node:child_process';
-import { writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { json } from '@sveltejs/kit';
 import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? resolve(process.cwd(), '../..');
 
@@ -27,39 +25,8 @@ export const POST = requireAuth(async ({ request, locals }) => {
   if (!SAFE_RE.test(message))
     return json({ error: 'Message contains disallowed characters' }, { status: 400 });
 
-  // Write message to temp file — avoids any shell interpolation of the message
-  const msgFile = join(tmpdir(), `docwright-commit-${Date.now()}.txt`);
-  try {
-    // Also seed COMMIT_EDITMSG so the pre-commit hook reads the correct message
-    mkdirSync(join(REPO, '.git'), { recursive: true });
-    writeFileSync(join(REPO, '.git', 'COMMIT_EDITMSG'), message + '\n');
-    writeFileSync(msgFile, message + '\n');
-
-    // Web UI commits are always human-initiated. Pass authenticated identity
-    // when available; fall back to git config for AUTH_MODE=none.
-    const authorEnv: Record<string, string> = {};
-    if (locals.user) {
-      authorEnv.GIT_AUTHOR_NAME = locals.user.displayName;
-      authorEnv.GIT_AUTHOR_EMAIL = locals.user.email;
-      authorEnv.GIT_COMMITTER_NAME = locals.user.displayName;
-      authorEnv.GIT_COMMITTER_EMAIL = locals.user.email;
-    }
-
-    const result = spawnSync('git', ['commit', '-F', msgFile], {
-      cwd: REPO,
-      encoding: 'utf-8',
-      env: { ...process.env, GIT_DIR: join(REPO, '.git'), GIT_WORK_TREE: REPO, HUMAN_APPROVED: '1', ...authorEnv },
-    });
-
-    if (result.status !== 0) {
-      const output = (result.stdout + result.stderr).trim();
-      return json({ error: output || 'Commit failed' }, { status: 422 });
-    }
-
-    // Extract SHA from output
-    const sha = execSync('git rev-parse --short HEAD', { cwd: REPO, encoding: 'utf-8' }).trim();
-    return json({ sha, message });
-  } finally {
-    try { unlinkSync(msgFile); } catch { /* ignore */ }
-  }
+  // Commit the already-staged index (no stagePaths).
+  const result = commitPaths(REPO, { message, user: locals.user });
+  if (!result.ok) return json({ error: result.error }, { status: 422 });
+  return json({ sha: result.sha, message });
 });

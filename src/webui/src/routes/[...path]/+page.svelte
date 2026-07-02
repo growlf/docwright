@@ -521,7 +521,11 @@
       showToast('Approve failed: ' + (data.error || res.statusText), 4000);
       return;
     }
-    showToast('✓ Proposal approved — navigating to new plan…', 2000);
+    if (data.committed) {
+      showToast(`✓ Approved & committed (${data.committed}) — navigating to new plan…`, 2500);
+    } else {
+      showToast(`✓ Approved (⚠ not committed: ${data.commitError || 'unknown'}) — commit via the git panel`, 5000);
+    }
     goto('/' + data.planPath.replace(/\.md$/, '') + '?from=proposal');
   }
 

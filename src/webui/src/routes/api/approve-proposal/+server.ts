@@ -8,6 +8,8 @@ import { route } from '../../../../../policy-atoms-core/router';
 import { resolve } from '../../../../../policy-atoms-core/resolver';
 import { parseAtomYaml } from '../../../../../policy-atoms-core/parse-yaml';
 import { generatePlanSections, assemblePlan } from './plan-generator';
+import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -36,7 +38,7 @@ function logAudit(action: string, detail: string) {
   fs.appendFileSync(AUDIT_LOG, entry + '\n');
 }
 
-export async function POST({ request }) {
+export const POST = requireAuth(async ({ request, locals }) => {
   const { path: filePath } = await request.json();
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
@@ -220,9 +222,22 @@ export async function POST({ request }) {
 
   logAudit('APPROVED', `proposal/${norm} → proposals/approved/ + plan created`);
 
+  // Persist the lifecycle action so it isn't left as a silent, uncommitted change (#110).
+  // The authenticated click is the seal: commit locally, authored as the user, with
+  // HUMAN_APPROVED. Never pushes — that stays a separate, explicit action. Non-fatal:
+  // the files are already written, so a commit failure is surfaced, not thrown.
+  const slug = norm.replace(/\.md$/, '');
+  const commit = commitPaths(REPO_ROOT, {
+    message: `docs: approve ${slug} (proposal → plan)\n\nHUMAN-APPROVED:${slug}`,
+    stagePaths: [`proposals/${norm}`, approvedRel, planRel],
+    user: locals.user,
+  });
+
   return json({
     ok: true,
     approvedPath: approvedRel,
     planPath: planRel,
+    committed: commit.ok ? commit.sha : null,
+    commitError: commit.ok ? null : commit.error,
   });
-}
+});
