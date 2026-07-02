@@ -77,7 +77,11 @@ function getRepoRoot(): string {
     return path.resolve(dir, '../..');
   }
   // Fallback to cwd
-  return process.cwd();
+  const cwd = process.cwd();
+  if (cwd.endsWith('webui') || cwd.includes('webui/')) {
+    return path.resolve(cwd, '../..');
+  }
+  return cwd;
 }
 
 function loadBundledProfile(): ProfileConfig {

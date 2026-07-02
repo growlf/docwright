@@ -217,7 +217,10 @@ export class OpenCodeEngine implements AIEngine {
 
   /** Create a session and send one prompt, return extracted text. */
   private async callSession(prompt: string): Promise<string> {
-    const dir = this.vaultRoot ?? process.env.DOCWRIGHT_ROOT ?? process.cwd();
+    let dir = this.vaultRoot ?? process.env.DOCWRIGHT_ROOT ?? process.cwd();
+    if (dir.endsWith('webui') || dir.includes('webui/')) {
+      dir = path.resolve(dir, '../..');
+    }
     const q = `directory=${encodeURIComponent(dir)}`;
     const sessRes = await fetch(`${this.url}/session?${q}`, {
       method: 'POST',

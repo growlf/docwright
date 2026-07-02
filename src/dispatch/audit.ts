@@ -55,9 +55,14 @@ export interface AuditFilter {
 
 // Resolve repo root lazily (__dirname not available in ESM/Vite SSR)
 function getRepoRoot(): string {
-  return process.env.DOCWRIGHT_ROOT
-    ? path.resolve(process.env.DOCWRIGHT_ROOT)
-    : process.cwd();
+  if (process.env.DOCWRIGHT_ROOT) {
+    return path.resolve(process.env.DOCWRIGHT_ROOT);
+  }
+  const cwd = process.cwd();
+  if (cwd.endsWith('webui') || cwd.includes('webui/')) {
+    return path.resolve(cwd, '../..');
+  }
+  return cwd;
 }
 
 function getAuditDir(repoRoot?: string): string {
