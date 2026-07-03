@@ -259,6 +259,8 @@ export interface AssemblePlanInput {
   testingPlan: string;
   rollback: string;
   riskAssessment: string;
+  phase?: string;
+  related_to?: string[];
 }
 
 /**
@@ -272,6 +274,10 @@ export function assemblePlan(i: AssemblePlanInput): string {
   const tagsYaml = i.tags.length
     ? 'tags:\n' + i.tags.map(t => `  - ${t}`).join('\n')
     : 'tags: []';
+  const phaseLine = i.phase ? `\nphase: ${i.phase}` : '';
+  const relatedLine = i.related_to && i.related_to.length
+    ? '\nrelated_to:\n' + i.related_to.map(r => `  - ${r}`).join('\n')
+    : '\nrelated_to: []';
   return `---
 title: ${i.title}
 status: draft
@@ -283,7 +289,7 @@ priority: ${i.priority}
 automated: guided
 assigned_to: ${i.assigned}
 tests_defined: false
-tests_human_reviewed: false
+tests_human_reviewed: false${phaseLine}${relatedLine}
 ---
 
 # ${i.title}

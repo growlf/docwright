@@ -63,4 +63,14 @@ describe('assemblePlan (approve→plan generation, #108)', () => {
     assert.match(p, /## Rollback Procedures\n\nrevert the PR/);
     assert.match(p, /## Risk Assessment\n\nlow/);
   });
+
+  it('supports optional phase and related_to fields', () => {
+    const p = assemblePlan({
+      ...base,
+      phase: '3',
+      related_to: ['proposals/other-widget.md']
+    });
+    assert.match(p, /^phase: 3$/m);
+    assert.match(p, /^related_to:\n {2}- proposals\/other-widget\.md$/m);
+  });
 });

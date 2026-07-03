@@ -12,6 +12,7 @@ approved: true
 created_by: "NetYeti@phoenix"
 assigned_to: "NetYeti"
 priority: high
+consumed_by: plans/completed/chat-active-document-context.md
 ---
 
 ## Problem

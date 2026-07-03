@@ -17,6 +17,8 @@
     onclose,
     onrecheck,
     oncreateplan,
+    consumedBy = '',
+    onopenplan,
   }: {
     matches: Array<{
       path: string;
@@ -33,6 +35,7 @@
     alreadyRelated?: string[];
     loading?: boolean;
     planMode?: boolean;
+    consumedBy?: string;
     onaddrelated?: (path: string) => void;
     onadddepends?: (path: string) => void;
     onaddblocks?: (path: string) => void;
@@ -40,6 +43,7 @@
     onclose?: () => void;
     onrecheck?: () => void;
     oncreateplan?: () => void;
+    onopenplan?: (path: string) => void;
   } = $props();
 
   let expanded  = $state<Set<string>>(new Set());
@@ -139,19 +143,33 @@
   {:else if matches.length === 0}
     {#if planMode}
       <div class="empty">No related proposals found.</div>
-      <button class="create-plan-btn" onclick={() => oncreateplan?.()}
-        title="Scaffold a plan from this proposal">
-        + Create Plan from This Proposal
-      </button>
+      {#if consumedBy}
+        <button class="create-plan-btn open-plan-btn" onclick={() => onopenplan?.(consumedBy)}
+          title="Open the existing plan for this proposal">
+          ↗ Open Plan
+        </button>
+      {:else}
+        <button class="create-plan-btn" onclick={() => oncreateplan?.()}
+          title="Scaffold a plan from this proposal">
+          + Create Plan from This Proposal
+        </button>
+      {/if}
     {:else}
       <div class="empty">No related proposals found.</div>
     {/if}
   {:else}
     {#if planMode}
-      <button class="create-plan-btn" onclick={() => oncreateplan?.()}
-        title="Scaffold a plan bundling this proposal with the related proposals below">
-        + Create Plan — Bundle {matches.length + 1} Proposal{matches.length > 0 ? 's' : ''}
-      </button>
+      {#if consumedBy}
+        <button class="create-plan-btn open-plan-btn" onclick={() => onopenplan?.(consumedBy)}
+          title="Open the existing plan for this proposal">
+          ↗ Open Plan
+        </button>
+      {:else}
+        <button class="create-plan-btn" onclick={() => oncreateplan?.()}
+          title="Scaffold a plan bundling this proposal with the related proposals below">
+          + Create Plan — Bundle {matches.length + 1} Proposal{matches.length > 0 ? 's' : ''}
+        </button>
+      {/if}
     {/if}
     <div class="hint">
       {planMode ? 'Related proposals that will be bundled. ' : ''}Accept relationships to write them to frontmatter.

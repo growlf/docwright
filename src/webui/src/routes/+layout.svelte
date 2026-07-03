@@ -289,7 +289,7 @@ import {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: 'Plan: ' + (fm.title || fp),
+        title: fm.title || fp,
         candidates: [fp.replace(/\.md$/, '')],
       }),
     });
@@ -307,6 +307,12 @@ import {
         collationRelationships.set([]);
       }
     }
+  }
+
+  function handleOpenPlan(planPath: string) {
+    goto('/' + planPath.replace(/\.md$/, ''));
+    collationMatches.set([]);
+    collationRelationships.set([]);
   }
 
   async function handleReview() {
@@ -1120,12 +1126,14 @@ import {
         relationships={cr}
         loading={cl}
         planMode={$currentDoc.docType === 'proposal' && $currentDoc.frontmatter?.approved === true}
+        consumedBy={$currentDoc.frontmatter?.consumed_by || ''}
         alreadyRelated={Array.isArray($currentDoc.frontmatter?.related_to) ? $currentDoc.frontmatter.related_to : []}
         onaddrelated={(path) => $currentDoc.onAddRelated?.(path)}
         onadddepends={(path) => $currentDoc.onAddDepends?.(path)}
         onaddblocks={(path) => $currentDoc.onAddBlocks?.(path)}
         onsubsume={(path) => $currentDoc.onSubsume?.(path)}
         oncreateplan={() => handleCreatePlan()}
+        onopenplan={(path) => handleOpenPlan(path)}
         onrecheck={() => { if ($currentDoc.filePath) findRelated($currentDoc.filePath); }}
         onclose={() => { rightTab = 'properties'; collationMatches.set([]); collationRelationships.set([]); }}
       />

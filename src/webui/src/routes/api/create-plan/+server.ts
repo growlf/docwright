@@ -3,6 +3,7 @@ import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter, setFrontmatterField } from '../../../../../dispatch/frontmatter';
 import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
+import { generatePlanSections, assemblePlan } from '../approve-proposal/plan-generator';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -22,15 +23,25 @@ function resolvePath(p: string): string {
   return p.endsWith('.md') ? p : p + '.md';
 }
 
-function readTemplate(): string {
-  const candidatePaths = [
-    path.join(REPO_ROOT, 'templates', 'plan-template.md'),
-    path.join(REPO_ROOT, '.docworkbench', 'doc-lifecycle', 'templates', 'plan.md'),
-  ];
-  for (const p of candidatePaths) {
-    if (fs.existsSync(p)) return fs.readFileSync(p, 'utf-8');
+function findProposalPath(cand: string): string | null {
+  const rel = cand.endsWith('.md') ? cand : cand + '.md';
+  if (rel.startsWith('proposals/')) {
+    const p = path.join(REPO_ROOT, rel);
+    if (fs.existsSync(p)) return rel;
+    if (rel.startsWith('proposals/approved/')) {
+      const alt = rel.replace('proposals/approved/', 'proposals/');
+      if (fs.existsSync(path.join(REPO_ROOT, alt))) return alt;
+    } else {
+      const alt = rel.replace('proposals/', 'proposals/approved/');
+      if (fs.existsSync(path.join(REPO_ROOT, alt))) return alt;
+    }
+    return null;
   }
-  return '';
+  const p1 = `proposals/approved/${path.basename(rel)}`;
+  if (fs.existsSync(path.join(REPO_ROOT, p1))) return p1;
+  const p2 = `proposals/${path.basename(rel)}`;
+  if (fs.existsSync(path.join(REPO_ROOT, p2))) return p2;
+  return null;
 }
 
 function readFileBody(filePath: string): string {
@@ -60,51 +71,7 @@ function parseProposalSections(body: string): Record<string, string> {
   return sections;
 }
 
-function extractStepsFromProposal(sections: Record<string, string>): string {
-  // Ordered list of section names to try for step extraction
-  const stepSourceSections = [
-    'implementation steps',
-    'proposed solution',
-    'proposed approach',
-    'notes for plan generation',
-    'phasing',
-    'implementation plan',
-  ];
-  for (const sectionName of stepSourceSections) {
-    if (sections[sectionName]) {
-      const items: string[] = [];
-      for (const line of sections[sectionName].split('\n')) {
-        const li = line.match(/^\s*\d+\.\s+(.+)/);
-        if (li) items.push(li[1].trim());
-      }
-      if (items.length > 0) {
-        return items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
-      }
-    }
-  }
-  return '';
-}
-
-function getProposalSection(sections: Record<string, string>, names: string[]): string {
-  for (const name of names) {
-    if (sections[name]) return sections[name];
-  }
-  return '';
-}
-
-function getContextSections(sections: Record<string, string>, exclude: string[]): string {
-  const parts: string[] = [];
-  const excludeLower = exclude.map(s => s.toLowerCase());
-  for (const [name, content] of Object.entries(sections)) {
-    if (!excludeLower.includes(name) && content) {
-      parts.push(`### ${name.charAt(0).toUpperCase() + name.slice(1)}\n\n${content}\n`);
-    }
-  }
-  return parts.join('\n');
-}
-
 function detectCurrentPhase(repoRoot: string): string {
-  // Find the lowest-numbered in-progress or approved phase overview plan
   const plansDir = path.join(repoRoot, 'plans');
   if (!fs.existsSync(plansDir)) return '';
   try {
@@ -129,8 +96,10 @@ function walkDeps(candidates: string[], repoRoot: string): string[] {
     const c = queue.shift()!;
     if (seen.has(c)) continue;
     seen.add(c);
-    const resolved = path.join(repoRoot, resolvePath(c));
-    const fm = readFrontmatter(resolved);
+    const resolved = findProposalPath(c);
+    if (!resolved) continue;
+    const resolvedFull = path.join(repoRoot, resolved);
+    const fm = readFrontmatter(resolvedFull);
     if (!fm) continue;
     for (const field of ['depends_on']) {
       const links = Array.isArray(fm[field]) ? fm[field] : (fm[field] ? [fm[field]] : []);
@@ -148,8 +117,25 @@ export async function POST({ request }) {
     return json({ error: 'missing title or candidates' }, { status: 400 });
   }
 
-  const slug = slugify(title);
-  const planPath = `plans/${slug}.md`;
+  const sourceProposal = candidates[0] || '';
+  const resolvedProposal = sourceProposal ? findProposalPath(sourceProposal) : null;
+  let proposalFm: Record<string, any> = {};
+  if (resolvedProposal) {
+    const fullPropPath = path.join(REPO_ROOT, resolvedProposal);
+    proposalFm = readFrontmatter(fullPropPath) || {};
+    if (proposalFm.consumed_by) {
+      return json({ error: 'plan already exists', path: proposalFm.consumed_by }, { status: 409 });
+    }
+  }
+
+  let planSlug = '';
+  if (sourceProposal) {
+    planSlug = path.basename(sourceProposal, '.md');
+  } else {
+    planSlug = slugify(title);
+  }
+  planSlug = planSlug.replace(/^plan-/, '');
+  const planPath = `plans/${planSlug}.md`;
   const resolved = path.join(REPO_ROOT, planPath);
   if (!resolved.startsWith(REPO_ROOT)) return json({ error: 'invalid path' }, { status: 403 });
   if (fs.existsSync(resolved)) {
@@ -163,9 +149,9 @@ export async function POST({ request }) {
   const validCandidates: string[] = [];
   const alreadyPlanned: string[] = [];
   for (const cand of allCandidates) {
-    const candResolved = path.join(REPO_ROOT, resolvePath(cand));
-    if (!fs.existsSync(candResolved)) continue;
-    const fm = readFrontmatter(candResolved);
+    const candResolved = findProposalPath(cand);
+    if (!candResolved) continue;
+    const fm = readFrontmatter(path.join(REPO_ROOT, candResolved));
     if (!fm) continue;
     if (fm.consumed_by) {
       alreadyPlanned.push(cand);
@@ -175,119 +161,100 @@ export async function POST({ request }) {
   }
 
   const now = new Date().toISOString().slice(0, 10);
-  const template = readTemplate();
   const currentPhase = detectCurrentPhase(REPO_ROOT);
 
-  const sourceProposal = candidates[0] || validCandidates[0] || '';
-
   // Parse the first candidate proposal's body to extract sections
-  const proposalBody = readFileBody(sourceProposal);
+  const proposalBody = resolvedProposal ? readFileBody(resolvedProposal) : '';
   const proposalSections = proposalBody ? parseProposalSections(proposalBody) : {};
-  const stepsBody = extractStepsFromProposal(proposalSections) || '| 1 | | | ⏳ Pending |';
-  const testingBody = getProposalSection(proposalSections, ['testing plan', 'test plan', 'testing']) || '';
-  const riskBody = getProposalSection(proposalSections, ['risk assessment', 'risks', 'risk']) || '';
-  const rollbackBody = getProposalSection(proposalSections, ['rollback procedures', 'rollback', 'rollback plan']) || '';
-  const contextBody = getContextSections(proposalSections, ['implementation steps', 'proposed solution', 'proposed approach', 'testing plan', 'test plan', 'testing', 'risk assessment', 'risks', 'risk', 'rollback procedures', 'rollback', 'rollback plan', 'expected outcomes', 'resources required', 'notes for plan generation']);
 
+  // sequential atomic generator calls if opencodeUrl is available
+  const opencodeUrl = process.env.OPENCODE_URL;
+  let atomicSections: { steps: string; testingPlan: string; rollback: string; riskAssessment: string } | null = null;
+  if (opencodeUrl && proposalBody) {
+    let planModel: string | undefined;
+    try {
+      const ocJson = path.join(REPO_ROOT, 'opencode.json');
+      if (fs.existsSync(ocJson)) {
+        planModel = JSON.parse(fs.readFileSync(ocJson, 'utf-8')).model;
+      }
+    } catch (_e) { /* use server default */ }
+
+    atomicSections = await generatePlanSections(proposalBody, opencodeUrl, REPO_ROOT, planModel);
+  }
+
+  let stepsBody = '';
+  if (atomicSections) {
+    stepsBody = atomicSections.steps;
+  } else if (proposalSections['implementation steps']) {
+    stepsBody = proposalSections['implementation steps'];
+  } else if (proposalSections['proposed solution']) {
+    const items: string[] = [];
+    for (const line of proposalSections['proposed solution'].split('\n')) {
+      const li = line.match(/^\s*\d+\.\s+(.+)/);
+      if (li) items.push(li[1].trim());
+    }
+    if (items.length > 0) {
+      stepsBody = items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
+    }
+  } else if (proposalSections['proposed approach']) {
+    const items: string[] = [];
+    for (const line of proposalSections['proposed approach'].split('\n')) {
+      const li = line.match(/^\s*\d+\.\s+(.+)/);
+      if (li) items.push(li[1].trim());
+    }
+    if (items.length > 0) {
+      stepsBody = items.map((item, i) => `| ${i + 1} | ${item} | | ⏳ Pending |`).join('\n');
+    }
+  }
+  if (!stepsBody) {
+    stepsBody = '| Step | Action | Details | Status |\n|------|--------|---------|--------|\n| 1 | | | ⏳ Pending |';
+  }
+
+  const testingBody = atomicSections?.testingPlan
+    ?? (proposalSections['testing plan'] || proposalSections['testing'] || '_Testing plan TBD_');
+  const rollbackBody = atomicSections?.rollback
+    ?? (proposalSections['rollback procedures'] || proposalSections['rollback'] || '_Rollback procedures TBD_');
+  const riskBody = atomicSections?.riskAssessment
+    ?? (proposalSections['risk assessment'] || proposalSections['risks'] || '_Risk assessment TBD_');
+
+  const cleanTitle = title.replace(/^Plan:\s*/i, '');
   const overviewBody = validCandidates.length > 1
     ? `This plan bundles: ${validCandidates.map(c => `[[${c.replace(/\.md$/, '')}]]`).join(', ')}`
-    : (contextBody || '');
+    : (proposalSections['summary'] || '');
 
-  if (template && template.includes('{{VALUE:')) {
-    const filled = template
-      .replace(/\{\{VALUE:title\}\}/g, title)
-      .replace(/\{\{VALUE:author\}\}/g, 'NetYeti')
-      .replace(/\{\{DATE:YYYY-MM-DD\}\}/g, now)
-      .replace(/\{\{VALUE:created_by\}\}/g, 'NetYeti@phoenix')
-      .replace(/\{\{VALUE:tags\}\}/g, 'planning')
-      .replace(/\{\{VALUE:proposal_source\}\}/g, sourceProposal)
-      .replace(/\{\{VALUE:priority\}\}/g, 'medium')
-      .replace(/\{\{VALUE:phase\}\}/g, currentPhase)
-      .replace(/\{\{VALUE:assigned_to\}\}/g, 'NetYeti')
-      .replace(/\{\{VALUE:overview\}\}/g, overviewBody)
-      .replace(/\{\{VALUE:testing\}\}/g, testingBody)
-      .replace(/\{\{VALUE:rollback\}\}/g, rollbackBody)
-      .replace(/\{\{VALUE:risk\}\}/g, riskBody)
-      .replace(/\{\{VALUE:steps\}\}/g, stepsBody);
-    // Strip any unprocessed template syntax (Handlebars blocks, leftover tokens)
-    const cleaned = filled
-      .replace(/\{\{#if[^}]*\}\}/g, '')
-      .replace(/\{\{else if[^}]*\}\}/g, '')
-      .replace(/\{\{else\}\}/g, '')
-      .replace(/\{\{\/if\}\}/g, '')
-      .replace(/\{\{[#/][^}]*\}\}/g, '')
-      .replace(/\{\{VALUE:[^}]*\}\}/g, '');
-    // Ensure plan status is draft (not proposal) — created plans begin as drafts
-    const final = cleaned.replace(/^status:\s*proposal$/m, 'status: draft');
-    fs.mkdirSync(path.dirname(resolved), { recursive: true });
-    fs.writeFileSync(resolved, final, 'utf-8');
-  } else {
-    const depsList = validCandidates.length > 1
-      ? `\nrelated_to:\n${validCandidates.map(c => `  - ${c}`).join('\n')}`
-      : '\nrelated_to: []';
-    const contextSection = contextBody ? `\n${contextBody}\n` : '';
-    const testingSection = testingBody ? `\n## Testing Plan\n\n${testingBody}\n` : '';
-    const riskSection = riskBody ? `\n## Risk Assessment\n\n${riskBody}\n` : '';
-    const rollbackSection = rollbackBody ? `\n## Rollback Procedures\n\n${rollbackBody}\n` : '';
-    const content = `---
-title: "${title}"
-status: draft
-author: NetYeti
-created: ${now}
-tags:
-  - planning
-proposal_source: ${sourceProposal}
-priority: medium
-phase: ${currentPhase}
-automated: guided
-assigned_to: NetYeti
-tests_defined: false
-tests_human_reviewed: false${depsList}
----
+  const planContent = assemblePlan({
+    title: cleanTitle,
+    author: proposalFm.author || 'NetYeti',
+    created: now,
+    tags: Array.isArray(proposalFm.tags) ? proposalFm.tags : (proposalFm.tags ? [proposalFm.tags] : ['planning']),
+    priority: proposalFm.priority || 'medium',
+    proposalSource: resolvedProposal || sourceProposal,
+    assigned: proposalFm.assigned_to || 'NetYeti',
+    summary: overviewBody,
+    steps: stepsBody,
+    testingPlan: testingBody,
+    rollback: rollbackBody,
+    riskAssessment: riskBody,
+    phase: currentPhase || undefined,
+    related_to: validCandidates.filter(c => c !== sourceProposal),
+  });
 
-# ${title}
-
-## Overview
-
-${overviewBody || '*Plan generated from proposal*'}
-
-## Implementation Steps
-
-| Step | Action | Details | Status |
-|------|--------|---------|--------|
-${stepsBody}
-${testingSection}${riskSection}${rollbackSection}
-## Phase Gate
-
-- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
-- [ ] Test coverage defined and human-reviewed (\`tests_human_reviewed: true\`)
-- [ ] Deferred ideas captured as proposals before closing
-- [ ] Rollback procedures documented
-- [ ] Risk assessment completed
-
-## Document History
-
-| Date | Change | Author |
-|------|--------|--------|
-| ${now} | Created from proposal ${sourceProposal} | NetYeti |
-`;
-    fs.mkdirSync(path.dirname(resolved), { recursive: true });
-    fs.writeFileSync(resolved, content, 'utf-8');
-  }
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  fs.writeFileSync(resolved, planContent, 'utf-8');
 
   // Sync test criteria into the plan — always ensures the Testing Plan section exists
   {
     const planRaw = fs.readFileSync(resolved, 'utf-8');
-    const synced = syncTestCriteria(planRaw, title);
-    const withTestsDefined = setFrontmatterField(synced, 'tests_defined', true);
-    fs.writeFileSync(resolved, withTestsDefined, 'utf-8');
+    const synced = syncTestCriteria(planRaw, cleanTitle);
+    fs.writeFileSync(resolved, synced, 'utf-8');
   }
 
   // Set consumed_by on each valid candidate (skip already-planned)
   for (const cand of validCandidates) {
-    const candResolved = path.join(REPO_ROOT, resolvePath(cand));
-    if (!fs.existsSync(candResolved)) continue;
-    const raw = fs.readFileSync(candResolved, 'utf-8');
+    const candResolved = findProposalPath(cand);
+    if (!candResolved) continue;
+    const candResolvedFull = path.join(REPO_ROOT, candResolved);
+    const raw = fs.readFileSync(candResolvedFull, 'utf-8');
     const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
     if (!match) continue;
     let fm = match[1];
@@ -297,7 +264,7 @@ ${testingSection}${riskSection}${rollbackSection}
     } else {
       fm += `\nconsumed_by: ${planPath}`;
     }
-    fs.writeFileSync(candResolved, `---\n${fm}\n---\n${body}`);
+    fs.writeFileSync(candResolvedFull, `---\n${fm}\n---\n${body}`);
   }
 
   return json({
