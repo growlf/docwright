@@ -12,6 +12,7 @@
     staged: string[];
     untracked: string[];
     latestTag: string;
+    commits: { sha: string; message: string; }[];
   }
 
   let expanded  = $state(false);
@@ -90,6 +91,55 @@
       await loadStatus();
     } else {
       setLog('✗ ' + (data.error || 'Stage failed'));
+    }
+  }
+
+  async function stageFile(path: string) {
+    setLog(`Staging ${path}…`);
+    const res = await fetch('/api/git/stage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path] }),
+    });
+    if (res.ok) {
+      setLog(`✓ Staged ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Stage failed'}`);
+    }
+  }
+
+  async function unstageFile(path: string) {
+    setLog(`Unstaging ${path}…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path], staged: true }),
+    });
+    if (res.ok) {
+      setLog(`✓ Unstaged ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Unstage failed'}`);
+    }
+  }
+
+  async function discardChanges(path: string) {
+    if (!confirm(`Are you sure you want to discard all changes in ${path}?`)) return;
+    setLog(`Discarding changes in ${path}…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path], staged: false }),
+    });
+    if (res.ok) {
+      setLog(`✓ Reverted ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Discard failed'}`);
     }
   }
 
@@ -209,16 +259,31 @@
 
   {#if expanded}
     <div class="git-body">
-      <!-- File counts -->
+      <!-- Sync Status & Tag badge -->
       {#if status}
+        <div class="sync-info">
+          {#if status.latestTag}
+            <span class="tag-badge" title="Latest Release Tag">🏷 {status.latestTag}</span>
+          {/if}
+          <span class="status-summary">
+            {#if status.ahead === 0 && status.behind === 0}
+              ✓ Up to date
+            {:else}
+              {#if status.ahead > 0}↑ {status.ahead} ahead{/if}
+              {#if status.behind > 0}↓ {status.behind} behind{/if}
+            {/if}
+          </span>
+        </div>
+
+        <!-- File counts -->
         <div class="counts">
-          <button class="count-btn" onclick={() => showStaged = !showStaged}>
+          <button class="count-btn" class:active={showStaged} onclick={() => showStaged = !showStaged}>
             Staged <span class="badge">{filteredStaged.length}</span>
           </button>
-          <button class="count-btn" onclick={() => showModified = !showModified}>
+          <button class="count-btn" class:active={showModified} onclick={() => showModified = !showModified}>
             Modified <span class="badge">{filteredModified.length}</span>
           </button>
-          <button class="count-btn" onclick={() => showUntracked = !showUntracked}>
+          <button class="count-btn" class:active={showUntracked} onclick={() => showUntracked = !showUntracked}>
             New <span class="badge">{filteredUntracked.length}</span>
           </button>
         </div>
@@ -226,21 +291,37 @@
         {#if showStaged && filteredStaged.length}
           <ul class="file-list">
             {#each filteredStaged as f}
-              <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
+              <li class="file-row">
+                <button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))} title={f}>{f}</button>
+                <div class="row-actions">
+                  <button class="row-btn unstage" onclick={() => unstageFile(f)} title="Unstage file">-</button>
+                </div>
+              </li>
             {/each}
           </ul>
         {/if}
         {#if showModified && filteredModified.length}
           <ul class="file-list">
             {#each filteredModified as f}
-              <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
+              <li class="file-row">
+                <button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))} title={f}>{f}</button>
+                <div class="row-actions">
+                  <button class="row-btn stage" onclick={() => stageFile(f)} title="Stage file">+</button>
+                  <button class="row-btn discard" onclick={() => discardChanges(f)} title="Discard changes">↶</button>
+                </div>
+              </li>
             {/each}
           </ul>
         {/if}
         {#if showUntracked && filteredUntracked.length}
           <ul class="file-list untracked">
             {#each filteredUntracked as f}
-              <li>{f}</li>
+              <li class="file-row">
+                <span class="file-name" title={f}>{f}</span>
+                <div class="row-actions">
+                  <button class="row-btn stage" onclick={() => stageFile(f)} title="Stage file">+</button>
+                </div>
+              </li>
             {/each}
           </ul>
         {/if}
@@ -309,6 +390,21 @@
               <button class="ci-opt-btn" onclick={() => ciState = 'idle'}>dismiss</button>
             </div>
           {/if}
+        </div>
+      {/if}
+
+      <!-- Recent commits history -->
+      {#if status && status.commits && status.commits.length > 0}
+        <div class="recent-commits-section">
+          <div class="recent-commits-heading">Recent Commits</div>
+          <ul class="commit-history-list">
+            {#each status.commits as c}
+              <li class="commit-history-row">
+                <span class="commit-history-sha">{c.sha}</span>
+                <span class="commit-history-msg" title={c.message}>{c.message}</span>
+              </li>
+            {/each}
+          </ul>
         </div>
       {/if}
     </div>
@@ -392,6 +488,138 @@
   .ci-link { color: $blue; font-size: 10px; text-decoration: none; &:hover { text-decoration: underline; } }
   .ci-options { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: $muted; }
   .ci-opt-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 10px; padding: 2px 6px; cursor: pointer; &:hover { border-color: $muted; } }
+
+  // Sync status
+  .sync-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 10px 6px;
+    font-size: 10px;
+    color: $muted;
+  }
+  .tag-badge {
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 9px;
+    color: $teal;
+  }
+  .status-summary {
+    font-style: italic;
+  }
+
+  // Interactive File list styling
+  .file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 0;
+    &:hover {
+      .row-actions {
+        opacity: 1;
+      }
+    }
+  }
+  .file-name {
+    font-size: 10px;
+    color: $fg-dim;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .row-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .row-btn {
+    background: $bg-2;
+    border: 1px solid $border;
+    color: $muted;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 1;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    &:hover {
+      color: $fg-dim;
+      border-color: $muted;
+    }
+    &.stage {
+      color: $blue;
+      border-color: $blue-bdr;
+      &:hover { background: $blue-bg; }
+    }
+    &.unstage {
+      color: $teal;
+      border-color: $teal-bdr;
+      &:hover { background: $teal-bg; }
+    }
+    &.discard {
+      color: $red;
+      border-color: $red-bdr;
+      &:hover { background: rgba(200,50,50,0.1); }
+    }
+  }
+
+  // Recent commits styling
+  .recent-commits-section {
+    margin: 10px 8px 0;
+    padding-top: 8px;
+    border-top: 1px solid $border;
+  }
+  .recent-commits-heading {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $muted;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .commit-history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 90px;
+    overflow-y: auto;
+  }
+  .commit-history-row {
+    display: flex;
+    gap: 6px;
+    padding: 2px 0;
+    font-size: 10px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  .commit-history-sha {
+    font-family: monospace;
+    color: $blue;
+    font-size: 9px;
+    background: $bg-2;
+    border-radius: 3px;
+    padding: 0 3px;
+  }
+  .commit-history-msg {
+    color: $fg-dim;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
 
   @media (max-width: 768px) {
     .git-header, .act-btn, .go-btn, .cancel-btn, .count-btn { min-height: 44px; font-size: 12px; }

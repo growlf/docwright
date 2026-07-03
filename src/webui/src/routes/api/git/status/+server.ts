@@ -38,5 +38,16 @@ export function GET() {
 
   const latestTag = git('describe --tags --abbrev=0 2>/dev/null') || '';
 
-  return json({ branch, ahead, behind, modified, staged, untracked, latestTag });
+  // Get recent 5 commits: sha & subject
+  const commitsRaw = gitLines('log -n 5 --pretty=format:"%h %s"');
+  const commits = commitsRaw.map(line => {
+    const space = line.indexOf(' ');
+    if (space === -1) return { sha: line, message: '' };
+    return {
+      sha: line.slice(0, space),
+      message: line.slice(space + 1)
+    };
+  });
+
+  return json({ branch, ahead, behind, modified, staged, untracked, latestTag, commits });
 }
