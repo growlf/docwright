@@ -30,8 +30,11 @@ Thumbs.db
 !.obsidian/plugins/templater-obsidian/*
 !.obsidian/plugins/quickadd/*
 
-# Python cache
+# Python cache and byte-code
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 # Virtual environments
 .venv/
