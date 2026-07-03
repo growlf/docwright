@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
+import { scanPlugins } from '$lib/server/plugins.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -37,6 +38,27 @@ interface SearchResult {
   type: string;
   excerpt: string;
   score: number;
+  badge?: string;
+  badgeColor?: string;
+  tags?: string[];
+}
+
+function parseTags(raw: string): string[] {
+  const m = raw.match(/^---\n[\s\S]*?\n---/);
+  if (!m) return [];
+  const fm = m[0];
+  const tagsBlock = fm.match(/^tags:\s*\n((?:\s+-\s+.+\n?)*)/m);
+  if (tagsBlock) {
+    return tagsBlock[1]
+      .split('\n')
+      .map(l => l.replace(/^\s+-\s*/, '').trim())
+      .filter(Boolean);
+  }
+  const inline = fm.match(/^tags:\s*\[(.+)\]/m);
+  if (inline) {
+    return inline[1].split(',').map(t => t.replace(/["'\s]/g, '')).filter(Boolean);
+  }
+  return [];
 }
 
 function extractTitle(content: string, filename: string): string {
@@ -69,11 +91,40 @@ function scoreMatch(content: string, title: string, query: string): number {
   return score;
 }
 
-export function GET({ url }: { url: URL }) {
+export async function GET({ url, fetch }: { url: URL; fetch: typeof window.fetch }) {
   const q = (url.searchParams.get('q') || '').trim();
   if (q.length < 2) return json({ results: [] });
 
+  const isTagSearch = q.startsWith('#') || q.startsWith('tag:');
+  const targetTag = isTagSearch 
+    ? (q.startsWith('#') ? q.slice(1) : q.slice(4)).trim().toLowerCase()
+    : '';
+
   const results: SearchResult[] = [];
+
+  // Query active plugins that have search capability
+  try {
+    const activePlugins = scanPlugins().filter(p => p.manifest.hasSearch);
+    for (const plugin of activePlugins) {
+      const res = await fetch(`/api/plugin/${plugin.manifest.name}/api/search?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const pluginResults = await res.json();
+        for (const pr of pluginResults) {
+          results.push({
+            path: pr.route,
+            title: pr.title,
+            type: plugin.manifest.name,
+            excerpt: pr.excerpt,
+            score: 8, // Set a solid priority score for plugin matches
+            badge: pr.badge,
+            badgeColor: pr.badgeColor,
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[DocWright] Failed to search plugins:', e);
+  }
 
   for (const dir of SEARCH_DIRS) {
     const fullDir = path.join(REPO_ROOT, dir);
@@ -86,15 +137,27 @@ export function GET({ url }: { url: URL }) {
       try { content = fs.readFileSync(fullPath, 'utf-8'); } catch { continue; }
 
       const title = extractTitle(content, file);
-      const score = scoreMatch(content, title, q);
-      if (score === 0) continue;
+      const fileTags = parseTags(content);
+
+      let score = 0;
+      if (isTagSearch) {
+        if (fileTags.map(t => t.toLowerCase()).includes(targetTag)) {
+          score = 100;
+        } else {
+          continue;
+        }
+      } else {
+        score = scoreMatch(content, title, q);
+        if (score === 0) continue;
+      }
 
       results.push({
         path: path.join(dir, file),
         title,
         type: TYPE_MAP[dir] ?? 'doc',
-        excerpt: extractExcerpt(content, q),
+        excerpt: extractExcerpt(content, isTagSearch ? targetTag : q),
         score,
+        tags: fileTags,
       });
     }
   }

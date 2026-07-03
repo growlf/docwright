@@ -5,6 +5,7 @@ import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprot
 import { loadConfig } from './config';
 import { setRepoRoot } from './lib/paths';
 import { allTools } from './tools/index';
+import { setMode } from './lib/mode';
 import * as http from 'node:http';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
@@ -38,6 +39,9 @@ for (let i = 0; i < args.length; i++) {
     process.exit(0);
   }
 }
+
+// Store mode for tools that need to gate on it
+setMode(mode);
 
 async function main() {
   const config = loadConfig();

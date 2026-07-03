@@ -62,6 +62,8 @@ Place `plugin.json` at the root of your plugin directory.
   "version": "1.0.0",
   "description": "A short description shown in the plugin list",
   "icon": "🔌",
+  "defaultRoute": "/plugin/my-plugin",
+  "hasSearch": false,
 
   "type": "view-container",
   "order": 100,
@@ -84,6 +86,8 @@ Place `plugin.json` at the root of your plugin directory.
 | `version` | string | ✅ | — | SemVer string, e.g. `"1.0.0"`. |
 | `description` | string | ✅ | — | One-line description for the plugin list. |
 | `icon` | string | ✅ | — | Single emoji shown in the activity bar. |
+| `defaultRoute` | string | ✅ | — | Default URL route (e.g. `/plugin/my-plugin`) to navigate to when the plugin is selected in the activity bar. |
+| `hasSearch` | boolean | — | `false` | If `true`, the plugin must expose a GET endpoint at `api/search?q=...` returning `PluginSearchResult[]` which DocWright's global search aggregates. |
 | `author` | string | — | — | Optional author name or email. |
 | `type` | `"view-container"` \| `"tool"` | — | `"view-container"` | Opts into activity bar presence. Use `"tool"` for server-side-only plugins. |
 | `order` | integer | — | `100` | Activity bar position. Core views use 10–40. External plugins should use 100+. Lower = higher up. |

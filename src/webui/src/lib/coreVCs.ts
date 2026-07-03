@@ -7,17 +7,18 @@
 
 import { mount as svelteMount, unmount as svelteUnmount } from 'svelte';
 import type { Writable } from 'svelte/store';
+import { goto } from '$app/navigation';
 
 import GovernancePanel from '$lib/GovernancePanel.svelte';
 import FileTree        from '../routes/FileTree.svelte';
 import GitPanel        from '$lib/GitPanel.svelte';
-import TagsPanel       from '$lib/TagsPanel.svelte';
 import SearchPanel     from '$lib/SearchPanel.svelte';
 
 export interface CoreVCOptions {
   onNewMenu:        () => void;
   filesSearchQuery: Writable<string>;
   govSearchQuery:   Writable<string>;
+  gitSearchQuery:   Writable<string>;
 }
 
 export function setupCoreVCs(opts: CoreVCOptions): void {
@@ -29,6 +30,7 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     mount(el: HTMLElement) { govApp = svelteMount(GovernancePanel, { target: el }); },
     unmount()              { if (govApp) { svelteUnmount(govApp); govApp = null; } },
     onSearch(q: string)    { opts.govSearchQuery.set(q); },
+    onActivate()           { if (window.location.pathname !== '/status' && window.location.pathname !== '/status/') goto('/status'); },
     onDeactivate()         { opts.govSearchQuery.set(''); },
   });
 
@@ -37,14 +39,10 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
   dw.registerView('search', {
     mount(el: HTMLElement) { searchApp = svelteMount(SearchPanel, { target: el }); },
     unmount()              { if (searchApp) { svelteUnmount(searchApp); searchApp = null; } },
+    onActivate()           { if (window.location.pathname !== '/search' && window.location.pathname !== '/search/') goto('/search'); },
   });
 
-  // ── Tags (order: 30) ──────────────────────────────────────────────────
-  let tagsApp: any = null;
-  dw.registerView('tags', {
-    mount(el: HTMLElement) { tagsApp = svelteMount(TagsPanel, { target: el }); },
-    unmount()              { if (tagsApp) { svelteUnmount(tagsApp); tagsApp = null; } },
-  });
+
 
   // ── Git (order: 40) ───────────────────────────────────────────────────
   // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth)
@@ -52,6 +50,9 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
   dw.registerView('git', {
     mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
     unmount()              { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
+    onSearch(q: string)    { opts.gitSearchQuery.set(q); },
+    onActivate()           { if (window.location.pathname !== '/git' && window.location.pathname !== '/git/') goto('/git'); },
+    onDeactivate()         { opts.gitSearchQuery.set(''); },
   });
 
   // ── Files (order: 20, searchable) ────────────────────────────────────
@@ -66,6 +67,19 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     },
     unmount()           { if (filesApp) { svelteUnmount(filesApp); filesApp = null; } },
     onSearch(q: string) { opts.filesSearchQuery.set(q); },
+    onActivate() {
+      if (
+        window.location.pathname === '/git' ||
+        window.location.pathname === '/git/' ||
+        window.location.pathname === '/search' ||
+        window.location.pathname === '/search/' ||
+        window.location.pathname === '/status' ||
+        window.location.pathname === '/status/' ||
+        window.location.pathname.startsWith('/plugin')
+      ) {
+        setTimeout(() => goto('/'), 0);
+      }
+    },
     onDeactivate()      { opts.filesSearchQuery.set(''); },
   });
 }

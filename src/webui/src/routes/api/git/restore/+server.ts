@@ -29,8 +29,14 @@ export const POST = requireAuth(async ({ request }) => {
     return json({ ok: true, restored: 0 });
   }
 
-  // git checkout HEAD -- <paths> restores working tree to HEAD state
-  const result = spawnSync('git', ['checkout', 'HEAD', '--', ...paths], {
+  // If staged flag is true: git restore --staged -- <paths>
+  // Otherwise: git checkout HEAD -- <paths> (reverts working tree)
+  const isStaged = !!(body as any)?.staged;
+  const args = isStaged
+    ? ['restore', '--staged', '--', ...paths]
+    : ['checkout', 'HEAD', '--', ...paths];
+
+  const result = spawnSync('git', args, {
     cwd: REPO,
     encoding: 'utf-8',
   });

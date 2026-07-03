@@ -90,6 +90,7 @@ function entry(p: string, fm: Record<string, any>) {
     path: p,
     title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')),
     created: String(fm.created ?? ''),
+    completed_date: String(fm.completed_date ?? ''),
     tags: Array.isArray(fm.tags) ? fm.tags : [],
     category: Array.isArray(fm.category) && fm.category.length > 0
       ? fm.category
@@ -170,7 +171,15 @@ export function GET() {
       return sd !== 0 ? sd : byPriority(a, b);
     });
 
-  const completedCount = readDir(path.join(REPO_ROOT, 'plans', 'completed')).length;
+  const completed = readDir(path.join(REPO_ROOT, 'plans', 'completed'))
+    .filter(({ path: p }) => p.endsWith('.md') && !p.endsWith('README.md') && !p.endsWith('.gitkeep'))
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort((a, b) => {
+      const da = a.completed_date || '';
+      const db = b.completed_date || '';
+      return db.localeCompare(da);
+    });
+  const completedCount = completed.length;
 
   // Phase/roadmap data
   //
@@ -428,7 +437,7 @@ export function GET() {
     currentPhase,
     phasePlans,
     proposals: { open, approved_pending: approvedPending, deferred },
-    plans: { active, completed_count: completedCount },
+    plans: { active, completed_count: completedCount, completed },
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,

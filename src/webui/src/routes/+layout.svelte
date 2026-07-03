@@ -6,6 +6,7 @@
   import { searchFocusTrigger } from '$lib/searchFocus.js';
   import { filesSearchQuery } from '$lib/filesVc.js';
   import { govSearchQuery } from '$lib/govVc.js';
+  import { gitSearchQuery } from '$lib/gitVc.js';
   import { setupCoreVCs } from '$lib/coreVCs.js';
   import { page } from '$app/stores';
   import { fileChanged } from '$lib/fileChanges';
@@ -33,7 +34,7 @@ import {
   interface BrandConfig { name: string; logoPath: string | null; }
 
   let brand = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
-  let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean }[]>([]);
+  let activePlugins = $state<{ name: string; displayName: string; icon: string; order: number; searchable: boolean; defaultRoute: string }[]>([]);
 
   // AI model picker
   let aiModels    = $state<{ id: string; providerID: string; name: string }[]>([]);
@@ -77,8 +78,7 @@ import {
     ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true  }],
     ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true  }],
     ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false }],
-    ['tags',       { order: 30, icon: '🏷', label: 'Tags',              searchable: false }],
-    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: false }],
+    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: true  }],
   ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
@@ -163,6 +163,12 @@ import {
     (window as any).__docwright = {
       bridge,
       registerView: (name: string, vc: any) => {
+        if (!vc || typeof vc.mount !== 'function' || typeof vc.unmount !== 'function') {
+          const errorMsg = `Plugin "${name}" does not comply with the DWViewContainer specification (missing mount/unmount functions).`;
+          console.error(`[DocWright] ${errorMsg}`);
+          showToast(errorMsg, 4000);
+          return;
+        }
         (window as any).__dw_plugins.set(name, vc);
         vcRegistryVersion.update(n => n + 1); // signals ViewContainerMount to retry
       },
@@ -173,6 +179,7 @@ import {
       onNewMenu:        () => { showNewMenu = !showNewMenu; },
       filesSearchQuery,
       govSearchQuery,
+      gitSearchQuery,
     });
   });
 
@@ -948,7 +955,11 @@ import {
       {#each activePlugins as plugin}
         <button class="act-btn"
           class:active={leftView === `plugin-${plugin.name}`}
-          onclick={() => { leftView = `plugin-${plugin.name}`; showSidebar = true; }}
+          onclick={() => {
+            leftView = `plugin-${plugin.name}`;
+            showSidebar = true;
+            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+          }}
           title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     {/if}
@@ -967,7 +978,10 @@ import {
       {/each}
       {#each activePlugins as plugin}
         <button class="mobile-act-btn" class:active={leftView === `plugin-${plugin.name}`}
-          onclick={() => leftView = `plugin-${plugin.name}`} title={plugin.displayName}>{plugin.icon}</button>
+          onclick={() => {
+            leftView = `plugin-${plugin.name}`;
+            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+          }} title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     </div>
 

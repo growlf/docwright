@@ -136,22 +136,22 @@
     {:else}
       <div class="gov-section-title">Vault Overview</div>
       <div class="gov-stat-grid">
-        <div class="gov-stat">
+        <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=active-plans')}>
           <span class="gov-stat-n">{activePlans.length}</span>
           <span class="gov-stat-l">Active Plans</span>
-        </div>
-        <div class="gov-stat">
+        </button>
+        <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=open-proposals')}>
           <span class="gov-stat-n">{openProposals.length}</span>
           <span class="gov-stat-l">Open Proposals</span>
-        </div>
-        <div class="gov-stat">
+        </button>
+        <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=approved-pending')}>
           <span class="gov-stat-n">{approvedPending.length}</span>
           <span class="gov-stat-l">Pending Approval</span>
-        </div>
-        <div class="gov-stat">
+        </button>
+        <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=completed')}>
           <span class="gov-stat-n">{completedCount}</span>
           <span class="gov-stat-l">Completed Plans</span>
-        </div>
+        </button>
       </div>
       <button class="gov-open-status" onclick={() => bridge()?.navigate('/status')}>
         Open full dashboard →
@@ -338,6 +338,10 @@
   .gov-stat {
     background: $bg-2; border: 1px solid $border; border-radius: 6px;
     padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;
+    align-items: flex-start; text-align: left; width: 100%; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: inherit;
+    &:hover { background: $bg-hover; border-color: $accent; }
   }
   .gov-stat-n { font-size: 20px; font-weight: 700; color: $accent; line-height: 1; }
   .gov-stat-l { font-size: 10px; color: $muted; }

@@ -3,9 +3,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 function getRepoRoot(): string {
-  return process.env.DOCWRIGHT_ROOT
-    ? path.resolve(process.env.DOCWRIGHT_ROOT)
-    : process.cwd();
+  if (process.env.DOCWRIGHT_ROOT) {
+    return path.resolve(process.env.DOCWRIGHT_ROOT);
+  }
+  const cwd = process.cwd();
+  if (cwd.endsWith('webui') || cwd.includes('webui/')) {
+    return path.resolve(cwd, '../..');
+  }
+  return cwd;
 }
 
 function getAuditDir(): string {

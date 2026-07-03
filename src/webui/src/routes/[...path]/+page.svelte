@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import MarkdownRenderer from '../MarkdownRenderer.svelte';
@@ -176,6 +176,16 @@
     });
   });
 
+  onDestroy(() => {
+    currentDoc.set({
+      frontmatter: null,
+      body: '',
+      docType: 'page',
+      mode: 'read',
+      filePath: '',
+    });
+  });
+
   async function loadFile() {
     approvalRelatedChecked = false;
     const res = await fetch('/api/read?path=' + encodeURIComponent(filePath()));
@@ -227,7 +237,8 @@
   }
 
   function filePath(): string {
-    let p = $page.params.path;
+    let p = $page.params.path || '';
+    if (!p) return '';
     if (p.endsWith('.base')) return p;
     if (!p.endsWith('.md')) p += '.md';
     return p;

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { fileChanged } from '$lib/fileChanges';
+  import { gitSearchQuery } from '$lib/gitVc.js';
 
   interface GitStatus {
     branch: string;
@@ -11,6 +12,8 @@
     staged: string[];
     untracked: string[];
     latestTag: string;
+    commits: { sha: string; message: string; }[];
+    statuses?: Record<string, { x: string; y: string }>;
   }
 
   let expanded  = $state(false);
@@ -89,6 +92,55 @@
       await loadStatus();
     } else {
       setLog('✗ ' + (data.error || 'Stage failed'));
+    }
+  }
+
+  async function stageFile(path: string) {
+    setLog(`Staging ${path}…`);
+    const res = await fetch('/api/git/stage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path] }),
+    });
+    if (res.ok) {
+      setLog(`✓ Staged ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Stage failed'}`);
+    }
+  }
+
+  async function unstageFile(path: string) {
+    setLog(`Unstaging ${path}…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path], staged: true }),
+    });
+    if (res.ok) {
+      setLog(`✓ Unstaged ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Unstage failed'}`);
+    }
+  }
+
+  async function discardChanges(path: string) {
+    if (!confirm(`Are you sure you want to discard all changes in ${path}?`)) return;
+    setLog(`Discarding changes in ${path}…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: [path], staged: false }),
+    });
+    if (res.ok) {
+      setLog(`✓ Reverted ${path}`);
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Discard failed'}`);
     }
   }
 
@@ -176,14 +228,136 @@
     if (tagging && status) tagName = bumpTag(status.latestTag, tagBump);
   }
 
+  let query = $derived($gitSearchQuery);
+  const filteredStaged = $derived(
+    status ? status.staged.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+  const filteredModified = $derived(
+    status ? status.modified.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+  const filteredUntracked = $derived(
+    status ? status.untracked.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+
   $effect(() => {
     if (tagging && status) tagName = bumpTag(status.latestTag, tagBump);
   });
+
+  let selectedPaths = $state<string[]>([]);
+
+  function toggleSelect(path: string) {
+    if (selectedPaths.includes(path)) {
+      selectedPaths = selectedPaths.filter(p => p !== path);
+    } else {
+      selectedPaths = [...selectedPaths, path];
+    }
+  }
+
+  function isSelected(path: string) {
+    return selectedPaths.includes(path);
+  }
+
+  function selectAllStaged(stagedFiles: string[], select: boolean) {
+    if (select) {
+      selectedPaths = Array.from(new Set([...selectedPaths, ...stagedFiles]));
+    } else {
+      selectedPaths = selectedPaths.filter(p => !stagedFiles.includes(p));
+    }
+  }
+
+  function selectAllUnstaged(unstagedFiles: string[], select: boolean) {
+    if (select) {
+      selectedPaths = Array.from(new Set([...selectedPaths, ...unstagedFiles]));
+    } else {
+      selectedPaths = selectedPaths.filter(p => !unstagedFiles.includes(p));
+    }
+  }
+
+  const unstagedFiles = $derived(status ? [...status.modified, ...status.untracked] : []);
+  const hasSelectedStaged = $derived(selectedPaths.some(p => status?.staged.includes(p)));
+  const hasSelectedUnstaged = $derived(selectedPaths.some(p => unstagedFiles.includes(p)));
+  const hasSelectedModified = $derived(selectedPaths.some(p => status?.modified.includes(p)));
+
+  let stagedCheckbox = $state<HTMLInputElement | null>(null);
+  let unstagedCheckbox = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (stagedCheckbox && status) {
+      const staged = status.staged;
+      const count = staged.filter(p => selectedPaths.includes(p)).length;
+      stagedCheckbox.indeterminate = count > 0 && count < staged.length;
+    }
+  });
+
+  $effect(() => {
+    if (unstagedCheckbox && status) {
+      const count = unstagedFiles.filter(p => selectedPaths.includes(p)).length;
+      unstagedCheckbox.indeterminate = count > 0 && count < unstagedFiles.length;
+    }
+  });
+
+  async function stageSelected() {
+    const toStage = selectedPaths.filter(p => status?.modified.includes(p) || status?.untracked.includes(p));
+    if (toStage.length === 0) return;
+    setLog(`Staging ${toStage.length} files…`);
+    const res = await fetch('/api/git/stage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: toStage }),
+    });
+    if (res.ok) {
+      setLog(`✓ Staged ${toStage.length} files`);
+      selectedPaths = selectedPaths.filter(p => !toStage.includes(p));
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Stage failed'}`);
+    }
+  }
+
+  async function unstageSelected() {
+    const toUnstage = selectedPaths.filter(p => status?.staged.includes(p));
+    if (toUnstage.length === 0) return;
+    setLog(`Unstaging ${toUnstage.length} files…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: toUnstage, staged: true }),
+    });
+    if (res.ok) {
+      setLog(`✓ Unstaged ${toUnstage.length} files`);
+      selectedPaths = selectedPaths.filter(p => !toUnstage.includes(p));
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Unstage failed'}`);
+    }
+  }
+
+  async function discardSelected() {
+    const toDiscard = selectedPaths.filter(p => status?.modified.includes(p));
+    if (toDiscard.length === 0) return;
+    if (!confirm(`Are you sure you want to discard all changes in ${toDiscard.length} selected files?`)) return;
+    setLog(`Discarding changes in ${toDiscard.length} files…`);
+    const res = await fetch('/api/git/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: toDiscard, staged: false }),
+    });
+    if (res.ok) {
+      setLog(`✓ Discarded changes in ${toDiscard.length} files`);
+      selectedPaths = selectedPaths.filter(p => !toDiscard.includes(p));
+      await loadStatus();
+    } else {
+      const data = await res.json();
+      setLog(`✗ ${data.error || 'Discard failed'}`);
+    }
+  }
 </script>
 
 <div class="git-panel">
-  <!-- Collapsed header — always visible -->
-  <button class="git-header" onclick={() => { expanded = !expanded; if (expanded) loadStatus(); }}>
+  <!-- Static header — always visible -->
+  <div class="git-header">
     <span class="git-branch">⎇ {status?.branch ?? '…'}</span>
     {#if status && (status.ahead > 0 || status.behind > 0)}
       <span class="ahead-behind">
@@ -192,45 +366,134 @@
       </span>
     {/if}
     <span class="dot {dotClass}"></span>
-    <span class="chevron">{expanded ? '▾' : '▸'}</span>
-  </button>
+  </div>
 
-  {#if expanded}
-    <div class="git-body">
-      <!-- File counts -->
+  <div class="git-body">
+      <!-- Sync Status & Tag badge -->
       {#if status}
-        <div class="counts">
-          <button class="count-btn" onclick={() => showStaged = !showStaged}>
-            Staged <span class="badge">{status.staged.length}</span>
-          </button>
-          <button class="count-btn" onclick={() => showModified = !showModified}>
-            Modified <span class="badge">{status.modified.length}</span>
-          </button>
-          <button class="count-btn" onclick={() => showUntracked = !showUntracked}>
-            New <span class="badge">{status.untracked.length}</span>
-          </button>
+        <div class="sync-info">
+          {#if status.latestTag}
+            <span class="tag-badge" title="Latest Release Tag">🏷 {status.latestTag}</span>
+          {/if}
+          <span class="status-summary">
+            {#if status.ahead === 0 && status.behind === 0}
+              ✓ Up to date
+            {:else}
+              {#if status.ahead > 0}↑ {status.ahead} ahead{/if}
+              {#if status.behind > 0}↓ {status.behind} behind{/if}
+            {/if}
+          </span>
         </div>
 
-        {#if showStaged && status.staged.length}
-          <ul class="file-list">
+        <!-- Bulk operations bar -->
+        {#if selectedPaths.length > 0}
+          <div class="bulk-ops-bar">
+            <span class="sel-count">{selectedPaths.length} selected</span>
+            <div class="bulk-ops-actions">
+              {#if hasSelectedUnstaged}
+                <button class="bulk-btn stage" onclick={stageSelected} title="Stage selected">Stage</button>
+              {/if}
+              {#if hasSelectedStaged}
+                <button class="bulk-btn unstage" onclick={unstageSelected} title="Unstage selected">Unstage</button>
+              {/if}
+              {#if hasSelectedModified}
+                <button class="bulk-btn discard" onclick={discardSelected} title="Discard selected">Discard</button>
+              {/if}
+            </div>
+          </div>
+        {/if}
+
+        <!-- Staged Changes Section -->
+        <div class="section-header">
+          <label class="select-all-label">
+            <input
+              type="checkbox"
+              bind:this={stagedCheckbox}
+              checked={status.staged.length > 0 && status.staged.every(p => selectedPaths.includes(p))}
+              onchange={(e) => selectAllStaged(status?.staged ?? [], e.currentTarget.checked)}
+            />
+            <span class="section-title">Staged Changes ({status.staged.length})</span>
+          </label>
+        </div>
+
+        {#if status.staged.length > 0}
+          <ul class="file-list select-mode">
             {#each status.staged as f}
-              <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
+              <li class="file-row" class:selected={isSelected(f)}>
+                <label class="file-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isSelected(f)}
+                    onchange={() => toggleSelect(f)}
+                  />
+                  <span class="file-status staged" title="Staged">
+                    {status.statuses?.[f]?.x || 'A'}
+                  </span>
+                  <span class="file-name" title={f}>{f}</span>
+                </label>
+                <div class="row-actions">
+                  <button class="row-btn unstage" onclick={() => unstageFile(f)} title="Unstage file">-</button>
+                </div>
+              </li>
             {/each}
           </ul>
+        {:else}
+          <div class="empty-state">No staged changes</div>
         {/if}
-        {#if showModified && status.modified.length}
-          <ul class="file-list">
+ 
+        <!-- Unstaged Changes Section -->
+        <div class="section-header">
+          <label class="select-all-label">
+            <input
+              type="checkbox"
+              bind:this={unstagedCheckbox}
+              checked={unstagedFiles.length > 0 && unstagedFiles.every(p => selectedPaths.includes(p))}
+              onchange={(e) => selectAllUnstaged(unstagedFiles, e.currentTarget.checked)}
+            />
+            <span class="section-title">Unstaged Changes ({unstagedFiles.length})</span>
+          </label>
+        </div>
+ 
+        {#if unstagedFiles.length > 0}
+          <ul class="file-list select-mode">
             {#each status.modified as f}
-              <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
+              <li class="file-row" class:selected={isSelected(f)}>
+                <label class="file-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isSelected(f)}
+                    onchange={() => toggleSelect(f)}
+                  />
+                  <span class="file-status modified" title="Modified">
+                    {status.statuses?.[f]?.y || 'M'}
+                  </span>
+                  <span class="file-name" title={f}>{f}</span>
+                </label>
+                <div class="row-actions">
+                  <button class="row-btn stage" onclick={() => stageFile(f)} title="Stage file">+</button>
+                  <button class="row-btn discard" onclick={() => discardChanges(f)} title="Discard changes">↶</button>
+                </div>
+              </li>
             {/each}
-          </ul>
-        {/if}
-        {#if showUntracked && status.untracked.length}
-          <ul class="file-list untracked">
             {#each status.untracked as f}
-              <li>{f}</li>
+              <li class="file-row" class:selected={isSelected(f)}>
+                <label class="file-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isSelected(f)}
+                    onchange={() => toggleSelect(f)}
+                  />
+                  <span class="file-status untracked" title="Untracked">U</span>
+                  <span class="file-name" title={f}>{f}</span>
+                </label>
+                <div class="row-actions">
+                  <button class="row-btn stage" onclick={() => stageFile(f)} title="Stage file">+</button>
+                </div>
+              </li>
             {/each}
           </ul>
+        {:else}
+          <div class="empty-state">No unstaged changes</div>
         {/if}
       {/if}
 
@@ -300,7 +563,6 @@
         </div>
       {/if}
     </div>
-  {/if}
 </div>
 
 <style lang="scss">
@@ -310,10 +572,9 @@
 
   .git-header {
     display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 12px;
-    background: none; border: none; color: $muted; cursor: pointer; font-size: 11px; text-align: left;
-    &:hover { background: $bg-hover; color: $fg-dim; }
+    color: $fg-dim; font-size: 11px; font-weight: 600;
   }
-  .git-branch    { flex: 1; font-size: 11px; }
+  .git-branch    { flex: 1; font-size: 11px; color: $fg-dim; }
   .ahead-behind  { display: flex; gap: 3px; font-size: 10px; }
   .ahead  { color: $blue; }
   .behind { color: #e87; }
@@ -327,19 +588,131 @@
 
   .git-body { padding: 6px 0 8px; }
 
-  .counts { display: flex; gap: 2px; padding: 0 8px 6px; }
-  .count-btn {
-    flex: 1; background: none; border: 1px solid $border; border-radius: 3px;
-    color: $muted; font-size: 10px; padding: 2px 4px; cursor: pointer; text-align: center;
-    &:hover { border-color: $muted; color: $fg-dim; }
+  .file-list {
+    list-style: none; margin: 0 0 8px; padding: 0 8px; max-height: 220px; overflow-y: auto;
+    &.select-mode {
+      border: 1px solid $border;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 4px;
+    }
   }
-  .badge { display: inline-block; background: $bg-2; border-radius: 8px; padding: 0 4px; margin-left: 2px; }
 
-  .file-list { list-style: none; margin: 0 0 4px; padding: 0 8px; max-height: 80px; overflow-y: auto; }
-  .file-btn { @include flat-btn; font-size: 10px; padding: 1px 0; text-align: left; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; &:hover { color: $fg-dim; } }
-  .file-list.untracked li { color: $muted; font-size: 10px; padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
 
-  .actions { display: flex; gap: 3px; padding: 0 8px 4px; }
+  .file-status {
+    font-family: monospace;
+    font-size: 9px;
+    font-weight: bold;
+    width: 13px;
+    height: 13px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    &.staged { color: #2d7d46; background: rgba(45, 125, 70, 0.15); }
+    &.modified { color: #cc8800; background: rgba(204, 136, 0, 0.15); }
+    &.untracked { color: $muted; background: $bg-2; }
+  }
+
+  .section-header {
+    padding: 8px 8px 4px;
+    margin-top: 4px;
+  }
+  .select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    color: $muted;
+    input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+    &:hover {
+      color: $fg-dim;
+    }
+  }
+  .section-title {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 9px;
+  }
+
+  .empty-state {
+    padding: 6px 12px;
+    font-size: 9px;
+    color: $muted;
+    font-style: italic;
+    border: 1px dashed $border;
+    border-radius: 4px;
+    margin: 0 8px 8px;
+    text-align: center;
+  }
+
+  .bulk-ops-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 4px 8px;
+  }
+  .sel-count {
+    font-size: 9px;
+    font-weight: 600;
+    color: $fg-dim;
+  }
+  .bulk-ops-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .bulk-btn {
+    background: none;
+    border: 1px solid $border;
+    border-radius: 3px;
+    font-size: 9px;
+    padding: 2px 6px;
+    cursor: pointer;
+    &.stage {
+      color: $blue;
+      border-color: $blue-bdr;
+      &:hover { background: $blue-bg; }
+    }
+    &.unstage {
+      color: $teal;
+      border-color: $teal-bdr;
+      &:hover { background: $teal-bg; }
+    }
+    &.discard {
+      color: $red;
+      border-color: $red-bdr;
+      &:hover { background: rgba(200, 50, 50, 0.1); }
+    }
+  }
+
+  .actions { display: flex; gap: 3px; padding: 4px 8px; }
   .act-btn {
     flex: 1; background: $bg-2; border: 1px solid $border; border-radius: 3px;
     color: $muted; font-size: 10px; padding: 3px 4px; cursor: pointer;
@@ -380,6 +753,90 @@
   .ci-link { color: $blue; font-size: 10px; text-decoration: none; &:hover { text-decoration: underline; } }
   .ci-options { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: $muted; }
   .ci-opt-btn { background: none; border: 1px solid $border; border-radius: 3px; color: $muted; font-size: 10px; padding: 2px 6px; cursor: pointer; &:hover { border-color: $muted; } }
+
+  // Sync status
+  .sync-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 10px 6px;
+    font-size: 10px;
+    color: $muted;
+  }
+  .tag-badge {
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 9px;
+    color: $teal;
+  }
+  .status-summary {
+    font-style: italic;
+  }
+
+  // Interactive File list styling
+  .file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 0;
+    &:hover {
+      .row-actions {
+        opacity: 1;
+      }
+    }
+  }
+  .file-name {
+    font-size: 10px;
+    color: $fg-dim;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .row-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .row-btn {
+    background: $bg-2;
+    border: 1px solid $border;
+    color: $muted;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 1;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    &:hover {
+      color: $fg-dim;
+      border-color: $muted;
+    }
+    &.stage {
+      color: $blue;
+      border-color: $blue-bdr;
+      &:hover { background: $blue-bg; }
+    }
+    &.unstage {
+      color: $teal;
+      border-color: $teal-bdr;
+      &:hover { background: $teal-bg; }
+    }
+    &.discard {
+      color: $red;
+      border-color: $red-bdr;
+      &:hover { background: rgba(200,50,50,0.1); }
+    }
+  }
 
   @media (max-width: 768px) {
     .git-header, .act-btn, .go-btn, .cancel-btn, .count-btn { min-height: 44px; font-size: 12px; }

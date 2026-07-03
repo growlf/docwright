@@ -7,6 +7,8 @@ export function GET() {
     version: manifest.version,
     icon: manifest.icon,
     description: manifest.description,
+    defaultRoute: manifest.defaultRoute,
+    hasSearch: manifest.hasSearch,
     order: manifest.order,
     searchable: manifest.searchable,
   }));

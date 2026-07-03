@@ -221,13 +221,23 @@
     // Only count rows inside the Implementation Steps section
     const stepsMatch = body.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
     const section = stepsMatch ? stepsMatch[0] : body;
-    // Only check the Status column (last cell) — ⏳ in Details column is fine
-    const rows = section.split('\n').filter(l => l.startsWith('|') && !l.startsWith('|---'));
+    const lines = section.split('\n');
+    const headerLine = lines.find(l => l.startsWith('|') && !l.startsWith('|---') && l.toLowerCase().includes('status'));
+    const headerCells = headerLine ? headerLine.split('|').map(c => c.trim().toLowerCase()) : [];
+    const statusIndex = headerCells.indexOf('status');
+
+    const rows = lines.filter(l => l.startsWith('|') && !l.startsWith('|---') && l !== headerLine);
     let count = 0;
     for (const row of rows) {
-      const cells = row.split('|').filter(c => c.trim() !== '');
-      const lastCell = cells[cells.length - 1] || '';
-      if (lastCell.includes('⏳')) count++;
+      const cells = row.split('|');
+      let cell = '';
+      if (statusIndex !== -1 && statusIndex < cells.length) {
+        cell = cells[statusIndex];
+      } else {
+        const filtered = cells.filter(c => c.trim() !== '');
+        cell = filtered[filtered.length - 1] || '';
+      }
+      if (cell.includes('⏳')) count++;
     }
     return count;
   });
@@ -361,7 +371,13 @@
           {/if}
         {/if}
         {#if frontmatter.status === 'in-progress'}
-          {#if !frontmatter.tests_defined}
+          {#if pendingSteps > 0}
+            <!-- Progress — execution panel triggers next step -->
+            <button class="act start" onclick={startExecution}
+              title="Open execution panel to progress the plan and run pending steps">
+              Progress
+            </button>
+          {:else if !frontmatter.tests_defined}
             {#if testPassed === true && !frontmatter.tests_human_reviewed}
               <!-- Tests passed but human review needed before auto-certify -->
               <button class="act approve" onclick={certifyTests}
@@ -371,10 +387,8 @@
             {:else}
               <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
               <button class="act estimate" onclick={runTests}
-                disabled={testRunning || pendingSteps > 0}
-                title={pendingSteps > 0
-                  ? `${pendingSteps} step${pendingSteps === 1 ? '' : 's'} still pending — complete all steps before running tests`
-                  : 'Run the test suite — Complete button appears when all tests pass'}>
+                disabled={testRunning}
+                title="Run the test suite — Complete button appears when all tests pass">
                 {testRunning ? '⏳ Running…' : '▶ Run Tests'}
               </button>
             {/if}

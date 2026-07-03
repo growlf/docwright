@@ -8,6 +8,8 @@ export interface PluginManifest {
   version: string;
   description: string;
   icon: string;
+  defaultRoute: string;
+  hasSearch?: boolean;
   author?: string;
   // View Container fields (Step 5)
   type: 'view-container' | 'tool';   // opts into activity bar + sidebar presence
@@ -38,16 +40,17 @@ const DEFAULTS = {
   type: 'view-container' as const,
   order: 100,
   searchable: false,
+  hasSearch: false,
   capabilities: [] as string[],
   serverEntrypoint: 'server.js',
   clientEntrypoint: 'client/bundle.js',
   clientStylesheet: 'client/style.css',
 };
 
-const REQUIRED_FIELDS = ['apiVersion', 'name', 'displayName', 'version', 'description', 'icon'] as const;
+const REQUIRED_FIELDS = ['apiVersion', 'name', 'displayName', 'version', 'description', 'icon', 'defaultRoute'] as const;
 const SUPPORTED_API_VERSIONS = new Set(['1']);
 const KNOWN_FIELDS = new Set([
-  'apiVersion', 'name', 'displayName', 'version', 'description', 'icon',
+  'apiVersion', 'name', 'displayName', 'version', 'description', 'icon', 'defaultRoute', 'hasSearch',
   'author', 'type', 'order', 'searchable', 'capabilities',
   'serverEntrypoint', 'clientEntrypoint', 'clientStylesheet',
 ]);

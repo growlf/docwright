@@ -18,15 +18,25 @@ function getFmField(text: string, field: string): string {
 }
 
 function hasPendingSteps(text: string): boolean {
-  let inSteps = false;
-  for (const line of text.split('\n')) {
-    if (line.startsWith('## ')) { inSteps = line.includes('Implementation Steps'); continue; }
-    if (inSteps && line.startsWith('|') && !line.startsWith('|---')) {
-      // Only check the Status column (last cell) — ⏳ in Details column is fine
-      const cells = line.split('|').filter(c => c.trim() !== '');
-      const lastCell = cells[cells.length - 1] || '';
-      if (lastCell.includes('⏳')) return true;
+  const stepsMatch = text.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
+  const section = stepsMatch ? stepsMatch[0] : '';
+  if (!section) return false;
+  const lines = section.split('\n');
+  const headerLine = lines.find(l => l.startsWith('|') && !l.startsWith('|---') && l.toLowerCase().includes('status'));
+  const headerCells = headerLine ? headerLine.split('|').map(c => c.trim().toLowerCase()) : [];
+  const statusIndex = headerCells.indexOf('status');
+
+  const rows = lines.filter(l => l.startsWith('|') && !l.startsWith('|---') && l !== headerLine);
+  for (const row of rows) {
+    const cells = row.split('|');
+    let cell = '';
+    if (statusIndex !== -1 && statusIndex < cells.length) {
+      cell = cells[statusIndex];
+    } else {
+      const filtered = cells.filter(c => c.trim() !== '');
+      cell = filtered[filtered.length - 1] || '';
     }
+    if (cell.includes('⏳')) return true;
   }
   return false;
 }

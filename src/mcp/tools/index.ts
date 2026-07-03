@@ -5,6 +5,7 @@ import { queryTools } from './query_index';
 import { utilityTools } from './utility_index';
 import { inventoryTools } from './inventory_index';
 import { stepIssueTools } from './step_issues_index';
+import { contributionTools } from './contribute_index';
 
 export const allTools: McpTool[] = [
   ...mutationTools,
@@ -13,4 +14,5 @@ export const allTools: McpTool[] = [
   ...utilityTools,
   ...inventoryTools,
   ...stepIssueTools,
+  ...contributionTools,
 ];
