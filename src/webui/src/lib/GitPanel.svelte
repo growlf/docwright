@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { fileChanged } from '$lib/fileChanges';
+  import { gitSearchQuery } from '$lib/gitVc.js';
 
   interface GitStatus {
     branch: string;
@@ -176,6 +177,17 @@
     if (tagging && status) tagName = bumpTag(status.latestTag, tagBump);
   }
 
+  let query = $derived($gitSearchQuery);
+  const filteredStaged = $derived(
+    status ? status.staged.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+  const filteredModified = $derived(
+    status ? status.modified.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+  const filteredUntracked = $derived(
+    status ? status.untracked.filter(f => f.toLowerCase().includes(query.toLowerCase())) : []
+  );
+
   $effect(() => {
     if (tagging && status) tagName = bumpTag(status.latestTag, tagBump);
   });
@@ -201,33 +213,33 @@
       {#if status}
         <div class="counts">
           <button class="count-btn" onclick={() => showStaged = !showStaged}>
-            Staged <span class="badge">{status.staged.length}</span>
+            Staged <span class="badge">{filteredStaged.length}</span>
           </button>
           <button class="count-btn" onclick={() => showModified = !showModified}>
-            Modified <span class="badge">{status.modified.length}</span>
+            Modified <span class="badge">{filteredModified.length}</span>
           </button>
           <button class="count-btn" onclick={() => showUntracked = !showUntracked}>
-            New <span class="badge">{status.untracked.length}</span>
+            New <span class="badge">{filteredUntracked.length}</span>
           </button>
         </div>
 
-        {#if showStaged && status.staged.length}
+        {#if showStaged && filteredStaged.length}
           <ul class="file-list">
-            {#each status.staged as f}
+            {#each filteredStaged as f}
               <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
             {/each}
           </ul>
         {/if}
-        {#if showModified && status.modified.length}
+        {#if showModified && filteredModified.length}
           <ul class="file-list">
-            {#each status.modified as f}
+            {#each filteredModified as f}
               <li><button class="file-btn" onclick={() => goto('/' + f.replace(/\.md$/, ''))}>{f}</button></li>
             {/each}
           </ul>
         {/if}
-        {#if showUntracked && status.untracked.length}
+        {#if showUntracked && filteredUntracked.length}
           <ul class="file-list untracked">
-            {#each status.untracked as f}
+            {#each filteredUntracked as f}
               <li>{f}</li>
             {/each}
           </ul>

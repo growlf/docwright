@@ -50,26 +50,18 @@
       return;
     }
 
-    if (typeof vc.mount === 'function') {
-      try {
-        vc.mount(el);
-        vc.onActivate?.();
-      } catch (e: any) {
-        errorMsg = e?.message ?? String(e);
-        console.error(`[DocWright] Plugin "${vcName}" mount() threw:`, e);
-      }
-    } else if (typeof vc.mountSidebar === 'function') {
-      // Backward compat — old plugins locate their container via #id themselves.
-      // requestAnimationFrame kept for parity with old plugin expectations.
-      // Remove this branch when all plugins use mount(el) (Step 3).
-      requestAnimationFrame(() => {
-        try {
-          vc.mountSidebar();
-        } catch (e: any) {
-          errorMsg = e?.message ?? String(e);
-          console.error(`[DocWright] Plugin "${vcName}" mountSidebar() threw:`, e);
-        }
-      });
+    if (typeof vc.mount !== 'function' || typeof vc.unmount !== 'function') {
+      errorMsg = `Plugin "${vcName}" is disabled because it is non-compliant with the DWViewContainer specification (must implement mount and unmount).`;
+      console.error(`[DocWright] ${errorMsg}`);
+      return;
+    }
+
+    try {
+      vc.mount(el);
+      vc.onActivate?.();
+    } catch (e: any) {
+      errorMsg = e?.message ?? String(e);
+      console.error(`[DocWright] Plugin "${vcName}" mount() threw:`, e);
     }
 
     return () => {
