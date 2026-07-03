@@ -244,8 +244,8 @@
 </script>
 
 <div class="git-panel">
-  <!-- Collapsed header — always visible -->
-  <button class="git-header" onclick={() => { expanded = !expanded; if (expanded) loadStatus(); }}>
+  <!-- Static header — always visible -->
+  <div class="git-header">
     <span class="git-branch">⎇ {status?.branch ?? '…'}</span>
     {#if status && (status.ahead > 0 || status.behind > 0)}
       <span class="ahead-behind">
@@ -254,11 +254,9 @@
       </span>
     {/if}
     <span class="dot {dotClass}"></span>
-    <span class="chevron">{expanded ? '▾' : '▸'}</span>
-  </button>
+  </div>
 
-  {#if expanded}
-    <div class="git-body">
+  <div class="git-body">
       <!-- Sync Status & Tag badge -->
       {#if status}
         <div class="sync-info">
@@ -408,7 +406,6 @@
         </div>
       {/if}
     </div>
-  {/if}
 </div>
 
 <style lang="scss">
@@ -418,10 +415,9 @@
 
   .git-header {
     display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 12px;
-    background: none; border: none; color: $muted; cursor: pointer; font-size: 11px; text-align: left;
-    &:hover { background: $bg-hover; color: $fg-dim; }
+    color: $fg-dim; font-size: 11px; font-weight: 600;
   }
-  .git-branch    { flex: 1; font-size: 11px; }
+  .git-branch    { flex: 1; font-size: 11px; color: $fg-dim; }
   .ahead-behind  { display: flex; gap: 3px; font-size: 10px; }
   .ahead  { color: $blue; }
   .behind { color: #e87; }
