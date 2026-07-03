@@ -11,14 +11,16 @@ tags:
   - critical
 complexity: low
 estimated_effort: S
-approved: false
+approved: true
 priority: high
-created_by: "NetYeti@phoenix"
-assigned_to: ""
+created_by: NetYeti@phoenix
+assigned_to: NetYeti
 related_to:
   - src/webui/src/routes/api/plan-execute/+server.ts
   - src/executor/session.ts
   - proposals/deferred-watcher-presence-indicator.md
+_path: proposals/approved/executor-panel-live-feedback
+consumed_by: plans/executor-panel-live-feedback.md
 ---
 
 ## Problem
