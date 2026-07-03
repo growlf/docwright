@@ -1,6 +1,6 @@
 ---
 title: "Session-start is blind to unmerged branches and open issues — parked work silently vanishes"
-status: open
+status: in-progress
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -15,6 +15,7 @@ tags:
   - code-over-memory
   - roadmap
 created_by: "NetYeti@cluster-llm"
+proposal: proposals/session-start-branch-issue-awareness.md
 assigned_to: ""
 milestone: next
 ---
@@ -77,5 +78,6 @@ AI must not have to *remember* to check.
 
 - [[proposals/separate-dev-tracking-milestones-and-beta-channel]] — the near-lost work that exposed this
 - [[policies/core/code-over-memory.md]] — the principle this violates
+- [[proposals/session-start-branch-issue-awareness]] — the proposal for this fix
 - [[proposals/formalize-roadmap-sequencing-enforcement]] — related roadmap-visibility gap
 - [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] — sibling visibility gap

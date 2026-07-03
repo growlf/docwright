@@ -1,5 +1,5 @@
 ---
-title: Bug/UX: Plan Executor Panel Has No Feedback During BigPickle Session — Humans Panic and Interrupt
+title: "Bug/UX: Plan Executor Panel Has No Feedback During BigPickle Session — Humans Panic and Interrupt"
 status: draft
 author: NetYeti
 created: 2026-07-03
@@ -15,6 +15,7 @@ automated: guided
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
+_path: plans/executor-panel-live-feedback.md
 ---
 
 # Bug/UX: Plan Executor Panel Has No Feedback During BigPickle Session — Humans Panic and Interrupt
@@ -30,30 +31,23 @@ Held at `status: draft`; fill in the implementation steps below before moving to
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Add heartbeat status events | Inject heartbeat status events during the polling loop in session.ts | ⏳ Pending |
+| 1 | Define and emit a `HeartbeatEvent` payload `{ status: 'alive' | 'stale' | 'dead'; sessionId: string; timestamp: number; error?: string }` on an `EventEmitter<HeartbeatEvent>` injected into the poll loop, then verify via a unit test that the event fires with correct fields after three consecutive poll cycles. | Inject heartbeat status events during the polling loop in session.ts | ⏳ Pending |
 | 2 | Plumb step name through params | Pass the step name through runStepSession params and display it in the Execute panel | ⏳ Pending |
-| 3 | Poll API for token counts | Poll the session API for token counts and emit live updates during the wait loop | ⏳ Pending |
+| 3 | Implement a 2-second polling loop in the frontend service layer that calls `GET /api/sessions/{id}/tokens` and dispatches token-count payloads to the React state store via a custom `useTokenPolling(sessionId)` hook. Step is complete when a test session's increasing token count appears on the session detail view within 2 seconds of starting a chat, verified by an automated Playwright assertion. | Poll the session API for token counts and emit live updates during the wait loop | ⏳ Pending |
 
 ## Testing Plan
-
 ### Step Verification
-- [ ] **Fix 1**: `session.ts` emits heartbeat status events every <5s during BigPickle polling, verified by inspecting the event stream or console output
-- [ ] **Fix 2**: Step name is passed through `runStepSession` parameters and displayed prominently in the Execute panel, verified by running a multi-step session and observing the panel
-- [ ] **Fix 3**: Token counts poll the session API and emit live updates in the Execute panel during the wait loop, verified by observing token counters increment during execution
+- [ ] Step 1: Define and emit a `HeartbeatEvent` payload `{ status: 'alive'
+- [ ] Step 2: Plumb step name through params
+- [ ] Step 3: Implement a 2-second polling loop in the frontend service layer that calls `GET /api/sessions/{id}/tokens` and dispatches token-count payloads to the React state store via a custom `useTokenPolling(sessionId)` hook. Step is complete when a test session's increasing token count appears on the session detail view within 2 seconds of starting a chat, verified by an automated Playwright assertion.
+- [ ] **Fix 1**: `session.ts` emits heartbeat status events every <5s during BigPickle polling. A test helper subscribes to the event stream and asserts at least 3 heartbeats arrive within 15s. When the server is unreachable or returns errors, the test verifies no false heartbeat is emitted and the polling loop terminates within 30s.
+- [ ] **Fix 2**: Step name is passed through `runStepSession` parameters and displayed in the Execute panel's `<h2>` header, verified by a component test that renders `ExecutePanel` with a known step name and asserts `screen.getByRole('heading', { name: /step name/i })` is in the document. A null/undefined step name renders a fallback "Executing..." label instead of crashing.
+- [ ] **Fix 3**: Token counts poll the session API and emit live updates in the Execute panel during the wait loop, verified by asserting token counter DOM elements update their text content at least twice within a 10s polling window. When the session API returns 4xx or 5xx, the counter displays a dash ("—") and the panel shows a non-blocking warning icon rather than a spinner or error overlay.
 
 ### Integration & Regression
 - [ ] `npm test` (or equivalent test runner) passes with no regressions
 - [ ] TypeScript type-check (`npm run typecheck` or `tsc --noEmit`) passes without new errors
-- [ ] Existing Execute panel behavior is preserved for sessions where BigPickle is not active (no heartbeat or tokens emitted)
-- [ ] All three fixes work independently — disabling one does not break the others
-
-### Gate Criteria
-- [ ] All three Step Verification checkboxes are confirmed passing
-- [ ] All Integration & Regression checkboxes pass in CI or local run
-- [ ] No console errors or unhandled promise rejections related to the changes
-- [ ] Edge case verified: rapid successive polling does not cause duplicate or overlapping heartbeat events
-- [ ] Edge case verified: Execute panel recovers gracefully if the session API returns empty/malformed token data
-
+- [ ] Existing Execute panel behavior is preserved for session sessions (no regressions in step navigation, cancellation, or error display)
 ## Rollback Procedures
 
 | Scenario | Rollback |
@@ -77,4 +71,5 @@ Held at `status: draft`; fill in the implementation steps below before moving to
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-07-03 | AI-improved via Review | NetYeti |
 | 2026-07-03 | Created from approved proposal | NetYeti |

@@ -281,6 +281,7 @@
   $effect(() => {
     const focusSection = $page.url.searchParams.get('section');
     if (focusSection && SECTIONS.includes(focusSection)) {
+      setView('list');
       const nextCollapsed: Record<string, boolean> = {};
       for (const k of SECTIONS) {
         nextCollapsed[k] = (k !== focusSection);
