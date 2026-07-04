@@ -36,14 +36,23 @@ export function GET({ request }) {
         // Debounce index rebuilds — file saves often fire multiple rapid events
         watcher = fs.watch(REPO_ROOT, { recursive: true }, (eventType, filename) => {
           if (!filename) return;
-          const name = String(filename);
+          const name = String(filename).replace(/\\/g, '/');
+          // Skip .git internals — prompt daemons (gitstatusd) churn temp dirs there
+          if (name === '.git' || name.startsWith('.git/') || name.includes('/.git/')) return;
           if (!name.endsWith('.md') && eventType !== 'rename') return;
-          send('filechange', { event: eventType, path: name.replace(/\\/g, '/') });
+          send('filechange', { event: eventType, path: name });
           // Rebuild and persist the index 500ms after the last change in the burst
           if (rebuildTimer) clearTimeout(rebuildTimer);
           rebuildTimer = setTimeout(() => {
             try { rebuildIfStale(REPO_ROOT); } catch { /* non-fatal */ }
           }, 500);
+        });
+        // Without an 'error' listener, a watcher error (e.g. a short-lived dir
+        // deleted mid-scan) is an unhandled 'error' event and kills the process
+        watcher.on('error', (err) => {
+          send('error', { message: String(err) });
+          try { watcher?.close(); } catch { /* already closed */ }
+          watcher = null;
         });
       } catch (err) {
         send('error', { message: 'watch not supported on this platform' });
