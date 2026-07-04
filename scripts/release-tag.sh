@@ -42,7 +42,7 @@ fi
 
 # Derive GitHub repo slug from origin remote
 REPO=$(git -C "$ROOT" remote get-url origin 2>/dev/null \
-    | sed -E 's|.*github\.com[:/]([^/]+/[^/]+?)(\.git)?$|\1|' || true)
+    | sed -E 's|.*github\.com[:/]||; s|\.git$||' || true)
 
 if [ -z "$REPO" ]; then
     echo "Error: could not determine GitHub repo from origin remote." >&2
