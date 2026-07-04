@@ -364,7 +364,7 @@ validate_phase_review_gate() {
     for f in plans/completed/phase-${PREV_PHASE}-*.md; do
         [ -f "$f" ] || continue
         local G=$(get_frontmatter "$f" | grep "^gate_status:" | sed 's/^gate_status:[[:space:]]*//' | xargs)
-        echo "$G" | grep -qE '^(approved|waived)$' && PREV_COMPLETED="$f" && break
+        echo "$G" | grep -qE '^(approved|waived|reviewed)$' && PREV_COMPLETED="$f" && break
     done
     [ -z "$PREV_COMPLETED" ] && return 0  # No gated previous phase — skip
 
