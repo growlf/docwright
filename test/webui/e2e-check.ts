@@ -336,6 +336,23 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
     return !!inp || 'no search input after Ctrl+K';
   }));
 
+  // ── Toolbar click route changes ──────────────────────────────────────────
+  results.push(await check('navigation: clicking Git toolbar button updates route to /git', async () => {
+    await page.goto(`${baseUrl}/docs/roadmap`, { waitUntil: 'load', timeout: 15000 });
+    await page.waitForTimeout(1000);
+    await page.click('.act-btn[title="Git"]');
+    await page.waitForTimeout(1000);
+    const url = page.url();
+    return url.endsWith('/git') || `URL is ${url}`;
+  }));
+
+  results.push(await check('navigation: clicking Files toolbar button updates route to /docs/roadmap', async () => {
+    await page.click('.act-btn[title="Files"]');
+    await page.waitForTimeout(1000);
+    const url = page.url();
+    return url.endsWith('/docs/roadmap') || `URL is ${url}`;
+  }));
+
   // ── /settings route ─────────────────────────────────────────────────────
   await page.goto(`${baseUrl}/settings`, { waitUntil: 'domcontentloaded', timeout: 10000 });
   await page.waitForTimeout(600);
