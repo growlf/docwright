@@ -75,10 +75,10 @@ import {
   // Core VC registry — insertion order = activity bar order.
   // External plugins use leftView === 'plugin-<name>'; core VCs use their plain name.
   const CORE_VCS = new Map([
-    ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true  }],
-    ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true  }],
-    ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false }],
-    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: true  }],
+    ['governance', { order: 10, icon: '🏛', label: 'Governance Engine', searchable: true,  defaultRoute: '/status' }],
+    ['files',      { order: 20, icon: '📄', label: 'Files',             searchable: true,  defaultRoute: '/docs/roadmap' }],
+    ['search',     { order: 25, icon: '🔍', label: 'Search (Ctrl+K)',   searchable: false, defaultRoute: '/search' }],
+    ['git',        { order: 40, icon: '⎇', label: 'Git',               searchable: true,  defaultRoute: '/git' }],
   ]);
   $effect(() => { if (typeof localStorage !== 'undefined') localStorage.setItem('dw-left-view', leftView); });
   type Theme = 'dark' | 'light' | 'system';
@@ -945,8 +945,10 @@ import {
     {#each [...CORE_VCS.entries()] as [vcId, meta]}
       <button class="act-btn" class:active={leftView === vcId}
         onclick={() => {
+          const changed = leftView !== vcId;
           leftView = vcId; showSidebar = true;
           if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+          if (changed && meta.defaultRoute) goto(meta.defaultRoute);
         }}
         title={meta.label}>{meta.icon}</button>
     {/each}
@@ -956,9 +958,11 @@ import {
         <button class="act-btn"
           class:active={leftView === `plugin-${plugin.name}`}
           onclick={() => {
-            leftView = `plugin-${plugin.name}`;
+            const pluginId = `plugin-${plugin.name}`;
+            const changed = leftView !== pluginId;
+            leftView = pluginId;
             showSidebar = true;
-            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+            if (changed && plugin.defaultRoute) goto(plugin.defaultRoute);
           }}
           title={plugin.displayName}>{plugin.icon}</button>
       {/each}
@@ -971,16 +975,20 @@ import {
       {#each [...CORE_VCS.entries()] as [vcId, meta]}
         <button class="mobile-act-btn" class:active={leftView === vcId}
           onclick={() => {
+            const changed = leftView !== vcId;
             leftView = vcId;
             if (vcId === 'search') searchFocusTrigger.update(n => n + 1);
+            if (changed && meta.defaultRoute) goto(meta.defaultRoute);
           }}
           title={meta.label}>{meta.icon}</button>
       {/each}
       {#each activePlugins as plugin}
         <button class="mobile-act-btn" class:active={leftView === `plugin-${plugin.name}`}
           onclick={() => {
-            leftView = `plugin-${plugin.name}`;
-            if (plugin.defaultRoute) goto(plugin.defaultRoute);
+            const pluginId = `plugin-${plugin.name}`;
+            const changed = leftView !== pluginId;
+            leftView = pluginId;
+            if (changed && plugin.defaultRoute) goto(plugin.defaultRoute);
           }} title={plugin.displayName}>{plugin.icon}</button>
       {/each}
     </div>
