@@ -1215,3 +1215,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Fix/complete plan reactivity
 
 **Session note:** `docs/session-notes/session_note_202607032132.md`
+
+---
+
+## Session: 2026-07-03 — watch endpoint crash fix
+
+**Focus:** watch endpoint crash fix
+
+**Completed:**
+- [x] fix: watch endpoint no longer crashes the server on .git watcher races
+- [x] fix: watch endpoint no longer crashes the server on .git watcher races
+- [x] feat: env-driven vite allowedHosts for reverse-proxied deployments
+- [x] docs: propose three-instance deployment — dogfood, csdocs, cs-erp-images
+- [x] feat: interactive status tiles and approval flow fixes
+- [x] docs: BMS dev-cloud three-deployment architecture (design draft)
+- [x] feat: consolidate Tags into Search VC and implement reactive navigation routing
+- [x] refactor: centralize the duplicated frontmatter parser (Issue #94)
+- [x] fix: relabel 'Pending Approval' stat and add tooltips in Governance panel
+- [x] chore: bump version to 0.4.6 webui and lockfiles
+
+**Session note:** `docs/session-notes/session_note_202607032246.md`
