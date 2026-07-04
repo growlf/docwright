@@ -82,9 +82,9 @@
   // Collapsed state per section, persisted in sessionStorage
   const SECTIONS = ['active-plans', 'approved-pending', 'open-proposals', 'research', 'deferred', 'completed'];
   function isCollapsed(key: string): boolean {
-    if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
+    if (typeof sessionStorage === 'undefined') return true;
     const val = sessionStorage.getItem('status-collapsed-' + key);
-    return val !== null ? val === 'true' : (key === 'completed' || key === 'deferred');
+    return val !== null ? val === 'true' : true;
   }
   function toggleSection(key: string) {
     const next = !isCollapsed(key);
