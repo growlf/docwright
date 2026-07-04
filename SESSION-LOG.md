@@ -1268,3 +1268,17 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: watch endpoint no longer crashes the server on .git watcher races
 
 **Session note:** `docs/session-notes/session_note_202607040052.md`
+
+---
+
+## Session: 2026-07-04 — default status sections to collapsed in list view
+
+**Focus:** default status sections to collapsed in list view
+
+**Completed:**
+- [x] feat: default status sections to collapsed in list view
+- [x] feat: remove redundant phase gate review banner from status list view
+- [x] fix: resolve stale Phase 2 banner on status dashboard
+- [x] fix: watch endpoint no longer crashes the server on .git watcher races
+
+**Session note:** `docs/session-notes/session_note_202607040055.md`
