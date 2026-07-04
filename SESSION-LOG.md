@@ -1255,3 +1255,16 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] refactor: centralize the duplicated frontmatter parser (Issue #94)
 
 **Session note:** `docs/session-notes/session_note_202607040048.md`
+
+---
+
+## Session: 2026-07-04 — remove redundant phase gate review banner from sta
+
+**Focus:** remove redundant phase gate review banner from sta
+
+**Completed:**
+- [x] feat: remove redundant phase gate review banner from status list view
+- [x] fix: resolve stale Phase 2 banner on status dashboard
+- [x] fix: watch endpoint no longer crashes the server on .git watcher races
+
+**Session note:** `docs/session-notes/session_note_202607040052.md`
