@@ -79,21 +79,26 @@ Key properties:
 
 ### Instances 2 & 4 — consumed Phase-3 sub-plans
 
-Two already-approved Phase-3 sub-plans describe deployments this proposal now realizes.
-On approval of this proposal, both should be transitioned as superseded/absorbed — a
-human/UI governance action, **not performed here** (they are `approved: true`):
+Two already-approved Phase-3 sub-plans describe deployments this proposal now realizes, so
+their substance is **merged here**. The UI has no way yet to consume/supersede or process
+one governance doc into another (tracked by
+[[issues/feature-ui-consume-and-process-governance-docs]]), so this merge is manual and the
+sub-plans' **formal supersession is deferred** until that functionality exists — the docs
+are `approved: true` and are deliberately **not transitioned here**.
 
 - **Instance 2 (csdocs)** realizes [[proposals/approved/sub-plan-cascade-steam-early-access]]
-  (Phase 3, deliverable #8): an early-access CS vault so leadership can open the Web UI,
-  read the seeded content, and submit their first proposal — de-risking Phase 5 before
-  production infrastructure exists.
+  (Phase 3, deliverable #8): an early-access CS vault (no Forgejo/AI stack yet), seeded from
+  the Drive vault content, so leadership can open the Web UI, read the seed, and submit their
+  first proposal — de-risking Phase 5 before production infrastructure exists.
   *Acceptance bar:* leadership navigates the vault seed and submits a proposal with no
   manual file editing.
 - **Instance 4 (msp-pilot)** realizes [[proposals/approved/sub-plan-msp-pilot-vault]]
   (Phase 3, deliverable #7): a real-world MSP pilot running a **complete** governance
   lifecycle (proposal → approve → plan → execute → complete → archive) entirely through the
-  Web UI + MCP tools, with `bms-ai-cluster` as the vault — the primary validation gate for
-  the vault-portability architecture.
+  Web UI + MCP tools, with `bms-ai-cluster` as the vault. Exercises vault portability,
+  `docwright init` scaffolding, profile override (MSP policies: service-catalog,
+  change-management, incident-response, security-baseline, onboarding), and the contribution
+  pipeline — the primary validation gate for the vault-portability architecture.
   *Acceptance bar:* full lifecycle with zero manual file edits; friction logged via
   `log_friction`.
 
