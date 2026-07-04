@@ -99,7 +99,7 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
         window.location.pathname === '/status/' ||
         window.location.pathname.startsWith('/plugin')
       ) {
-        setTimeout(() => goto('/'), 0);
+        setTimeout(() => goto('/docs/roadmap'), 0);
       }
     },
     onDeactivate()      { opts.filesSearchQuery.set(''); },

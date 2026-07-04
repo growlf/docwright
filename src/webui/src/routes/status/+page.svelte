@@ -82,9 +82,9 @@
   // Collapsed state per section, persisted in sessionStorage
   const SECTIONS = ['active-plans', 'approved-pending', 'open-proposals', 'research', 'deferred', 'completed'];
   function isCollapsed(key: string): boolean {
-    if (typeof sessionStorage === 'undefined') return key === 'completed' || key === 'deferred';
+    if (typeof sessionStorage === 'undefined') return true;
     const val = sessionStorage.getItem('status-collapsed-' + key);
-    return val !== null ? val === 'true' : (key === 'completed' || key === 'deferred');
+    return val !== null ? val === 'true' : true;
   }
   function toggleSection(key: string) {
     const next = !isCollapsed(key);
@@ -482,97 +482,6 @@
         {/each}
       </div>
     {:else}
-
-    <!-- Phase gate review banner -->
-    {#if data.phaseReview}
-    {@const allReviewed = data.phaseReview.plans.every(p => !p.needsReview)}
-    {@const nextPhase = data.phaseReview.plans.find(p => p.phase === data.phaseReview!.gatedPhase + 1)}
-    <div class="phase-review-banner">
-      <div class="prb-title-row">
-        <span class="prb-icon">🔍</span>
-        <span class="prb-title">Phase {data.phaseReview.gatedPhase} complete — review required before Phase {data.phaseReview.gatedPhase + 1} begins</span>
-      </div>
-      <div class="prb-steps">
-        <div class="prb-step" class:prb-step-done={allReviewed}>
-          <span class="prb-step-num">1</span>
-          <div class="prb-step-body">
-            <strong>Open and review each upcoming phase plan</strong>
-            <span class="prb-step-hint">Read it — does the scope still reflect what we know? Update any deliverables that changed. Then come back here and click <em>Done reviewing</em>.</span>
-          </div>
-        </div>
-        <div class="prb-step" class:prb-step-done={allReviewed}>
-          <span class="prb-step-num">2</span>
-          <div class="prb-step-body">
-            <strong>Mark each plan reviewed below</strong>
-            <span class="prb-step-hint">This records today's date as the review date. You can re-review at any time.</span>
-          </div>
-        </div>
-        <div class="prb-step" class:prb-step-done={allReviewed}>
-          <span class="prb-step-num">3</span>
-          <div class="prb-step-body">
-            {#if nextPhase && nextPhase.status === 'in-progress'}
-              <strong>Phase {data.phaseReview.gatedPhase + 1} is already active ✓</strong>
-              <span class="prb-step-hint">Click <em>Done reviewing</em> for each plan in the table below to dismiss this banner.</span>
-            {:else}
-              <strong>Activate Phase {data.phaseReview.gatedPhase + 1}</strong>
-              <span class="prb-step-hint">Open the Phase {data.phaseReview.gatedPhase + 1} plan → click <em>Start</em> in the Properties panel on the right side of the screen.</span>
-            {/if}
-          </div>
-        </div>
-      </div>
-      <table class="prb-table">
-        <thead><tr><th>Phase</th><th>Plan</th><th>Last reviewed</th><th></th></tr></thead>
-        <tbody>
-          {#each data.phaseReview.plans as p}
-            <tr class="prb-row {p.needsReview ? 'prb-needs-review' : 'prb-reviewed'}">
-              <td class="prb-phase">Phase {p.phase}</td>
-              <td class="prb-plan-title">{p.title}</td>
-              <td class="prb-date">{p.reviewDate || 'Not yet reviewed'}</td>
-              <td class="prb-actions">
-                <button class="prb-open-btn" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>Open plan →</button>
-                {#if p.needsReview}
-                  {#if !p.canReview}
-                    <span class="prb-blocked" title="{p.activeWorkCount} plan{p.activeWorkCount === 1 ? '' : 's'} still open in this phase">
-                      ⏳ {p.activeWorkCount} open plan{p.activeWorkCount === 1 ? '' : 's'}
-                    </span>
-                  {:else}
-                    <button class="prb-confirm-btn" disabled={phaseReviewBusy[p.path]}
-                      onclick={() => markPhaseReviewed(p.path)}>
-                      {phaseReviewBusy[p.path] ? 'Saving…' : '✓ Done reviewing'}
-                    </button>
-                  {/if}
-                {:else}
-                  <span class="prb-ok">✅ Reviewed</span>
-                {/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-      {#if allReviewed && nextPhase}
-        {#if nextPhase.status === 'in-progress'}
-          <div class="prb-activate-cta">
-            <span class="prb-activate-msg">✅ All phases reviewed — Phase {data.phaseReview.gatedPhase + 1} is already active</span>
-            <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
-              Open Phase {data.phaseReview.gatedPhase + 1} plan →
-            </button>
-          </div>
-        {:else}
-          <div class="prb-activate-cta">
-            <span class="prb-activate-msg">✅ All phases reviewed — ready to activate Phase {data.phaseReview.gatedPhase + 1}</span>
-            <button class="prb-activate-btn" onclick={() => goto('/' + nextPhase.path.replace(/\.md$/, ''))}>
-              Open Phase {data.phaseReview.gatedPhase + 1} plan to activate →
-            </button>
-            <span class="prb-activate-hint">Once the plan is open, click <strong>Start</strong> in the Properties panel on the right.</span>
-          </div>
-        {/if}
-      {:else if !allReviewed}
-        <div class="prb-progress">
-          {data.phaseReview.plans.filter(p => !p.needsReview).length} of {data.phaseReview.plans.length} plans reviewed
-        </div>
-      {/if}
-    </div>
-    {/if}
 
     <!-- Pending Gates -->
     {#if data.gates.pending.length > 0}

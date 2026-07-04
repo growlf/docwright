@@ -365,7 +365,7 @@ export function GET() {
   const completedPhasePlans = [
     ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
   ].filter(({ fm }) => /phase-\d/.test(String(fm.title ?? '')) || parseInt(String(fm.phase ?? ''), 10) > 0)
-   .filter(({ fm }) => ['approved', 'waived'].includes(String(fm.gate_status ?? '')))
+   .filter(({ fm }) => ['approved', 'waived', 'reviewed'].includes(String(fm.gate_status ?? '')))
    .map(({ path: p, fm }) => ({
      path: p,
      phase: parseInt(String(fm.phase ?? '0'), 10),
