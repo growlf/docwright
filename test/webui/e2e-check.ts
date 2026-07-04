@@ -156,12 +156,12 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
   await page.waitForTimeout(2500); // wait for Svelte mount + VC registration
 
   // ── Activity bar ────────────────────────────────────────────────────────
-  results.push(await check('activity bar: 5 core VCs in order (🏛📄🔍🏷⎇)', async () => {
+  results.push(await check('activity bar: 4 core VCs in order (🏛📄🔍⎇)', async () => {
     const titles = await page.$$eval('.activity-bar .act-btn',
       btns => btns.map(b => b.getAttribute('title'))
     );
-    const expected = ['Governance Engine', 'Files', 'Search (Ctrl+K)', 'Tags', 'Git'];
-    const actual = titles.slice(0, 5);
+    const expected = ['Governance Engine', 'Files', 'Search (Ctrl+K)', 'Git'];
+    const actual = titles.slice(0, 4);
     return expected.every((t, i) => actual[i] === t)
       || `got [${actual.join(' | ')}]`;
   }));
@@ -294,46 +294,37 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
     return hasBranch || `vc text="${text.slice(0, 80).replace(/\s+/g, ' ')}"`;
   }));
 
-  // ── Tags VC ─────────────────────────────────────────────────────────────
-  await page.click('.act-btn[title="Tags"]');
-  await page.waitForTimeout(900);
-  await shot(page, 'vc-06-tags');
-
-  results.push(await check('tags vc: mounts (no error banner)', async () => {
-    const err = await page.$('.vc-error');
-    return !err || `vc-error: ${await err.textContent()}`;
-  }));
-  results.push(await check('tags vc: filter input present', async () => {
-    const inp = await page.$('.tags-filter');
-    return !!inp || 'no .tags-filter found';
-  }));
-  results.push(await check('tags vc: ≥1 tag row', async () => {
-    const n = await page.$$eval('.tag-row', els => els.length);
-    return n > 0 || 'no .tag-row elements found';
-  }));
-
-  // Filter interaction
-  const tagsFilter = await page.$('.tags-filter');
-  if (tagsFilter) {
-    await tagsFilter.fill('ui');
-    await page.waitForTimeout(300);
-    const filtered = await page.$$eval('.tag-row', els => els.length);
-    results.push(await check('tags vc: filter narrows results', async () => {
-      const total = await page.$$eval('.tag-row', els => els.length);
-      return true; // narrowed or same — just checking it doesn't crash
-    }));
-    await tagsFilter.fill('');
-  }
-
-  // ── Search VC ───────────────────────────────────────────────────────────
+  // ── Search VC (consolidated tags) ───────────────────────────────────────
   await page.click('.act-btn[title="Search (Ctrl+K)"]');
   await page.waitForTimeout(900);
   await shot(page, 'vc-07-search');
 
-  results.push(await check('search vc: search input present', async () => {
+  results.push(await check('search vc: mounts (no error banner)', async () => {
+    const err = await page.$('.vc-error');
+    return !err || `vc-error: ${await err.textContent()}`;
+  }));
+
+  results.push(await check('search vc: search/filter input present', async () => {
     const inp = await page.$('input[type="search"]');
     return !!inp || 'no input[type=search] found';
   }));
+
+  results.push(await check('search vc: tag list renders', async () => {
+    const n = await page.$$eval('.result-row', els => els.length);
+    return n > 0 || 'no tag rows found in search panel';
+  }));
+
+  // Filter interaction
+  const searchFilter = await page.$('input[type="search"]');
+  if (searchFilter) {
+    await searchFilter.fill('ui');
+    await page.waitForTimeout(300);
+    results.push(await check('search vc: filter narrows results', async () => {
+      // just verify it doesn't crash
+      return true;
+    }));
+    await searchFilter.fill('');
+  }
 
   // Ctrl+K shortcut — switch to Files first, then trigger shortcut
   await page.click('.act-btn[title="Files"]');
@@ -362,17 +353,22 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
   // ── Mobile VC strip ─────────────────────────────────────────────────────
   const mobilePage = await ctx.newPage();
   await mobilePage.setViewportSize({ width: 390, height: 844 });
+  await mobilePage.goto(baseUrl);
+  await mobilePage.evaluate(() => localStorage.clear());
   await mobilePage.goto(baseUrl, { waitUntil: 'load', timeout: 15000 });
-  await mobilePage.waitForTimeout(2500);
+  await mobilePage.waitForTimeout(3000);
 
-  // Open sidebar via hamburger
-  await mobilePage.click('.hamburger').catch(() => {});
-  await mobilePage.waitForTimeout(500);
+  // Since localStorage is cleared, both panels are closed. Open sidebar via hamburger.
+  const hamburger = await mobilePage.$('.hamburger');
+  if (hamburger) {
+    await hamburger.click();
+    await mobilePage.waitForTimeout(1000);
+  }
   await mobilePage.screenshot({ path: SCREENSHOT ? path.join(SCREENSHOT_DIR, 'vc-09-mobile.png') : '/tmp/dw-mobile.png' });
 
-  results.push(await check('mobile: VC strip has ≥5 buttons', async () => {
+  results.push(await check('mobile: VC strip has ≥4 buttons', async () => {
     const n = await mobilePage.$$eval('.mobile-vc-strip .mobile-act-btn', btns => btns.length);
-    return n >= 5 || `got ${n} mobile-act-btn elements`;
+    return n >= 4 || `got ${n} mobile-act-btn elements`;
   }));
   results.push(await check('mobile: strip is display:flex', async () => {
     const display = await mobilePage.evaluate(() => {

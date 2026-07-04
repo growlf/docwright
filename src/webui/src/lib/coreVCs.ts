@@ -21,6 +21,18 @@ export interface CoreVCOptions {
   gitSearchQuery:   Writable<string>;
 }
 
+function isDocOrStandalone(p: string): boolean {
+  return (
+    p.startsWith('/docs/') ||
+    p.startsWith('/proposals/') ||
+    p.startsWith('/plans/') ||
+    p.startsWith('/research/') ||
+    p === '/settings' || p === '/settings/' ||
+    p === '/audit' || p === '/audit/' ||
+    p === '/login' || p === '/login/'
+  );
+}
+
 export function setupCoreVCs(opts: CoreVCOptions): void {
   const dw = (window as any).__docwright;
 
@@ -30,7 +42,11 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     mount(el: HTMLElement) { govApp = svelteMount(GovernancePanel, { target: el }); },
     unmount()              { if (govApp) { svelteUnmount(govApp); govApp = null; } },
     onSearch(q: string)    { opts.govSearchQuery.set(q); },
-    onActivate()           { if (window.location.pathname !== '/status' && window.location.pathname !== '/status/') goto('/status'); },
+    onActivate() {
+      const p = window.location.pathname;
+      if (isDocOrStandalone(p)) return;
+      if (p !== '/status' && p !== '/status/') goto('/status');
+    },
     onDeactivate()         { opts.govSearchQuery.set(''); },
   });
 
@@ -39,10 +55,12 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
   dw.registerView('search', {
     mount(el: HTMLElement) { searchApp = svelteMount(SearchPanel, { target: el }); },
     unmount()              { if (searchApp) { svelteUnmount(searchApp); searchApp = null; } },
-    onActivate()           { if (window.location.pathname !== '/search' && window.location.pathname !== '/search/') goto('/search'); },
+    onActivate() {
+      const p = window.location.pathname;
+      if (isDocOrStandalone(p)) return;
+      if (p !== '/search' && p !== '/search/') goto('/search');
+    },
   });
-
-
 
   // ── Git (order: 40) ───────────────────────────────────────────────────
   // APIs: GET /api/git/status, POST /api/git/stage|commit|push|tag (writes need auth)
@@ -51,7 +69,11 @@ export function setupCoreVCs(opts: CoreVCOptions): void {
     mount(el: HTMLElement) { gitApp = svelteMount(GitPanel, { target: el }); },
     unmount()              { if (gitApp) { svelteUnmount(gitApp); gitApp = null; } },
     onSearch(q: string)    { opts.gitSearchQuery.set(q); },
-    onActivate()           { if (window.location.pathname !== '/git' && window.location.pathname !== '/git/') goto('/git'); },
+    onActivate() {
+      const p = window.location.pathname;
+      if (isDocOrStandalone(p)) return;
+      if (p !== '/git' && p !== '/git/') goto('/git');
+    },
     onDeactivate()         { opts.gitSearchQuery.set(''); },
   });
 
