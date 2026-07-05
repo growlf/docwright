@@ -157,10 +157,11 @@
       if (docType === 'proposal') pendingAutoImprove = true;
       goto($page.url.pathname, { replaceState: true, noScroll: true });
     }
-    // Plan just created from an approved proposal — auto-trigger AI improve
+    // Plan just created from an approved proposal — show success toast and properties pane
     if ($page.url.searchParams.get('from') === 'proposal') {
-      pendingAutoImprove = true;
-      showImproveTab.set(true);
+      showProps = true;
+      showPropsPane.set(true);
+      showToast('Plan created — draft; fill steps / mark in-progress', 5000);
       goto($page.url.pathname, { replaceState: true, noScroll: true });
     }
     return fileChanged.subscribe((change) => {
@@ -343,10 +344,13 @@
           await triggerPlanCompletedTransition();
         }
         if (docType === 'proposal') {
-          if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
-          else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
-          // On-save trigger: fire improvement pass non-blocking on first save of a new proposal
-          if (lastBodyLen === 0) triggerImproveOnSave();
+          // If the proposal is already approved, skip overlap check and AI improvement
+          if (frontmatter?.approved !== true) {
+            if (lastBodyLen === 0 && $featureFlags.autoDetectOnCreate) checkOverlap();
+            else if (lastBodyLen > 0 && $featureFlags.autoDetectOnUpdate) checkOverlap();
+            // On-save trigger: fire improvement pass non-blocking on first save of a new proposal
+            if (lastBodyLen === 0) triggerImproveOnSave();
+          }
         }
       }
     } catch (e) {

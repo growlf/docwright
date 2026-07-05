@@ -247,9 +247,14 @@ import {
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
     untrack(() => {
-      if (rightTab === 'related' && fp) findRelated(fp);
-      if (rightTab === 'review') rightTab = 'properties';
-      if (rightTab === 'improve') rightTab = 'properties';
+      const fromProposal = $page.url.searchParams.get('from') === 'proposal';
+      if (fromProposal) {
+        rightTab = 'properties';
+      } else {
+        if (rightTab === 'related' && fp) findRelated(fp);
+        if (rightTab === 'review') rightTab = 'properties';
+        if (rightTab === 'improve') rightTab = 'properties';
+      }
     });
   });
 

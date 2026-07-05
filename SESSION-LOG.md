@@ -1282,3 +1282,43 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: watch endpoint no longer crashes the server on .git watcher races
 
 **Session note:** `docs/session-notes/session_note_202607040055.md`
+
+---
+
+## Session: 2026-07-04 — resolve plugin navigation regression and route def
+
+**Focus:** resolve plugin navigation regression and route def
+
+**Completed:**
+- [x] fix: resolve plugin navigation regression and route defaults
+- [x] fix: resolve plugin navigation regression and route defaults
+- [x] chore: integrate origin/dogfood (allowedHosts) with local main-merge
+- [x] docs: propose three-instance deployment — dogfood, csdocs, cs-erp-images
+- [x] fix: set default landing page for files view container to roadmap
+- [x] feat: default status sections to collapsed in list view
+- [x] feat: remove redundant phase gate review banner from status list view
+- [x] fix: resolve stale Phase 2 banner on status dashboard
+- [x] chore: merge main into dogfood — watch crash fix (#121) + session note
+- [x] fix: watch endpoint no longer crashes the server on .git watcher races
+
+**Session note:** `docs/session-notes/session_note_202607040121.md`
+
+---
+
+## Session: 2026-07-04 — release-tag.sh repo slug kept .git suffix, breakin
+
+**Focus:** release-tag.sh repo slug kept .git suffix, breakin
+
+**Completed:**
+- [x] fix: release-tag.sh repo slug kept .git suffix, breaking CI watch
+- [x] chore: bump version to 0.4.7 — allowedHosts + watch crash fix
+- [x] feat: env-driven vite allowedHosts for reverse-proxied deployments
+- [x] docs: log UI consume/process gap; merge sub-plans manually pending it
+- [x] docs: retire dogfood-branch deployment draft — superseded by proposal
+- [x] docs: enrich deployment proposal — add msp-pilot (4th) instance, consume Phase-3 sub-plans
+- [x] fix: resolve plugin navigation regression and route defaults
+- [x] fix: resolve plugin navigation regression and route defaults
+- [x] chore: integrate origin/dogfood (allowedHosts) with local main-merge
+- [x] docs: propose three-instance deployment — dogfood, csdocs, cs-erp-images
+
+**Session note:** `docs/session-notes/session_note_202607041723.md`
