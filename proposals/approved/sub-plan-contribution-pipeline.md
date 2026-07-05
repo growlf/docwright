@@ -16,7 +16,7 @@ complexity: medium
 parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: 6
 _path: proposals/sub-plan-contribution-pipeline.md
-consumed_by: plans/contribution-pipeline.md
+consumed_by: plans/completed/contribution-pipeline.md
 ---
 
 ## Problem
