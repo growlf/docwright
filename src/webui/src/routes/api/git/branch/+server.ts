@@ -16,7 +16,20 @@ function git(cmd: string, cwd = REPO): string {
 }
 
 function listBranches(): string[] {
-  return git('branch --format=%(refname:short)').split('\n').map((s) => s.trim()).filter(Boolean);
+  // execFileSync (no shell) — `--format=%(refname:short)` contains parens that a shell
+  // would try to interpret, which silently returned an empty list via the string-based helper.
+  try {
+    return execFileSync('git', ['branch', '--format=%(refname:short)'], {
+      cwd: REPO,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 function isDirty(): boolean {
