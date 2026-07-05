@@ -1,6 +1,8 @@
 ---
 title: Web UI lifecycle transitions bypass the MCP completion gate — no test-evidence or checkbox validation on Complete
-status: open
+status: resolved
+closed_by_pr: "#195"
+resolved: 2026-07-05
 github_issue: 172
 created: 2026-07-05
 author: NetYeti
