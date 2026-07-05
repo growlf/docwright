@@ -1342,3 +1342,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: env-driven vite allowedHosts for reverse-proxied deployments
 
 **Session note:** `docs/session-notes/session_note_202607041950.md`
+
+---
+
+## Session: 2026-07-04 — cross-tool parity + branch hygiene
+
+**Focus:** cross-tool parity + branch hygiene
+
+**Completed:**
+- [x] fix: CI dangling-branch guard checks outcome, not admin-only setting
+- [x] feat: branch hygiene — auto-delete merged heads, prune locals, flag stranded main commits
+- [x] chore: bump version to 0.4.8 — openssh-client + plugin-loader fix
+- [x] chore: archive completed plan separate-dev-tracking-milestones-and-beta-channel
+- [x] fix: install openssh-client in image so SSH remotes / deploy keys work
+- [x] fix: step-table parsers split on escaped \| inside cells
+- [x] docs: enrich deployment proposal — 4th (msp-pilot) instance + consume Phase-3 sub-plans
+- [x] docs: refresh CLAUDE.md phase sections — phases 0–3 complete, phase 4 current
+- [x] feat: complete heatmap and dedup pipeline — cross-source dedup, capture_bug_report MCP tool, heatmap UI, promote-to-GH, time-weighted demand
+- [x] fix: plugin loader falls back to DOCWRIGHT_ROOT so plugins load in the container
+
+**Session note:** `docs/session-notes/session_note_202607042227.md`
