@@ -1407,3 +1407,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: contribution-pipeline Testing Plan reconciled with evidence
 
 **Session note:** `docs/session-notes/session_note_202607050230.md`
+
+---
+
+## Session: 2026-07-05 — agent-roles proposal + parallel branch
+
+**Focus:** agent-roles proposal + parallel branch
+
+**Completed:**
+- [x] docs: webui-write-integrity Step 1 → done; #94 resolved in issue store
+- [x] docs: propose scoped agent roles with per-role model routing (ai-stack bridge)
+- [x] docs: webui-write-integrity Step 1 → done; #94 resolved in issue store
+- [x] chore: leap-frog dogfood from main — branch-list shell fix
+- [x] refactor: centralize frontmatter parsing in dispatch; delete 6 parseFm copies (#94)
+- [x] fix: branch list returned empty — shell mangled the %(refname:short) format
+- [x] docs: propose scoped agent roles with per-role model routing (ai-stack bridge)
+- [x] refactor: centralize frontmatter parsing in dispatch; delete 6 parseFm copies
+- [x] chore: leap-frog dogfood from main — git-panel branch switcher
+- [x] feat: git-panel branch switcher (/api/git/branch + dropdown)
+
+**Session note:** `docs/session-notes/session_note_202607051413.md`
