@@ -46,7 +46,7 @@ Markdown files in this git repository.
 
 BDFL: NetYeti (growlf on GitHub, growlfd@gmail.com)
 License: MIT
-Status: Pre-alpha — Phase 0 complete, Web UI prototype functional
+Status: Pre-alpha — v0.4.x; Phases 0–3 complete, Phase 4 (profile engine, ACL, AI integration) in progress
 
 ## Full project context
 
@@ -166,65 +166,45 @@ For guidelines on multi-agent/multi-session collaboration and sync, see [[AGENTS
 - `infra-topology` — planned→active→decommissioned (network/device management)
 - `knowledge-base` — LLM Wiki pattern (Karpathy); Ingest/Lint/Save-to-Wiki
 
-## Phase 0 — spike (complete) ✅
+## Phase history (0–3 complete)
 
-Goal: validate `opencode serve` HTTP API feasibility.
+Versioning is phase-driven (see above): `0.MINOR` = phase number. Full scope per
+phase is in PROJECT.md §14; phase plans live in `plans/` and `plans/completed/`.
 
-Results:
-- `opencode serve` v1.15.13 HTTP API is stable ✅
-- JS SDK covers required endpoints ✅
-- SPA embed via iframe in WebView confirmed working ✅
-- Decision: go with iframe SPA embed (approach 1) ✅
-- Web UI redirected as primary target (VSCodium extension demoted)
+- **Phase 0 — `opencode serve` spike.** HTTP API validated (v1.15.13 stable, JS SDK
+  sufficient); decision: iframe SPA embed. Web UI promoted to primary surface,
+  VSCodium extension demoted/deferred.
+- **Phase 1 — Web UI prototype.** SvelteKit web UI: CRUD + rename/delete with git
+  undo, wikilinks, SSE live reload, 3-mode editor (preview/WYSIWYG/source),
+  proposal templating, properties pane, vault status page, collation foundation,
+  lifecycle compliance (pre-commit gate + MCP server + Claude Code hook), project
+  registry/vault switching, containerization.
+  See `plans/completed/phase-1-*.md`.
+- **Phase 2 — Foundation, web-first (closed 2026-06-08).** Dispatch module CI (zero
+  VS Code API leakage verified), `author-role:` in all bundled profile templates,
+  GitHub Actions CI, FOSS hygiene files, Research Stage MVP, plan execution modes
+  (mentor/guided/autonomous), plans-to-phases assignment. Profile engine and inbox
+  capture deferred to Phase 4. See `plans/completed/phase-2-foundation.md`.
+- **Phase 3 — Vault foundation, perception & real-world pilots (closed 2026-06-25).**
+  TypeScript MCP server with `--mode vault|upstream`, vault portability +
+  `docwright init`/adopt scaffolds, profile override merge, vault migration system,
+  MSP pilot + Cascade STEAM early-access vaults, Web UI auth/multiuser, plugin
+  system, knowledge graph. See `plans/completed/phase-3-vault-foundation.md`.
 
-## Phase 1 (current) — Web UI prototype
+## Phase 4 (current) — Profile Engine, ACL & AI Integration
 
-Goal: functional SvelteKit web UI with full CRUD, file tree, wikilink navigation,
-and live file change detection via SSE.
+Phase plan: `plans/phase-4-profile-acl-ai.md` (draft — full profile engine
+runtime, ACL controller, inbox capture, AI integration maturity).
 
-**VSCodium extension: deliberately deferred.** The team uses the Web UI
-surface more than the IDE at this stage. The extension will follow in Phase 2
-when the dispatch module exists. See `plans/phase-1-opencode-embed.md`.
+Other active plans: `contribution-pipeline` (in-progress, carried from Phase 3),
+`lifecycle-gates` (high), `collaboration-issue-model-and-roadmap-sync` (high),
+`vscodium-extension` (still deliberately deferred until after alpha validation
+by real users).
 
-Delivered:
-- [x] SvelteKit scaffold with dark theme layout, collapsible file tree sidebar
-- [x] Markdown rendering (markdown-it) with TOC anchors, external link targets
-- [x] Wikilink parsing: `[[path]]`, `[[path#section]]`, `[[path|alias]]`
-- [x] CRUD + rename + delete with toast notifications and git undo
-- [x] SSE live reload: `/api/watch` endpoint, auto-refresh tree + page on file change
-- [x] 3-mode editor: preview / WYSIWYG / source
-- [x] Proposal templating system (sidebar + UI button)
-- [x] Document properties pane (frontmatter form, action buttons, mode-aware)
-- [x] Sidebar polish: docs/all-files toggle, hidden archived dirs, context-aware +
-- [x] Vault status page (`/status`) with SSE refresh — default home page
-- [x] Smart 404: moved-document redirect + not-found inline state
-- [x] Collation foundation: overlap detection stub, related-proposals panel
-- [x] Lifecycle compliance: pre-commit gate, MCP server, Claude Code hook
-- [x] Project registry + vault switching
+## Phase 5 (next) — Cascade STEAM Production Infrastructure
 
-**Active plans:** collation (high), git-controls (medium), phase-1-opencode-embed (high, see above)
-
-## Phase 2 (next) — Foundation (Web-First)
-
-Goal: profile engine, dispatch module maturity, inbox capture, CI pipeline,
-FOSS hygiene, containerization, TypeScript MCP server.
-VSCodium extension deliberately deferred to after alpha validation.
-
-Key deliverables:
-- Profile engine loads profile.json; falls back to org-operations
-- Dispatch module CI — verify no VS Code API leakage
-- Inbox capture: minimal localhost web form
-- `author-role:` field in ALL profile templates from day one
-- GitHub Actions CI: lint + typecheck + unit tests (no .vsix yet)
-- All FOSS hygiene files: CHANGELOG.md, SECURITY.md, CONTRIBUTING.md,
-  NOTICE.md, AGENTS.md, CODEOWNERS, .github/ templates, dependabot.yml
-- TypeScript MCP server replacing Python mcp-server.py
-- (Containerization completed in Phase 1)
-
-## VSCodium Extension (after alpha)
-
-Goal: working extension skeleton after web tool validated by real users.
-See `plans/vscodium-extension.md`. Depends on Phase 2 dispatch maturity.
+Production deployment of the reference implementation: Forgejo git server,
+ai-stack/meshy AI backend, vault go-live. See `plans/phase-5-cascade-steam.md`.
 
 ## Repo structure
 
