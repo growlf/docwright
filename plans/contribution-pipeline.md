@@ -23,6 +23,9 @@ automated: full
 milestone: next
 channel: beta
 gate_note: "Changed files are untestable types: plans/contribution-pipeline.md"
+tests_last_run: "2026-07-05T08:41:21.901Z"
+tests_last_result: pass
+tests_last_commit: d165862
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 
@@ -119,3 +122,5 @@ manually. `.docwright/contributions.log` is append-only NDJSON; truncate if need
 | 2026-07-05 | Step 2 delivered (GH #153, PR #154): log_friction MCP tool (vault mode) with sanitization + category/severity validation; friction parse/append/age engine in src/dispatch/friction.ts (shared by MCP tool, /api/status, and init scaffold); weekly review cadence documented in the scaffold; aged-entry amber badge on the status page linking to docs/friction-log. Retroactive Step 1 test coverage added (mode gate, human gate, prefill fallback, NDJSON log). 332 dispatch + 26 friction/contribution/parity tests pass; webui builds clean. | NetYeti |
 | 2026-07-05 | Step 3 delivered (GH #155): list_docwright_issues (label/assignee/state filters, PR filtering, rate-limit hint) + create_docwright_proposal (pre-filled URL only — consent-based, no upstream writes, so no approval gate needed). Upstream slug derives from origin in upstream mode, defaults to growlf/docwright in vault mode, DOCWRIGHT_UPSTREAM_REPO override. 10 new offline tests (fetch stubbed); full MCP suite green. All three plan steps now done. | NetYeti |
 | 2026-07-05 | Testing Plan reconciled with evidence: deduplicated the doubled Step Verification block, ticked boxes with named test/CI citations (incl. live list_docwright_issues run), left three genuinely-unverified boxes unchecked with reasons (token-path issue creation, badge visual render, non-forgeability sign-off). | NetYeti |
+| 2026-07-05 | Test run recorded via verify_plan_tests: npm run test:dispatch → PASS @ d165862 | NetYeti |
+| 2026-07-05 | Test run recorded via verify_plan_tests: npm run test:mcp → PASS @ d165862 | NetYeti |
