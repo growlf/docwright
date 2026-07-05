@@ -12,7 +12,7 @@ priority: medium
 mode: autonomous
 scenario_synthesis: Contribution pipeline and friction log — MCP tools (contribute_upstream, log_friction, list_docwright_issues, create_docwright_proposal); structured logging; GitHub issue/URL generation; no VS Code or IDE-specific steps
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 phase: 5
 total_steps: 3
