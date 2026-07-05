@@ -60,32 +60,40 @@ delegate here. Does not gate Phase 3 completion.
 
 ## Testing Plan
 
+> Evidence: `test/mcp/contribution.test.ts`, `test/mcp/intake.test.ts`,
+> `test/dispatch/friction.test.ts` (all in the CI `test:mcp` / `test:dispatch` chains,
+> green in PRs #154/#156/#157). Unchecked boxes below are genuinely unverified —
+> see the note under each.
+
 ### Step Verification
-- [ ] Step 1: `contribute_upstream` MCP tool
-- [ ] Step 2: `log_friction` MCP tool + periodic review
-- [ ] Step 3: `list_docwright_issues` + consent intake flow
-- [ ] Step 1: `contribute_upstream` MCP tool
-- [ ] Step 2: `log_friction` MCP tool + periodic review
-- [ ] Step 3: `list_docwright_issues` + consent intake flow
+- [x] Step 1: `contribute_upstream` MCP tool (`contribution.test.ts` — retroactive coverage added in PR #154)
+- [x] Step 2: `log_friction` MCP tool + periodic review (`contribution.test.ts`, `friction.test.ts`)
+- [x] Step 3: `list_docwright_issues` + consent intake flow (`intake.test.ts`)
 
 - [ ] Step 1: `contribute_upstream` with valid token creates a GitHub issue and logs the entry
-- [ ] Step 1: `contribute_upstream` without token returns a pre-filled URL and still logs
-- [ ] Step 1: Call without `DOCWRIGHT_CONTRIB_APPROVED=1` is rejected with clear error
-- [ ] Step 2: `log_friction` creates a well-formed entry in `docs/friction-log.md`
+      — *not yet verified: the offline suite covers only the no-token path; needs either a
+      stubbed-fetch token-path test or one recorded live run with a real token*
+- [x] Step 1: `contribute_upstream` without token returns a pre-filled URL and still logs (`contribution.test.ts`)
+- [x] Step 1: Call without `DOCWRIGHT_CONTRIB_APPROVED=1` is rejected with clear error (`contribution.test.ts`)
+- [x] Step 2: `log_friction` creates a well-formed entry in `docs/friction-log.md` (`contribution.test.ts`; parse/append/legacy-table cases in `friction.test.ts`)
 - [ ] Step 2: Status page shows notification badge when aged friction entries exist
-- [ ] Step 3: `list_docwright_issues` returns filtered results from GitHub
-- [ ] Step 3: `create_docwright_proposal` returns a valid pre-filled URL, does not write
+      — *aged-entry logic and `/api/status` wiring are unit-tested and the UI builds clean,
+      but the badge render itself hasn't been observed; confirm on the dogfood instance*
+- [x] Step 3: `list_docwright_issues` returns filtered results from GitHub (`intake.test.ts` stubbed; live run 2026-07-05: `label=governance` → 7 real issues, PRs excluded)
+- [x] Step 3: `create_docwright_proposal` returns a valid pre-filled URL, does not write (`intake.test.ts`; live URL generation confirmed 2026-07-05)
 
 ### Integration & Regression
 
-- [ ] Existing MCP tests pass without modification
-- [ ] TypeScript compiles cleanly
+- [x] Existing MCP tests pass without modification (full `test:mcp` chain green in CI, PRs #154/#156)
+- [x] TypeScript compiles cleanly (`tsc --noEmit` in CI Lint/Typecheck job)
 
 ### Gate Criteria
 
-- [ ] All three tools available in their respective modes (upstream/vault)
+- [x] All three tools available in their respective modes (upstream/vault) — mode-gate rejection tests in `contribution.test.ts`; intake tools mode-agnostic by design (read-only)
 - [ ] Human approval gate (`DOCWRIGHT_CONTRIB_APPROVED`) verified non-forgeable by AI
-- [ ] No direct GitHub writes — all issue creation is human-confirmed
+      — *rejection without the env var is tested; the non-forgeability claim is a deployment
+      property (server env is human-set) — BDFL judgment call, left for human sign-off*
+- [x] No direct GitHub writes — all issue creation is human-confirmed (`create_docwright_proposal`/`list_docwright_issues` write nothing, tested; `contribute_upstream` writes only behind the human-set env gate)
 
 ## Rollback Procedures
 
@@ -110,3 +118,4 @@ manually. `.docwright/contributions.log` is append-only NDJSON; truncate if need
 | 2026-07-03 | Step 1: Implemented contribute_upstream MCP tool — mode gate, human approval gate (DOCWRIGHT_CONTRIB_APPROVED), sanitization, GitHub issue creation via DOCWRIGHT_GITHUB_TOKEN or pre-filled URL fallback, NDJSON logging to .docwright/contributions.log | NetYeti |
 | 2026-07-05 | Step 2 delivered (GH #153, PR #154): log_friction MCP tool (vault mode) with sanitization + category/severity validation; friction parse/append/age engine in src/dispatch/friction.ts (shared by MCP tool, /api/status, and init scaffold); weekly review cadence documented in the scaffold; aged-entry amber badge on the status page linking to docs/friction-log. Retroactive Step 1 test coverage added (mode gate, human gate, prefill fallback, NDJSON log). 332 dispatch + 26 friction/contribution/parity tests pass; webui builds clean. | NetYeti |
 | 2026-07-05 | Step 3 delivered (GH #155): list_docwright_issues (label/assignee/state filters, PR filtering, rate-limit hint) + create_docwright_proposal (pre-filled URL only — consent-based, no upstream writes, so no approval gate needed). Upstream slug derives from origin in upstream mode, defaults to growlf/docwright in vault mode, DOCWRIGHT_UPSTREAM_REPO override. 10 new offline tests (fetch stubbed); full MCP suite green. All three plan steps now done. | NetYeti |
+| 2026-07-05 | Testing Plan reconciled with evidence: deduplicated the doubled Step Verification block, ticked boxes with named test/CI citations (incl. live list_docwright_issues run), left three genuinely-unverified boxes unchecked with reasons (token-path issue creation, badge visual render, non-forgeability sign-off). | NetYeti |
