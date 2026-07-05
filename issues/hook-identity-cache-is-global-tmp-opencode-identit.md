@@ -11,6 +11,8 @@ created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
 milestone: future
+demand_count: 2
+reported_dates: [2026-07-05]
 ---
 
 Observed live 2026-07-05: after `npm test` (which runs `test/hooks/test-human-approved-hook.sh` in a throwaway repo with `git config user.name "Hook Test"`), the very next real commit's pre-commit banner asserted `Human: Hook Test (hooktest@example.com)` — the throwaway repo's hook wrote the shared cache at `/tmp/opencode-identity-cache`, and `resolve_identity()` trusts it for 3600s regardless of which repo it came from.
@@ -24,3 +26,10 @@ The commit author itself was correct (git config); what's poisoned is the hook's
 Both hook copies (`scripts/pre-commit.sh` + `.githooks/pre-commit`) need the fix — see #144 for the drift problem making that a two-place change.
 
 **Verification:** run the hooks test suite, then make a real commit — banner must show the real identity, not Hook Test.
+
+## Additional reports
+
+### Additional report — 2026-07-05 (NetYeti)
+
+Reproduced again 2026-07-05 during webui-write-integrity Step 1: full npm test run re-poisoned the cache; the very next real commit's pre-commit banner asserted Human: Hook Test (hooktest@example.com). Second occurrence in one day — every full-suite run poisons the next hour of commit banners.
+

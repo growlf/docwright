@@ -18,20 +18,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseFrontmatter } from '../src/dispatch/frontmatter';
 
 const FIX = process.argv.includes('--fix');
 const ROOT = path.resolve(import.meta.dirname ?? __dirname, '..');
-
-function parseFrontmatter(raw: string): Record<string, any> {
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return {};
-  const fm: Record<string, any> = {};
-  for (const line of m[1].split('\n')) {
-    const kv = line.match(/^([^:]+):\s*(.*)/);
-    if (kv) fm[kv[1].trim()] = kv[2].trim();
-  }
-  return fm;
-}
 
 function setField(raw: string, field: string, value: string): string {
   if (raw.match(new RegExp(`^${field}:`, 'm'))) {

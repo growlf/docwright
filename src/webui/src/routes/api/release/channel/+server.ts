@@ -4,45 +4,11 @@ import { json } from '@sveltejs/kit';
 import { setDocumentField } from '../../../../../../dispatch/vault-write';
 import { getReleaseReadiness } from '../../../../../../dispatch/release';
 import { requireAuth } from '$lib/server/auth.js';
+import { parseFrontmatter as parseFm } from '../../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
-
-// Helper to parse simple frontmatter
-function parseFm(raw: string): Record<string, any> {
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-  const result: Record<string, any> = {};
-  const lines = match[1].split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    if (!line.trim() || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx <= 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-    if (rest === '' || rest === '[]') {
-      i++;
-      const arr: string[] = [];
-      if (rest !== '[]') {
-        while (i < lines.length && /^\s+-\s/.test(lines[i])) {
-          arr.push(lines[i].replace(/^\s+-\s*/, '').trim());
-          i++;
-        }
-      }
-      result[key] = arr;
-      continue;
-    }
-    let val: any = rest.replace(/^["']|["']$/g, '');
-    if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    result[key] = val;
-    i++;
-  }
-  return result;
-}
 
 function readDir(dir: string): Array<{ path: string; fm: Record<string, any> }> {
   const results: Array<{ path: string; fm: Record<string, any> }> = [];

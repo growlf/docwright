@@ -9,6 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { parseFrontmatter } from '../src/dispatch/frontmatter';
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(REPO_ROOT, '.opencode', 'skills');
@@ -21,20 +22,6 @@ interface SkillMeta {
   name: string;
   description: string;
   dir: string;
-}
-
-function parseFrontmatter(content: string): Record<string, string> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-  const result: Record<string, string> = {};
-  for (const line of match[1].split('\n')) {
-    const colon = line.indexOf(':');
-    if (colon === -1) continue;
-    const key = line.slice(0, colon).trim();
-    const val = line.slice(colon + 1).trim().replace(/^["']|["']$/g, '');
-    if (key && val) result[key] = val;
-  }
-  return result;
 }
 
 function loadSkills(): SkillMeta[] {

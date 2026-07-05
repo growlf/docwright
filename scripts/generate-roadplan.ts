@@ -2,43 +2,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { buildRoadplan } from '../src/dispatch/roadplan';
+import { parseFrontmatter as parseFm } from '../src/dispatch/frontmatter';
 
 const ROOT = process.env.DOCWRIGHT_ROOT || path.resolve(__dirname, '..');
-
-// Helper to parse frontmatter (handles string, boolean, list/arrays)
-function parseFm(raw: string): Record<string, any> {
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-  const result: Record<string, any> = {};
-  const lines = match[1].split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    if (!line.trim() || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx <= 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-    if (rest === '' || rest === '[]') {
-      i++;
-      const arr: string[] = [];
-      if (rest !== '[]') {
-        while (i < lines.length && /^\s+-\s/.test(lines[i])) {
-          arr.push(lines[i].replace(/^\s+-\s*/, '').trim());
-          i++;
-        }
-      }
-      result[key] = arr;
-      continue;
-    }
-    let val: any = rest.replace(/^["']|["']$/g, '');
-    if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    result[key] = val;
-    i++;
-  }
-  return result;
-}
 
 function scanDir(dirName: string): Array<{ path: string; fm: Record<string, any>; type: 'plan' | 'issue' }> {
   const results: Array<{ path: string; fm: Record<string, any>; type: 'plan' | 'issue' }> = [];
