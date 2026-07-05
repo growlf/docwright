@@ -1,7 +1,7 @@
 import { readFile, moveFile, writeFile, fileExists, getRepoRoot } from '../lib/paths';
 import { parseFrontmatter, formatYamlList, setFrontmatterField, extractFrontmatterField } from '../lib/frontmatter';
 import { logTransition } from '../lib/audit';
-import { hasPendingSteps, updateParentDeliverable, replaceStepStatus } from '../lib/steps';
+import { hasPendingSteps, updateParentDeliverable, replaceStepStatus, splitTableRow } from '../lib/steps';
 import { getAIEngine } from '../../dispatch/ai';
 
 interface ProposalSection {
@@ -364,7 +364,7 @@ export async function approveSubPlan(parentPlanName: string, proposalName: strin
     const linkPattern = `[[proposals/${baseName}]]`;
     const linkPatternMd = `[[proposals/${baseName}.md]]`;
     if (line.includes(linkPattern) || line.includes(linkPatternMd)) {
-      const parts = line.split('|');
+      const parts = splitTableRow(line);
       const lastIdx = parts.length - 2; // last cell before final |
       parts[lastIdx] = ' 🚧 In Progress ';
       parentLines[i] = parts.join('|');

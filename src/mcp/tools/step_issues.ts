@@ -1,5 +1,6 @@
 import { readFile, writeFile, getRepoRoot } from '../lib/paths';
 import { extractFrontmatterField } from '../lib/frontmatter';
+import { splitTableRow } from '../lib/steps';
 import { logTransition } from '../lib/audit';
 import { spawnSync } from 'node:child_process';
 
@@ -56,7 +57,7 @@ interface StepRowInfo {
   status: string;
   issue: string;
   branch: string;
-  issueColIdx: number;   // raw index in line.split('|')
+  issueColIdx: number;   // raw index in splitTableRow(line)
   branchColIdx: number;
 }
 
@@ -81,7 +82,7 @@ function findStepRow(lines: string[], stepNum: number): StepRowInfo | null {
     if (!inSteps) continue;
     if (!line.includes('|')) continue;
 
-    const rawParts = line.split('|');
+    const rawParts = splitTableRow(line);
 
     // Detect header row: must contain both 'action' and 'status' cells
     const lowerCells = rawParts.map(p => p.trim().toLowerCase());
@@ -131,7 +132,7 @@ function findStepRow(lines: string[], stepNum: number): StepRowInfo | null {
 }
 
 function setRowCell(line: string, rawColIdx: number, value: string): string {
-  const parts = line.split('|');
+  const parts = splitTableRow(line);
   parts[rawColIdx] = ' ' + value + ' ';
   return parts.join('|');
 }

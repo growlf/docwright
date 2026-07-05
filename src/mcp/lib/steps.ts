@@ -1,6 +1,16 @@
 import { readFile, writeFile } from './paths';
 import { parseFrontmatter, setFrontmatterField, extractFrontmatterField } from './frontmatter';
 
+/**
+ * Split a markdown table row on unescaped pipes only — `\|` inside a cell is
+ * literal content, not a column boundary. Cells keep their `\|` text, so
+ * rejoining the parts with '|' reproduces the original line.
+ */
+export function splitTableRow(line: string): string[] {
+  const ESC = '\u0000';
+  return line.split('\\|').join(ESC).split('|').map(p => p.split(ESC).join('\\|'));
+}
+
 export function countSteps(text: string): { total: number; completed: number } {
   const lines = text.split('\n');
   let inSection = false;
@@ -19,7 +29,7 @@ export function countSteps(text: string): { total: number; completed: number } {
     // Skip separator rows (| --- | or | :--- | etc.)
     if (/^\|[\s|:-]+\|$/.test(line)) continue;
 
-    const parts = line.split('|');
+    const parts = splitTableRow(line);
     // parts[0] is empty (before first |), parts[parts.length-1] is empty (after last |)
     const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
 
@@ -87,7 +97,7 @@ export function replaceStepStatus(text: string, stepMatch: string, newStatus: st
     // Skip separator rows
     if (/^\|[\s|:-]+\|$/.test(line)) continue;
 
-    const parts = line.split('|');
+    const parts = splitTableRow(line);
     const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
 
     // Detect header row to record statusColIdx
@@ -120,7 +130,7 @@ export function replaceStepStatus(text: string, stepMatch: string, newStatus: st
 
     // Replace the cell at statusColIdx in the raw parts array.
     // parts[0] = '' (before first |), so parts[statusColIdx + 1] is the status cell.
-    const rawParts = line.split('|');
+    const rawParts = splitTableRow(line);
     rawParts[statusColIdx + 1] = ` ${newStatus} `;
     lines[i] = rawParts.join('|');
     found = true;
@@ -207,7 +217,7 @@ export function hasPlaceholderSteps(text: string): boolean {
     if (!inSection || !line.startsWith('|')) continue;
     if (/^\|[\s|:-]+\|$/.test(line)) continue;
 
-    const parts = line.split('|');
+    const parts = splitTableRow(line);
     const cells = parts.slice(1, parts.length - 1).map(c => c.trim());
 
     if (!headerFound) {
@@ -260,7 +270,7 @@ export function updateParentDeliverable(text: string, safeName: string): string 
       }
       if (!inSection || !line.startsWith('|')) continue;
 
-      const parts = line.split('|');
+      const parts = splitTableRow(line);
       if (parts.length > 2 && parts[1].trim() === String(parentDeliverable).trim()) {
         const lastIdx = parts.length - 2;
         parts[lastIdx] = ' ✅ Done ';
