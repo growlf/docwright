@@ -43,6 +43,13 @@
   let showStaged    = $state(false);
   let showUntracked = $state(false);
 
+  // Branch switcher
+  let branches       = $state<string[]>([]);
+  let currentBranch  = $state('');
+  let vaultIsSource  = $state(false);
+  let showBranchMenu = $state(false);
+  let switching      = $state(false);
+
   const MSG_RE = /^(feat|fix|docs|refactor|test|chore|policy|decision): .+/;
 
   async function loadStatus() {
@@ -53,8 +60,44 @@
     }
   }
 
+  async function loadBranches() {
+    const res = await fetch('/api/git/branch');
+    if (res.ok) {
+      const d = await res.json();
+      branches      = d.branches ?? [];
+      currentBranch = d.current ?? '';
+      vaultIsSource = d.vaultIsSourceTree ?? false;
+    }
+  }
+
+  async function switchBranch(target: string) {
+    if (!target || target === currentBranch) { showBranchMenu = false; return; }
+    if (vaultIsSource && !confirm(
+      `Switch to "${target}"?\n\n⚠ This instance serves its own source tree, so switching ` +
+      `also swaps the running app code (it will hot-reload). Continue?`)) return;
+    switching = true;
+    const res = await fetch('/api/git/branch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ branch: target }),
+    });
+    switching = false;
+    showBranchMenu = false;
+    if (res.ok) {
+      const d = await res.json();
+      currentBranch = d.current ?? target;
+      setLog(`⎇ switched to ${currentBranch}`);
+      await loadStatus();
+      await loadBranches();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setLog(`✗ ${d.error || 'Branch switch failed'}`);
+    }
+  }
+
   onMount(() => {
     loadStatus();
+    loadBranches();
     return fileChanged.subscribe((c) => { if (c) loadStatus(); });
   });
 
@@ -358,7 +401,31 @@
 <div class="git-panel">
   <!-- Static header — always visible -->
   <div class="git-header">
-    <span class="git-branch">⎇ {status?.branch ?? '…'}</span>
+    <span style="position:relative; display:inline-block;">
+      <button
+        class="git-branch"
+        style="background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0;"
+        title="Switch branch"
+        disabled={switching}
+        onclick={() => { showBranchMenu = !showBranchMenu; if (showBranchMenu) loadBranches(); }}
+      >⎇ {currentBranch || status?.branch || '…'} ▾</button>
+      {#if showBranchMenu}
+        <div style="position:absolute; top:100%; left:0; z-index:30; margin-top:2px; min-width:170px; max-height:260px; overflow:auto; background:#1e1e1e; border:1px solid #444; border-radius:4px; box-shadow:0 4px 14px rgba(0,0,0,.5);">
+          {#if vaultIsSource}
+            <div style="padding:5px 9px; font-size:11px; color:#e0a030; border-bottom:1px solid #444;">⚠ serves own source — switching swaps code</div>
+          {/if}
+          {#each branches as b}
+            <button
+              style="display:block; width:100%; text-align:left; padding:5px 9px; background:{b === currentBranch ? '#2a3a50' : 'none'}; border:none; color:#ddd; font:inherit; cursor:pointer;"
+              onclick={() => switchBranch(b)}
+            >{b === currentBranch ? '● ' : '  '}{b}</button>
+          {/each}
+          {#if branches.length === 0}
+            <div style="padding:5px 9px; color:#888; font-size:12px;">no branches</div>
+          {/if}
+        </div>
+      {/if}
+    </span>
     {#if status && (status.ahead > 0 || status.behind > 0)}
       <span class="ahead-behind">
         {#if status.ahead > 0}<span class="ahead">↑{status.ahead}</span>{/if}
