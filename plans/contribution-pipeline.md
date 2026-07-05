@@ -16,12 +16,13 @@ tests_defined: false
 tests_human_reviewed: false
 phase: 5
 total_steps: 3
-completed_steps: 1
+completed_steps: 2
 _path: plans/contribution-pipeline.md
 github_epic: ""
 automated: full
 milestone: next
 channel: beta
+gate_note: "Changed files are untestable types: plans/contribution-pipeline.md"
 ---
 # Sub-Plan: Contribution Pipeline & Friction Log
 
@@ -46,7 +47,7 @@ delegate here. Does not gate Phase 3 completion.
 | Step | Action | Details | Status | Issue | Branch |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `contribute_upstream` MCP tool | Available in upstream mode only. Gated by `DOCWRIGHT_CONTRIB_APPROVED=1` env var (human-set; AI cannot forge). Validates input via sanitization schema. Creates GitHub issue via `DOCWRIGHT_GITHUB_TOKEN` env var, or generates a pre-filled URL fallback if token absent. Logs every call to `.docwright/contributions.log` (NDJSON: ts, title, category, docwright_version, issue_url_or_prefill, actor). | ✅ Done | — | ❌ Failed |
-| 2 | `log_friction` MCP tool + periodic review | Available in vault mode. Creates structured entry in `docs/friction-log.md` with fields: description, category (`bug`\|`feature-request`\|`ux-friction`\|`docs-gap`\|`missing-abstraction`), severity, date. Documents review cadence (recommended: weekly). Wires periodic review: aged friction entries surface in the status page as a notification badge. | ⏳ Pending | — | — |
+| 2 | `log_friction` MCP tool + periodic review | Available in vault mode. Creates structured entry in `docs/friction-log.md` with fields: description, category (`bug`\|`feature-request`\|`ux-friction`\|`docs-gap`\|`missing-abstraction`), severity, date. Documents review cadence (recommended: weekly). Wires periodic review: aged friction entries surface in the status page as a notification badge. | ✅ Done | #153 | `feat/153-log-friction-mcp-tool-periodic-review` |
 | 3 | `list_docwright_issues` + consent intake flow | `list_docwright_issues(filter?)` queries GitHub issues on the DocWright repo by label/assignee. `create_docwright_proposal(title, body, category)` generates a pre-filled proposal creation URL (not a direct write — requires human consent). Together these form a loop: friction entry → related open issues → propose upstream if novel. | ⏳ Pending | — | — |
 
 ## Parallelism Map
@@ -107,3 +108,4 @@ manually. `.docwright/contributions.log` is append-only NDJSON; truncate if need
 | 2026-06-24 | Rewrote — stripped AI review noise, reset Step 1 to Pending (no documented failure root cause), added clean steps/testing/risk | NetYeti |
 | 2026-06-14 | Created from approved proposal | NetYeti |
 | 2026-07-03 | Step 1: Implemented contribute_upstream MCP tool — mode gate, human approval gate (DOCWRIGHT_CONTRIB_APPROVED), sanitization, GitHub issue creation via DOCWRIGHT_GITHUB_TOKEN or pre-filled URL fallback, NDJSON logging to .docwright/contributions.log | NetYeti |
+| 2026-07-05 | Step 2 delivered (GH #153, PR #154): log_friction MCP tool (vault mode) with sanitization + category/severity validation; friction parse/append/age engine in src/dispatch/friction.ts (shared by MCP tool, /api/status, and init scaffold); weekly review cadence documented in the scaffold; aged-entry amber badge on the status page linking to docs/friction-log. Retroactive Step 1 test coverage added (mode gate, human gate, prefill fallback, NDJSON log). 332 dispatch + 26 friction/contribution/parity tests pass; webui builds clean. | NetYeti |

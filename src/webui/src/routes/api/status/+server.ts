@@ -4,6 +4,7 @@ import { json } from '@sveltejs/kit';
 import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGatesForDocument, isOverdue, getLastGateDate, parseCadence } from '../../../../../dispatch/gates';
 import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
 import { getReleaseReadiness } from '../../../../../dispatch/release';
+import { parseFrictionLog, agedFrictionEntries, FRICTION_LOG_PATH, FRICTION_REVIEW_CADENCE_DAYS } from '../../../../../dispatch/friction';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -485,6 +486,22 @@ export function GET({ url }: { url: URL }) {
   const roadplan = buildRoadplan(active, openIssues);
   const releaseReadiness = getReleaseReadiness(REPO_ROOT, roadplan.current.name);
 
+  // Friction log — weekly review cadence; aged = untriaged past the cadence
+  let frictionEntries: ReturnType<typeof parseFrictionLog> = [];
+  const frictionFile = path.join(REPO_ROOT, FRICTION_LOG_PATH);
+  if (fs.existsSync(frictionFile)) {
+    try {
+      frictionEntries = parseFrictionLog(fs.readFileSync(frictionFile, 'utf-8'));
+    } catch {
+      frictionEntries = [];
+    }
+  }
+  const friction = {
+    total: frictionEntries.length,
+    aged: agedFrictionEntries(frictionEntries, new Date()),
+    cadence_days: FRICTION_REVIEW_CADENCE_DAYS,
+  };
+
   const data = {
     vaultName,
     version,
@@ -499,6 +516,7 @@ export function GET({ url }: { url: URL }) {
     heatmap,
     roadplan,
     releaseReadiness,
+    friction,
     _window: window,
   };
   cache = { data, at: Date.now() };

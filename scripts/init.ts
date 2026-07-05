@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { scaffoldFrictionLog } from '../src/dispatch/friction';
 
 function sha256(content: string): string {
   return crypto.createHash('sha256').update(content, 'utf8').digest('hex');
@@ -196,25 +197,10 @@ function main() {
     console.log('  ✓ .docwright/registry.example.json');
   }
 
-  // docs/friction-log.md
+  // docs/friction-log.md — scaffold shared with the log_friction MCP tool
   const frictionPath = path.join(dest, 'docs', 'friction-log.md');
   if (!fs.existsSync(frictionPath)) {
-    fs.writeFileSync(frictionPath, [
-      '# Friction Log',
-      '',
-      'Track UX friction, bugs, and feature requests encountered while using DocWright.',
-      '',
-      '## Format',
-      '',
-      '| Date | Category | Description | Upstream Issue |',
-      '|------|----------|-------------|----------------|',
-      '|      |          |             |                |',
-      '',
-      '',
-
-      '---',
-      'Categories: bug | feature-request | ux-friction | docs-gap | missing-abstraction',
-    ].join('\n'), 'utf8');
+    fs.writeFileSync(frictionPath, scaffoldFrictionLog() + '\n', 'utf8');
     console.log('  ✓ docs/friction-log.md');
   }
 
