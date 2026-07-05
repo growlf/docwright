@@ -1,6 +1,7 @@
 ---
 title: "Docker image lacks openssh-client — SSH remotes / deploy keys don't work despite entrypoint docs"
-status: open
+status: resolved
+closed_by_pr: "#134"
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -52,3 +53,7 @@ Add `openssh-client` to the apt install in the `Dockerfile`. **Applied in this P
 
 Blocks deploy-key git-push for instances 2–4 until a release carries this fix. Pairs with
 the deploy-key mounts already wired in each deployment's `docker-compose.override.yml`.
+
+## Resolution (2026-07-04)
+
+Fixed by PR #134 (commit 7a0c625) — Dockerfile now installs `openssh-client`.

@@ -1,6 +1,7 @@
 ---
 title: "Session-start is blind to unmerged branches and open issues — parked work silently vanishes"
-status: open
+status: resolved
+closed_by_pr: "#77"
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -79,3 +80,10 @@ AI must not have to *remember* to check.
 - [[policies/core/code-over-memory.md]] — the principle this violates
 - [[proposals/formalize-roadmap-sequencing-enforcement]] — related roadmap-visibility gap
 - [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] — sibling visibility gap
+
+## Resolution (2026-07-04)
+
+Fixed by PR #77 (a028378). `scripts/vault-status.js` reports `parked_branches`
+(`git branch -r --no-merged origin/main`), the MCP `getSessionContextStructured` mirrors
+it, and both `.claude` and `.opencode` session-start skills consume it plus gh PR/issue
+state.

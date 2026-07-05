@@ -1,6 +1,6 @@
 ---
 title: "Test suite writes to the real audit/lifecycle.jsonl instead of an isolated temp store"
-status: open
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -15,7 +15,7 @@ tags:
   - data-integrity
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-closed_by_pr: ""
+closed_by_pr: "#84"
 cross_link: ""
 milestone: future
 ---
@@ -74,3 +74,11 @@ noise into commits. It also makes the log non-deterministic across test runs.
 - After a full `npm run test`, `git diff --exit-code` is clean for `audit/lifecycle.jsonl`,
   `plans/`, `proposals/`, and `issues/`.
 - Audit/plan tests still assert their transitions (against the temp store).
+
+## Resolution (2026-07-04)
+
+Core complaint fixed by PR #84 (commit 98449af): audit writer threads `repoRoot`, audit
+tests run against a temp `DOCWRIGHT_ROOT`, and `test/repo-isolation-guard.cjs` (wired in
+`.mocharc.cjs`) hard-fails any test that mutates real `audit/`, `plans/`, `proposals/`,
+`issues/`, `decisions/`, or `policies/`. GH #95 / PR #103 was the narrower follow-up
+(gitignore nested fixture `.docwright/audit.jsonl`).

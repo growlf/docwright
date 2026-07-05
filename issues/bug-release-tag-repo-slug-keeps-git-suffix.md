@@ -1,6 +1,7 @@
 ---
 title: "release-tag.sh repo slug keeps .git suffix — CI watch fails on every release"
-status: open
+status: resolved
+closed_by_pr: "#125"
 author: NetYeti
 author-role: contributor
 created: 2026-07-04
@@ -62,3 +63,7 @@ Verified against both `git@github.com:growlf/docwright.git` and
 - `release-tag.sh` resolves `REPO=growlf/docwright` for both SSH and HTTPS origins.
 - After pushing a tag, the script finds the triggered run, watches it, and exits 0 on
   success / non-zero on failure with the failed-step log.
+
+## Resolution (2026-07-04)
+
+Fixed by PR #125 (commit 953ca5a) — `release-tag.sh` now strips the `.git` suffix via the two-step sed.
