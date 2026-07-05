@@ -26,17 +26,31 @@ The cs-erp-images pipeline runs against a dev-server instance with the plugin lo
 via a local symlink (`plugins/erp-images` → a developer home directory), which is not
 reproducible on any other machine.
 
-**Current state (2026-07-04).** All four deployments target the BMS dev-cloud host
-(`10.10.0.201`, user `gemini`), fronted by NPMPlus (`10.10.0.11`, `*.bms.local`):
+**Current state (2026-07-05) — all four instances are live and proxied.** Each runs on the
+BMS dev-cloud host (`10.10.0.201`, user `gemini`) behind an NPMPlus proxy host (VIP
+`10.10.0.11`, `*.bms.local`) → the instance's port, with Technitium A records pointing the
+hostnames at the VIP. Wiring is a single idempotent Ansible playbook
+(`bms-ai-cluster:ansible/playbooks/configure-docwright-dev-cloud.yml`, ticket **BMS-0091**,
+resolved).
 
-- **Instance 1 (dogfood) is live.** The earlier `:5273` Docker dogfood that tracked
-  `main` has been **retired** (container, image, and auto-update cron removed). Instance 1
-  now runs in **dev-mode from a git clone** (`~/Projects/DocWright-development`,
-  `npm run dev` on `:5173`) on the long-lived `dogfood` branch, serving **itself** as its
-  vault. Reachable at `http://10.10.0.201:5173`; planned entrypoint `docwright-dev.bms.local`.
-- **Instances 2–4 are not yet stood up** — they depend on unresolved decisions
-  (git-push auth, service identity, and for instance 3 the tool-vs-customer-data
-  separation and backup store).
+| # | Instance | Hostname | Port | Mode / vault |
+|---|----------|----------|------|--------------|
+| 1 | dogfood-dev | `docwright-dev.bms.local` | 5173 | dev-mode from clone (`~/Projects/DocWright-development`), `dogfood` branch, serves itself |
+| 2 | csdocs | `csdocs.bms.local` | 5274 | release v0.4.7 container, vault `csdocs` |
+| 3 | erp-images | `erp-images.bms.local` | 5275 | release v0.4.7 container + `erp-images` plugin (loaded from the vault repo), vault `cs-erp-images` |
+| 4 | msp-pilot | `msp.bms.local` | 5276 | release v0.4.7 container, vault a dedicated `bms-ai-cluster` clone |
+
+- The earlier `:5273` Docker dogfood (tracked `main`) was **retired** (container, image, and
+  auto-update cron removed); instance 1 replaced it in dev-mode.
+- Release **v0.4.7** was cut to carry the reverse-proxy `allowedHosts` fix and the
+  `/api/watch` crash fix; instances 2–4 are pinned to it. A plugin-loader fix
+  (`DOCWRIGHT_ROOT` fallback) has since landed on `main` — until the next release, instance 3
+  sets `DOCWRIGHT_VAULT_ROOT` via a compose override so its plugin loads.
+- All four verified: `dig → 10.10.0.11`, HTTP via the VIP → 200, websockets on.
+
+**Still open** (see Deferred proposals below): git-push auth (per-repo deploy keys) for
+instances 2–4, the instance-3 tool-vs-customer-data guardrail + backup store, and per-user
+OAuth attribution. Interim commit identity is a transparently-labeled static service identity.
 
 This scheme was designed across two parallel working sessions and captured twice
 (this proposal and a `dogfood`-branch design draft) — itself an instance of the
