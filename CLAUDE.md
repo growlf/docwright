@@ -83,6 +83,12 @@ Unresolved bugs mislead feature development, create security exposure, and incre
 cognitive load. Exceptions are rare and must be explicitly justified in the plan or
 commit. See [[policies/core/bugs-before-features.md]].
 
+**ALWAYS file noticed bugs/gaps through `capture_bug_report`.** Never hand-file first:
+`suggest` (cross-source dedup — `confirm` to +1 demand on a match) → `create` if novel →
+mirror to GitHub with a `github_issue:` backlink. Hand-filed issues bypass dedup and the
+demand heatmap. The suggest matcher is literal — try more than one phrasing before
+trusting "no duplicates". (BDFL directive 2026-07-05; see AGENTS.md §Core Principles.)
+
 Every feature is designed with security as a baseline constraint — never retrofitted.
 Every behavior is governed by policy (profile definitions, frontmatter schema, ACL)
 rather than hardcoded logic. Every change ships only after it is verifiable through
