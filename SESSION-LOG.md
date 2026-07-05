@@ -1387,3 +1387,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: CHANGELOG 0.4.6–0.4.8, session-note continuation, operational runbook (deployment-bms-devcloud)
 
 **Session note:** `docs/session-notes/session_note_202607050615.md`
+
+---
+
+## Session: 2026-07-05 — Issue-store reconciliation + contribution pipeline
+
+**Focus:** Issue-store reconciliation + contribution pipeline
+
+**Completed:**
+- [x] chore: first real friction-loop cycle — log entry, file #166, triage with upstream link
+- [x] docs: close doc gaps — CHANGELOG 0.4.6-0.4.8, session-note continuation, deploy runbook
+- [x] chore: first real friction-loop cycle — log entry, file #166, triage with upstream link
+- [x] docs: contribution-pipeline verification gaps closed; #145 resolved in issue store
+- [x] fix: research-smoke treats research as opt-in per profile; add contribute_upstream token-path tests (#145)
+- [x] chore: leap-frog dogfood from main — /api/plugins dangling-symlink fix
+- [x] fix: /api/plugins 500 on dangling plugin symlink; drop committed dev-home symlink
+- [x] chore: issue store sync — #159 resolved, #160 filed
+- [x] feat: plan completion gated on recorded green test run + fully-checked Testing Plan (#159)
+- [x] docs: contribution-pipeline Testing Plan reconciled with evidence
+
+**Session note:** `docs/session-notes/session_note_202607050230.md`
