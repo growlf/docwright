@@ -33,7 +33,11 @@ export interface ManifestValidation {
 }
 
 function vaultRoot(): string {
-  return process.env.DOCWRIGHT_VAULT_ROOT ?? process.cwd();
+  // Prefer the plugin-specific override, then the canonical vault root the rest of the
+  // server uses (DOCWRIGHT_ROOT — set by the Docker image/entrypoint), then cwd. Without
+  // the DOCWRIGHT_ROOT fallback, plugins under the vault silently fail to load in the
+  // container, which sets DOCWRIGHT_ROOT but not DOCWRIGHT_VAULT_ROOT.
+  return process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_ROOT ?? process.cwd();
 }
 
 const DEFAULTS = {
