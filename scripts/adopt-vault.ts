@@ -286,7 +286,7 @@ function writeFull(
   if (atomsSeeded > 0) pass(`policies/ (${atomIds.length} pilot atoms seeded)`);
 
   // Root .gitignore — append DocWright block (duplicate-safe)
-  appendGitignore(dest);
+  appendGitignore(dest, docwrightPath);
 
   // Skills bridge (Claude Code, OpenCode, Gemini)
   copySkillsBridge(dest, docwrightPath, manifest);
@@ -305,11 +305,17 @@ function writeFull(
 // .gitignore append
 // ---------------------------------------------------------------------------
 
-function appendGitignore(dest: string) {
+function appendGitignore(dest: string, docwrightPath: string) {
   const giPath = path.join(dest, '.gitignore');
   const existing = fs.existsSync(giPath) ? fs.readFileSync(giPath, 'utf8') : '';
-  const managed = ['.env', '.dw-session.json', 'node_modules', '.claude/skills/',
-                   '.opencode/skills/', '.gemini/agents/', '.gemini/settings.json'];
+  // The skill/agent bridge dirs are managed COPIES in adopted vaults, but
+  // canonical SOURCE in the DocWright repo itself — ignoring them there
+  // silently drops every new skill from git (and from CI).
+  const isSourceRepo = path.resolve(dest) === path.resolve(docwrightPath);
+  const managed = isSourceRepo
+    ? ['.env', '.dw-session.json', 'node_modules']
+    : ['.env', '.dw-session.json', 'node_modules', '.claude/skills/',
+       '.opencode/skills/', '.gemini/agents/', '.gemini/settings.json'];
   const toAdd = managed.filter(e => !existing.includes(e));
   if (toAdd.length === 0) { pass('.gitignore (no new entries needed)'); return; }
   const block = '\n# DocWright — managed entries (added by adopt-vault.ts)\n' +
