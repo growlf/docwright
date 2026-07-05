@@ -1,6 +1,7 @@
 ---
 title: "scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead"
 status: open
+github_issue: 146
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -84,3 +85,11 @@ If `gh pr merge --squash` after a clean CI run turns out to be safe to
 automate too (e.g., only for session-note-only diffs with no code changes),
 that could be a fast-follow — but should be its own explicit decision, not
 bundled into this fix.
+
+## Scope update (2026-07-04)
+
+Partially addressed by the branch-hygiene work (bef5d43): on protected-main rejection,
+`end-session.ts` now warns, tracks the commits as "stranded", and prints the exact
+`git checkout -b … && gh pr create --base main` recovery commands. Remaining: it does
+not auto-create the branch+PR — the manual dance is still required. Stays open for the
+auto branch+PR behavior.

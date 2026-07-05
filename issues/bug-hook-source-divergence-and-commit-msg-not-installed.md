@@ -1,6 +1,7 @@
 ---
 title: "Hook source drift — .githooks diverged from scripts/pre-commit.sh, and commit-msg is never installed for vaults"
 status: open
+github_issue: 144
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -77,3 +78,10 @@ mechanism itself is not reliably deployed.
 - [[proposals/bug-human-approved-precommit-check-broken]] — the fix that surfaced this
 - [[policies/core/code-over-memory]] — enforcement must be reliably deployed, not assumed
 - [[proposals/bug-governance-hooks-silently-disabled-docwright-path]] — sibling install/deploy defect
+
+## Scope update (2026-07-04)
+
+Re-verified still valid: `install-hooks.sh` hardcodes `scripts/pre-commit.sh` and never
+installs `commit-msg` (no `scripts/commit-msg` source exists), and the two pre-commit
+copies still diverge (a live `reviewed`-gate line) with no CI drift check. Only the
+specific two-validator drift example originally cited is now obsolete.

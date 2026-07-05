@@ -1,6 +1,7 @@
 ---
 title: "Governance hooks silently disabled when DOCWRIGHT_PATH is unset (non-interactive shells)"
 status: open
+github_issue: 143
 author: NetYeti
 author-role: contributor
 created: 2026-07-01

@@ -1,6 +1,7 @@
 ---
 title: "Approving by moving a proposal to proposals/approved/ bypasses the HUMAN-APPROVED gate"
 status: open
+github_issue: 140
 author: NetYeti
 author-role: contributor
 created: 2026-07-01

@@ -1,6 +1,7 @@
 ---
 title: "Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel"
 status: open
+github_issue: 142
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -72,3 +73,11 @@ completing `plans/governance-engine-view-container.md`.
 - [[proposals/bug-wysiwyg-editor-corrupts-documents]] — same full-file re-serialization smell
 - [[plans/completed/governance-engine-view-container]] — the plan completed when this was found
 - [[policies/core/bugs-before-features]]
+
+## Scope update (2026-07-04)
+
+Symptom B (no live refresh) fixed by PR #118 (91a86fb) plus the Complete handler now
+navigating to /status. Symptom A remains: `transition-completed/+server.ts` still writes
+`docs/<name>.md` alongside `plans/completed/` with re-serialized quote-wrapped
+frontmatter. Note the docs/ write is commented as deliberately mirroring the MCP
+`transition_to_completed` tool — may be a wont-fix by design; needs a maintainer call.

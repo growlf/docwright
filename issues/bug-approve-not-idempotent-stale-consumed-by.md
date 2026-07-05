@@ -1,6 +1,7 @@
 ---
 title: "Approve button silently no-ops when a stale consumed_by points at a missing plan"
 status: open
+github_issue: 141
 author: NetYeti
 author-role: contributor
 created: 2026-07-01

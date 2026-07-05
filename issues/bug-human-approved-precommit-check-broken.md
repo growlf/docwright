@@ -1,6 +1,7 @@
 ---
 title: "Pre-commit HUMAN-APPROVED check is broken — reads stale COMMIT_EDITMSG"
-status: open
+status: resolved
+closed_by_pr: "#70"
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -86,3 +87,9 @@ DocWright `.githooks/pre-commit`, observed 2026-06-30 approving
 - [[policies/core/bugs-before-features]]
 - [[policies/core/ai-governance-boundaries]] — this is the gate meant to enforce it
 - [[proposals/bug-wysiwyg-editor-corrupts-documents]], [[proposals/bug-complete-plan-stray-copy-and-no-refresh]] — sibling dogfooding finds (same session)
+
+## Resolution (2026-07-04)
+
+Fixed by PR #70 (69440c4) + 50e829c. The stale `.git/COMMIT_EDITMSG` grep is gone:
+pre-commit now only detects `false→true` and arms a `dw-needs-human-approval` flag, and
+the new `.githooks/commit-msg` asserts `HUMAN-APPROVED:` against the real message file.

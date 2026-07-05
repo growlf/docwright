@@ -1,6 +1,8 @@
 ---
 title: "Plan generator (approve → plan) dumps the whole proposal, mangles frontmatter, and mints an unreviewed 'approved' plan"
-status: open
+status: resolved
+github_issue: 108
+closed_by_pr: "#109"
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -103,3 +105,12 @@ incorrect requirements straight past the human review that approval is supposed 
 - No invented fields/CLIs; no step contradicts the source proposal (spot-check the sorting
   test direction).
 - Markdown lints clean (single Testing Plan header; well-formed tables).
+
+## Resolution (2026-07-04)
+
+High-severity defects fixed by PR #109 (commit dd27ea9), GH #108 closed: no proposal-body
+dump, plan starts at `status: draft`, priority inherited, tags emitted as a YAML list,
+single Testing Plan section, 2-column rollback table. Residual (medium, defect #6):
+`assemblePlan()` still emits no `phase`/`total_steps`/`completed_steps`/`mode`/
+`template_version`/gate fields — tracked as a follow-up comment on GH #136 (the open
+plan-generator issue).

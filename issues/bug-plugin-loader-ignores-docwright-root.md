@@ -1,6 +1,7 @@
 ---
 title: "Plugin loader reads DOCWRIGHT_VAULT_ROOT only — plugins silently don't load in the container"
-status: open
+status: resolved
+closed_by_pr: "#131"
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -54,3 +55,7 @@ return process.env.DOCWRIGHT_VAULT_ROOT ?? process.env.DOCWRIGHT_ROOT ?? process
 
 - A release container started with only `DOCWRIGHT_ROOT=/vault` discovers and serves
   plugins from `/vault/plugins` (verify `/api/plugins`) — no compose override needed.
+
+## Resolution (2026-07-04)
+
+Fixed by PR #131 (commit d135be8) — `vaultRoot()` falls back `DOCWRIGHT_VAULT_ROOT ?? DOCWRIGHT_ROOT ?? cwd`.

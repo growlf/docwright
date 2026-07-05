@@ -1,6 +1,7 @@
 ---
 title: "research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles'"
 status: open
+github_issue: 145
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
