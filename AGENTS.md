@@ -13,6 +13,14 @@ policy grounding, and verification at every stage of the documents it helps prod
 implementation. If bugs exist that affect the feature's area, resolve them first
 or declare an explicit exception in the plan. See `policies/core/bugs-before-features.md`.
 
+**ALWAYS file noticed bugs/gaps through `capture_bug_report`.** When you notice a bug,
+gap, or issue — while working on anything else — file it via the MCP bridge, never by
+hand: `capture_bug_report(action=suggest)` first (cross-source dedup; if a match exists,
+`confirm` to +1 its demand instead of double-filing), then `create` only if novel, then
+mirror to GitHub with a `github_issue:` backlink. Hand-filed issues bypass dedup and the
+demand heatmap. The suggest matcher is literal — try more than one phrasing before
+trusting "no duplicates". (BDFL directive 2026-07-05.)
+
 **ALWAYS VERIFY, never assume docs are up to date.** Before acting on any documented IP, credential, role, or topology, verify against the live system.
 
 **One-off tasks are prohibited.** All work must flow through the document lifecycle. See the `order-of-work-lifecycle` SOP for details.
