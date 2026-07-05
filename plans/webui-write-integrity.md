@@ -13,15 +13,16 @@ priority: high
 mode: autonomous
 scenario_synthesis: Web UI write-integrity cluster — centralize frontmatter parse/serialize in dispatch, share the completion gate across surfaces, auto-commit all UI lifecycle writes, stop syncTestCriteria save rewrites, safe WYSIWYG round-trip, approve idempotency self-heal
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 phase: 4
 total_steps: 6
-completed_steps: 0
+completed_steps: 1
 github_epic: ""
 automated: full
 milestone: next
 channel: dev
+gate_note: "Changed files are untestable types: plans/webui-write-integrity.md"
 ---
 # Web UI write integrity: shared parser, shared gate, committed transitions, safe saves
 
@@ -53,7 +54,7 @@ begin") — no separate proposal; the seven linked issues are the intake record.
 
 | Step | Action | Details | Status | Issue | Branch |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Centralize frontmatter parse/serialize in dispatch | One canonical parser + a byte-preserving field editor in `src/dispatch/frontmatter.ts`; every webui endpoint and script imports it; delete all local `parseFm`/`buildRaw` copies. Foundation for every later step. | ⏳ Pending | #94 | — |
+| 1 | Centralize frontmatter parse/serialize in dispatch | One canonical parser + a byte-preserving field editor in `src/dispatch/frontmatter.ts`; every webui endpoint and script imports it; delete all local `parseFm`/`buildRaw` copies. Foundation for every later step. | ✅ Done | #94 | — |
 | 2 | Share the completion gate across surfaces | Move `checkCompletionGate`/`uncheckedTestingPlanBoxes` into the dispatch module (surface-agnostic, no MCP dep); MCP re-exports; webui `transition-completed` runs the same gate and refuses identically. Parity test asserts both surfaces reject the same fixture. | ⏳ Pending | #172 | — |
 | 3 | Auto-commit every Web UI lifecycle write | Extend the PR #111 `commitPaths` pattern to approve-sub-plan/plan-review, create-plan, transition-completed, and `/api/write`; no UI action leaves the working tree dirty. #142 resolution folded in: keep the completion doc (mirrors MCP by design) but stop re-serializing frontmatter into it. | ⏳ Pending | #147 | — |
 | 4 | syncTestCriteria only on step-table change | Plain saves and lifecycle transitions must not rewrite the Testing Plan; sync runs only when the Implementation Steps table actually changed, and never against `plans/completed/`. Sweep archived plans for already-injected phantom blocks (contribution-pipeline has one). | ⏳ Pending | #148 | — |
@@ -110,3 +111,4 @@ the guard restores current behavior.
 | --- | --- | --- |
 | 2026-07-05 | Created from the 2026-07-05 issue-grouping exercise by BDFL in-session directive ("group any issues together that might be easy overlaps, create a plan, and begin"); consumes #94 #141 #142 #147 #148 #149 #172. | NetYeti |
 | 2026-07-05 | Approved and started per BDFL in-session directive 2026-07-05 (NetYeti: "group any issues together that might be easy overlaps, create a plan, and begin"). Sibling clusters B–D captured as deferred proposal issue-cluster-remediation-waves. | NetYeti |
+| 2026-07-05 | Step 1 delivered (GH #94, PR #187): canonical parser now JSON_SCHEMA (dates stay strings — latent Date-object hazard fixed) with tolerant line-parser fallback (28 real vault docs previously parsed to {} on the strict path); 6 parseFm copies deleted (webui status/base/release-channel, 3 TS scripts); grep-guard test forbids new copies; +page.svelte serializer deferred to Step 5, plain-node .js scripts allowlisted. Full suite 668 green, webui builds, sync:skills idempotent. Side finds captured via bridge: #185 (generator emits invalid tags line), #160 demand → 2 (identity cache re-poisoned by this step's own test run). | NetYeti |
