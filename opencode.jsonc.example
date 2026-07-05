@@ -1,0 +1,19 @@
+// Example OpenCode config for a DocWright vault.
+//
+// The real ./opencode.jsonc is git-ignored: DocWright auto-generates it per-machine via
+// the "Register MCP" action (POST /api/opencode-config), writing absolute paths for THIS
+// machine. Committing it churned on every clone (each rewrote its own paths).
+//
+// For a manual/portable setup, copy this to ./opencode.jsonc. The relative command path
+// resolves against the vault/repo root; the MCP server defaults its vault to that repo
+// when DOCWRIGHT_VAULT_ROOT is unset.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "dw-mcp": {
+      "type": "local",
+      "command": ["node", "dist/mcp/server.js", "--mode", "vault"],
+      "enabled": true
+    }
+  }
+}

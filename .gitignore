@@ -71,6 +71,11 @@ build/
 .docworkbench/_backlinks.json
 .docwright/_backlinks.json
 
+# docwright OpenCode MCP config — runtime-generated per-machine with absolute paths by
+# POST /api/opencode-config. Committing it churns on every clone (each rewrites its own
+# paths). Portable reference: opencode.jsonc.example.
+/opencode.jsonc
+
 # docwright daemon trust config (per-instance)
 .docworkbench/daemon.json
 .docwright/daemon.json
