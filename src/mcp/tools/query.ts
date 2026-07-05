@@ -1,6 +1,6 @@
 import { readFile, fileExists, getMtime, globFiles, getRepoRoot } from '../lib/paths';
 import { extractFrontmatterField, parseFrontmatter } from '../lib/frontmatter';
-import { countSteps } from '../lib/steps';
+import { countSteps, splitTableRow } from '../lib/steps';
 import { getHumanIdentity } from '../lib/identity';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
@@ -372,7 +372,7 @@ export function nextAction(): NextAction {
     if (!inSteps || !line.startsWith('|')) continue;
     if (line.includes('|---') || line.includes('| ---')) continue;
 
-    const parts = line.split('|').map(p => p.trim());
+    const parts = splitTableRow(line).map(p => p.trim());
     if (parts.length < 3) continue;
     if (parts[parts.length - 2]?.toLowerCase() === 'status') continue; // header row
 

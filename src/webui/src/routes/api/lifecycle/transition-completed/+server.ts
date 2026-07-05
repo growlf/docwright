@@ -17,18 +17,26 @@ function getFmField(text: string, field: string): string {
   return m ? m[1].trim().replace(/^["']|["']$/g, '') : '';
 }
 
+// Split a markdown table row on unescaped pipes only — `\|` inside a cell is
+// literal content, not a column boundary. Mirrors splitTableRow in
+// src/mcp/lib/steps.ts (webui cannot import from src/mcp).
+function splitTableRow(line: string): string[] {
+  const ESC = '\u0000';
+  return line.split('\\|').join(ESC).split('|').map(p => p.split(ESC).join('\\|'));
+}
+
 function hasPendingSteps(text: string): boolean {
   const stepsMatch = text.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
   const section = stepsMatch ? stepsMatch[0] : '';
   if (!section) return false;
   const lines = section.split('\n');
   const headerLine = lines.find(l => l.startsWith('|') && !l.startsWith('|---') && l.toLowerCase().includes('status'));
-  const headerCells = headerLine ? headerLine.split('|').map(c => c.trim().toLowerCase()) : [];
+  const headerCells = headerLine ? splitTableRow(headerLine).map(c => c.trim().toLowerCase()) : [];
   const statusIndex = headerCells.indexOf('status');
 
   const rows = lines.filter(l => l.startsWith('|') && !l.startsWith('|---') && l !== headerLine);
   for (const row of rows) {
-    const cells = row.split('|');
+    const cells = splitTableRow(row);
     let cell = '';
     if (statusIndex !== -1 && statusIndex < cells.length) {
       cell = cells[statusIndex];
