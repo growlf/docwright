@@ -20,7 +20,7 @@ how to reproduce, operate, and update them. Host: `10.10.0.201` (BMS env), Linux
 
 | # | Name | URL (no port) | Port | Mode | Vault → remote |
 |---|------|---------------|------|------|----------------|
-| 1 | dogfood-dev | `docwright-dev.bms.local` | 5173 | host `npm run dev`, `dogfood` branch, **serves itself** | `~/Projects/DocWright-development` → `growlf/docwright` |
+| 1 | dogfood-dev | `docwright-dev.bms.local` | 5173 | **systemd** `docwright-dev.service` (`npm run dev`), `dogfood` branch, **serves itself** | `~/Projects/DocWright-development` → `growlf/docwright` |
 | 2 | csdocs | `csdocs.bms.local` | 5274 | release container (v0.4.8) | `~/Projects/csdocs` → `CascadeSTEAM/csdocs` |
 | 3 | erp-images | `erp-images.bms.local` | 5275 | release container + `erp-images` plugin | `~/Projects/cs-erp-images` → `CascadeSTEAM/cs-erp-images` |
 | 4 | msp-pilot | `msp.bms.local` | 5276 | release container (v0.4.8) | `~/Projects/msp-pilot-vault` (clone of `growlf/bms-ai-cluster`) |
@@ -73,6 +73,19 @@ Per-repo ed25519 **write** deploy keys, one per content repo, `root:600` on the 
 (items `DocWright deploy key: <repo>`). Container image includes `openssh-client` as of v0.4.8.
 (#1 pushes with the host user's own key.)
 
+## Process management & auto-update
+
+- **#1 (dogfood-dev)** runs under **systemd** — unit `docwright-dev.service` (in
+  `/etc/systemd/system/`, tracked at `deploy/bms-dev-cloud/docwright-dev.service`). `enabled`
+  (survives reboot), `Restart=on-failure`. Manage with
+  `sudo systemctl {status,restart,stop,start} docwright-dev`. Its **code** is updated by the manual
+  leap-frog (`dogfood` ← `main`); after pulling, `sudo systemctl restart docwright-dev` (Vite HMR
+  also picks up source changes live between restarts).
+- **#2/#3/#4** **auto-update hourly** — `deploy/bms-dev-cloud/auto-release-update.sh` (deployed at
+  `~/Projects/docwright-deploy/auto-release-update.sh`) runs on cron (`0 * * * *`): fetches the newest
+  `v*` release tag and, for any instance not on it, checks it out + rebuilds/recreates the container.
+  Logs to `~/Projects/docwright-deploy/auto-release.log`. `restart: unless-stopped` covers crash/reboot.
+
 ## Common operations
 
 ```bash
@@ -85,13 +98,11 @@ cd ~/Projects/docwright-deploy/<name>
 git fetch origin --tags && git checkout vX.Y.Z
 docker compose -p docwright-<name> up -d --build
 
-# #1 dogfood-dev — leap-frog from main, then restart the dev server
+# #1 dogfood-dev — leap-frog from main, then restart the systemd-managed dev server
 cd ~/Projects/DocWright && git checkout dogfood && git merge origin/main   # (conforming commit msg)
 cd ~/Projects/DocWright-development && git pull --ff-only origin dogfood
 npm ci && (cd src/webui && npm ci) && npm run compile:mcp                  # if package.json changed
-pkill -9 -f "$PWD/src/webui"; cd src/webui
-DOCWRIGHT_ROOT=~/Projects/DocWright-development DOCWRIGHT_ALLOWED_HOSTS=docwright-dev.bms.local,localhost \
-  setsid nohup npm run dev -- --host 0.0.0.0 --port 5173 --strictPort > ../dev-server.log 2>&1 &
+sudo systemctl restart docwright-dev
 
 # Re-run the proxy/DNS playbook (creds via env from VaultWarden)
 cd ~/Projects/bms-ai-cluster
@@ -105,5 +116,6 @@ DNS+proxy): `http://10.10.0.201:<port>/`.
 
 Tracked in the proposal's *Deferred proposals* section: per-user OAuth attribution (replaces the
 interim static service identities), instance-3 tool-vs-customer-data commit guardrail +
-customer-data backup store, and multi-instance deploy tooling (pull the GHCR release image instead
-of building locally; collapse the three near-identical checkouts).
+customer-data backup store, and multi-instance deploy tooling — the hourly auto-release cron +
+systemd unit are now in place; the remaining optimization is to **pull the GHCR release image**
+instead of building locally and collapse the three near-identical checkouts.

@@ -1,0 +1,21 @@
+[Unit]
+Description=DocWright #1 dogfood-dev (Vite dev server; serves the DocWright-development vault)
+Documentation=https://github.com/growlf/docwright docs/deployment-bms-devcloud.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gemini
+Group=gemini
+WorkingDirectory=/home/gemini/Projects/DocWright-development/src/webui
+Environment=DOCWRIGHT_ROOT=/home/gemini/Projects/DocWright-development
+Environment=DOCWRIGHT_ALLOWED_HOSTS=docwright-dev.bms.local,localhost
+Environment=NODE_ENV=development
+ExecStart=/usr/bin/npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=90
+
+[Install]
+WantedBy=multi-user.target
