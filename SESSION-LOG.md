@@ -1322,3 +1322,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: propose three-instance deployment — dogfood, csdocs, cs-erp-images
 
 **Session note:** `docs/session-notes/session_note_202607041723.md`
+
+---
+
+## Session: 2026-07-04 — Heatmap and dedup pipeline
+
+**Focus:** Heatmap and dedup pipeline
+
+**Completed:**
+- [x] feat: complete heatmap and dedup pipeline — cross-source dedup, capture_bug_report MCP tool, heatmap UI, promote-to-GH, time-weighted demand
+- [x] feat: add issue workflow MCP tools — preflight, sync, branch, complete
+- [x] feat: add issue workflow MCP tools — preflight, sync, branch, complete
+- [x] fix: detect and prevent duplicate plan creation from two paths
+- [x] fix: detect and prevent duplicate plan creation from two paths
+- [x] fix: after approve, land on plan Properties tab with success toast
+- [x] fix: after approve, land on plan Properties tab with success toast
+- [x] fix: release-tag.sh repo slug kept .git suffix, breaking CI watch
+- [x] chore: bump version to 0.4.7 — allowedHosts + watch crash fix
+- [x] feat: env-driven vite allowedHosts for reverse-proxied deployments
+
+**Session note:** `docs/session-notes/session_note_202607041950.md`
