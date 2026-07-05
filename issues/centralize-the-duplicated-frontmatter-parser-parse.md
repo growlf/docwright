@@ -1,7 +1,8 @@
 ---
 title: "Centralize the duplicated frontmatter parser (parseFm copied across 4+ files)"
-status: open
+status: resolved
 github_issue: 94
+closed_by_pr: "#187"
 category: feature
 priority: high
 tags:
@@ -21,3 +22,10 @@ milestone: future
 - [ ] All copies replaced with the shared `parseFrontmatter` (or one shared helper).
 - [ ] No behavior change; existing tests green.
 - [ ] A lint/grep check (or note) to discourage re-duplication.
+
+## Resolution (2026-07-05)
+
+Fixed by PR #187 (webui-write-integrity Step 1). Canonical dispatch parser
+(JSON_SCHEMA + tolerant fallback) replaces 6 copies; grep-guard test prevents new
+ones. Remaining known copies are scoped: +page.svelte client serializer → plan
+Step 5, plain-node .js scripts allowlisted pending a loader decision.
