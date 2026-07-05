@@ -116,5 +116,65 @@ describe('Contribution pipeline tools', () => {
       const res = await contributeUpstream('<b></b>', 'desc');
       assert.ok(res.startsWith('ERROR'), res);
     });
+
+    it('with valid token: POSTs the issue to GitHub and logs the created URL', async () => {
+      setMode('upstream');
+      process.env.DOCWRIGHT_CONTRIB_APPROVED = '1';
+      process.env.DOCWRIGHT_GITHUB_TOKEN = 'ghp_test_token';
+      const realFetch = global.fetch;
+      const calls: { url: string; init: any }[] = [];
+      global.fetch = (async (url: any, init: any) => {
+        calls.push({ url: String(url), init });
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ html_url: 'https://github.com/growlf/docwright/issues/999' }),
+          text: async () => '',
+        };
+      }) as any;
+      try {
+        const res = await contributeUpstream('Tokened report', 'It broke with a token', 'bug');
+        assert.ok(res.includes('✅ GitHub issue created'), res);
+        assert.ok(res.includes('/issues/999'), res);
+
+        assert.strictEqual(calls.length, 1);
+        assert.ok(calls[0].url.includes('api.github.com/repos/'), calls[0].url);
+        assert.strictEqual(calls[0].init.method, 'POST');
+        assert.strictEqual(calls[0].init.headers['Authorization'], 'Bearer ghp_test_token');
+        const body = JSON.parse(calls[0].init.body);
+        assert.strictEqual(body.title, 'Tokened report');
+        assert.deepStrictEqual(body.labels, ['bug', 'contribution-pipeline']);
+
+        const logPath = path.join(tmpRoot, '.docwright', 'contributions.log');
+        const lines = fs.readFileSync(logPath, 'utf8').trim().split('\n');
+        const entry = JSON.parse(lines[lines.length - 1]);
+        assert.strictEqual(entry.issue_url_or_prefill, 'https://github.com/growlf/docwright/issues/999');
+        assert.ok(!JSON.stringify(entry).includes('ghp_test_token'), 'token must never be logged');
+      } finally {
+        global.fetch = realFetch;
+      }
+    });
+
+    it('with token but API failure: falls back to the pre-filled URL and still logs', async () => {
+      setMode('upstream');
+      process.env.DOCWRIGHT_CONTRIB_APPROVED = '1';
+      process.env.DOCWRIGHT_GITHUB_TOKEN = 'ghp_test_token';
+      const realFetch = global.fetch;
+      global.fetch = (async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+        text: async () => 'boom',
+      })) as any;
+      try {
+        const res = await contributeUpstream('Fallback report', 'desc', 'bug');
+        assert.ok(res.includes('issues/new?'), res);
+        const logPath = path.join(tmpRoot, '.docwright', 'contributions.log');
+        const entry = JSON.parse(fs.readFileSync(logPath, 'utf8').trim().split('\n').pop()!);
+        assert.ok(entry.issue_url_or_prefill.includes('issues/new?'));
+      } finally {
+        global.fetch = realFetch;
+      }
+    });
   });
 });
