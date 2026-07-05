@@ -11,10 +11,53 @@ export function parseFrontmatter(raw: string): Record<string, any> {
   const match = raw.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return {};
   try {
-    return (yaml.load(match[1]) as Record<string, any>) ?? {};
+    // JSON_SCHEMA: unquoted dates stay strings ("2026-07-05", not a Date
+    // object) — frontmatter dates are compared and rendered as strings
+    // everywhere. Booleans, numbers, lists, and maps still parse.
+    return (yaml.load(match[1], { schema: yaml.JSON_SCHEMA }) as Record<string, any>) ?? {};
   } catch {
-    return {};
+    // Real vault docs exist with YAML js-yaml rejects (unquoted colons in
+    // titles, generator-malformed tags) — degrade to a tolerant line parser
+    // instead of dropping the whole document's frontmatter.
+    return tolerantParse(match[1]);
   }
+}
+
+/**
+ * Line-oriented fallback for frontmatter blocks strict YAML rejects.
+ * Handles `key: value` (quotes stripped, true/false coerced) and block lists.
+ * Later keys win; unparseable lines are skipped.
+ */
+function tolerantParse(block: string): Record<string, any> {
+  const result: Record<string, any> = {};
+  const lines = block.split('\n');
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim() || line.trim().startsWith('#')) { i++; continue; }
+    const colonIdx = line.indexOf(':');
+    if (colonIdx <= 0 || /^\s/.test(line)) { i++; continue; }
+    const key = line.slice(0, colonIdx).trim();
+    const rest = line.slice(colonIdx + 1).trim();
+    if (rest === '' || rest === '[]') {
+      i++;
+      const arr: string[] = [];
+      if (rest !== '[]') {
+        while (i < lines.length && /^\s+-\s/.test(lines[i])) {
+          arr.push(lines[i].replace(/^\s+-\s*/, '').trim());
+          i++;
+        }
+      }
+      result[key] = arr;
+      continue;
+    }
+    let val: any = rest.replace(/^["']|["']$/g, '');
+    if (val === 'true') val = true;
+    else if (val === 'false') val = false;
+    result[key] = val;
+    i++;
+  }
+  return result;
 }
 
 export function stripFrontmatter(raw: string): string {

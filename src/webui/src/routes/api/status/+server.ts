@@ -5,6 +5,7 @@ import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGate
 import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
 import { getReleaseReadiness } from '../../../../../dispatch/release';
 import { parseFrictionLog, agedFrictionEntries, FRICTION_LOG_PATH, FRICTION_REVIEW_CADENCE_DAYS } from '../../../../../dispatch/friction';
+import { parseFrontmatter as parseFm } from '../../../../../dispatch/frontmatter';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -26,41 +27,6 @@ function getGateDefs(): any[] {
   } catch {
     return [];
   }
-}
-
-// Simple frontmatter parser — handles strings, booleans, and block arrays
-function parseFm(raw: string): Record<string, any> {
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-  const result: Record<string, any> = {};
-  const lines = match[1].split('\n');
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    if (!line.trim() || line.startsWith('#')) { i++; continue; }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx <= 0) { i++; continue; }
-    const key = line.slice(0, colonIdx).trim();
-    const rest = line.slice(colonIdx + 1).trim();
-    if (rest === '' || rest === '[]') {
-      i++;
-      const arr: string[] = [];
-      if (rest !== '[]') {
-        while (i < lines.length && /^\s+-\s/.test(lines[i])) {
-          arr.push(lines[i].replace(/^\s+-\s*/, '').trim());
-          i++;
-        }
-      }
-      result[key] = arr;
-      continue;
-    }
-    let val: any = rest.replace(/^["']|["']$/g, '');
-    if (val === 'true') val = true;
-    else if (val === 'false') val = false;
-    result[key] = val;
-    i++;
-  }
-  return result;
 }
 
 function readDir(dir: string): Array<{ path: string; fm: Record<string, any> }> {
