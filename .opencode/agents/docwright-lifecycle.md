@@ -28,6 +28,13 @@ node scripts/lifecycle-gate.js --status
 
 If no active approved plan is shown, STOP. Ask the human to approve a plan before proceeding.
 
+## Governance: use MCP tools, never direct writes
+
+All plan mutations MUST go through the DocWright MCP tools (`update_plan_status`,
+`set_plan_field`, `update_step`, `append_history`, `write_plan`,
+`transition_to_completed`, `transition_to_canceled`) — never direct file writes.
+See `.opencode/rules/governance-writes.md`.
+
 ## Rules
 
 1. Proposals: `approved: false` initially. **Only humans set `approved: true`.** Agents must NEVER self-approve.
