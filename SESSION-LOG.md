@@ -1362,3 +1362,24 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: plugin loader falls back to DOCWRIGHT_ROOT so plugins load in the container
 
 **Session note:** `docs/session-notes/session_note_202607042227.md`
+
+---
+
+## Session: 2026-07-05 — BMS dev-cloud build-out (4 DocWright instances)
+
+**Focus:** Stand up the full four-instance DocWright dev-cloud on BMS — releases, reverse-proxy/DNS, deploy-key push, governing proposal.
+
+**Completed:**
+- [x] Stand up 4 instances: dogfood-dev (:5173), csdocs (:5274), erp-images+plugin (:5275), msp-pilot (:5276); retire the old :5273 dogfood
+- [x] Wire NPMPlus proxy hosts + Technitium DNS (`*.bms.local` → VIP) via idempotent Ansible playbook (BMS-0091)
+- [x] Deploy-key git-push for #2/#3/#4 (per-repo write keys, backed into VaultWarden CS-org DocWright collection)
+- [x] Cut v0.4.7 (allowedHosts + watch fix) and v0.4.8 (openssh-client + plugin-loader fix); instances 2–4 pinned to v0.4.8
+- [x] docs: enrich + merge deployment proposal — 4th (msp-pilot) instance + consume Phase-3 sub-plans (#123)
+- [x] fix: env-driven vite allowedHosts (#124)
+- [x] fix: release-tag.sh repo slug kept .git suffix (#125)
+- [x] fix: plugin loader falls back to DOCWRIGHT_ROOT (#131)
+- [x] fix: install openssh-client in image (#134)
+- [x] chore: leap-frog dogfood from main; restart #1 on synced code
+- [x] bms-ai-cluster: configure-docwright-dev-cloud playbook + 3 findings issues
+
+**Session note:** `docs/session-notes/session_note_202607050615.md`
