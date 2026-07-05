@@ -95,11 +95,13 @@ export function scanPlugins(): LoadedPlugin[] {
   const loaded: LoadedPlugin[] = [];
   for (const entry of fs.readdirSync(pluginsDir, { withFileTypes: true })) {
     const entryPath = path.join(pluginsDir, entry.name);
-    // isDirectory() doesn't follow symlinks; use statSync so symlinked plugin dirs work
-    if (!fs.statSync(entryPath).isDirectory()) continue;
     const manifestPath = path.join(pluginsDir, entry.name, 'plugin.json');
-    if (!fs.existsSync(manifestPath)) continue;
+    // Everything per-entry is wrapped: statSync follows symlinks (so symlinked plugin
+    // dirs work), but a dangling/unreadable symlink throws here — skip it with a warning
+    // instead of letting it 500 the whole /api/plugins endpoint.
     try {
+      if (!fs.statSync(entryPath).isDirectory()) continue;
+      if (!fs.existsSync(manifestPath)) continue;
       const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as Partial<PluginManifest>;
       const validation = validateManifest(raw, entry.name);
 
@@ -114,7 +116,7 @@ export function scanPlugins(): LoadedPlugin[] {
       const manifest: PluginManifest = { ...DEFAULTS, ...raw } as PluginManifest;
       loaded.push({ manifest, dir: path.join(pluginsDir, entry.name) });
     } catch (e) {
-      console.warn(`[plugins] Failed to parse ${manifestPath}:`, e);
+      console.warn(`[plugins] Skipping "${entry.name}" (unreadable — e.g. dangling symlink): ${(e as Error).message}`);
     }
   }
   // Sort by order so activity bar position is stable across restarts
