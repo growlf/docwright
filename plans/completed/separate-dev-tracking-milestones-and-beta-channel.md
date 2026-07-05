@@ -1,6 +1,7 @@
 ---
 title: "Base Process-Flow: code-issue/governance split, docwright-dev profile, milestones, and beta channel"
 status: completed
+completed_date: 2026-07-05
 author: NetYeti
 created: 2026-07-01
 created_by: NetYeti@cluster-llm
@@ -23,7 +24,7 @@ tests_human_reviewed: true
 template_version: 1.0
 total_steps: 8
 completed_steps: 8
-_path: plans/separate-dev-tracking-milestones-and-beta-channel.md
+_path: plans/completed/separate-dev-tracking-milestones-and-beta-channel.md
 scenario_synthesis: "Umbrella governance/process plan (no product code itself). Sequences and authorizes eight deliverables in a dependency chain: docwright-dev profile (grammar), in-vault issues/ store + backlog migration, milestone frontmatter field + lint, derived roadplan view, the first milestone-determination cycle, release-channel/beta gate, user bug-reporting bridge, and empty-image deployment. Each row becomes its own sub-plan/code-issue once the issues/ store exists, dogfooding the code-issue/governance split. Guided mode: agent drafts, human approves. No VS Code or IDE-specific steps."
 gate_note: "Changed files are untestable types: plans/separate-dev-tracking-milestones-and-beta-channel.md"
 milestone: v0.5.0
