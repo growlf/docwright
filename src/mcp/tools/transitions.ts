@@ -1,8 +1,9 @@
 import { readFile, moveFile, writeFile, fileExists, getRepoRoot } from '../lib/paths';
 import { parseFrontmatter, formatYamlList, setFrontmatterField, extractFrontmatterField } from '../lib/frontmatter';
 import { logTransition } from '../lib/audit';
-import { hasPendingSteps, updateParentDeliverable, replaceStepStatus, splitTableRow } from '../lib/steps';
+import { hasPendingSteps, updateParentDeliverable, replaceStepStatus, splitTableRow, checkCompletionGate } from '../lib/steps';
 import { getAIEngine } from '../../dispatch/ai';
+import { spawnSync } from 'node:child_process';
 
 interface ProposalSection {
   name: string;
@@ -225,6 +226,27 @@ export async function transitionToCompleted(planName: string): Promise<string> {
     return `ERROR: Plan '${planName}' has ⏳ pending steps. Mark all step rows ✅ Done before completing.`;
   }
 
+  // Belt and braces: update_plan_status/write_plan run this gate when setting
+  // status: completed, but the status can predate the gate (or be hand-edited),
+  // so the archival transition enforces it again.
+  const gateErr = checkCompletionGate(text, planName);
+  if (gateErr) return gateErr;
+
+  // Stale evidence is a warning, not a block — the human judges whether the
+  // commits since the recorded run touched anything the tests cover.
+  let staleMsg = '';
+  const testedCommit = String(extractFrontmatterField(text, 'tests_last_commit') ?? '');
+  if (testedCommit) {
+    const head = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
+      cwd: getRepoRoot(),
+      encoding: 'utf8',
+    });
+    const headSha = head.status === 0 ? head.stdout.trim() : '';
+    if (headSha && headSha !== testedCommit) {
+      staleMsg = `\n\n⚠ Test evidence is stale: recorded green run was at ${testedCommit}, HEAD is ${headSha}. Re-run verify_plan_tests if the intervening commits touch this plan's code.`;
+    }
+  }
+
   const parentMsg = updateParentDeliverable(text, safe);
   const completedDate = new Date().toISOString().split('T')[0];
 
@@ -275,7 +297,7 @@ _Document generated from completed plan: plans/completed/${safe}_
     phaseMsg = `\n\n⚠  PHASE ${phaseNum} CLOSE-OUT REQUIRED:\n   Run: npm run phase:close -- ${phaseNum}\n   This bumps the version, commits, tags, and pushes the release.`;
   }
 
-  return `✅ Plan '${safe}' completed and moved to plans/completed/. Docs generated at docs/${docSlug}.${parentMsg}${phaseMsg}`;
+  return `✅ Plan '${safe}' completed and moved to plans/completed/. Docs generated at docs/${docSlug}.${parentMsg}${phaseMsg}${staleMsg}`;
 }
 
 /**

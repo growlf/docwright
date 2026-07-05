@@ -179,7 +179,41 @@ export function checkCompletionGate(text: string, planName: string): string | nu
     return `ERROR: Plan '${planName}' has ${unchecked} unchecked gate item${unchecked === 1 ? '' : 's'}. All Gate Criteria items must be checked [x] before the plan can be completed.`;
   }
 
+  // The whole Testing Plan section must be verified, not just Gate Criteria —
+  // Step Verification / Integration boxes left [ ] mean the tests were written
+  // but never confirmed against the criteria.
+  const openBoxes = uncheckedTestingPlanBoxes(text);
+  if (openBoxes.length > 0) {
+    return `ERROR: Plan '${planName}' has ${openBoxes.length} unchecked Testing Plan item${openBoxes.length === 1 ? '' : 's'}:\n${openBoxes.map((b) => `  ${b}`).join('\n')}\nVerify each (check it [x] with evidence) or record why it does not apply before completing.`;
+  }
+
+  // Tests must have actually RUN, not merely exist. verify_plan_tests records
+  // the evidence; a plan with no recorded green run cannot complete.
+  const lastResult = extractFrontmatterField(text, 'tests_last_result');
+  if (String(lastResult) !== 'pass') {
+    const state = lastResult == null ? 'no recorded test run' : `tests_last_result=${lastResult}`;
+    return `ERROR: Plan '${planName}' has ${state}. Run the verify_plan_tests MCP tool (records tests_last_run/result/commit on the plan) and get a green run before completing.`;
+  }
+
   return null;
+}
+
+/**
+ * Unchecked `- [ ]` items anywhere in the `## Testing Plan` section.
+ * Returns the trimmed line text of each open box (first 100 chars).
+ */
+export function uncheckedTestingPlanBoxes(text: string): string[] {
+  const out: string[] = [];
+  let inSection = false;
+  for (const line of text.split('\n')) {
+    // `## ` headers bound the section; `###` subsections stay inside it
+    if (/^##\s/.test(line)) {
+      inSection = /^##\s+Testing Plan\b/.test(line);
+      continue;
+    }
+    if (inSection && /^\s*-\s\[ \]/.test(line)) out.push(line.trim().slice(0, 100));
+  }
+  return out;
 }
 
 const TESTING_PLAN_PLACEHOLDERS = new Set([

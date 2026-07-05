@@ -183,7 +183,7 @@ Some background.
     });
 
     it('completes plan, moves to completed, and generates doc', async () => {
-      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'success.md'), '---\ntitle: "Test Plan"\nstatus: completed\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |');
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'success.md'), '---\ntitle: "Test Plan"\nstatus: completed\ntests_defined: true\ntests_human_reviewed: true\ntests_last_result: pass\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |\n\n## Testing Plan\n- [x] verified\n\n### Gate Criteria\n- [x] signed off\n');
       const res = await transitionToCompleted('success.md');
       console.log('Transition Result:', res);
       const docPath = path.join(FIXTURE_DIR, 'docs', 'success.md');
@@ -194,7 +194,7 @@ Some background.
     });
 
     it('emits phase close-out reminder for phase-named plans', async () => {
-      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'phase-2-test.md'), '---\ntitle: "Phase 2 Test"\nstatus: completed\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |');
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'phase-2-test.md'), '---\ntitle: "Phase 2 Test"\nstatus: completed\ntests_defined: true\ntests_human_reviewed: true\ntests_last_result: pass\n---\n## Implementation Steps\n| Step | Action | Status |\n| 1 | Do | ✅ Done |\n\n## Testing Plan\n- [x] verified\n\n### Gate Criteria\n- [x] signed off\n');
       const res = await transitionToCompleted('phase-2-test.md');
       assert.ok(res.includes('PHASE 2 CLOSE-OUT REQUIRED'));
       assert.ok(res.includes('npm run phase:close -- 2'));

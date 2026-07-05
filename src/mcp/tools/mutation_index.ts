@@ -1,5 +1,6 @@
 import { McpTool } from '../types';
 import { updateStep, updatePlanStatus, appendHistory, setPlanField, writePlan } from './mutation';
+import { verifyPlanTests } from './verify_tests';
 
 export const mutationTools: McpTool[] = [
   {
@@ -81,6 +82,29 @@ export const mutationTools: McpTool[] = [
     },
     handler: async (args) => {
       const res = await writePlan(String(args.plan_name), String(args.content));
+      return { content: [{ type: 'text', text: res }] };
+    }
+  },
+  {
+    name: 'verify_plan_tests',
+    description:
+      'Run a package.json test script (default: test) and record the result on a plan as completion-gate ' +
+      'evidence: tests_last_run, tests_last_result, tests_last_commit + a Document History row. ' +
+      'A plan cannot transition to completed without a recorded passing run and a fully-checked Testing Plan. ' +
+      'Only package.json-defined script names are runnable.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        plan_name: { type: 'string' },
+        script: {
+          type: 'string',
+          description: 'npm script name from package.json (default: test). E.g. test:mcp, test:dispatch.'
+        }
+      },
+      required: ['plan_name']
+    },
+    handler: async (args) => {
+      const res = await verifyPlanTests(String(args.plan_name), args.script ? String(args.script) : 'test');
       return { content: [{ type: 'text', text: res }] };
     }
   }
