@@ -251,6 +251,7 @@ ${nextBlock}
   ok('appended SESSION-LOG.md');
 
   // 8. commit + push per worktree
+  const stranded: string[] = [];
   if (!opts.commit) { warn('skipped commit (--no-commit)'); printReport(); return; }
 
   const msgFile = path.join(os.tmpdir(), `dw-session-${compact}.txt`);
@@ -280,10 +281,40 @@ ${nextBlock}
       pushed.push(`${path.basename(wt)}:${wtBranch}`);
       ok(`pushed ${wtBranch}`);
     } catch {
-      warn(`push failed for ${wtBranch} — push manually`);
+      if (wtBranch === 'main') {
+        // Branch protection rejects direct pushes to main — without this,
+        // commits sit stranded locally and the next session diverges
+        // (happened 2026-07-04 with the heatmap/dedup session).
+        warn(`push to protected 'main' REJECTED — ${path.basename(wt)} commits are STRANDED locally.`);
+        warn(`  Land them via PR: git checkout -b <type>/<slug> && git push -u origin <type>/<slug> && gh pr create --base main`);
+        stranded.push(path.basename(wt));
+      } else {
+        warn(`push failed for ${wtBranch} — push manually`);
+      }
     }
   }
   fs.rmSync(msgFile, { force: true });
+
+  // 9. branch hygiene — origin auto-deletes PR head branches on merge
+  // (delete_branch_on_merge). Prune the local leftovers so merged
+  // feature/issue branches don't dangle. Never guesses: only branches whose
+  // upstream is gone AND whose commits are patch-contained in main are
+  // deleted; anything else is reported for human review.
+  if (opts.push) {
+    gitTry(['fetch', '--prune', '--quiet', 'origin']);
+    const goneRaw = gitTry(['for-each-ref', '--format=%(refname:short)\t%(upstream:track)', 'refs/heads']);
+    for (const line of goneRaw.split('\n')) {
+      const [b, track] = line.split('\t');
+      if (track !== '[gone]' || !b || b === branch || b === 'main' || b.startsWith('release/')) continue;
+      const unique = gitTry(['cherry', 'main', b]).split('\n').filter(l => l.startsWith('+')).length;
+      if (unique === 0) {
+        gitTry(['branch', '-D', b]);
+        ok(`pruned local branch '${b}' (PR merged, remote head deleted, content on main)`);
+      } else {
+        warn(`local branch '${b}': remote head gone but ${unique} commit(s) not patch-matched on main (squash-merge?) — review then: git branch -D ${b}`);
+      }
+    }
+  }
 
   if (!committed.length) warn('no worktree had changes to commit');
   printReport(pushed);
@@ -292,6 +323,9 @@ ${nextBlock}
     hdr('Session ended');
     log(`note:    ${path.relative(ROOT, notePath)}`);
     log(`pushed:  ${pushedBranches.length ? pushedBranches.join(', ') : '(nothing / --no-push)'}`);
+    if (stranded.length) {
+      warn(`STRANDED COMMITS on protected 'main' in: ${stranded.join(', ')} — land them via PR before the next session`);
+    }
     if (activePlans.length) {
       log('active plans:');
       for (const p of activePlans) log(`  - ${p.name} (${p.status}, prio ${p.priority})`);
