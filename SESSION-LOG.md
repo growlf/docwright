@@ -1447,3 +1447,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: propose git-panel branch switcher (approved: false)
 
 **Session note:** `docs/session-notes/session_note_202607051433.md`
+
+---
+
+## Session: 2026-07-05 — write-integrity Step 2 shared gate
+
+**Focus:** write-integrity Step 2 shared gate
+
+**Completed:**
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it (#172)
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it
+- [x] chore: leap-frog dogfood from main — opencode.jsonc untrack/ignore
+- [x] fix: stop committing runtime-generated opencode.jsonc (perpetual clone churn)
+- [x] chore: capture #191 via bug-report bridge — endsession strands commits on protected main
+- [x] docs: webui-write-integrity Step 1 → done; #94 resolved in issue store
+- [x] docs: propose scoped agent roles with per-role model routing (ai-stack bridge)
+- [x] chore: leap-frog dogfood from main — branch-list shell fix
+
+**Session note:** `docs/session-notes/session_note_202607051631.md`
