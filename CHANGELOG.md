@@ -5,6 +5,32 @@ All notable changes to docwright will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.8] — 2026-07-05
+
+### Fixed
+- Docker image installs `openssh-client` so SSH git remotes / mounted deploy keys work — the entrypoint documented SSH-key auth but the client was absent, so all SSH git ops failed (#134)
+- Plugin loader falls back to `DOCWRIGHT_ROOT` (then cwd) instead of reading `DOCWRIGHT_VAULT_ROOT` only, so vault plugins load in the container without an override (#131)
+
+## [0.4.7] — 2026-07-04
+
+### Added
+- Env-driven `DOCWRIGHT_ALLOWED_HOSTS` for the Vite dev server so reverse-proxied deployments aren't 403'd on their `Host` header (#124)
+
+### Fixed
+- `/api/watch` no longer crashes the server on `.git` watcher races — the `FSWatcher` `error` event is handled and `.git/` events are filtered out (#121)
+- `release-tag.sh` repo-slug regex no longer keeps the `.git` suffix, which had silently broken the post-tag CI watch on every release (#125)
+
+## [0.4.6] — 2026-07-03
+
+### Added
+- Git sidebar panel — commit history + interactive file actions
+- Search view container (consolidates the former Tags panel) with reactive navigation routing
+- `contribute_upstream` MCP tool (environment-gated) + WebUI contribution workflow
+- Interactive status tiles and executor-panel live feedback
+
+### Changed
+- First tagged release consumed by the BMS dev-cloud release-pinned instances
+
 ## [0.4.5] — 2026-06-29
 
 ### Added

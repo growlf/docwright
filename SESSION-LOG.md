@@ -1381,5 +1381,9 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] fix: install openssh-client in image (#134)
 - [x] chore: leap-frog dogfood from main; restart #1 on synced code
 - [x] bms-ai-cluster: configure-docwright-dev-cloud playbook + 3 findings issues
+- [x] fix: /api/plugins 500 on dangling plugin symlink; dropped committed dev-home symlink (#163)
+- [x] Corrected NPMPlus topology — repointed *.bms.local to swarm CNAME (off flaky legacy LXC); decommissioned it (pct stop 104, BMS-0092)
+- [x] Verified all 4 instances load in a headless browser (0 console errors / failed requests)
+- [x] docs: CHANGELOG 0.4.6–0.4.8, session-note continuation, operational runbook (deployment-bms-devcloud)
 
 **Session note:** `docs/session-notes/session_note_202607050615.md`
