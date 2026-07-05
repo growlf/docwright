@@ -76,6 +76,16 @@ jobs:
             exit 1
           fi
 
+      - name: Merged PR head branches must auto-delete (no dangling branches)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          val=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.delete_branch_on_merge')
+          if [ "$val" != "true" ]; then
+            echo "::error::delete_branch_on_merge is OFF — merged feature/issue branches will dangle on origin. Re-enable: gh api -X PATCH repos/${GITHUB_REPOSITORY} -f delete_branch_on_merge=true"
+            exit 1
+          fi
+
   docker:
     name: Docker build + health check
     runs-on: ubuntu-latest
