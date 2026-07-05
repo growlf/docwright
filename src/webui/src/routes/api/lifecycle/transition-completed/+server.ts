@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import fs from 'node:fs';
 import path from 'node:path';
 import { moveDocument } from '../../../../../../dispatch/vault-write';
+import { hasPendingSteps, checkCompletionGate } from '../../../../../../dispatch/completion-gate';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 
@@ -15,38 +16,6 @@ function readPlan(name: string): string {
 function getFmField(text: string, field: string): string {
   const m = text.match(new RegExp(`^${field}:\\s*(.+)$`, 'm'));
   return m ? m[1].trim().replace(/^["']|["']$/g, '') : '';
-}
-
-// Split a markdown table row on unescaped pipes only — `\|` inside a cell is
-// literal content, not a column boundary. Mirrors splitTableRow in
-// src/mcp/lib/steps.ts (webui cannot import from src/mcp).
-function splitTableRow(line: string): string[] {
-  const ESC = '\u0000';
-  return line.split('\\|').join(ESC).split('|').map(p => p.split(ESC).join('\\|'));
-}
-
-function hasPendingSteps(text: string): boolean {
-  const stepsMatch = text.match(/##\s+Implementation Steps[\s\S]*?(?=\n##\s|\s*$)/);
-  const section = stepsMatch ? stepsMatch[0] : '';
-  if (!section) return false;
-  const lines = section.split('\n');
-  const headerLine = lines.find(l => l.startsWith('|') && !l.startsWith('|---') && l.toLowerCase().includes('status'));
-  const headerCells = headerLine ? splitTableRow(headerLine).map(c => c.trim().toLowerCase()) : [];
-  const statusIndex = headerCells.indexOf('status');
-
-  const rows = lines.filter(l => l.startsWith('|') && !l.startsWith('|---') && l !== headerLine);
-  for (const row of rows) {
-    const cells = splitTableRow(row);
-    let cell = '';
-    if (statusIndex !== -1 && statusIndex < cells.length) {
-      cell = cells[statusIndex];
-    } else {
-      const filtered = cells.filter(c => c.trim() !== '');
-      cell = filtered[filtered.length - 1] || '';
-    }
-    if (cell.includes('⏳')) return true;
-  }
-  return false;
 }
 
 function generateDoc(title: string, text: string, completedDate: string): string {
@@ -112,6 +81,13 @@ export async function POST({ request }) {
 
   if (hasPendingSteps(text))
     return json({ error: 'Plan has ⏳ pending steps — mark all steps ✅ Done first.' }, { status: 422 });
+
+  // Same completion gate the MCP tools enforce (#172): tests defined and
+  // human-reviewed, Gate Criteria + Testing Plan boxes all checked, and a
+  // recorded green verify_plan_tests run. Refusal message is identical to
+  // the MCP surface — parity asserted by test/integration/gate-parity.test.ts.
+  const gateErr = checkCompletionGate(text, docSlug);
+  if (gateErr) return json({ error: gateErr }, { status: 422 });
 
   const title       = getFmField(text, 'title') || safe.replace('.md', '');
   const completedDate = new Date().toISOString().slice(0, 10);
