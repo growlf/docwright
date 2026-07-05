@@ -65,6 +65,11 @@
       future: { name: string; items: any[] };
     };
     releaseReadiness?: any;
+    friction?: {
+      total: number;
+      aged: { date: string; category: string; severity: string; description: string }[];
+      cadence_days: number;
+    };
   }
 
   let data = $state<StatusData | null>(null);
@@ -338,6 +343,13 @@
       <button class="view-btn" class:active={viewMode === 'roadplan'} onclick={() => setView('roadplan')} title="Roadplan view">🗺 Roadplan</button>
       <a class="view-btn" href="/audit" title="Audit log">📊 Audit</a>
     </div>
+    {#if data?.friction && data.friction.aged.length > 0}
+      <a
+        class="friction-badge"
+        href="/docs/friction-log"
+        title="{data.friction.aged.length} friction entr{data.friction.aged.length === 1 ? 'y' : 'ies'} past the {data.friction.cadence_days}-day review cadence with no upstream issue"
+      >⚠ {data.friction.aged.length} aged friction</a>
+    {/if}
     <button class="report-bug-btn" onclick={() => showReportBugModal = true} title="Report a Bug">🐞 Report Bug</button>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>
   </div>
@@ -905,6 +917,13 @@
     @include flat-btn;
     border: 1px solid $border; border-radius: 4px; padding: 2px 8px; font-size: 14px;
     &:hover { border-color: $muted; }
+  }
+
+  .friction-badge {
+    color: $amber; background: $amber-bg;
+    border: 1px solid $amber-bdr; border-radius: 4px;
+    padding: 2px 8px; font-size: 12px; text-decoration: none; white-space: nowrap;
+    &:hover { border-color: $amber; }
   }
 
   // ── Graph view ──────────────────────────────────────────────────────────────
