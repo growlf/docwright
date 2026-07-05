@@ -1,6 +1,6 @@
 ---
 title: "research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles'"
-status: open
+status: resolved
 github_issue: 145
 author: NetYeti
 author-role: contributor
@@ -15,7 +15,7 @@ tags:
   - schema
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-closed_by_pr: ""
+closed_by_pr: "#164"
 cross_link: ""
 milestone: v0.5.0
 ---
@@ -66,3 +66,11 @@ missed by this test.
 
 - `npm test` is green on `main`.
 - Adding or removing a profile does not require editing a hardcoded count in this test.
+
+## Resolution (2026-07-05)
+
+Fixed by PR #164. Contract decided: research is opt-in per profile. The suite now asserts
+consistency (research-declaring profiles ship the full template+schema kit; profiles
+without it carry no orphan templates; at least one bundled profile must support research)
+and discovers profiles dynamically — no hardcoded count. Full `npm test` green on main
+for the first time since 2026-07-01.
