@@ -89,8 +89,7 @@ spike/
 session-ses_*.md
 
 # DocWright — managed entries (added by adopt-vault.ts)
+# NOTE: skill/agent bridge dirs (.claude/skills/, .opencode/skills/, .gemini/)
+# are canonical SOURCE in this repo and must stay tracked — adopt-vault.ts
+# only ignores them in adopted downstream vaults, never here.
 .dw-session.json
-.claude/skills/
-.opencode/skills/
-.gemini/agents/
-.gemini/settings.json

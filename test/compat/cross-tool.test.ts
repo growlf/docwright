@@ -3,6 +3,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { strict as assert } from 'assert';
 import { describe, it } from 'mocha';
+import { spawnSync } from 'child_process';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SKILLS_DIR = path.join(REPO_ROOT, '.opencode', 'skills');
@@ -148,6 +149,33 @@ describe('Cross-tool compatibility', () => {
       const specFile = path.join(REPO_ROOT, 'docs', 'specs', 'skill-format.md');
       assert.ok(fs.existsSync(specFile), 'docs/specs/skill-format.md is missing');
     });
+  });
+
+  describe('Source-repo gitignore safety', () => {
+    // In adopted vaults the skill bridge dirs are managed copies and get
+    // gitignored by adopt-vault.ts. In THIS repo they are canonical source —
+    // if they ever match an ignore rule, new skills silently never reach git
+    // (this happened: docwright-issue-workflow was dropped for a week).
+    // git check-ignore works on hypothetical paths, so probes need not exist.
+    const probes = [
+      '.opencode/skills/__probe__/SKILL.md',
+      '.claude/skills/__probe__.md',
+      '.opencode/agents/__probe__.md',
+      '.gemini/settings.json',
+    ];
+
+    for (const probe of probes) {
+      it(`${probe.split('/').slice(0, 2).join('/')} is not gitignored`, () => {
+        const res = spawnSync('git', ['check-ignore', '--no-index', probe], {
+          cwd: REPO_ROOT, encoding: 'utf-8',
+        });
+        assert.notEqual(
+          res.status, 0,
+          `"${probe}" is gitignored (matched: ${res.stdout.trim()}). ` +
+          'Canonical skill/agent dirs must stay tracked in the DocWright source repo.'
+        );
+      });
+    }
   });
 
 });
