@@ -1,6 +1,7 @@
 ---
 title: "Web UI lifecycle actions write to the working tree but never commit to git — the root of the approval-flow friction"
 status: open
+github_issue: 147
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -78,3 +79,13 @@ is supposed to spare contributors, and a step that felt like over-engineering pr
 - After the action, `git status` is clean for those files; the UI shows the commit/PR link.
 - A failed persist (e.g. protected branch, hook rejection) shows a clear error in the UI
   rather than silently leaving the change uncommitted.
+
+## Scope update (2026-07-04)
+
+GH #110 was closed by PR #111 (commit ef1a4d0), but that fix covers **only the
+approve-proposal path** (approve → move + generate plan now auto-commits via
+`git-commit.ts`/`commitPaths`). Still uncommitted: approving a plan
+(approve-sub-plan / plan-review), create-plan, and document edits (`/api/write`); the
+fix also commits to the current branch locally rather than branch+PR. This file stays
+**open** for the remaining paths and needs a fresh GH mirror issue (the old #110 is
+closed with narrower scope).

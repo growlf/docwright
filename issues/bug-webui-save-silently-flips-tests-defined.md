@@ -1,6 +1,7 @@
 ---
 title: "Web UI save silently flips tests_defined and reruns syncTestCriteria as a side effect"
 status: open
+github_issue: 148
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -77,3 +78,10 @@ this leaves governance state changed without intent and the working tree dirty.
   section unchanged on disk.
 - `tests_defined: true` is only reachable via run-tests or the explicit toggle.
 - A pure view never writes (already true).
+
+## Scope update (2026-07-04)
+
+Core bug fixed by PR #86 (d4c6551): `updateTestsDefined` is now demote-only and never
+promotes `tests_defined` on save. Remaining: `applySyncTestCriteria` still runs
+`syncTestCriteria` unconditionally on every plan save (rewriting the Testing Plan body),
+and the client `automated`-field re-persist hardening was not done. Stays open for those.

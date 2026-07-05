@@ -1,6 +1,7 @@
 ---
 title: "Web UI cannot consume/supersede or process one proposal or plan into another"
 status: open
+github_issue: 150
 author: NetYeti
 author-role: contributor
 created: 2026-07-04
