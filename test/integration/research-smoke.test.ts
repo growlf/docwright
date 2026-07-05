@@ -289,43 +289,56 @@ No conclusion section.`);
 describe('Research smoke test — profile coverage', () => {
   const PROFILES_DIR = path.join(REPO_ROOT, 'src', 'profiles');
 
-  it('all 4 profiles have research in documentTypes', () => {
-    const profiles = fs.readdirSync(PROFILES_DIR).filter(p =>
+  // Research is opt-in per profile (#145): docwright-dev and asset-management
+  // deliberately ship without it. The contract tested here is consistency —
+  // a profile that declares research must ship the full kit (template with
+  // author-role + schema type). Profiles are discovered, never hardcoded, so
+  // adding one can't silently break or dodge this suite.
+  function discoverProfiles(): string[] {
+    return fs.readdirSync(PROFILES_DIR).filter(p =>
       fs.statSync(path.join(PROFILES_DIR, p)).isDirectory()
     );
-    assert.ok(profiles.length >= 4, 'should have at least 4 profiles');
-    for (const p of profiles) {
-      const pJson = JSON.parse(fs.readFileSync(path.join(PROFILES_DIR, p, 'profile.json'), 'utf-8'));
-      assert.ok(
-        (pJson.documentTypes ?? []).includes('research'),
-        `${p}/profile.json missing research in documentTypes`
-      );
-    }
+  }
+  function declaresResearch(p: string): boolean {
+    const pJson = JSON.parse(fs.readFileSync(path.join(PROFILES_DIR, p, 'profile.json'), 'utf-8'));
+    return (pJson.documentTypes ?? []).includes('research');
+  }
+
+  it('at least one bundled profile supports research', () => {
+    const supporting = discoverProfiles().filter(declaresResearch);
+    assert.ok(
+      supporting.length >= 1,
+      'no bundled profile declares research in documentTypes — the research pipeline would be dead code'
+    );
   });
 
-  it('all 4 profiles have templates/research.md with author-role', () => {
-    const profiles = fs.readdirSync(PROFILES_DIR).filter(p =>
-      fs.statSync(path.join(PROFILES_DIR, p)).isDirectory()
-    );
-    for (const p of profiles) {
+  it('every research-declaring profile has templates/research.md with author-role', () => {
+    for (const p of discoverProfiles().filter(declaresResearch)) {
       const tmpl = path.join(PROFILES_DIR, p, 'templates', 'research.md');
-      assert.ok(fs.existsSync(tmpl), `${p}/templates/research.md is missing`);
+      assert.ok(fs.existsSync(tmpl), `${p} declares research but templates/research.md is missing`);
       const content = fs.readFileSync(tmpl, 'utf-8');
       assert.ok(content.includes('author-role'), `${p}/templates/research.md missing author-role field`);
     }
   });
 
-  it('schema.json exists in all 4 profiles with research type', () => {
-    const profiles = fs.readdirSync(PROFILES_DIR).filter(p =>
-      fs.statSync(path.join(PROFILES_DIR, p)).isDirectory()
-    );
-    for (const p of profiles) {
+  it('every research-declaring profile defines the research type in schema.json', () => {
+    for (const p of discoverProfiles().filter(declaresResearch)) {
       const schema = path.join(PROFILES_DIR, p, 'schema.json');
       assert.ok(fs.existsSync(schema), `${p}/schema.json is missing`);
       const parsed = JSON.parse(fs.readFileSync(schema, 'utf-8'));
       assert.ok(
         parsed.documentTypes?.research !== undefined,
-        `${p}/schema.json missing research type definition`
+        `${p} declares research but schema.json has no research type definition`
+      );
+    }
+  });
+
+  it('profiles without research declare none of the research kit (no orphan templates)', () => {
+    for (const p of discoverProfiles().filter(x => !declaresResearch(x))) {
+      const tmpl = path.join(PROFILES_DIR, p, 'templates', 'research.md');
+      assert.ok(
+        !fs.existsSync(tmpl),
+        `${p} has templates/research.md but does not declare research in profile.json — declare it or remove the template`
       );
     }
   });
