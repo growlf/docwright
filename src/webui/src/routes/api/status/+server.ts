@@ -105,14 +105,40 @@ function entry(p: string, fm: Record<string, any>) {
     parentPlan: String(fm.parent_plan ?? ''),
     parentDeliverable: String(fm.parent_deliverable ?? ''),
     milestone: String(fm.milestone ?? ''),
+    demandCount: parseInt(String(fm.demand_count ?? '0'), 10),
+    githubIssue: String(fm.github_issue ?? ''),
+    reportedDates: Array.isArray(fm.reported_dates)
+      ? fm.reported_dates.map(String)
+      : typeof fm.reported_dates === 'string'
+        ? String(fm.reported_dates).replace(/^\[|\]$/g, '').split(',').map(s => s.trim()).filter(Boolean)
+        : [],
   };
 }
 
 let cache: { data: any; at: number } | null = null;
 
-export function GET() {
-  // 2-second cache to smooth rapid SSE-triggered refreshes
-  if (cache && Date.now() - cache.at < 2000) return json(cache.data);
+function parseWindow(url: string): 'all' | '30d' {
+  try {
+    const u = new URL(url);
+    const w = u.searchParams.get('window');
+    if (w === '30d') return '30d';
+  } catch { /* ignore */ }
+  return 'all';
+}
+
+function daysSince(dateStr: string): number {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return Infinity;
+  return (Date.now() - d.getTime()) / 86400000;
+}
+
+export function GET({ url }: { url: URL }) {
+  const window = parseWindow(url);
+  // 2-second cache (keyed by window to avoid stale data across toggles)
+  if (cache && Date.now() - cache.at < 2000) {
+    const cached = cache.data;
+    if (cached._window === window) return json(cached);
+  }
 
   // Approved proposal paths referenced by existing plans.
   // Normalize to always include .md so the set check matches actual file paths.
@@ -426,6 +452,34 @@ export function GET() {
     .map(({ path: p, fm }) => entry(p, fm))
     .sort(byPriority);
 
+  // ── Heatmap: top bugs by demand (time-weighted) ─────────────────────────────
+  const heatmap = readDir(path.join(REPO_ROOT, 'issues'))
+    .filter(({ path: p, fm }) =>
+      !p.endsWith('README.md') &&
+      String(fm.category ?? '') === 'bug' &&
+      !['resolved', 'wont-fix'].includes(String(fm.status ?? ''))
+    )
+    .map(({ path: p, fm }) => {
+      const e = entry(p, fm);
+      const dates: string[] = e.reportedDates;
+      if (window === '30d') {
+        // Only count reports in the last 30 days
+        const recent = dates.filter(d => daysSince(d) <= 30);
+        const recentCount = recent.length;
+        // Decay: each report within 30d counts 1, oldest decays to 0.5
+        const decayedScore = recent.reduce((sum, d) => {
+          const age = daysSince(d);
+          return sum + Math.max(0.5, 1 - age / 60);
+        }, 0);
+        // Boost by total demand for persistent bugs, but weight recency heavily
+        e.demandCount = Math.round(Math.max(recentCount, decayedScore));
+      }
+      return e;
+    })
+    .filter(b => b.demandCount > 0)
+    .sort((a, b) => b.demandCount - a.demandCount)
+    .slice(0, 10);
+
   const vaultName = path.basename(REPO_ROOT);
 
   const roadplan = buildRoadplan(active, openIssues);
@@ -442,8 +496,10 @@ export function GET() {
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,
     issues: { open: openIssues },
+    heatmap,
     roadplan,
     releaseReadiness,
+    _window: window,
   };
   cache = { data, at: Date.now() };
   return json(data);
