@@ -11,6 +11,7 @@ Aged, untriaged entries surface as a notification badge on the vault status page
 | Date | Category | Severity | Description | Upstream Issue |
 |------|----------|----------|-------------|----------------|
 | 2026-07-05 | bug | medium | complete_issue_branch merge=true fails on every use under branch protection — merges before required checks finish, forcing a manual watch-then-merge dance per PR (NetYeti) | #166 |
+| 2026-07-05 | ux-friction | medium | capture_bug_report suggest only matches near-exact titles (0.77 on verbatim) — a plain paraphrase of an existing bug returned zero suggestions, so real duplicates will slip past the dedup check (NetYeti) |  |
 
 ---
 Categories: bug | feature-request | ux-friction | docs-gap | missing-abstraction
