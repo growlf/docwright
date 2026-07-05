@@ -10,6 +10,11 @@ secrets*
 # Temp files
 /tmp/*
 
+# Plugins are vault content, not repo content. Never commit dev plugin dirs/symlinks
+# into the source tree (a committed symlink into a dev home dangles in every clone and
+# 500s /api/plugins). Real plugins live in a vault's plugins/ dir.
+/plugins/
+
 # OS files
 .DS_Store
 Thumbs.db
