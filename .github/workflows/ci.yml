@@ -76,13 +76,26 @@ jobs:
             exit 1
           fi
 
-      - name: Merged PR head branches must auto-delete (no dangling branches)
+      - name: No dangling merged branches (auto-delete must be working)
         env:
           GH_TOKEN: ${{ github.token }}
+        # Checks the OUTCOME, not the repo setting — the default GITHUB_TOKEN
+        # cannot read delete_branch_on_merge (admin-only field, reads as null).
+        # A merged PR's head branch surviving >1h means auto-delete is off or
+        # was bypassed; the 1h grace covers deliberate branch restores.
         run: |
-          val=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.delete_branch_on_merge')
-          if [ "$val" != "true" ]; then
-            echo "::error::delete_branch_on_merge is OFF — merged feature/issue branches will dangle on origin. Re-enable: gh api -X PATCH repos/${GITHUB_REPOSITORY} -f delete_branch_on_merge=true"
+          dangling=""
+          while IFS=$'\t' read -r ref merged; do
+            [ -z "$ref" ] && continue
+            case "$ref" in release/*|dogfood) continue;; esac
+            [ "$(date -d "$merged" +%s)" -gt "$(( $(date +%s) - 3600 ))" ] && continue
+            enc=$(printf '%s' "$ref" | sed 's|/|%2F|g')
+            if gh api "repos/${GITHUB_REPOSITORY}/branches/${enc}" --silent 2>/dev/null; then
+              dangling="$dangling $ref"
+            fi
+          done < <(gh pr list --repo "${GITHUB_REPOSITORY}" --state merged --base main --limit 10 --json headRefName,mergedAt --jq '.[] | "\(.headRefName)\t\(.mergedAt)"')
+          if [ -n "$dangling" ]; then
+            echo "::error::Dangling merged branch(es):${dangling} — enable 'Automatically delete head branches' in repo settings, then: git push origin --delete${dangling}"
             exit 1
           fi
 
