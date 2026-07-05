@@ -66,6 +66,26 @@ export const POST = requireAuth(async ({ request, locals }) => {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
 
+  // Check whether proposal already has a plan — reject duplicate creation (#115)
+  if (fm.consumed_by) {
+    return json({
+      ok: true,
+      alreadyExists: true,
+      planPath: fm.consumed_by,
+    });
+  }
+
+  // Also check the create-plan slug path for cross-path collisions (#115)
+  const createPlanSlug = `plans/plan-${norm}`;
+  const createPlanResolved = path.resolve(REPO_ROOT, createPlanSlug);
+  if (fs.existsSync(createPlanResolved) && createPlanResolved.startsWith(REPO_ROOT)) {
+    return json({
+      ok: true,
+      alreadyExists: true,
+      planPath: createPlanSlug,
+    });
+  }
+
   // --- Atom validation at approval time ---
   // Run deterministic atoms scoped to 'proposal.approving' before committing the approval.
   // This is a non-blocking best-effort check — if the policies dir doesn't exist or the

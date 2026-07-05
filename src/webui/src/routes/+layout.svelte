@@ -1132,7 +1132,7 @@ import {
         matches={cm}
         relationships={cr}
         loading={cl}
-        planMode={$currentDoc.docType === 'proposal' && $currentDoc.frontmatter?.approved === true}
+        planMode={$currentDoc.docType === 'proposal' && $currentDoc.frontmatter?.approved === true && !$currentDoc.frontmatter?.consumed_by}
         alreadyRelated={Array.isArray($currentDoc.frontmatter?.related_to) ? $currentDoc.frontmatter.related_to : []}
         onaddrelated={(path) => $currentDoc.onAddRelated?.(path)}
         onadddepends={(path) => $currentDoc.onAddDepends?.(path)}

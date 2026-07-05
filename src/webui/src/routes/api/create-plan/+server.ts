@@ -156,6 +156,18 @@ export async function POST({ request }) {
     return json({ error: 'plan already exists', path: planPath }, { status: 409 });
   }
 
+  // Check the approve-proposal slug path for any approved single candidate (#115)
+  // If a plan was created via approve-proposal, it lives at plans/<proposal-slug>.md,
+  // which differs from the create-plan slug (plans/plan-<title-slug>.md). Detect and route.
+  if (candidates.length === 1) {
+    const candNorm = candidates[0].replace(/^proposals\//, '').replace(/^proposals\/approved\//, '');
+    const approveSlug = `plans/${candNorm}`;
+    const approveResolved = path.resolve(REPO_ROOT, approveSlug);
+    if (fs.existsSync(approveResolved) && approveResolved.startsWith(REPO_ROOT)) {
+      return json({ error: 'plan already exists', path: approveSlug }, { status: 409 });
+    }
+  }
+
   // Walk dependency chains to discover transitive candidates
   const allCandidates = walkDeps(candidates, REPO_ROOT);
 
