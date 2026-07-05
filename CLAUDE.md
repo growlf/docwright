@@ -23,6 +23,7 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 | `docwright-discovery` | Hardware and network asset discovery — runs unified Ansible playbook, cross-references router ARP, detects drift, syncs device YAMLs | [`.opencode/skills/docwright-discovery/SKILL.md`](.opencode/skills/docwright-discovery/SKILL.md) |
 | `docwright-git` | Git commit standards for DocWright projects | [`.opencode/skills/docwright-git/SKILL.md`](.opencode/skills/docwright-git/SKILL.md) |
 | `docwright-infra` | Infrastructure placement and reliability standards | [`.opencode/skills/docwright-infra/SKILL.md`](.opencode/skills/docwright-infra/SKILL.md) |
+| `docwright-issue-workflow` | End-to-end GitHub issue processing — branch, fix, test, PR, merge, cleanup | [`.opencode/skills/docwright-issue-workflow/SKILL.md`](.opencode/skills/docwright-issue-workflow/SKILL.md) |
 | `docwright-lifecycle` | DocWright document lifecycle management - proposals, plans, completed/canceled transitions | [`.opencode/skills/docwright-lifecycle/SKILL.md`](.opencode/skills/docwright-lifecycle/SKILL.md) |
 | `docwright-project` | Project registry and vault switching for multi-project DocWright workspaces | [`.opencode/skills/docwright-project/SKILL.md`](.opencode/skills/docwright-project/SKILL.md) |
 | `docwright-proposal` | Create properly templated proposals with required frontmatter | [`.opencode/skills/docwright-proposal/SKILL.md`](.opencode/skills/docwright-proposal/SKILL.md) |
