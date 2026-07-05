@@ -11,6 +11,7 @@
     tags: string[]; category: string[]; complexity: string;
     status: string; priority: string; assigned_to: string;
     depends_on?: string[]; phase?: string | null;
+    demandCount: number; githubIssue: string; reportedDates: string[];
   }
   interface PhasePlan {
     path: string; title: string; status: string; phase: number | null;
@@ -57,6 +58,7 @@
     };
     phaseReview: PhaseReview | null;
     issues?: { open: DocEntry[] };
+    heatmap?: DocEntry[];
     roadplan?: {
       current: { name: string; items: any[] };
       next: { name: string; items: any[] };
@@ -67,6 +69,7 @@
 
   let data = $state<StatusData | null>(null);
   let loading = $state(true);
+  let heatmapWindow = $state<'all' | '30d'>('all');
 
   type ViewMode = 'list' | 'funnel' | 'graph' | 'roadplan';
   function getViewMode(): ViewMode {
@@ -98,9 +101,14 @@
 
   async function load() {
     loading = true;
-    const res = await fetch('/api/status');
+    const res = await fetch(`/api/status?window=${heatmapWindow}`);
     if (res.ok) data = await res.json();
     loading = false;
+  }
+
+  function toggleHeatmapWindow() {
+    heatmapWindow = heatmapWindow === 'all' ? '30d' : 'all';
+    load();
   }
 
   onMount(() => {
@@ -172,7 +180,7 @@
   let reportSubmitting = $state(false);
   // Two-phase suggest flow (#68 §3 / #92): 'form' collects the report; 'suggest' shows
   // similar open bugs so the reporter answers "is one of these yours?" — never auto-rejected.
-  interface DupSuggestion { path: string; title: string; score: number; demandCount: number; }
+  interface DupSuggestion { path: string; title: string; score: number; demandCount: number; source: 'local' | 'gh'; ghIssueNumber?: number; }
   let reportStep = $state<'form' | 'suggest'>('form');
   let bugSuggestions = $state<DupSuggestion[]>([]);
 
@@ -181,6 +189,29 @@
       title: bugTitle, description: bugDesc, reporter: bugReporter,
       priority: bugPriority, system_info: bugSysInfo,
     };
+  }
+
+  let promotingIssues = $state<Record<string, boolean>>({});
+  async function promoteToGH(issuePath: string) {
+    promotingIssues = { ...promotingIssues, [issuePath]: true };
+    try {
+      const res = await fetch('/api/issues/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issuePath }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ Promoted to GitHub: ${data.url}`);
+        load();
+      } else {
+        alert(`❌ ${data.error}`);
+      }
+    } catch {
+      alert('❌ Network error promoting to GitHub');
+    } finally {
+      promotingIssues = { ...promotingIssues, [issuePath]: false };
+    }
   }
 
   function resetReport() {
@@ -411,6 +442,39 @@
           </div>
         {/if}
 
+        <!-- Most Reported Bugs Heatmap -->
+        {#if data.heatmap && data.heatmap.length > 0}
+          <div class="heatmap-card">
+            <div class="card-header">
+              <h3>🔥 Most Reported Bugs</h3>
+              <div class="heatmap-controls">
+                <span class="badge">{data.heatmap.length} items</span>
+                <button class="window-toggle" onclick={toggleHeatmapWindow}>
+                  {heatmapWindow === 'all' ? '📅 All time' : '📅 Last 30d'}
+                </button>
+              </div>
+            </div>
+            <div class="heatmap-grid">
+              {#each data.heatmap as bug, i}
+                {@const heatClass = bug.demandCount <= 2 ? 'cool' : bug.demandCount <= 4 ? 'warm' : 'hot'}
+                <div class="heatmap-row">
+                  <a href="/{bug.path.replace(/\.md$/, '')}" class="heatmap-item {heatClass}" title="{bug.title} — Demand: {bug.demandCount}">
+                    <span class="heatmap-rank">#{i + 1}</span>
+                    <span class="heatmap-title">{bug.title}</span>
+                    <span class="heatmap-demand">{bug.demandCount}</span>
+                  </a>
+                  {#if bug.demandCount >= 3 && !bug.githubIssue}
+                    <button class="gh-promote-btn" disabled={promotingIssues[bug.path]} onclick={() => promoteToGH(bug.path)} title="Promote to GitHub issue">{promotingIssues[bug.path] ? '...' : '⬆ GH'}</button>
+                  {/if}
+                  {#if bug.githubIssue}
+                    <a href="https://github.com/growlf/docwright/issues/{bug.githubIssue}" class="gh-link" target="_blank" title="GitHub issue #{bug.githubIssue}">GH#{bug.githubIssue}</a>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
         {#each ['current', 'next', 'future'] as bucketKey}
           {@const bucket = data.roadplan?.[bucketKey]}
           {#if bucket}
@@ -427,7 +491,7 @@
                 </h2>
                 <span class="badge">{bucket.items.length} item{bucket.items.length === 1 ? '' : 's'}</span>
               </div>
-              
+
               {#if bucket.items.length === 0}
                 <div class="empty">No items assigned to this milestone</div>
               {:else}
@@ -806,7 +870,10 @@
               <li class="suggest-item">
                 <div class="suggest-meta">
                   <span class="suggest-title">{s.title}</span>
-                  <span class="suggest-sub">demand {s.demandCount} · {(s.score * 100).toFixed(0)}% match</span>
+                  <span class="suggest-sub">
+                    {#if s.source === 'gh'}<span class="gh-badge">GH#{s.ghIssueNumber}</span>{/if}
+                    demand {s.demandCount} · {(s.score * 100).toFixed(0)}% match
+                  </span>
                 </div>
                 <button type="button" class="btn btn-submit" disabled={reportSubmitting} onclick={() => confirmExisting(s.path)}>This is mine</button>
               </li>
@@ -1305,4 +1372,45 @@
   .suggest-meta { display: flex; flex-direction: column; min-width: 0; }
   .suggest-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
   .suggest-sub { font-size: 0.75rem; opacity: 0.7; }
+  .gh-badge { display: inline-block; background: #2dba4e; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 3px; margin-right: 0.35rem; vertical-align: middle; }
+
+  // ── GH Promote ───────────────────────────────────────────────────────────────
+  .heatmap-row { display: flex; align-items: center; gap: 0.5rem; }
+  .heatmap-row .heatmap-item { flex: 1; }
+  .gh-promote-btn { background: #238636; color: #fff; border: none; border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .gh-promote-btn:hover { background: #2ea043; }
+  .gh-promote-btn:disabled { background: #555; cursor: wait; }
+  .gh-link { font-size: 0.7rem; font-weight: 600; color: #2dba4e; text-decoration: none; white-space: nowrap; padding: 0.2rem 0.45rem; border: 1px solid #2dba4e; border-radius: 4px; }
+  .gh-link:hover { background: rgba(45, 186, 78, 0.1); }
+  :global(html[data-theme="light"]) { .gh-promote-btn { background: #1a7f37; &:hover { background: #238636; } } .gh-link { border-color: #1a7f37; color: #1a7f37; } }
+
+  // ── Heatmap ─────────────────────────────────────────────────────────────────
+  .heatmap-card { background: #1c1c2e; border: 1px solid #333; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; }
+  .heatmap-card .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; h3 { margin: 0; } }
+  .heatmap-controls { display: flex; align-items: center; gap: 0.5rem; }
+  .window-toggle { background: #333; color: #ccc; border: 1px solid #555; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.7rem; cursor: pointer; }
+  .window-toggle:hover { background: #444; color: #fff; }
+  :global(html[data-theme="light"]) { .window-toggle { background: #e8e8e8; color: #555; border-color: #ccc; &:hover { background: #d8d8d8; color: #333; } } }
+  .heatmap-grid { display: flex; flex-direction: column; gap: 0.35rem; }
+  .heatmap-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.75rem; border-radius: 6px; text-decoration: none; transition: background 0.15s; }
+  .heatmap-item.cool { background: rgba(74, 108, 247, 0.08); border-left: 3px solid #4a6cf7; }
+  .heatmap-item.warm { background: rgba(247, 181, 74, 0.1); border-left: 3px solid #f7b54a; }
+  .heatmap-item.hot  { background: rgba(247, 74, 74, 0.1); border-left: 3px solid #f74a4a; }
+  .heatmap-item:hover { background: rgba(255,255,255,0.06); }
+  .heatmap-rank { font-size: 0.75rem; font-weight: 700; color: #888; min-width: 1.5rem; }
+  .heatmap-title { flex: 1; font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+  .heatmap-demand { font-size: 0.75rem; font-weight: 700; background: rgba(255,255,255,0.08); padding: 0.15rem 0.5rem; border-radius: 10px; color: #aaa; }
+  .heatmap-item.hot .heatmap-demand { background: rgba(247, 74, 74, 0.25); color: #f77; }
+
+  // ── Heatmap light theme ──────────────────────────────────────────────────────
+  :global(html[data-theme="light"]) {
+    .heatmap-card { background: #fff; border-color: #d0d0d0; }
+    .heatmap-item.cool { background: rgba(74, 108, 247, 0.05); }
+    .heatmap-item.warm { background: rgba(247, 181, 74, 0.06); }
+    .heatmap-item.hot  { background: rgba(247, 74, 74, 0.06); }
+    .heatmap-item:hover { background: rgba(0,0,0,0.03); }
+    .heatmap-title { color: #1a1a1a; }
+    .heatmap-demand { background: rgba(0,0,0,0.06); color: #555; }
+    .heatmap-item.hot .heatmap-demand { background: rgba(247, 74, 74, 0.12); color: #c33; }
+  }
 </style>

@@ -13,6 +13,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { execSync } from 'node:child_process';
 import { parseFrontmatter, setFrontmatterField } from './frontmatter';
 
 export interface BugReport {
@@ -29,6 +30,8 @@ export interface DuplicateSuggestion {
   title: string;
   score: number;
   demandCount: number;
+  source: 'local' | 'gh';
+  ghIssueNumber?: number;
 }
 
 // Titles at/above this Jaccard score are surfaced as suggestions ("is one of these yours?").
@@ -68,17 +71,46 @@ function openBugs(repoRoot: string): Array<{ relPath: string; absPath: string; f
   return out;
 }
 
+interface GhIssue { number: number; title: string; }
+
+/** Query GitHub for open bug-tracked issues. Returns empty array if gh CLI is unavailable. */
+function queryGhIssues(): GhIssue[] {
+  try {
+    const out = execSync('gh issue list --label bug --state open --json number,title', {
+      encoding: 'utf-8',
+      timeout: 5000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return JSON.parse(out) as GhIssue[];
+  } catch {
+    return [];
+  }
+}
+
 /** Phase 1 — read-only. Similar open bugs, best match first. Never writes. */
 export function suggestDuplicates(repoRoot: string, title: string): DuplicateSuggestion[] {
-  return openBugs(repoRoot)
+  const local: DuplicateSuggestion[] = openBugs(repoRoot)
     .map(b => ({
       path: b.relPath,
       title: String(b.fm.title ?? ''),
       score: getSimilarity(title, String(b.fm.title ?? '')),
       demandCount: parseInt(String(b.fm.demand_count ?? '1'), 10),
+      source: 'local' as const,
     }))
-    .filter(s => s.score >= SUGGEST_THRESHOLD)
-    .sort((a, b) => b.score - a.score);
+    .filter(s => s.score >= SUGGEST_THRESHOLD);
+
+  const gh: DuplicateSuggestion[] = queryGhIssues()
+    .map(issue => ({
+      path: `gh:${issue.number}`,
+      title: issue.title,
+      score: getSimilarity(title, issue.title),
+      demandCount: 0,
+      source: 'gh' as const,
+      ghIssueNumber: issue.number,
+    }))
+    .filter(s => s.score >= SUGGEST_THRESHOLD);
+
+  return [...local, ...gh].sort((a, b) => b.score - a.score);
 }
 
 /** Phase 2a — reporter confirmed a match: +1 demand and append their context. */
@@ -92,8 +124,15 @@ export function confirmDuplicate(repoRoot: string, canonicalPath: string, report
   const nextDemand = parseInt(String(fm.demand_count ?? '1'), 10) + 1;
   raw = setFrontmatterField(raw, 'demand_count', nextDemand);
 
-  // Harvest context — the goldmine is the spread of environments/repros, not the tally.
+  // Track report dates for time-weighted demand scoring
   const today = new Date().toISOString().slice(0, 10);
+  const existingDates: string[] = Array.isArray(fm.reported_dates) ? fm.reported_dates : [];
+  if (!existingDates.includes(today)) {
+    existingDates.push(today);
+  }
+  raw = setFrontmatterField(raw, 'reported_dates', `[${existingDates.join(', ')}]`);
+
+  // Harvest context — the goldmine is the spread of environments/repros, not the tally.
   const block = [
     `### Additional report — ${today} (${report.reporter})`,
     '',
@@ -133,6 +172,7 @@ priority: ${report.priority || 'medium'}
 complexity: medium
 estimated_effort: S
 demand_count: 1
+reported_dates: [${today}]
 milestone: future
 channel: dev
 ${relatedBlock}tags:

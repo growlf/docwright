@@ -3,6 +3,7 @@ import { logTransition } from '../lib/audit';
 import { spawnSync, execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { suggestDuplicates, confirmDuplicate, createReportedBug } from '../../dispatch/bridge';
 
 function run(cmd: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
   try {
@@ -78,6 +79,55 @@ function ghPRList(num: number): any[] {
     const all: any[] = JSON.parse(r.stdout);
     return all.filter((pr: any) => String(pr.number).includes(String(num)) || (pr.title || '').includes(`#${num}`));
   } catch { return []; }
+}
+
+// ---------------------------------------------------------------------------
+// 0. capture_bug_report — three sub-actions wrapping the bridge
+// ---------------------------------------------------------------------------
+
+export async function captureBugReport(action: string, args: Record<string, any>): Promise<string> {
+  const repoRoot = getRepoRoot();
+
+  switch (action) {
+    case 'suggest': {
+      const title = String(args.title || '');
+      if (!title) return 'ERROR: title is required';
+      const suggestions = suggestDuplicates(repoRoot, title);
+      return JSON.stringify({ ok: true, suggestions });
+    }
+
+    case 'confirm': {
+      const canonicalPath = String(args.canonical_path || args.path || '');
+      if (!canonicalPath) return 'ERROR: canonical_path is required';
+      const report = {
+        title: String(args.title || ''),
+        description: String(args.description || ''),
+        reporter: String(args.reporter || process.env.OPCODE_USER_NAME || 'agent'),
+        priority: args.priority || 'medium',
+        system_info: String(args.system_info || ''),
+      };
+      if (!report.title || !report.description) return 'ERROR: title and description are required';
+      const result = confirmDuplicate(repoRoot, canonicalPath, report);
+      return JSON.stringify({ ok: true, ...result });
+    }
+
+    case 'create': {
+      const report = {
+        title: String(args.title || ''),
+        description: String(args.description || ''),
+        reporter: String(args.reporter || process.env.OPCODE_USER_NAME || 'agent'),
+        priority: args.priority || 'medium',
+        system_info: String(args.system_info || ''),
+      };
+      if (!report.title || !report.description) return 'ERROR: title and description are required';
+      const related = Array.isArray(args.related) ? args.related : [];
+      const result = createReportedBug(repoRoot, report, related);
+      return JSON.stringify({ ok: true, ...result });
+    }
+
+    default:
+      return `ERROR: unknown action '${action}'. Use suggest, confirm, or create.`;
+  }
 }
 
 // ---------------------------------------------------------------------------

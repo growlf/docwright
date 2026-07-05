@@ -1,7 +1,57 @@
 import { McpTool } from '../types';
-import { issuePreflight, syncIssueFile, startIssueBranch, completeIssueBranch } from './issue_workflow';
+import { issuePreflight, syncIssueFile, startIssueBranch, completeIssueBranch, captureBugReport } from './issue_workflow';
 
 export const issueWorkflowTools: McpTool[] = [
+  {
+    name: 'capture_bug_report',
+    description:
+      'Three-step bug capture for agent-chat contexts. action=suggest: returns similar open bugs for a title (cross-source: local + GH). action=confirm: +1 demand on an existing bug and append reporter context. action=create: file a new bug with demand_count=1.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          description: 'Sub-action: suggest, confirm, or create',
+          enum: ['suggest', 'confirm', 'create'],
+        },
+        title: {
+          type: 'string',
+          description: 'Bug title (required for suggest and create; used for confirm too)',
+        },
+        description: {
+          type: 'string',
+          description: 'Bug description (required for confirm and create)',
+        },
+        canonical_path: {
+          type: 'string',
+          description: 'Path to the existing bug file (required for confirm; e.g., issues/bug-foo.md)',
+        },
+        reporter: {
+          type: 'string',
+          description: 'Reporter name (defaults to OPCODE_USER_NAME or "agent")',
+        },
+        priority: {
+          type: 'string',
+          description: 'Bug priority: low, medium, high (default: medium)',
+          enum: ['low', 'medium', 'high'],
+        },
+        system_info: {
+          type: 'string',
+          description: 'Environment/system info string',
+        },
+        related: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Related issue paths to associate (create only)',
+        },
+      },
+      required: ['action'],
+    },
+    handler: async (args) => {
+      const result = await captureBugReport(String(args.action), args);
+      return { content: [{ type: 'text', text: result }] };
+    },
+  },
   {
     name: 'issue_preflight',
     description:

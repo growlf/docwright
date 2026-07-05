@@ -38,6 +38,7 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
     assert.ok(suggestions.length >= 1);
     assert.ok(suggestions[0].score >= 0.5);
     assert.ok(suggestions[0].demandCount === 1);
+    assert.strictEqual(suggestions[0].source, 'local');
   });
 
   it('does NOT suggest a genuinely different bug (never swallow distinct reports)', () => {
