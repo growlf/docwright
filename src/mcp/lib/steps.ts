@@ -1,6 +1,7 @@
 import { readFile, writeFile } from './paths';
-import { parseFrontmatter, setFrontmatterField } from './frontmatter';
+import { parseFrontmatter, setFrontmatterField, extractFrontmatterField } from './frontmatter';
 import { splitTableRow, countSteps } from '../../dispatch/completion-gate';
+import { getProgressCounts, hasLinkedIssues } from './derived-progress';
 
 // Completion-gate logic is surface-agnostic and lives in the dispatch module
 // (src/dispatch/completion-gate.ts) so the Web UI enforces the identical gate
@@ -14,9 +15,17 @@ export {
 } from '../../dispatch/completion-gate';
 
 export function updateStepCounts(text: string): string {
-  const { total, completed } = countSteps(text);
-  text = setFrontmatterField(text, 'total_steps', total);
-  text = setFrontmatterField(text, 'completed_steps', completed);
+  // If plan has linked issues, compute progress from issue state (derived)
+  if (hasLinkedIssues(text)) {
+    const { total, completed } = getProgressCounts(text);
+    text = setFrontmatterField(text, 'total_steps', total);
+    text = setFrontmatterField(text, 'completed_steps', completed);
+  } else {
+    // Otherwise, count from the step table (traditional)
+    const { total, completed } = countSteps(text);
+    text = setFrontmatterField(text, 'total_steps', total);
+    text = setFrontmatterField(text, 'completed_steps', completed);
+  }
   return text;
 }
 

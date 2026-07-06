@@ -188,6 +188,20 @@ export function lintDocument(
     }
   }
 
+  // Derived progress rule: plans with tracked_by issues should not have hand-edited steps
+  if (
+    filePath.startsWith('plans/') &&
+    fm.tracked_by &&
+    Array.isArray(fm.tracked_by) &&
+    fm.tracked_by.length > 0
+  ) {
+    results.push({
+      field: 'tracked_by',
+      severity: 'warn',
+      message: 'Plan has linked issues (tracked_by). Progress should be derived from issue state, not manually edited steps. Keep the step table for reference only.',
+    });
+  }
+
   // Research document rules
   if (filePath.startsWith('research/')) {
     if (fm.status !== undefined && !VALID_RESEARCH_STATUS.has(String(fm.status))) {
