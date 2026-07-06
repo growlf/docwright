@@ -1,6 +1,8 @@
 ---
 title: scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead
-status: scope-checked
+status: resolved
+closed_by_pr: "#253"
+resolved: 2026-07-06
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
