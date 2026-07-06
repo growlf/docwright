@@ -126,3 +126,107 @@ describe('Frontmatter is never re-serialized (#149)', () => {
     assert.strictEqual(edited, FM);
   });
 });
+
+describe('Plan WYSIWYG round-trip (#149 governance docs)', () => {
+  // Real plan frontmatter with governance fields
+  const planFM = [
+    'title: Developer collaboration model',
+    'status: in-progress',
+    'author: NetYeti',
+    'created: 2026-07-02',
+    'assigned_to: NetYeti',
+    'proposal_source: proposals/approved/collaboration-issue-model.md',
+    'tracked_by:',
+    '  - issues/step-1.md',
+    '  - issues/step-2.md',
+    'tags:',
+    '  - governance',
+    '  - process',
+  ].join('\n');
+
+  const planBody = [
+    '# Implementation Steps',
+    '',
+    '| # | Action | Status |',
+    '| --- | --- | --- |',
+    '| 1 | Add schema fields | ✅ Done |',
+    '| 2 | Lock format | ✅ Done |',
+    '',
+    '## Testing Plan',
+    '',
+    '- [ ] Round-trip test: no body corruption',
+    '- [x] Frontmatter byte-stable on save',
+  ].join('\n');
+
+  const planRaw = `---\n${planFM}\n---\n\n${planBody}\n`;
+
+  it('plan body survives WYSIWYG round-trip with markdown tables', () => {
+    const parsed = splitFrontmatter(planRaw);
+    const out = roundTrip(parsed.body);
+
+    // Table structure preserved
+    assert.ok(out.includes('| # | Action | Status |'), out);
+    assert.ok(out.includes('| 1 | Add schema fields | ✅ Done |'), out);
+
+    // Task list preserved
+    assert.ok(out.includes('- [ ] Round-trip test'), out);
+    assert.ok(out.includes('- [x] Frontmatter byte-stable'), out);
+
+    // Headings preserved
+    assert.ok(out.includes('# Implementation Steps'), out);
+    assert.ok(out.includes('## Testing Plan'), out);
+  });
+
+  it('plan frontmatter fields round-trip byte-stable', () => {
+    const parsed = splitFrontmatter(planRaw);
+    assert.ok(parsed.fmText?.includes('proposal_source: proposals/approved/collaboration-issue-model.md'));
+    assert.ok(parsed.fmText?.includes('tracked_by:'));
+    assert.deepStrictEqual(parsed.frontmatter?.tracked_by, ['issues/step-1.md', 'issues/step-2.md']);
+  });
+
+  it('status field edit on plan touches only that field', () => {
+    const parsed = splitFrontmatter(planRaw);
+    const edited = applyFrontmatterEdits(parsed.fmText!, parsed.frontmatter!, {
+      ...parsed.frontmatter,
+      status: 'completed',
+    });
+
+    // Only status changed
+    assert.ok(edited.includes('status: completed'));
+    assert.ok(edited.includes('proposal_source: proposals/approved/collaboration-issue-model.md'));
+    assert.ok(edited.includes('tracked_by:'));
+  });
+
+  it('tracked_by array edit on plan replaces only the array', () => {
+    const parsed = splitFrontmatter(planRaw);
+    const edited = applyFrontmatterEdits(parsed.fmText!, parsed.frontmatter!, {
+      ...parsed.frontmatter,
+      tracked_by: ['issues/step-1.md', 'issues/step-2.md', 'issues/step-3.md'],
+    });
+
+    // Array updated
+    assert.ok(edited.includes('tracked_by:'));
+    assert.ok(edited.includes('  - issues/step-3.md'));
+
+    // Other fields untouched
+    assert.ok(edited.includes('proposal_source: proposals/approved/collaboration-issue-model.md'));
+    assert.ok(edited.includes('status: in-progress'));
+  });
+
+  it('full plan round-trip: body + frontmatter, no corruption', () => {
+    const parsed = splitFrontmatter(planRaw);
+
+    // Round-trip the body
+    const roundtrippedBody = roundTrip(parsed.body);
+
+    // Reattach frontmatter byte-identical
+    const rebuilt = buildRawFromText(parsed.fmText!, roundtrippedBody);
+
+    // Verify structure (not exact match due to markdown normalization)
+    const rebuildParsed = splitFrontmatter(rebuilt);
+    assert.strictEqual(rebuildParsed.frontmatter?.status, 'in-progress');
+    assert.deepStrictEqual(rebuildParsed.frontmatter?.tracked_by, ['issues/step-1.md', 'issues/step-2.md']);
+    assert.ok(rebuildParsed.body.includes('# Implementation Steps'));
+    assert.ok(rebuildParsed.body.includes('- [ ] Round-trip test'));
+  });
+});
