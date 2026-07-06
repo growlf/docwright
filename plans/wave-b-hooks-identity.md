@@ -13,15 +13,16 @@ priority: high
 mode: autonomous
 scenario_synthesis: Wave B of the issue-cluster remediation — unify the diverged pre-commit sources and install commit-msg for vaults, make hooks fail loudly when DOCWRIGHT_PATH is unset, scope the identity cache per-repo so test runs stop poisoning real commits, and close the approve-by-move HUMAN-APPROVED bypass
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 phase: 4
 total_steps: 4
-completed_steps: 0
+completed_steps: 1
 github_epic: ""
 automated: full
 milestone: v0.5.0
 channel: dev
+gate_note: "Changed files are untestable types: plans/wave-b-hooks-identity.md"
 ---
 # Wave B — hook & identity integrity
 
@@ -53,7 +54,7 @@ Wave B).
 
 | Step | Action | Details | Status | Issue | Branch |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Single hook source + commit-msg for vaults | Make `scripts/pre-commit.sh` the one canonical source; `.githooks/pre-commit` becomes a thin exec-shim (or install copies verbatim from scripts/); `install-hooks.sh` installs BOTH pre-commit and commit-msg in repo and vault modes. Add a drift-guard test that fails when shim and source diverge. | ⏳ Pending | #144 | — |
+| 1 | Single hook source + commit-msg for vaults | Make `scripts/pre-commit.sh` the one canonical source; `.githooks/pre-commit` becomes a thin exec-shim (or install copies verbatim from scripts/); `install-hooks.sh` installs BOTH pre-commit and commit-msg in repo and vault modes. Add a drift-guard test that fails when shim and source diverge. | ✅ Done | #144 | — |
 | 2 | Hooks fail loudly when DOCWRIGHT_PATH is unset | A vault hook that cannot resolve the DocWright tool repo must refuse the commit with a clear remediation message (or degrade to explicitly-warned minimal checks) — never silently pass. Cover non-interactive shells (no .zshrc/.bashrc env). | ⏳ Pending | #143 | — |
 | 3 | Scope the identity cache per-repo | Replace `/tmp/opencode-identity-cache` with a per-repo location (`.git/docwright-identity-cache`) so test fixtures and real repos cannot cross-poison; drop the manual `rm -f` ritual from the step workflow. | ⏳ Pending | #160 | — |
 | 4 | Block approve-by-move | Pre-commit detects a proposal appearing in `proposals/approved/` (add or rename) in the staged diff and requires the HUMAN-APPROVED seal exactly as the frontmatter `approved: true` path does — moving the file is no longer a bypass. | ⏳ Pending | #140 | — |
@@ -102,3 +103,4 @@ Step 3 falls back to the /tmp path if the .git-scoped cache is unwritable.
 | Date | Change | Author |
 | --- | --- | --- |
 | 2026-07-06 | Created from Wave B of [[proposals/issue-cluster-remediation-waves]] per BDFL in-session directive 2026-07-06 ("all 3"); consumes #140 #143 #144 #160. Approved and started per the same directive — provenance recorded in lieu of separate proposal approval, matching the webui-write-integrity precedent. | NetYeti |
+| 2026-07-06 | Step 1 delivered (GH #144, PR #240): scripts/pre-commit.sh + new scripts/commit-msg.sh are the only hook sources; .githooks/* reduced to 3-line exec-shims (drift structurally impossible — the fixed divergence was 10+ changes); install-hooks.sh installs BOTH hooks in both modes (vaults get commit-msg for the first time, js-yaml baked); self-install verifies shims instead of copying. Drift guard test-hook-source-unification.sh first in test:hooks chain. The PR's own commit ran through the new shim live. #160 cache poisoning reproduced during this step's test run — Step 3's motivation, live again. | NetYeti |
