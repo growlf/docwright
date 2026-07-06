@@ -1607,3 +1607,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: wave-b Step 2 → done; #143 resolved in issue store
 
 **Session note:** `docs/session-notes/session_note_202607061527.md`
+
+---
+
+## Session: 2026-07-06 — Merge collaboration model + principles
+
+**Focus:** Merge collaboration model + principles
+
+**Completed:**
+- [x] docs: retire dogfood-branch deployment draft — superseded by proposal
+- [x] docs: BMS dev-cloud three-deployment architecture (design draft)
+- [x] feat: implement collaboration issue model (all 7 steps)
+- [x] fix: use fs import instead of require in issue-generation.ts
+- [x] fix: replace Record<string, any> with Record<string, unknown> in AIEngine
+- [x] feat: file UX finding - roadplan view lacks pending work visibility
+- [x] docs: add mutual augmentation principle and memory healthcheck process
+- [x] feat: re-enable WYSIWYG editor on governance docs (#149 stability verified)
+- [x] docs: finalize sync strategy for collaboration model (step 7)
+- [x] feat: implement scope-freeze enforcement for in-progress plans
+
+**Session note:** `docs/session-notes/session_note_202607062238.md`
