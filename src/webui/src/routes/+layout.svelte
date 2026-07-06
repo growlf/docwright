@@ -31,6 +31,19 @@ import {
 
   let { data }: { data: LayoutData } = $props();
 
+  let vaultVersion = $state<string>('');
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const statusData = await res.json();
+        vaultVersion = statusData.version ?? '';
+      }
+    } catch {
+      // fail silently
+    }
+  });
+
   interface BrandConfig { name: string; logoPath: string | null; }
 
   let brand = $state<BrandConfig>({ name: 'DocWright', logoPath: null });
@@ -1272,6 +1285,8 @@ import {
   <a href="https://github.com/growlf/docwright" target="_blank" rel="noopener" class="footer-link">
     github.com/growlf/docwright
   </a>
+  <span class="footer-sep">·</span>
+  <span class="version-badge" title="DocWright release version">{vaultVersion ? `v${vaultVersion}` : 'version unknown'}</span>
   <span class="footer-spacer"></span>
   <a href="/settings" class="footer-link footer-settings" title="Settings">⚙ Settings</a>
   <span class="footer-sep">·</span>
@@ -1363,6 +1378,7 @@ import {
   .footer-link { color: #333; text-decoration: none; }
   .footer-link:hover { color: #666; }
   .footer-sep { color: #222; }
+  .version-badge { color: #666; font-family: monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
 
   /* chat-fab replaced by chat-toggle (see above) */
   /* sidebar-toggle removed — Panel.svelte provides the edge toggle */
