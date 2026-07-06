@@ -64,9 +64,6 @@ delegate here. Does not gate Phase 3 completion.
 
 ## Testing Plan
 
-- [ ] Step 1: `contribute_upstream` MCP tool
-- [ ] Step 2: `log_friction` MCP tool + periodic review
-- [ ] Step 3: `list_docwright_issues` + consent intake flow
 > Evidence: `test/mcp/contribution.test.ts`, `test/mcp/intake.test.ts`,
 > `test/dispatch/friction.test.ts` (all in the CI `test:mcp` / `test:dispatch` chains,
 > green in PRs #154/#156/#157/#164). Full `npm test` recorded green @ a016891 via

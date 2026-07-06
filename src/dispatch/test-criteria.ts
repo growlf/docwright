@@ -65,6 +65,53 @@ export function generateTestCriteria(title: string, steps: PlanStep[]): string {
   return lines.join('\n');
 }
 
+/**
+ * True when the Implementation Steps table differs between two versions of a
+ * plan (step numbers or actions added/removed/reworded). Gate for
+ * syncTestCriteria on saves (#148): a save that doesn't touch the step table
+ * must never rewrite the Testing Plan.
+ */
+export function stepsChanged(oldContent: string, newContent: string): boolean {
+  const key = (s: PlanStep) => `${s.number}|${s.action}`;
+  const a = extractPlanSteps(oldContent).map(key);
+  const b = extractPlanSteps(newContent).map(key);
+  return a.length !== b.length || a.some((v, i) => v !== b[i]);
+}
+
+/**
+ * Remove phantom unchecked step criteria from the Testing Plan section (#148
+ * sweep): an unchecked `- [ ] Step N: ...` line is a stale duplicate when the
+ * same step number also has a checked `- [x] Step N:` line in the section —
+ * the unchecked copy was re-injected by an unconditional sync against
+ * reworded step text. Returns the cleaned content and the removed lines.
+ */
+export function removePhantomStepDuplicates(content: string): { content: string; removed: string[] } {
+  const removed: string[] = [];
+  const lines = content.split('\n');
+  const out: string[] = [];
+  let inSection = false;
+
+  // First pass: collect step numbers with a checked line in the Testing Plan
+  const checkedNums = new Set<string>();
+  for (const line of lines) {
+    if (/^##\s/.test(line)) { inSection = /^##\s+Testing Plan\b/.test(line); continue; }
+    const m = inSection && line.trim().match(/^- \[x\] Step (\d+):/i);
+    if (m) checkedNums.add(m[1]);
+  }
+
+  inSection = false;
+  for (const line of lines) {
+    if (/^##\s/.test(line)) inSection = /^##\s+Testing Plan\b/.test(line);
+    const m = inSection && line.trim().match(/^- \[ \] Step (\d+):/);
+    if (m && checkedNums.has(m[1])) {
+      removed.push(line.trim());
+      continue;
+    }
+    out.push(line);
+  }
+  return { content: out.join('\n'), removed };
+}
+
 export function hasTestingPlanSection(content: string): boolean {
   const m = content.match(/^##\s+Testing Plan\s*\n([\s\S]*?)(?=^##\s|\n*$)/m);
   if (!m) return false;
