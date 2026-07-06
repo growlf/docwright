@@ -1,6 +1,9 @@
 ---
-title: Approve button silently no-ops when a stale consumed_by points at a missing plan
-status: scope-checked
+title: "Approve button silently no-ops when a stale consumed_by points at a missing plan"
+status: resolved
+closed_by_pr: "#216"
+resolved: 2026-07-06
+github_issue: 141
 author: NetYeti
 author-role: contributor
 created: 2026-07-01

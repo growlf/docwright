@@ -66,21 +66,27 @@ export const POST = requireAuth(async ({ request, locals }) => {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
 
-  // Check whether proposal already has a plan (#115, #141).
-  // If consumed_by points to a missing plan, clear the stale pointer and proceed (self-heal).
-  // If consumed_by points to an existing plan, reject duplicate creation.
+  // Check whether proposal already has a plan — reject duplicate creation (#115).
+  // Self-heal (#141): only short-circuit when the consumed_by target actually
+  // exists. A stale pointer at a deleted/renamed plan used to make Approve a
+  // silent no-op; now it's noted in the audit log and the approval proceeds,
+  // overwriting the stale pointer with the new plan below.
   if (fm.consumed_by) {
-    const consumedPath = path.resolve(REPO_ROOT, fm.consumed_by);
-    if (fs.existsSync(consumedPath)) {
+    const consumedSafe = String(fm.consumed_by).endsWith('.md')
+      ? String(fm.consumed_by)
+      : `${fm.consumed_by}.md`;
+    const consumedResolved = path.resolve(REPO_ROOT, consumedSafe);
+    if (consumedResolved.startsWith(REPO_ROOT) && fs.existsSync(consumedResolved)) {
       return json({
         ok: true,
         alreadyExists: true,
         planPath: fm.consumed_by,
       });
     }
-    // Stale pointer: the plan doesn't exist. Clear it with an audit note and proceed.
-    logAudit('STALE_CONSUMED_BY_CLEARED', `proposals/${norm}: consumed_by=${fm.consumed_by} (plan missing) — clearing and proceeding with approval`);
-    fm.consumed_by = '';
+    logAudit(
+      'CONSUMED_BY_SELF_HEAL',
+      `proposals/${norm}: stale consumed_by '${fm.consumed_by}' points at a missing plan — proceeding with approval`,
+    );
   }
 
   // Also check the create-plan slug path for cross-path collisions (#115)
