@@ -3,6 +3,7 @@ import { parseFrontmatter, formatYamlList, setFrontmatterField, extractFrontmatt
 import { logTransition } from '../lib/audit';
 import { hasPendingSteps, updateParentDeliverable, replaceStepStatus, splitTableRow, checkCompletionGate } from '../lib/steps';
 import { getAIEngine } from '../../dispatch/ai';
+import { generateCompletionDoc } from '../../dispatch/completion-doc';
 import { spawnSync } from 'node:child_process';
 
 interface ProposalSection {
@@ -216,7 +217,6 @@ export async function transitionToCompleted(planName: string): Promise<string> {
   }
 
   const status = extractFrontmatterField(text, 'status');
-  const title = extractFrontmatterField(text, 'title') || safe.replace(/\.md$/, '');
 
   if (status !== 'completed') {
     return `ERROR: Plan '${planName}' has status=${status}. Set status: completed first.`;
@@ -258,35 +258,9 @@ export async function transitionToCompleted(planName: string): Promise<string> {
   moveFile(`plans/${safe}`, `plans/completed/${safe}`);
 
   const docSlug = safe;
-  const author = extractFrontmatterField(text, 'author') || 'NetYeti';
-  const created = extractFrontmatterField(text, 'created') || completedDate;
-  const tagsStr = extractFrontmatterField(text, 'tags') || '';
-  let tagsBlock = '';
-  if (Array.isArray(tagsStr)) {
-    tagsBlock = `tags:${formatYamlList(tagsStr)}`;
-  } else if (typeof tagsStr === 'string' && tagsStr.trim() !== '') {
-    tagsBlock = `tags:\n  - ${tagsStr}`;
-  } else {
-    tagsBlock = `tags: []`;
-  }
-
-  const docContent = `---
-title: ${title}
-status: completed
-completed_date: ${completedDate}
-author: ${author}
-created: ${created}
-${tagsBlock}
----
-
-# ${title}
-
-_Document generated from completed plan: plans/completed/${safe}_
-
-<!-- Document your implementation here -->
-`;
-
-  writeFile(`docs/${docSlug}`, docContent);
+  // Shared with the Web UI transition-completed endpoint (#142) — both
+  // surfaces emit the identical completion doc.
+  writeFile(`docs/${docSlug}`, generateCompletionDoc(text, safe, completedDate));
   logTransition('COMPLETED', `plans/${safe} → plans/completed/${safe} + docs/${docSlug}`);
 
   // Detect phase plan close-out — add reminder
