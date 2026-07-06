@@ -1547,3 +1547,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] chore: merge origin/main into feature branch
 
 **Session note:** `docs/session-notes/session_note_202607060140.md`
+
+---
+
+## Session: 2026-07-06 — webui-write-integrity completion + collaboration model
+
+**Focus:** webui-write-integrity completion + collaboration model
+
+**Completed:**
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: propose git-native multi-session work claiming (approved: false)
+- [x] docs: mark #220 as resolved by PR #230
+- [x] docs: mark #220 as resolved by PR #230
+- [x] fix: show Certify Tests affordance for out-of-band test verification (#220)
+- [x] fix: show Certify Tests affordance for out-of-band test verification
+- [x] docs: mark #218 as resolved by PR #227
+
+**Session note:** `docs/session-notes/session_note_202607062042.md`
