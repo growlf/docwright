@@ -34,7 +34,7 @@ import * as os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const ROOT = (() => {
+const ROOT = process.env.DW_SESSION_ROOT || (() => {
   let dir = path.dirname(new URL(import.meta.url).pathname);
   while (dir !== path.dirname(dir)) {
     if (fs.existsSync(path.join(dir, 'VERSION'))) return dir;
@@ -282,12 +282,38 @@ ${nextBlock}
       ok(`pushed ${wtBranch}`);
     } catch {
       if (wtBranch === 'main') {
-        // Branch protection rejects direct pushes to main — without this,
-        // commits sit stranded locally and the next session diverges
-        // (happened 2026-07-04 with the heatmap/dedup session).
-        warn(`push to protected 'main' REJECTED — ${path.basename(wt)} commits are STRANDED locally.`);
-        warn(`  Land them via PR: git checkout -b <type>/<slug> && git push -u origin <type>/<slug> && gh pr create --base main`);
-        stranded.push(path.basename(wt));
+        // Branch protection rejects direct pushes to main. Land the commits
+        // via an auto-created PR branch instead of stranding them (#146) —
+        // every stranded session this week needed the identical manual
+        // recovery. The branch is created WITHOUT switching, pushed, PR'd
+        // with auto-merge armed (merges when required checks pass), and
+        // local main is reset to origin/main so the next session starts
+        // un-diverged. The session commits live safely on the PR branch.
+        const prBranch = `docs/session-note-${compact}`;
+        try {
+          git(['branch', '-f', prBranch], wt);
+          git(['push', '-u', 'origin', prBranch], wt);
+          try {
+            const prUrl = execFileSync('gh', ['pr', 'create', '--base', 'main', '--head', prBranch,
+              '--title', `docs: session note ${date} — ${focus}`,
+              '--body', 'Automated session shutdown artifacts, landed via PR because main is protected (end-session auto-landing, #146). Auto-merge is armed — merges when required checks pass.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)',
+            ], { cwd: wt, encoding: 'utf-8' }).trim();
+            execFileSync('gh', ['pr', 'merge', prBranch, '--squash', '--auto'],
+              { cwd: wt, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
+            ok(`landed via PR with auto-merge armed: ${prUrl}`);
+          } catch {
+            warn(`branch '${prBranch}' pushed but gh PR create/auto-merge failed —`);
+            warn(`  finish manually: gh pr create --base main --head ${prBranch} && gh pr merge --squash --auto`);
+          }
+          gitTry(['fetch', '--quiet', 'origin'], wt);
+          git(['reset', '--hard', 'origin/main'], wt);
+          ok(`main reset to origin/main — session commits live on '${prBranch}'`);
+          pushed.push(`${path.basename(wt)}:${prBranch}(PR)`);
+        } catch (e: any) {
+          warn(`push to protected 'main' REJECTED and auto-landing failed (${e?.message?.split('\n')[0] ?? e}) — ${path.basename(wt)} commits are STRANDED locally.`);
+          warn(`  Land them via PR: git checkout -b <type>/<slug> && git push -u origin <type>/<slug> && gh pr create --base main`);
+          stranded.push(path.basename(wt));
+        }
       } else {
         warn(`push failed for ${wtBranch} — push manually`);
       }

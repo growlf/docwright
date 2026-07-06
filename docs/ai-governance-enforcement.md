@@ -137,8 +137,10 @@ block on direct writes from the Claude Code surface.
 
 ## What git pre-commit still does
 
-The active hook is `.githooks/pre-commit` (`git config core.hooksPath = .githooks`).
-It runs two categories of checks:
+The active hook is `.githooks/pre-commit` (`git config core.hooksPath = .githooks`),
+which since #144 is a thin exec-shim: the canonical source is `scripts/pre-commit.sh`
+(same for `commit-msg` → `scripts/commit-msg.sh`; vault installs get real copies of
+both via `install-hooks.sh`). It runs two categories of checks:
 
 **Lifecycle governance (via `lifecycle-gate.js`):**
 - Pending step validation — `node scripts/lifecycle-gate.js --check-files` on every
