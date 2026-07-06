@@ -234,12 +234,24 @@ try {
 # =============================================================================
 validate_no_self_approval() {
     local FILE=$1
+    # Approval-by-location (#140): a file NEWLY appearing in proposals/approved/
+    # with approved: true is an approval exactly like flipping the flag — moving
+    # the file must not bypass the human seal. Files already in approved/ at
+    # HEAD are untouched (edits to previously-approved proposals need no seal).
+    if [[ "$FILE" =~ ^proposals/approved/[^/]+\.md$ ]]; then
+        git cat-file -e "HEAD:$FILE" 2>/dev/null && return 0
+        local MOVED_APPROVED=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+        [ "$MOVED_APPROVED" = "true" ] || return 0
+        touch "$(git rev-parse --git-dir)/dw-needs-human-approval"
+        return 0
+    fi
     [[ ! "$FILE" =~ ^proposals/[^/]+\.md$ ]] && return 0
-    [[ "$FILE" =~ ^proposals/approved/ ]] && return 0
     local OLD NEW
     OLD=$(git show "HEAD:$FILE" 2>/dev/null | grep "^approved:" | sed 's/^approved: *//')
     NEW=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
-    [ "$OLD" = "false" ] && [ "$NEW" = "true" ] || return 0
+    # Arm on a false→true flip AND on a brand-new proposal born approved: true
+    # (empty OLD) — the same bypass family as the move (#140).
+    [ "$NEW" = "true" ] && { [ "$OLD" = "false" ] || [ -z "$OLD" ]; } || return 0
     # A proposal's `approved` flipped false→true. The HUMAN-APPROVED:<name> marker
     # that authorizes this lives in the commit MESSAGE, which pre-commit cannot
     # read reliably: at this stage .git/COMMIT_EDITMSG still holds the PREVIOUS
