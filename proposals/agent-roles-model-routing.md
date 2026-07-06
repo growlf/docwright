@@ -562,3 +562,18 @@ narrowed by Rounds 2–3. Original text retained.)*
   Still open for Round 5: role granularity / Surveyor–Incident merge,
   routing-drift countermeasure design (gate 2), data classification
   (gate 3), `assigned_to`-vs-role collision (R3 f.9).
+- **2026-07-05 — Round 4 addendum (with BDFL): Round 6 rig identified.**
+  A LAN GPU host (RTX 3090, 24GB VRAM, ~64GB RAM) managed in a separate
+  private infrastructure vault is available for the Round 6 local-model
+  dry-run, already fronted by an OpenAI-compatible proxy stack with
+  24–32B-class quantized models pulled. This raises the tested capability
+  floor from the assumed 7–13B (ai-stack Xe iGPU) to 24–32B, materially
+  improving the odds for the local-model routing rows — the floor
+  question becomes "which tier", not "whether". Conditions carried over
+  from the security consideration: the model process receives no
+  repository credentials; endpoints stay LAN-only/SSH-tunneled; any
+  vault-write experiment goes through dw MCP tools so dispatch-layer
+  validation (Gate 1) is exercised by the dry-run itself. Rig setup is
+  captured as a templated proposal in the infrastructure vault (host
+  details deliberately kept out of this public repo). Sequencing
+  unchanged: Round 5 (Gemini) first, then Round 6 on this rig.
