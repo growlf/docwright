@@ -13,16 +13,19 @@ priority: high
 mode: autonomous
 scenario_synthesis: Web UI write-integrity cluster — centralize frontmatter parse/serialize in dispatch, share the completion gate across surfaces, auto-commit all UI lifecycle writes, stop syncTestCriteria save rewrites, safe WYSIWYG round-trip, approve idempotency self-heal
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 phase: 4
 total_steps: 6
-completed_steps: 5
+completed_steps: 6
 github_epic: ""
 automated: full
 milestone: v0.5.0
 channel: dev
 gate_note: "Changed files are untestable types: plans/webui-write-integrity.md"
+tests_last_run: "2026-07-06T03:57:36.908Z"
+tests_last_result: pass
+tests_last_commit: b308e2b
 ---
 # Web UI write integrity: shared parser, shared gate, committed transitions, safe saves
 
@@ -59,7 +62,7 @@ begin") — no separate proposal; the seven linked issues are the intake record.
 | 3 | Auto-commit every Web UI lifecycle write | Extend the PR #111 `commitPaths` pattern to approve-sub-plan/plan-review, create-plan, transition-completed, and `/api/write`; no UI action leaves the working tree dirty. #142 resolution folded in: keep the completion doc (mirrors MCP by design) but stop re-serializing frontmatter into it. | ✅ Done | #147 | — |
 | 4 | syncTestCriteria only on step-table change | Plain saves and lifecycle transitions must not rewrite the Testing Plan; sync runs only when the Implementation Steps table actually changed, and never against `plans/completed/`. Sweep archived plans for already-injected phantom blocks (contribution-pipeline has one). | ✅ Done | #148 | — |
 | 5 | WYSIWYG safe round-trip | turndown: GFM task-list rule, `-` bullet marker, stop escaping underscores in table cells; body-only round-trip (frontmatter never re-serialized on save); block WYSIWYG mode on governance docs until round-trip is proven byte-stable. | ✅ Done | #149 | — |
-| 6 | Approve idempotency self-heal | `approve-proposal` short-circuit validates the `consumed_by` target exists; if missing, clear the stale pointer and proceed (with audit note) instead of silently no-opping. | ⏳ Pending | #141 | — |
+| 6 | Approve idempotency self-heal | `approve-proposal` short-circuit validates the `consumed_by` target exists; if missing, clear the stale pointer and proceed (with audit note) instead of silently no-opping. | ✅ Done | #141 | — |
 
 ## Parallelism Map
 
@@ -74,21 +77,31 @@ begin") — no separate proposal; the seven linked issues are the intake record.
 
 ## Testing Plan
 
-### Step Verification
-- [ ] Step 1: no `parseFm`-style copies remain outside dispatch (grep-guard test); all suites green after consumers switch
-- [ ] Step 2: parity test — the same gate-failing fixture is refused by both MCP `transition_to_completed` and the webui endpoint with equivalent errors
-- [ ] Step 3: each UI lifecycle action leaves `git status` clean in a temp-vault test; completion doc no longer re-serializes frontmatter
-- [ ] Step 4: a plain document save leaves the Testing Plan byte-identical; step-table edit still syncs; archived plans untouched and swept clean
-- [ ] Step 5: WYSIWYG round-trip test — task-list checkboxes, `-` bullets, and underscores survive save byte-identically; governance docs refuse WYSIWYG until stable
-- [ ] Step 6: stale `consumed_by` fixture self-heals and approve proceeds; healthy pointer still short-circuits
+- [x] Step 1: no `parseFm`-style copies remain outside dispatch (grep-guard test); all suites green after consumers switch
+- [x] Step 2: parity test — the same gate-failing fixture is refused by both MCP `transition_to_completed` and the webui endpoint with equivalent errors
+- [x] Step 3: each UI lifecycle action leaves `git status` clean in a temp-vault test; completion doc no longer re-serializes frontmatter
+- [x] Step 4: a plain document save leaves the Testing Plan byte-identical; step-table edit still syncs; archived plans untouched and swept clean
+- [x] Step 5: WYSIWYG round-trip test — task-list checkboxes, `-` bullets, and underscores survive save byte-identically; governance docs refuse WYSIWYG until stable
+- [x] Step 6: stale `consumed_by` fixture self-heals and approve proceeds; healthy pointer still short-circuits
+
+> Evidence: Step 1 `test/dispatch/frontmatter-canonical.test.ts` (grep-guard; +page.svelte
+> allowlist entry removed in Step 5, PR #213). Step 2 `test/integration/gate-parity.test.ts`
+> (same function object + byte-identical refusal, PR #195). Step 3
+> `test/integration/webui-commit.test.ts` (clean tree + user-authored commit + MCP-identical
+> completion doc, PR #199). Step 4 `test/dispatch/test-criteria.test.ts` +
+> `test/integration/write-sync.test.ts`; sweep removed 26 phantom lines from 3 archived plans
+> (PR #209). Step 5 `test/webui/markdown-roundtrip.test.ts` (11 cases) + Playwright visual
+> smoke: plan Source-only, proposal WYSIWYG intact (PR #213). Step 6
+> `test/integration/approve-selfheal.test.ts` (PR #216). All suites run in CI as of PR #213
+> (test:integration + test:webui added to the pipeline).
 
 ### Integration & Regression
-- [ ] Full `npm test` green
-- [ ] `tsc --noEmit` clean; webui builds
+- [x] Full `npm test` green — recorded by verify_plan_tests (see tests_last_* frontmatter); also green in CI on every step PR (#187 #195 #199 #209 #213 #216)
+- [x] `tsc --noEmit` clean; webui builds — compile:mcp + webui production build verified after every step; CI Lint/Typecheck green on all six PRs
 
 ### Gate Criteria
-- [ ] All seven consumed issues closed by merged PRs (or explicitly re-scoped with BDFL note)
-- [ ] No Web UI write path can mutate a governance doc without the shared parser, the shared gate, and a commit
+- [x] All seven consumed issues closed by merged PRs (or explicitly re-scoped with BDFL note) — #94 (PR #187), #172 (PR #195), #147 + #142 (PR #199), #148 (PR #209), #149 (PR #213), #141 (PR #216); all verified CLOSED on GitHub, all resolved in the issue store with closed_by_pr
+- [x] No Web UI write path can mutate a governance doc without the shared parser, the shared gate, and a commit — parser: grep-guard forbids copies; gate: webui transition-completed runs dispatch checkCompletionGate (parity-tested); commit: all four write endpoints commit via commitPaths (fixture-tested); WYSIWYG additionally blocked on plans/policies/decisions
 
 ## Rollback Procedures
 
@@ -116,3 +129,6 @@ the guard restores current behavior.
 | 2026-07-06 | Step 3 delivered (GH #147 + folded #142, PR #199): commitPaths extended to transition-completed, approve-sub-plan, create-plan, and /api/write — every UI write commits locally as the authenticated user, tree never left dirty; approve-sub-plan/create-plan/transition-completed now requireAuth; plan-review/apply-review write nothing (no commit needed). Completion doc now generated by shared src/dispatch/completion-doc.ts (extracted from MCP transition_to_completed) — both surfaces byte-identical, webui quote-wrapped re-serialization deleted. Proven by test/integration/webui-commit.test.ts in a git-initialized fixture vault. Full suite green, compile:mcp clean, webui build clean. | NetYeti |
 | 2026-07-06 | Step 4 delivered (GH #148, PR #209): /api/write gates syncTestCriteria on new dispatch stepsChanged helper — plain saves never rewrite the Testing Plan, step-table changes still sync, plans/completed/ never synced (now under test). New removePhantomStepDuplicates + scripts/sweep-phantom-test-blocks.ts swept 26 phantom lines from 3 archived plans (contribution-pipeline's 3 known + 23 more in governance-engine-view-container and docwright-adopt). First test coverage for test-criteria module + write-sync integration test through the real endpoint. Full suite green, compile:mcp and webui build clean. | NetYeti |
 | 2026-07-06 | Step 5 delivered (GH #149, PR #213): editor never re-serializes frontmatter — $lib/markdown-roundtrip.ts keeps the original frontmatter text block, body saves reattach it byte-identical, property edits apply per-field via dispatch setFrontmatterField (now array/block-list-aware); client parseFm/stringifyFm/buildRaw deleted, grep-guard allowlist entry removed; latent source-mode clobber fixed. turndown: tight '-' bullets, task-list checkboxes survive, underscores unescaped. WYSIWYG blocked on plans/policies/decisions until round-trip proven byte-stable there. CI gap closed: test:integration + test:webui now run in the pipeline (with src/webui npm ci). 11 round-trip unit tests + Playwright visual smoke (plan Source-only, proposal WYSIWYG intact). Full suite green. | NetYeti |
+| 2026-07-06 | Step 6 delivered (GH #141, PR #216): approve-proposal short-circuits only when the consumed_by target exists; stale pointers are audit-logged (CONSUMED_BY_SELF_HEAL) and approval proceeds, overwriting the pointer with the new plan. Integration test proves both paths (valid pointer still guards #115; stale pointer heals end-to-end). ALL 6 STEPS COMPLETE — full suite green, awaiting human test review + completion. | NetYeti |
+| 2026-07-06 | Testing Plan reconciled with delivered evidence: all Step Verification, Integration & Regression, and Gate Criteria boxes checked with per-step test citations and PR references. Awaiting verify_plan_tests green stamp + human review (tests_human_reviewed) before completion. | NetYeti |
+| 2026-07-06 | Test run recorded via verify_plan_tests: npm test → PASS @ b308e2b | NetYeti |
