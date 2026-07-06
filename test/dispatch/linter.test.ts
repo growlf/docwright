@@ -531,6 +531,29 @@ describe('Plan/issue linkage fields', () => {
     assert.ok(!err, 'plans without tracked_by should still be valid');
   });
 
+  it('warns when plan has linked issues (derived progress)', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      tracked_by: ['issues/issue-1.md', 'issues/issue-2.md'],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'tracked_by' && r.severity === 'warn');
+    assert.ok(warn, 'should warn when plan has tracked_by issues');
+    assert.ok(warn?.message.includes('derived from issue state'));
+  });
+
+  it('does not warn on plan with empty tracked_by', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      tracked_by: [],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const warn = results.find(r => r.field === 'tracked_by' && r.severity === 'warn');
+    assert.ok(!warn, 'empty tracked_by should not warn');
+  });
+
   it('accepts deliverables as YAML array with title required', () => {
     const fm = {
       title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
