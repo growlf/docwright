@@ -22,6 +22,8 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 > **Auto-generated** by `scripts/sync-claude-skills.ts`. Do not edit manually.
 > Run `npm run sync:skills` after adding, removing, or renaming a skill.
 
+<!-- skills-table-start -->
+
 | Skill | Description | SKILL.md |
 |-------|-------------|----------|
 | `docwright-backup` | Backup and recovery procedures for infrastructure and configuration | [`.opencode/skills/docwright-backup/SKILL.md`](.opencode/skills/docwright-backup/SKILL.md) |
