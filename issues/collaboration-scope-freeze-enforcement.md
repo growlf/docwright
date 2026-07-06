@@ -1,6 +1,6 @@
 ---
 title: Scope-freeze enforcement (block proposal_source edits post-Start)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,11 +22,11 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Pre-commit hook detects plan in in-progress state
-- [ ] Blocks edits to `proposal_source` field (or requires decision doc + override)
-- [ ] Error message explains scope-freeze policy
-- [ ] Allows other field edits (status, history, etc.)
-- [ ] Fixture test: blocked edit attempt, decision doc permits override
+- [x] Pre-commit hook detects plan in in-progress state
+- [x] Blocks edits to `proposal_source` field (or requires decision doc + override)
+- [x] Error message explains scope-freeze policy
+- [x] Allows other field edits (status, history, etc.)
+- [x] Fixture test: blocked edit attempt, decision doc permits override
 
 ## Details
 

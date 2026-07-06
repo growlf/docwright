@@ -388,6 +388,34 @@ describe('diffAnnotate', () => {
     assert.strictEqual(ann.gateFlags.length, 0);
     assert.strictEqual(ann.statusTransition, undefined);
   });
+
+  it('flags scope-freeze when proposal_source changes on in-progress plan', () => {
+    const before = doc({ title: 'P', status: 'in-progress', proposal_source: 'proposals/approved/old.md' });
+    const after = doc({ title: 'P', status: 'in-progress', proposal_source: 'proposals/approved/new.md' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(ann.gateFlags.includes('scope-freeze'), 'should flag scope-freeze on proposal_source edit');
+  });
+
+  it('does not flag scope-freeze when proposal_source stays the same', () => {
+    const before = doc({ title: 'P', status: 'in-progress', proposal_source: 'proposals/approved/same.md' });
+    const after = doc({ title: 'P', status: 'in-progress', proposal_source: 'proposals/approved/same.md' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(!ann.gateFlags.includes('scope-freeze'), 'should not flag scope-freeze when proposal_source unchanged');
+  });
+
+  it('does not flag scope-freeze when plan is draft', () => {
+    const before = doc({ title: 'P', status: 'draft', proposal_source: 'proposals/approved/old.md' });
+    const after = doc({ title: 'P', status: 'draft', proposal_source: 'proposals/approved/new.md' });
+    const ann = diffAnnotate('plans/p.md', before, after);
+    assert.ok(!ann.gateFlags.includes('scope-freeze'), 'should not flag scope-freeze on draft plan');
+  });
+
+  it('does not flag scope-freeze when plan is completed', () => {
+    const before = doc({ title: 'P', status: 'completed', proposal_source: 'proposals/approved/old.md' });
+    const after = doc({ title: 'P', status: 'completed', proposal_source: 'proposals/approved/new.md' });
+    const ann = diffAnnotate('plans/completed/p.md', before, after);
+    assert.ok(!ann.gateFlags.includes('scope-freeze'), 'should not flag scope-freeze on completed plan');
+  });
 });
 
 describe('Milestone rule + issues/ handling', () => {
