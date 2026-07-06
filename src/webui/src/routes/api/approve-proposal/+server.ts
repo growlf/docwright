@@ -66,13 +66,21 @@ export const POST = requireAuth(async ({ request, locals }) => {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
 
-  // Check whether proposal already has a plan — reject duplicate creation (#115)
+  // Check whether proposal already has a plan (#115, #141).
+  // If consumed_by points to a missing plan, clear the stale pointer and proceed (self-heal).
+  // If consumed_by points to an existing plan, reject duplicate creation.
   if (fm.consumed_by) {
-    return json({
-      ok: true,
-      alreadyExists: true,
-      planPath: fm.consumed_by,
-    });
+    const consumedPath = path.resolve(REPO_ROOT, fm.consumed_by);
+    if (fs.existsSync(consumedPath)) {
+      return json({
+        ok: true,
+        alreadyExists: true,
+        planPath: fm.consumed_by,
+      });
+    }
+    // Stale pointer: the plan doesn't exist. Clear it with an audit note and proceed.
+    logAudit('STALE_CONSUMED_BY_CLEARED', `proposals/${norm}: consumed_by=${fm.consumed_by} (plan missing) — clearing and proceeding with approval`);
+    fm.consumed_by = '';
   }
 
   // Also check the create-plan slug path for cross-path collisions (#115)
