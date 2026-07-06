@@ -1,6 +1,7 @@
 ---
 title: "Web UI write integrity: shared parser, shared gate, committed transitions, safe saves"
 status: completed
+completed_date: 2026-07-06
 author: NetYeti
 created: 2026-07-05
 tags:
@@ -25,7 +26,7 @@ channel: dev
 tests_last_run: "2026-07-06T03:57:36.908Z"
 tests_last_result: pass
 tests_last_commit: b308e2b
-completed_date: 2026-07-06
+_path: plans/completed/webui-write-integrity
 ---
 # Web UI write integrity: shared parser, shared gate, committed transitions, safe saves
 
