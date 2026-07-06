@@ -13,7 +13,6 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog.
 scope_decision: in-scope
 github_issue: 113
-milestone: backlog
 assigned_to: []
 created_by: NetYeti@host
 ---

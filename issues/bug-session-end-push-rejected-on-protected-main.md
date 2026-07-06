@@ -19,7 +19,6 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog.
 scope_decision: in-scope
 github_issue: 146
-milestone: v0.5.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
 ---
