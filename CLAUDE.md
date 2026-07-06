@@ -2,13 +2,18 @@
 # Auto-read by Claude Code on session start.
 # Keep this lean — full context is in the Drive folder and PROJECT.md.
 
-## Available skills
+## How to Invoke Skills
 
-**Claude Code:** Check `.claude/skills/<name>.md` first — these are Claude Code-native
-versions that use bash tools directly instead of MCP. Fall back to the OpenCode skill
-(table below) only if no `.claude/skills/` version exists.
+**FIRST: Check `.claude/SKILL-INVOCATION-RULES.md`** — it has a decision tree that tells you whether to:
+- Use `Skill(name: "...")` (harness-registered skills like Explore, Plan, code-reviewer)
+- Read `.claude/skills/<name>.md` and execute directly (DocWright skills like endsession)
+- Read `.opencode/skills/<name>/SKILL.md` and follow the process (OpenCode workflow skills)
 
-<!-- skills-table-start -->
+**Key rule:** `Skill()` tool only works on harness-registered skills. DocWright skills must be read and executed manually. See `.claude/SKILL-INVOCATION-RULES.md` for the full matrix.
+
+---
+
+## Available Skills (Reference)
 
 DocWright ships workflow skills under `.opencode/skills/`. Each directory
 contains a `SKILL.md` with detection heuristics and step-by-step instructions.
@@ -16,6 +21,8 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 
 > **Auto-generated** by `scripts/sync-claude-skills.ts`. Do not edit manually.
 > Run `npm run sync:skills` after adding, removing, or renaming a skill.
+
+<!-- skills-table-start -->
 
 | Skill | Description | SKILL.md |
 |-------|-------------|----------|
