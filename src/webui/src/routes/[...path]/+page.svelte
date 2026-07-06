@@ -24,6 +24,9 @@
 
   let raw = $state('');
   let content = $state('');
+  // Track the body from the last confirmed file state (load or save) to detect
+  // whether the body has been edited — avoids false positives from state staleness (#218)
+  let confirmedBody = $state('');
   // Original frontmatter text block — reattached verbatim on save; parsed
   // `frontmatter` is a display/logic view and is NEVER re-serialized (#149).
   let fmText = $state<string | null>(null);
@@ -138,7 +141,7 @@
           if (foundPath) { goto('/' + foundPath.replace(/\.md$/, ''), { replaceState: true }); return; }
         }
         // Truly missing — show not-found state
-        raw = ''; content = ''; fmText = null; frontmatter = null; error = '404';
+        raw = ''; content = ''; confirmedBody = ''; fmText = null; frontmatter = null; error = '404';
       } else {
         error = 'Failed to load file';
       }
@@ -152,6 +155,7 @@
     fmText = parsed.fmText;
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
+    confirmedBody = parsed.body;
     html = md.render(content);
     // Auto-improve when navigating from proposal approval
     if (pendingAutoImprove) {
@@ -288,6 +292,7 @@
         fmText = parsed.fmText;
         frontmatter = parsed.frontmatter;
         content = parsed.body;
+        confirmedBody = parsed.body;
         html = md.render(content);
         showToast('Saved', 2000);
         if (docType === 'plan' && frontmatter?.status === 'completed') {
@@ -317,9 +322,11 @@
     const prevApproved = prevParsed.frontmatter?.approved;
     if (fm) frontmatter = { ...fm };
     // If the plan body was edited (not just frontmatter), reset tests_defined
-    // so the user must re-run tests before completing.
+    // so the user must re-run tests before completing. Compare against confirmedBody
+    // (the body from the last confirmed file state) to avoid false positives from
+    // state staleness or SSE reloads (#218).
     if (docType === 'plan' && frontmatter?.tests_defined === true) {
-      if (content !== prevParsed.body) {
+      if (content !== confirmedBody) {
         frontmatter = { ...frontmatter, tests_defined: false };
       }
     }
@@ -518,6 +525,7 @@
     fmText = parsed.fmText;
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
+    confirmedBody = parsed.body;
     html = md.render(content);
     // Re-load to get the fresh ETag from the server
     loadFile();
