@@ -1487,3 +1487,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
 
 **Session note:** `docs/session-notes/session_note_202607051732.md`
+
+---
+
+## Session: 2026-07-06 — Plan _path fix + milestone taxonomy
+
+**Focus:** Plan _path fix + milestone taxonomy
+
+**Completed:**
+- [x] chore: version-based milestone taxonomy + drop Phase from roadmap + tag proposals
+- [x] chore: version-based milestone taxonomy + drop Phase from roadmap + tag proposals
+- [x] docs: webui-write-integrity Step 4 → done; #148 resolved in issue store
+- [x] fix: syncTestCriteria only on step-table change; sweep phantom Testing Plan duplicates (#148)
+- [x] chore: leap-frog dogfood from main — v0.4.9 (gate parity + auto-commit UI writes)
+- [x] chore: bump version to 0.4.9 — write-integrity gate + auto-commit UI writes
+- [x] fix: Web UI approve→plan generator emits _path (kills out-of-band backfill churn)
+- [x] fix: Web UI approve→plan generator emits _path (kills out-of-band backfill churn)
+- [x] chore: bump version to 0.4.9 — write-integrity gate + auto-commit UI writes
+- [x] chore: capture #205 via bug-report bridge — release bump never lands on main (VERSION drift)
+
+**Session note:** `docs/session-notes/session_note_202607060130.md`
