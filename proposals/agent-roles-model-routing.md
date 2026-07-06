@@ -281,7 +281,8 @@ No plan is drafted from this proposal until (consolidated from Rounds
    heuristics (Round 2 f.1). *Draft: Annex A.4, pending Round 5 review.*
 3. **Data classification is decided** — which roles' data may be sent to
    which endpoints (hosted vs. LAN); gates every hosted-small-model
-   routing row (Round 2 f.5).
+   routing row (Round 2 f.5). *Draft: Annex B, pending BDFL rulings per
+   role and Round 5 review.*
 4. **The Critic pilot passes** its three validations (§D).
 5. **Local-model rows only:** Round-6 ollama dry-run transcripts attached
    to the Research Log (Round 2 f.4) — gates those rows' activation, not
@@ -374,6 +375,58 @@ criterion "measurable drift reduction" measurable.
 - **Deferred:** per-connection identity on shared SSE (per-role ports?
   auth header? one process per role?) — needed before any multi-role
   Web-UI surface, not for the pilot.
+
+## Annex B — Gate 3 draft: per-role data classification
+
+*(Round 4 addendum. Status: **draft with recommendations — each row
+needs a BDFL ruling** (AI does not decide data-egress policy). Also a
+Round 5 review target.)*
+
+### B.1 Data classes
+
+| Class | Definition | Max endpoint tier |
+|---|---|---|
+| **C1 Public** | Content already public (DocWright repo on main: code, policies, public proposals) | Any endpoint |
+| **C2 Vault-internal** | Private vault content: org proposals, plans, session notes, member names | Hosted frontier under contracted provider terms; hosted-small and below per vault-owner ruling |
+| **C3 Infrastructure-sensitive** | Device inventories, IPs/MACs, topology, audit/vulnerability findings, incident details | **LAN-only** (local models via olla/LiteLLM) |
+| **C4 Secrets** | Credentials, tokens, keys | **No model context, ever** — not even local. Runtime `bw` retrieval by humans/scripts only; a secret in a prompt is an incident |
+
+Classification is **per-vault, not global**: DocWright-the-repo is
+mostly C1, but adopter vaults (Cascade STEAM, MSP) are C2+ by default.
+Mechanism: the vault profile declares its default class; the Annex A
+role manifest gains a `max_endpoint_tier` per role; routing validates
+role × vault-class × endpoint before dispatch — code, not memory.
+
+### B.2 Role rulings
+
+| Role | Data it handles | Class | Recommended endpoint ceiling | BDFL ruling |
+|---|---|---|---|---|
+| Registrar | Frontmatter, lifecycle state, doc bodies | C1–C2 | Hosted frontier | ☐ |
+| Critic | Full plans/proposals | C1–C2 | Hosted frontier | ☐ |
+| Release Warden | Commits, PRs, CI status | C1 (public repo) / C2 (private vaults) | Hosted-small for C1 vaults; frontier for C2 | ☐ |
+| Session | Status, orientation, session notes | C2 | Hosted frontier (runs in main context anyway) | ☐ |
+| Triage | Bug reports, logs, stack traces | C2 **with C3/C4 leakage risk** — see B.3 | LAN-only, or frontier behind a redaction pass; **not hosted-small** | ☐ |
+| Surveyor | Device YAMLs, IPs, topology | C3 | LAN-only (confirms matrix) | ☐ |
+| Security Auditor | Vulnerability and audit findings | C3 (highest sensitivity) | LAN-only (confirms matrix) | ☐ |
+| Incident Responder | Incident details incl. topology/vuln info | C3 | **Exception decision — see B.3** | ☐ |
+
+### B.3 Two findings that push back on the §B routing matrix
+
+1. **Triage on Gemini Flash is not classification-safe.** Bug reports
+   and pasted logs routinely embed IPs, hostnames, and occasionally
+   secrets — C3/C4 material arriving unlabeled inside C2 traffic. The
+   matrix's "small/fast hosted" assignment for Triage should be
+   withdrawn unless a mechanical redaction pass (patterns: IP/MAC/key
+   formats) runs before egress. Recommended: LAN-local Triage, which
+   also gives cluster-llm a high-volume, low-stakes proving lane.
+2. **Incident Responder needs an explicit exception ruling.** The
+   matrix says "frontier by default, local fallback" — but incident
+   context is C3. Options: (a) strict — LAN-only, accept weaker
+   judgment during incidents; (b) exception — frontier permitted under
+   contracted provider terms because response quality is
+   safety-relevant, hosted-small never, local fallback mandatory for
+   connectivity loss. Recommended: (b), recorded as a standing,
+   documented exception rather than a silent default.
 
 ## Development Model — parallel branch `agent-roles`
 
@@ -672,3 +725,14 @@ narrowed by Rounds 2–3. Original text retained.)*
   Honest limits recorded in A.5 (config-file trust boundary, MCP bypass
   via direct writes, asserted-not-proven model stamp). Annex A is a
   Round 5 review target, added to the Gemini briefing as scope item 5.
+- **2026-07-05 — Claude (Fable 5) via Cowork, Round 4 addendum: Annex B
+  drafted (Gate 3, per-role data classification).** Four data classes
+  (C1 public → C4 secrets-never-in-context), per-vault not global, and
+  a role→endpoint-ceiling table with a BDFL ruling slot per row (AI
+  recommends, does not decide egress policy). Mechanism ties into the
+  Annex A role manifest via `max_endpoint_tier`, validated in code
+  before dispatch. Two findings push back on the §B matrix: Triage on
+  hosted-small is not classification-safe (logs leak C3/C4 material —
+  recommend LAN-local Triage, which also gives the Round 6 rig a
+  standing lane) and Incident Responder's frontier-by-default needs an
+  explicit documented exception ruling rather than a silent default.
