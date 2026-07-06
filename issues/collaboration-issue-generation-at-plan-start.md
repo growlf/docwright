@@ -1,6 +1,6 @@
 ---
 title: Build issue generation tool (plan-start → scaffold issues)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,12 +22,12 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] MCP tool or dispatch helper scaffolds issues from plan deliverables
-- [ ] One issue per deliverable with triage fields populated
-- [ ] Plan's `tracked_by:` list auto-populated with generated issue references
-- [ ] Each generated issue has `plan:` and `cross_link:` fields set
-- [ ] Tool integrates with plan-status transition (runs on in-progress)
-- [ ] Round-trip test: plan → issues → plan, no drift
+- [x] MCP tool or dispatch helper scaffolds issues from plan deliverables
+- [x] One issue per deliverable with triage fields populated
+- [x] Plan's `tracked_by:` list auto-populated with generated issue references
+- [x] Each generated issue has `plan:` and `cross_link:` fields set
+- [x] Tool integrates with plan-status transition (runs on in-progress)
+- [x] Round-trip test: plan → issues → plan, no drift
 
 ## Details
 

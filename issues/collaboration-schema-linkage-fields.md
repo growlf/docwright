@@ -1,6 +1,6 @@
 ---
 title: Add plan/issue linkage schema fields to org-operations
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,12 +22,12 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Add `tracked_by: []` field to plan type in org-operations schema
-- [ ] Add `plan:` field to issue type in org-operations schema
-- [ ] Add `cross_link:` field to issue type in org-operations schema
-- [ ] Fields are optional initially (backward-compat)
-- [ ] Pre-commit validation accepts lists of issue references
-- [ ] Schema passes validation tests
+- [x] Add `tracked_by: []` field to plan type in org-operations schema
+- [x] Add `plan:` field to issue type in org-operations schema
+- [x] Add `cross_link:` field to issue type in org-operations schema
+- [x] Fields are optional initially (backward-compat)
+- [x] Pre-commit validation accepts lists of issue references
+- [x] Schema passes validation tests
 
 ## Details
 

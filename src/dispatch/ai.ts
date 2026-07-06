@@ -30,7 +30,7 @@ export interface ComplexityResult {
 
 export interface AIEngine {
   findSimilar(targetPath: string, candidates: string[], vaultRoot: string): Promise<SimilarityResult[]>;
-  fillProposal(fm: Record<string, any>, body: string): Promise<string>;
+  fillProposal(fm: Record<string, unknown>, body: string): Promise<string>;
   critiqueDocument(content: string): Promise<string>;
   /** Phase 3 — AI pre-review for lifecycle gates */
   gatePreReview(
@@ -42,7 +42,7 @@ export interface AIEngine {
     aiPrompt?: string,
   ): Promise<GatePreReviewResult>;
   /** Phase 3 — AI-powered complexity estimation */
-  estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult>;
+  estimateComplexity(body: string, frontmatter: Record<string, unknown>): Promise<ComplexityResult>;
 }
 
 // ── Shared helpers ──────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ export class KeywordEngine implements AIEngine {
       .sort((a, b) => b.score - a.score);
   }
 
-  async fillProposal(_fm: Record<string, any>, body: string): Promise<string> {
+  async fillProposal(_fm: Record<string, unknown>, body: string): Promise<string> {
     return body + '\n\n*(AI fill-in unavailable — OpenCode not configured)*';
   }
 
@@ -145,7 +145,7 @@ export class KeywordEngine implements AIEngine {
     };
   }
 
-  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+  async estimateComplexity(body: string, frontmatter: Record<string, unknown>): Promise<ComplexityResult> {
     const bodyLower = body.toLowerCase();
     const highKeywords = [
       'refactor', 'rewrite', 'unified', 'architecture', 'migration',
@@ -279,7 +279,7 @@ export class OpenCodeEngine implements AIEngine {
     }
   }
 
-  async fillProposal(fm: Record<string, any>, body: string): Promise<string> {
+  async fillProposal(fm: Record<string, unknown>, body: string): Promise<string> {
     const title = fm.title || '(untitled)';
     const tags  = Array.isArray(fm.tags) ? fm.tags.join(', ') : String(fm.tags || '');
     const prompt =
@@ -363,7 +363,7 @@ Respond with ONLY valid JSON:`;
     }
   }
 
-  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+  async estimateComplexity(body: string, frontmatter: Record<string, unknown>): Promise<ComplexityResult> {
     const title = frontmatter.title || '(untitled)';
     const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : String(frontmatter.tags || '');
     const deps = Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on.join(', ') : '';
@@ -459,7 +459,7 @@ export class OllamaEngine implements AIEngine {
     }
   }
 
-  async fillProposal(fm: Record<string, any>, body: string): Promise<string> {
+  async fillProposal(fm: Record<string, unknown>, body: string): Promise<string> {
     const title = fm.title || '(untitled)';
     const tags  = Array.isArray(fm.tags) ? fm.tags.join(', ') : String(fm.tags || '');
     const prompt =
@@ -542,7 +542,7 @@ Respond with ONLY valid JSON:`;
     }
   }
 
-  async estimateComplexity(body: string, frontmatter: Record<string, any>): Promise<ComplexityResult> {
+  async estimateComplexity(body: string, frontmatter: Record<string, unknown>): Promise<ComplexityResult> {
     const title = frontmatter.title || '(untitled)';
     const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : String(frontmatter.tags || '');
     const deps = Array.isArray(frontmatter.depends_on) ? frontmatter.depends_on.join(', ') : '';

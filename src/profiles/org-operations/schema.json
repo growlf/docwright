@@ -32,7 +32,9 @@
         "scope_decision":       { "type": "string", "enum": ["in-scope", "out-of-scope", "duplicate", "deferred"], "description": "Outcome of scope check (required when status: scope-checked)" },
         "scope_notes":          { "type": "string", "description": "If duplicate: link to canonical; if out-of-scope: justification; if deferred: target milestone" },
         "proposal_source":      { "type": "string", "description": "Path to proposal that addresses this issue (set when status: proposal-linked)" },
-        "consumed_by":          { "type": "string", "description": "Alias for proposal_source, for clarity" }
+        "consumed_by":          { "type": "string", "description": "Alias for proposal_source, for clarity" },
+        "plan":                 { "type": "string", "description": "Filename of plan this issue is tracked by" },
+        "cross_link":           { "type": "string", "description": "Full path to plan (for wikilink and bidirectional reference)" }
       },
       "if": {
         "properties": { "status": { "const": "triaged" } },
@@ -54,7 +56,9 @@
         "phase":                { "type": "integer" },
         "parent_plan":          { "type": "string", "description": "Filename of parent plan (omit if top-level)" },
         "parent_deliverable":   { "type": "string", "description": "Row number in parent's Deliverables table" },
-        "tags":                 { "type": "array", "items": { "type": "string" } }
+        "tags":                 { "type": "array", "items": { "type": "string" } },
+        "tracked_by":           { "type": "array", "items": { "type": "string" }, "description": "Issue filenames or paths tracked by this plan" },
+        "deliverables":         { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "description": { "type": "string" }, "acceptance_criteria": { "type": "array", "items": { "type": "string" } } }, "required": ["title"] }, "description": "Workable deliverables; each becomes an issue at plan-start" }
       }
     },
     "research": {

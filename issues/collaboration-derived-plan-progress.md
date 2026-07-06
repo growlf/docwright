@@ -1,6 +1,6 @@
 ---
 title: Compute plan completion from issue state (derived progress)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,12 +22,12 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Plan's completion status computed from linked issues' state
-- [ ] All issues resolved → plan eligible for completion
-- [ ] Step-table no longer hand-updated once issues exist
-- [ ] Derived view computes completed_steps from issue count
-- [ ] Fixture test: issues → plan completion, no manual edits
-- [ ] Retirement: hand-updated step-table becomes read-only
+- [x] Plan's completion status computed from linked issues' state
+- [x] All issues resolved → plan eligible for completion
+- [x] Step-table no longer hand-updated once issues exist
+- [x] Derived view computes completed_steps from issue count
+- [x] Fixture test: issues → plan completion, no manual edits
+- [x] Retirement: hand-updated step-table becomes read-only
 
 ## Details
 

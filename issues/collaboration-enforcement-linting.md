@@ -1,6 +1,6 @@
 ---
 title: Add enforcement linting (priority, epic link, tracked_by list)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,12 +22,12 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Pre-commit hook rejects issue without priority (if planned)
-- [ ] Pre-commit hook rejects planned issue without epic/cross_link
-- [ ] Pre-commit hook rejects in-progress plan without `tracked_by:` list
-- [ ] CI check enforces same rules
-- [ ] Error messages are clear and actionable
-- [ ] Fixture tests: all violations caught
+- [x] Pre-commit hook rejects issue without priority (if planned)
+- [x] Pre-commit hook rejects planned issue without epic/cross_link
+- [x] Pre-commit hook rejects in-progress plan without `tracked_by:` list
+- [x] CI check enforces same rules
+- [x] Error messages are clear and actionable
+- [x] Fixture tests: all violations caught
 
 ## Details
 
