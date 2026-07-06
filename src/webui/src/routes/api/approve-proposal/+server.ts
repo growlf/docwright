@@ -223,7 +223,7 @@ export const POST = requireAuth(async ({ request, locals }) => {
 
   const planContent = assemblePlan({
     title, author, created: now, tags: tagList, priority,
-    proposalSource: approvedRel, assigned, summary,
+    proposalSource: approvedRel, planPath: planRel, assigned, summary,
     steps: stepsBody, testingPlan: testingBody, rollback: rollbackBody, riskAssessment: riskBody,
   });
   const planPath = path.join(REPO_ROOT, planRel);
