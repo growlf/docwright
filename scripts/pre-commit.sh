@@ -21,10 +21,13 @@ print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 print_status()  { echo -e "${GREEN}[✓]${NC} $1"; }
 
 # =============================================================================
-# 1. Identity + Network (cached in /tmp/)
+# 1. Identity + Network
+#    Identity cache is PER-REPO (under .git/) — identity resolves from this
+#    repo's .env, and a global /tmp cache let test-fixture identities poison
+#    real commit banners for an hour (#160). Network cache stays machine-global.
 # =============================================================================
 resolve_identity() {
-    local CACHE_FILE="/tmp/opencode-identity-cache"
+    local CACHE_FILE="$(git rev-parse --git-dir)/docwright-identity-cache"
     if [ -f "$CACHE_FILE" ] && [ "$(( $(date +%s) - $(stat -c %Y "$CACHE_FILE") ))" -lt 3600 ]; then
         cat "$CACHE_FILE"; return
     fi
