@@ -1,18 +1,15 @@
 ---
-title: "transition_to_completed must gate on a recorded green test run + fully-checked Testing Plan"
+title: transition_to_completed must gate on a recorded green test run + fully-checked Testing Plan
 status: resolved
-github_issue: 159
-closed_by_pr: "#161"
+created: 2026-07-05
 category: feature
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-  - enhancement
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
+tags: []
+github_issue: 159
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
+closed_by_pr: #161
 ---
 
 Found while closing out `plans/contribution-pipeline.md`: the Testing Plan checkboxes were never ticked because **no tooling connects an actual test run to the plan**, and `transition_to_completed` gates only on `status: completed` + no pending steps — a plan can complete with `tests_defined: false` and every verification box unchecked.

@@ -1,5 +1,5 @@
 ---
-title: "Test suite writes to the real audit/lifecycle.jsonl instead of an isolated temp store"
+title: Test suite writes to the real audit/lifecycle.jsonl instead of an isolated temp store
 status: resolved
 author: NetYeti
 author-role: contributor
@@ -8,16 +8,12 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - testing
-  - audit
-  - governance
-  - data-integrity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-closed_by_pr: "#84"
-cross_link: ""
+tags: []
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #84
+cross_link: 
 ---
 
 > The inaugural native code-issue in the `issues/` store — captured while dogfooding #68

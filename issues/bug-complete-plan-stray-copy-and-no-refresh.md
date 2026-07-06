@@ -1,9 +1,6 @@
 ---
-title: "Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel"
+title: Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel
 status: resolved
-closed_by_pr: "#199"
-resolved: 2026-07-06
-github_issue: 142
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -11,14 +8,13 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - webui
-  - lifecycle
-  - data-integrity
-  - reactivity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+github_issue: 142
 milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #199
+resolved: 2026-07-06
 ---
 
 > Found by dogfooding on 2026-06-30 completing the `governance-engine-view-container`

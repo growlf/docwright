@@ -1,7 +1,6 @@
 ---
-title: "research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles'"
+title: research-smoke tests fail: asset-management profile missing research type; test hardcodes '4 profiles'
 status: resolved
-github_issue: 145
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -9,15 +8,13 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - testing
-  - profiles
-  - schema
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-closed_by_pr: "#164"
-cross_link: ""
+tags: []
+github_issue: 145
 milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #164
+cross_link: 
 ---
 
 > Found 2026-07-01 during the test-isolation work — surfaced when the full `npm test`

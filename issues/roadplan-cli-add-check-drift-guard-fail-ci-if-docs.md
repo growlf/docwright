@@ -1,19 +1,21 @@
 ---
-title: "roadplan CLI: add --check drift guard (fail CI if docs/roadplan.md is stale)"
-status: open
-github_issue: 97
+title: roadplan CLI: add --check drift guard (fail CI if docs/roadplan.md is stale)
+status: scope-checked
+created: 2026-07-05
 category: feature
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-  - enhancement
-  - good first issue
-  - priority:low
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as feature / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 97
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 `scripts/generate-roadplan.ts` generates `docs/roadplan.md` but has no way to verify the committed copy is current. A `--check` mode (regenerate in-memory, diff against the committed file, exit non-zero if stale) lets CI catch a forgotten regen.

@@ -1,9 +1,6 @@
 ---
-title: "WYSIWYG editor corrupts documents and clobbers frontmatter on save"
+title: WYSIWYG editor corrupts documents and clobbers frontmatter on save
 status: resolved
-closed_by_pr: "#213"
-resolved: 2026-07-06
-github_issue: 149
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -11,15 +8,13 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - webui
-  - editor
-  - wysiwyg
-  - governance
-  - data-integrity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+github_issue: 149
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #213
+resolved: 2026-07-06
 ---
 
 > Found by dogfooding the Web UI on 2026-06-30 while trying to Complete the

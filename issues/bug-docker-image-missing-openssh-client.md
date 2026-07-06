@@ -1,7 +1,6 @@
 ---
-title: "Docker image lacks openssh-client — SSH remotes / deploy keys don't work despite entrypoint docs"
+title: Docker image lacks openssh-client — SSH remotes / deploy keys don't work despite entrypoint docs
 status: resolved
-closed_by_pr: "#134"
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -9,15 +8,11 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - docker
-  - deployment
-  - git
-  - ssh
-  - dogfooding
+tags: []
 milestone: v0.6.0
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #134
 ---
 
 > Found by dogfooding on 2026-07-05 setting up per-repo **deploy-key** git-push auth for the

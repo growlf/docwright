@@ -1,7 +1,6 @@
 ---
-title: "Governance hooks silently disabled when DOCWRIGHT_PATH is unset (non-interactive shells)"
-status: open
-github_issue: 143
+title: Governance hooks silently disabled when DOCWRIGHT_PATH is unset (non-interactive shells)
+status: scope-checked
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -9,14 +8,18 @@ category: bug
 priority: high
 complexity: low
 estimated_effort: S
-tags:
-  - governance
-  - hooks
-  - claude-code
-  - fail-safe
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-01
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-01
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 143
 milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Observed at session start on 2026-07-01: a burst of

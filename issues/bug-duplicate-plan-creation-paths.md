@@ -1,22 +1,17 @@
 ---
-title: "Two plan-creation paths (approve-proposal vs create-plan) let a proposal get duplicate plans"
+title: Two plan-creation paths (approve-proposal vs create-plan) let a proposal get duplicate plans
 status: resolved
-github_issue: 115
-closed_by_pr: "#127"
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
 category: bug
 priority: high
-tags:
-  - webui
-  - lifecycle
-  - plan-generation
-  - data-integrity
-  - governance
-created_by: "NetYeti@phoenix"
-assigned_to: ""
+tags: []
+github_issue: 115
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@phoenix
+closed_by_pr: #127
 ---
 
 > Found dogfooding 2026-07-02 (recurring — also hit at session start).
