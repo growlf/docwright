@@ -1,6 +1,6 @@
 ---
 title: Lock plan deliverables format (YAML array vs markdown table)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,10 +22,10 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Decision: YAML array or markdown table?
-- [ ] Format documented in org-operations profile
-- [ ] Example in plan templates
-- [ ] Issue-generation tool design locked against format
+- [x] Decision: YAML array or markdown table?
+- [x] Format documented in org-operations profile
+- [x] Example in plan templates
+- [x] Issue-generation tool design locked against format
 
 ## Details
 
