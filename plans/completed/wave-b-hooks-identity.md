@@ -1,6 +1,7 @@
 ---
 title: "Wave B — hook & identity integrity: one hook source, loud failures, scoped cache, no approve-by-move bypass"
-status: in-progress
+status: completed
+completed_date: 2026-07-06
 author: NetYeti
 created: 2026-07-06
 tags:
@@ -14,7 +15,7 @@ mode: autonomous
 scenario_synthesis: Wave B of the issue-cluster remediation — unify the diverged pre-commit sources and install commit-msg for vaults, make hooks fail loudly when DOCWRIGHT_PATH is unset, scope the identity cache per-repo so test runs stop poisoning real commits, and close the approve-by-move HUMAN-APPROVED bypass
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 phase: 4
 total_steps: 4
 completed_steps: 4
@@ -26,6 +27,7 @@ gate_note: "Changed files are untestable types: plans/wave-b-hooks-identity.md"
 tests_last_run: "2026-07-06T22:09:31.000Z"
 tests_last_result: pass
 tests_last_commit: 4d89752
+_path: plans/completed/wave-b-hooks-identity
 ---
 # Wave B — hook & identity integrity
 
