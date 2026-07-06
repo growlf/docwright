@@ -377,19 +377,28 @@
               title="Open execution panel to progress the plan and run pending steps">
               Progress
             </button>
-          {:else if !frontmatter.tests_defined}
-            {#if testPassed === true && !frontmatter.tests_human_reviewed}
-              <!-- Tests passed but human review needed before auto-certify -->
+          {:else if !frontmatter.tests_defined || (!frontmatter.tests_human_reviewed && frontmatter.tests_last_result === 'pass')}
+            {#if (testPassed === true || frontmatter.tests_last_result === 'pass') && !frontmatter.tests_human_reviewed}
+              <!-- Tests passed (either in-session or via verify_plan_tests) but human review needed before auto-certify (#220) -->
               <button class="act approve" onclick={certifyTests}
-                title="Human certifies AI-generated tests — enables auto-certify on future runs">
+                title="Human certifies tests — enables auto-certify on future runs (works with both Run Tests and verify_plan_tests)">
                 Certify Tests
               </button>
-            {:else}
+            {:else if !frontmatter.tests_defined}
               <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
               <button class="act estimate" onclick={runTests}
                 disabled={testRunning}
                 title="Run the test suite — Complete button appears when all tests pass">
                 {testRunning ? '⏳ Running…' : '▶ Run Tests'}
+              </button>
+            {:else}
+              <!-- Fallback: shouldn't reach here, but just in case -->
+              <button class="act complete" onclick={() => setPlanStatus('completed')}
+                disabled={completeBlockers.length > 0}
+                title={completeBlockers.length > 0
+                  ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
+                  : 'All checks pass — complete and archive this plan'}>
+                {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
               </button>
             {/if}
           {:else}
