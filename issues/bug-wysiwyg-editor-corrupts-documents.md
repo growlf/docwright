@@ -1,6 +1,8 @@
 ---
 title: "WYSIWYG editor corrupts documents and clobbers frontmatter on save"
-status: open
+status: resolved
+closed_by_pr: "#213"
+resolved: 2026-07-06
 github_issue: 149
 author: NetYeti
 author-role: contributor
