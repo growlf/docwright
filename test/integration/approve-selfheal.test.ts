@@ -41,8 +41,13 @@ describe('Approve consumed_by self-heal (#141)', function () {
   let vault: string;
   let POST: any;
   const originalEnv = process.env.DOCWRIGHT_ROOT;
+  // The approve endpoint calls the live OpenCode backend for plan generation
+  // when OPENCODE_URL is set (no timeout) — hung the BDFL's in-UI Run Tests on
+  // 2026-07-06. Tests must always take the deterministic template fallback.
+  const originalOpencodeUrl = process.env.OPENCODE_URL;
 
   before(() => {
+    delete process.env.OPENCODE_URL;
     vault = fs.mkdtempSync(path.join(os.tmpdir(), 'approve-heal-'));
     for (const d of ['proposals/approved', 'plans/completed', 'docs']) {
       fs.mkdirSync(path.join(vault, d), { recursive: true });
@@ -60,6 +65,7 @@ describe('Approve consumed_by self-heal (#141)', function () {
   after(() => {
     if (originalEnv === undefined) delete process.env.DOCWRIGHT_ROOT;
     else process.env.DOCWRIGHT_ROOT = originalEnv;
+    if (originalOpencodeUrl !== undefined) process.env.OPENCODE_URL = originalOpencodeUrl;
     fs.rmSync(vault, { recursive: true, force: true });
   });
 
