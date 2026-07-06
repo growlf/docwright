@@ -337,6 +337,70 @@ validate_no_duplicate_locations() {
 }
 
 # =============================================================================
+# 12. Issue workflow validation
+#     Enforces issue status transitions: new → triaged → scope-checked →
+#     awaiting-proposal → proposal-linked → resolved/deferred/duplicate
+#     Checks:
+#     - Valid status enum
+#     - Milestone can only be set after proposal is linked (or if deferred)
+#     - scope-checked requires scope_assessment and scope_decision
+#     - Deferred requires target milestone in scope_notes
+#     - Duplicate requires canonical issue reference in scope_notes
+# =============================================================================
+validate_issue_workflow() {
+    local FILE=$1 FM=$(get_frontmatter "$FILE")
+    [ -z "$FM" ] && return 0
+
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ -z "$STATUS" ] && return 0  # No status field, skip
+
+    local MILESTONE=$(echo "$FM" | grep "^milestone:" | sed 's/^milestone:[[:space:]]*//' | xargs)
+    local SCOPE_DECISION=$(echo "$FM" | grep "^scope_decision:" | sed 's/^scope_decision:[[:space:]]*//' | xargs)
+    local SCOPE_ASSESSMENT=$(echo "$FM" | grep "^scope_assessment:" | sed 's/^scope_assessment:[[:space:]]*//' | xargs)
+    local SCOPE_NOTES=$(echo "$FM" | grep "^scope_notes:" | sed 's/^scope_notes:[[:space:]]*//' | xargs)
+
+    # Valid statuses
+    if ! echo "$STATUS" | grep -qE '^(new|triaged|scope-checked|awaiting-proposal|proposal-linked|resolved|deferred|duplicate)$'; then
+        print_error "$FILE: Invalid status '$STATUS'. Must be one of: new, triaged, scope-checked, awaiting-proposal, proposal-linked, resolved, deferred, duplicate"
+        return 1
+    fi
+
+    # Rule 1: Milestone can only be set after proposal is linked (or if deferred)
+    if [ -n "$MILESTONE" ] && [ "$STATUS" != "proposal-linked" ] && [ "$STATUS" != "resolved" ] && [ "$STATUS" != "deferred" ]; then
+        print_error "$FILE: Cannot set milestone on status='$STATUS'. Milestone is only allowed when status is proposal-linked, resolved, or deferred."
+        return 1
+    fi
+
+    # Rule 2: Scope-checked must have scope_assessment and scope_decision
+    if [ "$STATUS" = "scope-checked" ]; then
+        [ -z "$SCOPE_ASSESSMENT" ] && print_error "$FILE: status=scope-checked but scope_assessment is missing" && return 1
+        [ -z "$SCOPE_DECISION" ] && print_error "$FILE: status=scope-checked but scope_decision is missing" && return 1
+        if ! echo "$SCOPE_DECISION" | grep -qE '^(in-scope|out-of-scope|duplicate|deferred)$'; then
+            print_error "$FILE: Invalid scope_decision='$SCOPE_DECISION'. Must be: in-scope, out-of-scope, duplicate, or deferred"
+            return 1
+        fi
+    fi
+
+    # Rule 3: If deferred, must specify target milestone in scope_notes
+    if [ "$STATUS" = "deferred" ] || [ "$SCOPE_DECISION" = "deferred" ]; then
+        echo "$SCOPE_NOTES" | grep -qE '(v0\.|backlog|future)' || {
+            print_error "$FILE: Deferred issue but scope_notes doesn't mention target milestone (v0.5.0, v0.6.0, backlog, etc.)"
+            return 1
+        }
+    fi
+
+    # Rule 4: If duplicate, must specify canonical issue in scope_notes
+    if [ "$STATUS" = "duplicate" ] || [ "$SCOPE_DECISION" = "duplicate" ]; then
+        echo "$SCOPE_NOTES" | grep -qE '(issues/|duplicate|canonical)' || {
+            print_error "$FILE: Duplicate issue but scope_notes doesn't reference the canonical issue"
+            return 1
+        }
+    fi
+
+    return 0
+}
+
+# =============================================================================
 # 13. Phase plan activation gate
 #     Warns when a phase plan is being activated (moved to in-progress) but
 #     has not been reviewed since the previous phase's gate was approved.
@@ -399,6 +463,7 @@ for FILE in $STAGED; do
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
     validate_no_self_approval "$FILE" || ((ERRORS++))
     validate_location_invariant "$FILE" || ((ERRORS++))
+    [[ "$FILE" =~ ^issues/[^/]+\.md$ ]] && { validate_issue_workflow "$FILE" || ((ERRORS++)); }
     validate_phase_review_gate "$FILE" || ((ERRORS++))
     validate_parent_plan_sync "$FILE" || ((WARNINGS++))
     validate_no_duplicate_locations "$FILE" || ((ERRORS++))

@@ -13,6 +13,8 @@ tags:
 proposal_source: proposals/approved/collaboration-issue-model-and-roadmap-sync.md
 priority: high
 automated: guided
+phase: 4
+milestone: v0.6.0
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false

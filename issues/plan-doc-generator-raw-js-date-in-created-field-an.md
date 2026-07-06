@@ -1,16 +1,21 @@
 ---
-title: "Plan doc generator: raw JS date in created: field and unquoted colon-containing title:"
-status: open
-github_issue: 136
+title: Plan doc generator: raw JS date in created: field and unquoted colon-containing title:
+status: scope-checked
+created: 2026-07-05
 category: bug
 priority: medium
-tags:
-  - github-issue
-  - issue-workflow
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / medium.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 136
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 Found while archiving `separate-dev-tracking-milestones-and-beta-channel` via `transition_to_completed` (see PR #135).

@@ -1,7 +1,6 @@
 ---
-title: "release-tag.sh repo slug keeps .git suffix — CI watch fails on every release"
+title: release-tag.sh repo slug keeps .git suffix — CI watch fails on every release
 status: resolved
-closed_by_pr: "#125"
 author: NetYeti
 author-role: contributor
 created: 2026-07-04
@@ -9,14 +8,11 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - release
-  - ci
-  - tooling
-  - dogfooding
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
 milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #125
 ---
 
 > Found by dogfooding on 2026-07-04 while cutting the **v0.4.7** release. The tag pushed

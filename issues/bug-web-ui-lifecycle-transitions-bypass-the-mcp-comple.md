@@ -1,25 +1,24 @@
 ---
 title: Web UI lifecycle transitions bypass the MCP completion gate — no test-evidence or checkbox validation on Complete
 status: resolved
-closed_by_pr: "#195"
-resolved: 2026-07-05
-github_issue: 172
-created: 2026-07-05
 author: NetYeti
 author-role: user
+created: 2026-07-05
 category: bug
 priority: high
 complexity: medium
 estimated_effort: S
-demand_count: 1
+tags: []
 reported_dates: [2026-07-05]
+demand_count: 1
+github_issue: 172
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #195
+resolved: 2026-07-05
 channel: dev
-related:
-  - issues/bug-webui-lifecycle-actions-not-committed-to-git.md
-  - issues/bug-complete-plan-stray-copy-and-no-refresh.md
-tags:
-  - reported-bug
+related: 
 ---
 
 # Web UI lifecycle transitions bypass the MCP completion gate — no test-evidence or checkbox validation on Complete

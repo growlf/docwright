@@ -1,20 +1,28 @@
 ---
 title: Release process leaves VERSION and package.json on main stale — bump only lands on release branch
-status: open
-github_issue: 205
-created: 2026-07-06
+status: scope-checked
 author: NetYeti
 author-role: user
+created: 2026-07-06
 category: bug
 priority: medium
 complexity: medium
 estimated_effort: S
-demand_count: 1
+tags: []
 reported_dates: [2026-07-06]
+demand_count: 1
+triage_date: 2026-07-06
+triage_by: NetYeti
+triage_notes: Triaged as bug / medium.
+scope_check_date: 2026-07-06
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 205
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
 channel: dev
-tags:
-  - reported-bug
 ---
 
 # Release process leaves VERSION and package.json on main stale — bump only lands on release branch

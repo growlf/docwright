@@ -1,17 +1,24 @@
 ---
 title: Certify Tests button unreachable when tests were verified out-of-band — no UI affordance for tests_human_reviewed
-status: open
-github_issue: 220
-created: 2026-07-06
+status: scope-checked
 author: NetYeti
-author-role: user
+author-role: contributor
+created: 2026-07-06
+created_by: NetYeti@cluster-llm
 category: bug
 priority: high
 complexity: medium
 estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-06]
-milestone: future
+triage_date: 2026-07-06
+triage_by: NetYeti
+triage_notes: Triaged as bug / high — UI control/affordance missing.
+scope_check_date: 2026-07-06
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog for the current phase.
+scope_decision: in-scope
+github_issue: 220
 channel: dev
 tags:
   - reported-bug

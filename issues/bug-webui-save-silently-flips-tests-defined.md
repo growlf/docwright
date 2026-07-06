@@ -1,9 +1,6 @@
 ---
-title: "Web UI save silently flips tests_defined and reruns syncTestCriteria as a side effect"
+title: Web UI save silently flips tests_defined and reruns syncTestCriteria as a side effect
 status: resolved
-closed_by_pr: "#209"
-resolved: 2026-07-06
-github_issue: 148
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -11,16 +8,14 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - webui
-  - governance
-  - data-integrity
-  - plans
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-closed_by_pr: ""
-cross_link: "issues/bug-webui-lifecycle-actions-not-committed-to-git"
+tags: []
+github_issue: 148
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: 
+resolved: 2026-07-06
+cross_link: issues/bug-webui-lifecycle-actions-not-committed-to-git
 ---
 
 > Found 2026-07-01 while dogfooding #68. Originally filed as "rewrites plan frontmatter

@@ -1,7 +1,6 @@
 ---
-title: "scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead"
-status: open
-github_issue: 146
+title: scripts/end-session.ts pushes directly to main and fails on branch protection — needs to branch+PR instead
+status: scope-checked
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -9,14 +8,18 @@ category: bug
 priority: low
 complexity: low
 estimated_effort: S
-tags:
-  - governance
-  - automation
-  - session-shutdown
-  - trunk-migration
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+triage_date: 2026-06-30
+triage_by: NetYeti
+triage_notes: Triaged as bug / low.
+scope_check_date: 2026-06-30
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 146
 milestone: v0.5.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Hit twice in one session (2026-06-30, PRs #74 and #75) — same manual

@@ -1,22 +1,29 @@
 ---
 title: Completion doc generator emits invalid YAML tags line in generated docs frontmatter
-status: open
-github_issue: 185
-created: 2026-07-05
+status: scope-checked
 author: NetYeti
 author-role: user
+created: 2026-07-05
 category: bug
 priority: low
 complexity: medium
 estimated_effort: S
-demand_count: 1
+tags: []
 reported_dates: [2026-07-05]
+demand_count: 1
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / low.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 185
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
 channel: dev
-related:
-  - issues/plan-doc-generator-raw-js-date-in-created-field-an.md
-tags:
-  - reported-bug
+related: 
 ---
 
 # Completion doc generator emits invalid YAML tags line in generated docs frontmatter

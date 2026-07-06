@@ -1,17 +1,21 @@
 ---
-title: "Governance panel: Status stat tiles aren't clickable — no drill-in to proposals"
-status: open
-github_issue: 113
+title: Governance panel: Status stat tiles aren't clickable — no drill-in to proposals
+status: scope-checked
+created: 2026-07-05
 category: feature
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-  - enhancement
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as feature / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 113
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 Found dogfooding 2026-07-02. In the Governance panel's **Status** subview (`src/webui/src/lib/GovernancePanel.svelte:138-155`), the four stat tiles (Active Plans / Open Proposals / Pending Approval / Completed) are display-only `<div>`s. Only **Active Plans** has a clickable drill-down list beneath the grid (line ~159-168).

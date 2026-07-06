@@ -1,9 +1,6 @@
 ---
-title: "Web UI lifecycle actions write to the working tree but never commit to git — the root of the approval-flow friction"
+title: Web UI lifecycle actions write to the working tree but never commit to git — the root of the approval-flow friction
 status: resolved
-closed_by_pr: "#199"
-resolved: 2026-07-06
-github_issue: 147
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -11,15 +8,13 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - webui
-  - lifecycle
-  - approval
-  - governance
-  - git
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+github_issue: 147
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #199
+resolved: 2026-07-06
 ---
 
 > Found by dogfooding on 2026-07-01 (GitHub #68 approval). This is the **root cause** that

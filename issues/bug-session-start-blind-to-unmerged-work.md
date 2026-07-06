@@ -1,7 +1,6 @@
 ---
-title: "Session-start is blind to unmerged branches and open issues — parked work silently vanishes"
+title: Session-start is blind to unmerged branches and open issues — parked work silently vanishes
 status: resolved
-closed_by_pr: "#77"
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -9,15 +8,11 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - governance
-  - session-start
-  - tooling
-  - code-over-memory
-  - roadmap
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
 milestone: v0.5.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #77
 ---
 
 > Root cause of the 2026-07-01 near-loss of the urgent #68 base process-flow

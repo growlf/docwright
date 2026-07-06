@@ -1,8 +1,6 @@
 ---
-title: "Plan generator (approve → plan) dumps the whole proposal, mangles frontmatter, and mints an unreviewed 'approved' plan"
+title: Plan generator (approve → plan) dumps the whole proposal, mangles frontmatter, and mints an unreviewed 'approved' plan
 status: resolved
-github_issue: 108
-closed_by_pr: "#109"
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -10,15 +8,12 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: M
-tags:
-  - webui
-  - lifecycle
-  - plan-generation
-  - governance
-  - data-integrity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+github_issue: 108
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #109
 ---
 
 > Found by dogfooding on 2026-07-01 while approving the urgent umbrella proposal

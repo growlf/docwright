@@ -1,16 +1,21 @@
 ---
-title: "Release dogfood-window uses a fixed 7-day clock (contradicts plan §5)"
-status: open
-github_issue: 93
+title: Release dogfood-window uses a fixed 7-day clock (contradicts plan §5)
+status: scope-checked
+created: 2026-07-05
 category: bug
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 93
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 `src/dispatch/release.ts` computes the dogfood window as `actualDays >= 7` measured from the earliest `created` date of milestone items.

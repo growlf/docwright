@@ -11,14 +11,18 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - webui
-  - lifecycle
-  - approval
-  - idempotency
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+triage_date: 2026-07-01
+triage_by: NetYeti
+triage_notes: Triaged as bug / medium.
+scope_check_date: 2026-07-01
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 141
 milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Found by dogfooding on 2026-07-01 approving
