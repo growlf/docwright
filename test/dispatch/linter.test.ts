@@ -466,15 +466,15 @@ describe('Plan/issue linkage fields', () => {
     assert.ok(!err, 'tracked_by with array of strings should be valid');
   });
 
-  it('accepts optional tracked_by as empty array on plans', () => {
+  it('accepts optional tracked_by as empty array on draft plans', () => {
     const fm = {
-      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
-      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      title: 'P', status: 'draft', author: 'A', created: '2026-01-01',
+      assigned_to: 'A',
       tracked_by: [],
     };
     const results = lintDocument('plans/p.md', fm, profile);
     const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
-    assert.ok(!err, 'empty tracked_by array should be valid');
+    assert.ok(!err, 'empty tracked_by array on draft plan should be valid');
   });
 
   it('accepts optional plan field on issues (string)', () => {
@@ -521,14 +521,14 @@ describe('Plan/issue linkage fields', () => {
     assert.ok(!err, 'issues without linkage fields should still be valid');
   });
 
-  it('does not require tracked_by on plans (backward compat)', () => {
+  it('does not require tracked_by on draft plans (backward compat)', () => {
     const fm = {
-      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
-      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      title: 'P', status: 'draft', author: 'A', created: '2026-01-01',
+      assigned_to: 'A',
     };
     const results = lintDocument('plans/p.md', fm, profile);
     const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
-    assert.ok(!err, 'plans without tracked_by should still be valid');
+    assert.ok(!err, 'draft plans without tracked_by should still be valid');
   });
 
   it('warns when plan has linked issues (derived progress)', () => {
@@ -587,5 +587,117 @@ describe('Plan/issue linkage fields', () => {
     const results = lintDocument('plans/p.md', fm, profile);
     const err = results.find(r => r.field === 'deliverables' && r.severity === 'error');
     assert.ok(!err, 'empty deliverables array should be valid');
+  });
+});
+
+describe('Collaboration model enforcement linting', () => {
+  it('errors on in-progress plan without tracked_by', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(err, 'in-progress plan without tracked_by should error');
+    assert.ok(err?.message.includes('must have tracked_by'));
+  });
+
+  it('passes on in-progress plan with tracked_by', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      tracked_by: ['issues/test.md'],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(!err, 'in-progress plan with tracked_by should pass');
+  });
+
+  it('passes on draft/approved plan without tracked_by', () => {
+    const fm = {
+      title: 'P', status: 'draft', author: 'A', created: '2026-01-01',
+      assigned_to: 'A',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(!err, 'draft plan without tracked_by should pass');
+  });
+
+  it('errors on planned issue without cross_link', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      plan: 'my-plan.md',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'cross_link' && r.severity === 'error');
+    assert.ok(err, 'planned issue without cross_link should error');
+    assert.ok(err?.message.includes('cross_link'));
+  });
+
+  it('passes on planned issue with cross_link', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      plan: 'my-plan.md',
+      cross_link: 'plans/my-plan.md',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'cross_link' && r.severity === 'error');
+    assert.ok(!err, 'planned issue with cross_link should pass');
+  });
+
+  it('errors on triaged issue without priority', () => {
+    const fm = {
+      title: 'Bug', status: 'triaged', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      category: 'bug',
+      triage_notes: 'This is a real bug that needs fixing',
+      triage_by: 'A',
+      triage_date: '2026-01-01',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'priority' && r.severity === 'error');
+    assert.ok(err, 'triaged issue without priority should error');
+    assert.ok(err?.message.includes('priority'));
+  });
+
+  it('errors on scope-checked issue without priority', () => {
+    const fm = {
+      title: 'Bug', status: 'scope-checked', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      scope_assessment: 'This is in scope',
+      scope_check_by: 'A',
+      scope_check_date: '2026-01-01',
+      scope_decision: 'in-scope',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'priority' && r.severity === 'error');
+    assert.ok(err, 'scope-checked issue without priority should error');
+  });
+
+  it('passes on new issue without priority', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'priority' && r.severity === 'error');
+    assert.ok(!err, 'new issue without priority should pass');
+  });
+
+  it('passes on triaged issue with priority', () => {
+    const fm = {
+      title: 'Bug', status: 'triaged', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      category: 'bug',
+      triage_notes: 'This is a real bug that needs fixing',
+      triage_by: 'A',
+      triage_date: '2026-01-01',
+      priority: 'high',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'priority' && r.severity === 'error');
+    assert.ok(!err, 'triaged issue with priority should pass');
   });
 });
