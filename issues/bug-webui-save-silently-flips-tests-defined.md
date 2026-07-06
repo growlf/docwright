@@ -1,6 +1,8 @@
 ---
 title: "Web UI save silently flips tests_defined and reruns syncTestCriteria as a side effect"
-status: open
+status: resolved
+closed_by_pr: "#209"
+resolved: 2026-07-06
 github_issue: 148
 author: NetYeti
 author-role: contributor
