@@ -209,7 +209,11 @@ function writeLightweight(
   const dwClaudeSettings = path.join(docwrightPath, '.claude', 'settings.json');
   if (fs.existsSync(dwClaudeSettings) && dest !== docwrightPath) {
     let content = fs.readFileSync(dwClaudeSettings, 'utf8');
-    content = content.replace(/\$\{DOCWRIGHT_PATH\}/g, docwrightPath);
+    // Bake the absolute install path — covers both the plain ${DOCWRIGHT_PATH}
+    // form and the ${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR} fallback (#143):
+    // in an adopted vault CLAUDE_PROJECT_DIR is the VAULT, not the install,
+    // so the fallback must not survive adoption.
+    content = content.replace(/\$\{DOCWRIGHT_PATH[^}]*\}/g, docwrightPath);
     writeManaged(dest, '.claude/settings.json', content, manifest);
   }
 

@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-session-start-hook.sh\"",
+            "command": "D=\"${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR}\"; H=\"$D/scripts/claude-session-start-hook.sh\"; if [ ! -f \"$H\" ]; then echo \"DocWright session-start hook unresolvable (set DOCWRIGHT_PATH or run from the repo)\" >&2; exit 1; fi; bash \"$H\"",
             "timeout": 10,
             "statusMessage": "Checking for urgent issues…"
           }
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-lifecycle-hook.sh\"",
+            "command": "D=\"${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR}\"; H=\"$D/scripts/claude-lifecycle-hook.sh\"; if [ ! -f \"$H\" ]; then echo \"DocWright lifecycle gate UNRESOLVABLE — governance cannot run, blocking write. Set DOCWRIGHT_PATH (settings env block) or run from the repo. (#143)\" >&2; exit 2; fi; bash \"$H\"",
             "timeout": 10,
             "statusMessage": "Lifecycle gate…"
           }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-session-boundary-hook.sh\"",
+            "command": "D=\"${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR}\"; H=\"$D/scripts/claude-session-boundary-hook.sh\"; if [ ! -f \"$H\" ]; then echo \"DocWright session-boundary hook unresolvable (set DOCWRIGHT_PATH or run from the repo)\" >&2; exit 1; fi; bash \"$H\"",
             "timeout": 5,
             "statusMessage": "Session boundary check…"
           }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${DOCWRIGHT_PATH}/scripts/claude-tag-push-watch.sh\"",
+            "command": "D=\"${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR}\"; H=\"$D/scripts/claude-tag-push-watch.sh\"; if [ ! -f \"$H\" ]; then echo \"DocWright tag-push watch unresolvable (set DOCWRIGHT_PATH or run from the repo)\" >&2; exit 1; fi; bash \"$H\"",
             "timeout": 300,
             "statusMessage": "Watching CI for tag push…"
           }
