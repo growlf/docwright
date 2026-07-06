@@ -100,7 +100,7 @@ describe('Derived roadplan sorting and grouping', () => {
       assert.strictEqual(roadplan.next.items.length, 1);
       assert.strictEqual(roadplan.next.items[0].title, 'Plan Next');
 
-      assert.strictEqual(roadplan.future.name, 'Future Pool');
+      assert.strictEqual(roadplan.future.name, 'backlog');
       // Should contain Issue Future, Issue Unassigned, and Issue V5
       assert.strictEqual(roadplan.future.items.length, 3);
       // Sorted by priority: critical (iu) -> highest (i5) -> low (if)
@@ -109,6 +109,35 @@ describe('Derived roadplan sorting and grouping', () => {
       assert.strictEqual(roadplan.future.items[0].title, 'Issue V5');
       assert.strictEqual(roadplan.future.items[1].title, 'Issue Unassigned');
       assert.strictEqual(roadplan.future.items[2].title, 'Issue Future');
+    });
+
+    it('groups version-based milestones (v0.5.0 current, v0.6.0 next) and includes proposals', () => {
+      const plans = [
+        { title: 'Plan v5', milestone: 'v0.5.0', priority: 'high', path: 'plans/p5.md' },
+      ];
+      const issues = [
+        { title: 'Issue v6', milestone: 'v0.6.0', priority: 'high', path: 'issues/i6.md' },
+        { title: 'Issue backlog', milestone: 'backlog', priority: 'low', path: 'issues/ib.md' },
+      ];
+      const proposals = [
+        { title: 'Proposal v5', milestone: 'v0.5.0', priority: 'medium', path: 'proposals/pr5.md' },
+        { title: 'Proposal backlog', milestone: 'backlog', priority: 'low', path: 'proposals/prb.md' },
+      ];
+
+      const roadplan = buildRoadplan(plans, issues, proposals);
+
+      // Lowest two version milestones become current + next; 'backlog' is the future sentinel.
+      assert.strictEqual(roadplan.current.name, 'v0.5.0');
+      assert.strictEqual(roadplan.current.items.length, 2); // Plan v5 + Proposal v5
+      assert.ok(roadplan.current.items.some(i => i.itemType === 'proposal' && i.title === 'Proposal v5'));
+
+      assert.strictEqual(roadplan.next.name, 'v0.6.0');
+      assert.strictEqual(roadplan.next.items.length, 1);
+      assert.strictEqual(roadplan.next.items[0].title, 'Issue v6');
+
+      // 'backlog' items land in the future pool, never named as a milestone bucket.
+      assert.strictEqual(roadplan.future.items.length, 2);
+      assert.ok(roadplan.future.items.every(i => i.milestone === 'backlog'));
     });
   });
 });

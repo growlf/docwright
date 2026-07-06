@@ -13,7 +13,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 `scripts/generate-roadplan.ts` generates `docs/roadplan.md` but has no way to verify the committed copy is current. A `--check` mode (regenerate in-memory, diff against the committed file, exit non-zero if stale) lets CI catch a forgotten regen.

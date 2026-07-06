@@ -10,7 +10,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 Found dogfooding 2026-07-02. In the Governance panel (`src/webui/src/lib/GovernancePanel.svelte:147-150`), the stat tile labeled **"Pending Approval"** is bound to `approvedPending` (`d.proposals.approved_pending`).

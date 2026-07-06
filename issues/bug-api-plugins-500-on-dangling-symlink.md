@@ -1,6 +1,6 @@
 ---
 title: "/api/plugins 500s on a dangling plugin symlink; repo committed a dev-home symlink"
-status: open
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -13,7 +13,7 @@ tags:
   - api
   - reproducibility
   - dogfooding
-milestone: v0.5.0
+milestone: v0.6.0
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

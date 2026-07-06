@@ -12,7 +12,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 Found while closing out `plans/contribution-pipeline.md`: the Testing Plan checkboxes were never ticked because **no tooling connects an actual test run to the plan**, and `transition_to_completed` gates only on `status: completed` + no pending steps — a plan can complete with `tests_defined: false` and every verification box unchecked.

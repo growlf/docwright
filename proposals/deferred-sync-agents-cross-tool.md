@@ -18,6 +18,7 @@ assigned_to: ""
 related_to:
   - policies/core/code-over-memory.md
   - scripts/sync-claude-skills.ts
+milestone: backlog
 ---
 
 ## Problem

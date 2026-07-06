@@ -15,6 +15,7 @@ approved: false
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: 2
+milestone: v0.5.0
 ---
 
 ## Problem

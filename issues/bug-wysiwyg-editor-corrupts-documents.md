@@ -17,7 +17,7 @@ tags:
   - data-integrity
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 > Found by dogfooding the Web UI on 2026-06-30 while trying to Complete the

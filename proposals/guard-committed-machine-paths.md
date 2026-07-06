@@ -14,6 +14,7 @@ related_to:
   - "[[issues/bug-api-plugins-500-on-dangling-symlink]]"
 depends_on: []
 blocks: []
+milestone: backlog
 ---
 
 # Guard against committing machine-specific absolute paths

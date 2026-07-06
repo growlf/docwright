@@ -13,7 +13,7 @@ complexity: medium
 estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-05]
-milestone: future
+milestone: backlog
 channel: dev
 related:
   - issues/bug-webui-lifecycle-actions-not-committed-to-git.md

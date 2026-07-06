@@ -1,6 +1,6 @@
 ---
 title: "Web UI approve→plan generator omits _path → out-of-band backfill churns the plan file"
-status: open
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -13,7 +13,7 @@ tags:
   - lifecycle
   - reproducibility
   - dogfooding
-milestone: v0.5.0
+milestone: v0.6.0
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

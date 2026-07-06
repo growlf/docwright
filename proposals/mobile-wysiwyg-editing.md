@@ -15,6 +15,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
 related_to:
   - proposals/approved/mobile-friendly.md
+milestone: backlog
 ---
 
 ## Problem

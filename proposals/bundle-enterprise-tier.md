@@ -23,6 +23,7 @@ absorbs:
   - proposals/enterprise-scheduled-scans.md
 depends_on:
   - plans/phase-3-profile-acl-ai.md
+milestone: backlog
 ---
 
 ## Problem

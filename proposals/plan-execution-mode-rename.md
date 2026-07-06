@@ -17,6 +17,7 @@ research_source:
   - research/plan-execution-mode-tool-survey.md
   - research/plan-execution-mode-ui-mocks.md
   - research/plan-execution-mode-enforcement.md
+milestone: backlog
 ---
 
 ## Problem

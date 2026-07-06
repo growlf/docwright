@@ -20,6 +20,7 @@ related_to:
   - plans/phase-4-profile-acl-ai.md
   - proposals/approved/knowledge-graph-cross-document-idea-linkage.md
 deferred_reason: "Requires Phase 3 backlink index for edge traversal. D3.js dependency adds bundle weight — deferred until backlink index ships. Deferred from lifecycle-graph.md Step 7."
+milestone: backlog
 ---
 
 ## Problem

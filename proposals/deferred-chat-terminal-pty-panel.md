@@ -18,6 +18,7 @@ related_to:
   - plans/chat-session-panel.md
   - proposals/approved/bundle-chat-session-panel.md
 deferred_reason: "Gate condition not met: at least 3 distinct developer users must explicitly request a terminal panel before implementation begins. Deferred from chat-session-panel.md Tier 4 (steps 16–17)."
+milestone: backlog
 ---
 
 ## Problem

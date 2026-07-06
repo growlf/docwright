@@ -14,6 +14,7 @@ priority: high
 complexity: medium
 parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "2"
+milestone: v0.6.0
 ---
 
 ## Problem

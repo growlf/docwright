@@ -17,6 +17,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/skill-plan-critique.md
 _path: proposals/skill-plan-critique-ci.md
+milestone: backlog
 ---
 ## Problem
 

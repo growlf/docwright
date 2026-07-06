@@ -17,7 +17,7 @@ tags:
   - roadmap
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-milestone: next
+milestone: v0.5.0
 ---
 
 > Root cause of the 2026-07-01 near-loss of the urgent #68 base process-flow

@@ -17,6 +17,7 @@ related_to:
   - docs/ai-governance-enforcement.md
   - plans/completed/phase-1-plan-step-enforcement.md
 _path: proposals/plan-steps-structured-frontmatter.md
+milestone: backlog
 ---
 
 ## Problem

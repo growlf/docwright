@@ -14,6 +14,7 @@ related_to:
   - "[[proposals/three-docwright-instance-deployment]]"
 depends_on: []
 blocks: []
+milestone: v0.5.0
 ---
 
 # Git panel branch switcher

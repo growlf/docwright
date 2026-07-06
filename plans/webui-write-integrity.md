@@ -20,7 +20,7 @@ total_steps: 6
 completed_steps: 4
 github_epic: ""
 automated: full
-milestone: next
+milestone: v0.5.0
 channel: dev
 gate_note: "Changed files are untestable types: plans/webui-write-integrity.md"
 ---
