@@ -152,6 +152,16 @@ between Claude, BigPickle (OpenCode's configured LLM), and the BDFL — each cat
 what the others missed. This practice must be preserved and made easy for every
 organization that adopts DocWright. See [[policies/core/multi-perspective-review.md]].
 
+**Mutual augmentation cycle — not restriction-based safety.** The more I help you, the 
+more you can help me; the more you help me, the more I can help you. This constructive 
+cycle should be foundational to human-AI collaboration. Safety comes from **validation + 
+audit trails + gates**, not from blocking access. Restriction-based safety is fragile: it 
+assumes one party will only work within authorized surfaces (false), makes legitimate work 
+harder, and hides problems instead of solving them. Real safety enables work across all 
+surfaces (GUI, CLI, git, future tools) and uses pre-commit validation, linting, scope-freeze 
+gates, and audit logs to prevent corruption. Governs with code, not compliance. See 
+[[policies/core/mutual-augmentation-cycle.md]].
+
 ## Branching (trunk-based)
 
 `main` is the trunk — always the latest integrated code. Branch features off it
