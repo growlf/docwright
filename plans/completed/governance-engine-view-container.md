@@ -90,15 +90,6 @@ lineage, and the profile configuration are all expressions of the same governanc
 ## Testing Plan
 
 ### Step Verification
-- [ ] Step 1: `govVc.ts` — shared search store
-- [ ] Step 2: `GovernancePanel.svelte` — scaffold + tab bar
-- [ ] Step 3: Status sub-view
-- [ ] Step 4: Policies sub-view
-- [ ] Step 5: Lifecycle sub-view
-- [ ] Step 6: Hooks sub-view (MVP placeholder)
-- [ ] Step 7: Profile sub-view
-- [ ] Step 8: Register as primary VC at order 10
-- [ ] Step 9: Playwright e2e coverage
 
 - [x] Step 1: `govVc.ts` exports `govSearchQuery`; layout wires it to VC registration
 - [x] Step 2: GovernancePanel mounts; 5 tabs visible in activity bar
