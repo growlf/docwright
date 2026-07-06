@@ -275,10 +275,10 @@ No plan is drafted from this proposal until (consolidated from Rounds
 
 1. **Dispatch-layer role enforcement is designed** — the mechanism by
    which dw MCP tools identify and validate the calling role (Round 2
-   f.1; Round 3 f.2/f.3).
+   f.1; Round 3 f.2/f.3). *Draft: Annex A.1–A.3, pending Round 5 review.*
 2. **Routing-drift countermeasure is specified** — how main-session work
    gets routed to roles instead of done in place, with named detection
-   heuristics (Round 2 f.1).
+   heuristics (Round 2 f.1). *Draft: Annex A.4, pending Round 5 review.*
 3. **Data classification is decided** — which roles' data may be sent to
    which endpoints (hosted vs. LAN); gates every hosted-small-model
    routing row (Round 2 f.5).
@@ -297,6 +297,83 @@ validation proves impractical without forking OpenCode; or two
 consecutive research rounds conclude the taxonomy adds process weight
 without measurable drift reduction. Failure must be as legible as
 success.
+
+## Annex A — Gate 1/2 design draft (dispatch-layer role identity)
+
+*(Round 4 addendum. Status: **draft for Round 5 review** — this is the
+security architecture the whole proposal rests on, so it gets the same
+multi-perspective treatment as the taxonomy. Grounded in the actual
+`src/mcp` implementation as of 2026-07-05.)*
+
+### A.1 Identity binding — spawn-time, never model-assertable
+
+Role identity is set by **configuration at server spawn**, following the
+existing `DOCWRIGHT_CONTRIB_APPROVED=1` precedent (env-only, unforgeable
+from inside the conversation): `DOCWRIGHT_ROLE=<role>` (or `--role`) in
+the agent definition's MCP server config. The model can never assert or
+switch its own role — no `begin_role_session(role)` tool, deliberately:
+any identity a model can claim, a drifting model can claim wrongly.
+
+The dw server runs stdio (per-client process) or SSE (shared :3100).
+Stdio is a natural fit — each agent definition spawns its own server
+process carrying its role env. **The pilot uses per-role stdio only.**
+Per-connection role identity on shared SSE is explicitly deferred (see
+A.5).
+
+### A.2 Two-layer enforcement in the server
+
+1. **Advertisement filtering.** Registration of the 34 tools is
+   currently static; with `DOCWRIGHT_ROLE` set, the server registers
+   only that role's allowlist. A scoped role cannot see out-of-lane
+   tools — structural incapability, not refusal.
+2. **Call-time validation.** Every `CallToolRequest` is additionally
+   checked against the role matrix (defense in depth: clients cache
+   tool lists; SSE may not filter).
+
+The role→tool matrix lives in a schema-validated **role manifest**
+(`src/mcp/roles.json`, or per-profile with vault override — Round 5
+question), making role scope policy-driven, not hardcoded. CI asserts no
+role's list contains a constitution-violating tool (already in
+Verification).
+
+### A.3 Constitution stays global and can only be narrowed
+
+The existing server-side guards — blocked frontmatter fields
+(`approved`, `status`, `gate_status`, …), human-approval gates — apply
+to **every** role including the generalist. The role manifest can only
+narrow capability below the constitution ceiling, never widen it.
+
+### A.4 Gate 2 — routing-drift countermeasure
+
+The main session (no `DOCWRIGHT_ROLE`) runs the **generalist** profile:
+queries, capture, and utility tools — but role-laned mutation tools
+(lifecycle transitions, plan mutations, issue-branch operations) are
+absent from its registration. Main-session lifecycle work then fails
+structurally at the first mutation, forcing delegation to the Registrar
+et al. Detection: every `audit.jsonl` event gains a `role` field (and a
+`model` field — this is the V1 `ai-last-action` stamping vehicle from
+Verification); a CI/endsession check scans for laned mutations with a
+missing or wrong role. Rollout: warn-only first, then deny — the
+warn-period audit data is also the baseline that makes the exit
+criterion "measurable drift reduction" measurable.
+
+### A.5 Honest limits and threat model
+
+- **Trust boundary is the config file + process spawn.** Anything able
+  to edit `opencode.json`/`.mcp.json` or spawn processes can claim any
+  role — including a role whose own allowlist grants Bash. Mitigations:
+  agent configs are git-tracked and human-reviewed; Bash-bearing roles
+  are the exception; the pre-commit gate remains the backstop.
+- **Direct file writes bypass MCP entirely.** Dispatch-layer is the
+  primary enforcement point, not the only one — the pre-commit gate and
+  (where available) client hooks stay.
+- **`model` in the audit stamp is asserted by config, not proven.**
+  Adequate for drift analytics, inadequate for forensics; noted.
+- **Fail closed:** if a role's server or model is unreachable, laned
+  operations do not fall back to the generalist.
+- **Deferred:** per-connection identity on shared SSE (per-role ports?
+  auth header? one process per role?) — needed before any multi-role
+  Web-UI surface, not for the pilot.
 
 ## Development Model — parallel branch `agent-roles`
 
@@ -578,3 +655,20 @@ narrowed by Rounds 2–3. Original text retained.)*
   captured as a templated proposal in the infrastructure vault (host
   details deliberately kept out of this public repo). Sequencing
   unchanged: Round 5 (Gemini) first, then Round 6 on this rig.
+- **2026-07-05 — Claude (Fable 5) via Cowork, Round 4 addendum: Annex A
+  drafted (Gates 1–2 design).** Dispatch-layer role identity designed
+  against the actual `src/mcp` implementation (stdio/SSE transports, 34
+  statically registered tools, existing env-only `DOCWRIGHT_CONTRIB_APPROVED`
+  precedent, `audit.jsonl`). Core decisions: role identity is spawn-time
+  configuration (`DOCWRIGHT_ROLE`), never model-assertable — no
+  role-selection tool exists by design; two-layer enforcement
+  (registration filtering + call-time validation against a
+  schema-validated role manifest); constitution guards stay global,
+  manifest can only narrow; generalist profile without laned mutation
+  tools is the Gate 2 routing-drift countermeasure, with `role` + `model`
+  fields added to `audit.jsonl` (doubling as the V1 `ai-last-action`
+  stamp and the drift-measurement baseline); fail closed on unreachable
+  role servers; SSE per-connection identity deferred past the pilot.
+  Honest limits recorded in A.5 (config-file trust boundary, MCP bypass
+  via direct writes, asserted-not-proven model stamp). Annex A is a
+  Round 5 review target, added to the Gemini briefing as scope item 5.
