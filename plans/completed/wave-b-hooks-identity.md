@@ -1,6 +1,7 @@
 ---
 title: "Wave B — hook & identity integrity: one hook source, loud failures, scoped cache, no approve-by-move bypass"
 status: completed
+completed_date: 2026-07-06
 author: NetYeti
 created: 2026-07-06
 tags:
@@ -26,6 +27,7 @@ gate_note: "Changed files are untestable types: plans/wave-b-hooks-identity.md"
 tests_last_run: "2026-07-06T22:09:31.000Z"
 tests_last_result: pass
 tests_last_commit: 4d89752
+_path: plans/completed/wave-b-hooks-identity
 ---
 # Wave B — hook & identity integrity
 
