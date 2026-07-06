@@ -1567,3 +1567,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: mark #218 as resolved by PR #227
 
 **Session note:** `docs/session-notes/session_note_202607062042.md`
+
+---
+
+## Session: 2026-07-06 — AI health stewardship framework + collaboration model
+
+**Focus:** AI health stewardship framework + collaboration model
+
+**Completed:**
+- [x] docs: establish AI health audit cycle and skill invocation clarity
+- [x] fix: restore skills-table-start marker in CLAUDE.md for auto-generation
+- [x] fix: make the plan test/certify state machine legible — visible checklist, honest Uncertify, confirm
+- [x] docs: establish AI health audit cycle and skill invocation clarity
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: propose git-native multi-session work claiming (approved: false)
+- [x] docs: mark #220 as resolved by PR #230
+
+**Session note:** `docs/session-notes/session_note_202607062103.md`
