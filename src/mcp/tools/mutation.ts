@@ -1,5 +1,5 @@
 import { readFile, writeFile } from '../lib/paths';
-import { extractFrontmatterField, setFrontmatterField } from '../lib/frontmatter';
+import { extractFrontmatterField, setFrontmatterField, formatYamlList } from '../lib/frontmatter';
 import { logTransition } from '../lib/audit';
 import { getHumanIdentity } from '../lib/identity';
 import { dispatchTestGen } from '../../dispatch/test-gen';
@@ -11,6 +11,7 @@ import {
   hasTestingPlan,
   hasPlaceholderSteps
 } from '../lib/steps';
+import { generateIssuesFromDeliverables } from '../lib/issue-generation';
 import { atomRoutingCheck } from './atom-routing';
 
 const STEP_STATUS_MAP: Record<string, string> = {
@@ -117,11 +118,27 @@ export async function updatePlanStatus(planName: string, newStatus: string): Pro
 
   let final = setFrontmatterField(text, 'status', newStatus);
   final = updateStepCounts(final);
-  
+
+  // Generate issues from deliverables when transitioning to in-progress
+  let issueGenMsg = '';
+  if (newStatus === 'in-progress' && current !== 'in-progress') {
+    const deliverables = extractFrontmatterField(final, 'deliverables');
+    if (deliverables && Array.isArray(deliverables) && deliverables.length > 0) {
+      const planPath = `plans/${safe}`;
+      const generatedIssues = generateIssuesFromDeliverables(safe, planPath, deliverables);
+
+      if (generatedIssues.length > 0) {
+        // Update tracked_by field with generated issues
+        final = setFrontmatterField(final, 'tracked_by', formatYamlList(generatedIssues));
+        issueGenMsg = `\n📋 Generated ${generatedIssues.length} issue(s) from deliverables: ${generatedIssues.join(', ')}`;
+      }
+    }
+  }
+
   writeFile(`plans/${safe}`, final);
   logTransition('STATUS_CHANGE', `plan/${safe}: ${current} -> ${newStatus}`);
   await atomRoutingCheck(`plans/${safe}`, final, `plan.${newStatus}`);
-  return `✅ Plan '${safe}' status: ${current} -> ${newStatus}.`;
+  return `✅ Plan '${safe}' status: ${current} -> ${newStatus}.${issueGenMsg}`;
 }
 
 export async function appendHistory(planName: string, change: string): Promise<string> {
