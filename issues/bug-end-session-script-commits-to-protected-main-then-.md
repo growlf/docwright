@@ -1,6 +1,8 @@
 ---
 title: end-session script commits to protected main then push is rejected, stranding commits
-status: scope-checked
+status: resolved
+closed_by_pr: "#253"
+resolved: 2026-07-06
 author: NetYeti
 author-role: user
 created: 2026-07-05
