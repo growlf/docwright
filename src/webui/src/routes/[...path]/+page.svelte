@@ -195,13 +195,8 @@
   // ---------------------------------------------------------------------------
   let editorEl: HTMLDivElement | undefined = $state();
 
-  // WYSIWYG is blocked on governance docs until the HTML⇄markdown round-trip
-  // is proven byte-stable on them (#149) — read and source modes only. The
-  // plan-file mangling incident came through this editor.
-  let wysiwygBlocked = $derived(/^(plans|policies|decisions)\//.test(filePath()));
-
   function cycleMode() {
-    if (mode === 'read')       mode = wysiwygBlocked ? 'source' : 'edit';
+    if (mode === 'read')       mode = 'edit';
     else if (mode === 'edit')  mode = 'source';
     else                       mode = 'read';
     currentDoc.update(d => ({ ...d, mode }));
@@ -576,9 +571,9 @@
         {/if}
         <button class="btn mode-toggle" onclick={cycleMode}
           title={mode === 'read'
-            ? (wysiwygBlocked ? 'Switch to raw Markdown source (WYSIWYG is disabled on governance docs)' : 'Switch to WYSIWYG editor')
+            ? 'Switch to WYSIWYG editor'
             : mode === 'edit' ? 'Switch to raw Markdown / frontmatter source' : 'Switch to read-only preview'}>
-          {mode === 'read' ? (wysiwygBlocked ? '⟨/⟩ Source' : '✏ Edit') : mode === 'edit' ? '⟨/⟩ Source' : '👁 Preview'}
+          {mode === 'read' ? '✏ Edit' : mode === 'edit' ? '⟨/⟩ Source' : '👁 Preview'}
         </button>
       </div>
     </div>
