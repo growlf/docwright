@@ -2,40 +2,11 @@ import * as assert from 'node:assert';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { createRequire } from 'node:module';
 import * as steps from '../../src/mcp/lib/steps';
 import * as gate from '../../src/dispatch/completion-gate';
 import { setRepoRoot, getRepoRoot } from '../../src/mcp/lib/paths';
 import { transitionToCompleted } from '../../src/mcp/tools/transitions';
-
-// The webui +server.ts reads DOCWRIGHT_ROOT at module load, so it must be
-// loaded lazily AFTER the fixture env is set. createRequire keeps the load
-// inside the tsx/cjs pipeline (dynamic import() would hit node's native ESM
-// resolver, which can't resolve extensionless TS).
-const lazyRequire = createRequire(__filename);
-
-// '@sveltejs/kit' is ESM-only and can't be required from the CJS test
-// pipeline. The endpoint only uses its `json` helper, so shim that one
-// module with the equivalent Response constructor while the endpoint loads.
-const NodeModule: any = lazyRequire('node:module').Module;
-const realLoad = NodeModule._load;
-function shimSvelteKit() {
-  NodeModule._load = function (request: string, ...rest: any[]) {
-    if (request === '@sveltejs/kit') {
-      return {
-        json: (data: any, init?: ResponseInit) =>
-          new Response(JSON.stringify(data), {
-            ...init,
-            headers: { 'content-type': 'application/json' },
-          }),
-      };
-    }
-    return realLoad.call(this, request, ...rest);
-  };
-}
-function unshimSvelteKit() {
-  NodeModule._load = realLoad;
-}
+import { loadEndpoint } from './sveltekit-shim';
 
 /**
  * #172 — the Web UI transition-completed endpoint must enforce the SAME
@@ -120,17 +91,12 @@ describe('Completion-gate parity: MCP vs Web UI (#172)', () => {
 
     // Web UI surface
     process.env.DOCWRIGHT_ROOT = FIXTURE_DIR;
-    shimSvelteKit();
-    let POST: any;
-    try {
-      ({ POST } = lazyRequire(
-        '../../src/webui/src/routes/api/lifecycle/transition-completed/+server',
-      ));
-    } finally {
-      unshimSvelteKit();
-    }
+    const { POST } = loadEndpoint(
+      'src/webui/src/routes/api/lifecycle/transition-completed/+server',
+    );
     const res = await POST({
       request: { json: async () => ({ plan: 'gate-fixture' }) },
+      locals: { user: { displayName: 'Parity Tester', email: 'parity@example.com' } },
     } as any);
     assert.strictEqual(res.status, 422);
     const body = await res.json();

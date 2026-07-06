@@ -3,6 +3,8 @@ import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter, setFrontmatterField } from '../../../../../dispatch/frontmatter';
 import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
+import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -142,7 +144,7 @@ function walkDeps(candidates: string[], repoRoot: string): string[] {
   return [...seen];
 }
 
-export async function POST({ request }) {
+export const POST = requireAuth(async ({ request, locals }) => {
   const { title, candidates } = await request.json();
   if (!title || !candidates || !Array.isArray(candidates)) {
     return json({ error: 'missing title or candidates' }, { status: 400 });
@@ -312,10 +314,21 @@ ${testingSection}${riskSection}${rollbackSection}
     fs.writeFileSync(candResolved, `---\n${fm}\n---\n${body}`);
   }
 
+  // Persist the creation so it isn't left as a silent, uncommitted change
+  // (#147): the new plan plus each consumed candidate's consumed_by edit.
+  // Local commit only; non-fatal on failure.
+  const commit = commitPaths(REPO_ROOT, {
+    message: `docs: create plan ${slug} (draft)`,
+    stagePaths: [planPath, ...validCandidates.map(c => resolvePath(c))],
+    user: locals.user,
+  });
+
   return json({
     ok: true,
     path: planPath,
     bundled: validCandidates,
     skipped: alreadyPlanned,
+    committed: commit.ok ? commit.sha : null,
+    commitError: commit.ok ? null : commit.error,
   });
-}
+});

@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { moveDocument } from '../../../../../../dispatch/vault-write';
 import { hasPendingSteps, checkCompletionGate } from '../../../../../../dispatch/completion-gate';
+import { generateCompletionDoc } from '../../../../../../dispatch/completion-doc';
+import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 
@@ -18,34 +21,6 @@ function getFmField(text: string, field: string): string {
   return m ? m[1].trim().replace(/^["']|["']$/g, '') : '';
 }
 
-function generateDoc(title: string, text: string, completedDate: string): string {
-  const author   = getFmField(text, 'author') || 'NetYeti';
-  const created  = getFmField(text, 'created') || completedDate;
-  const tags     = getFmField(text, 'tags') || '';
-  const source   = getFmField(text, 'proposal_source') || '';
-
-  const histMatch = text.match(/^## Document History[\s\S]*$/m);
-  const history   = histMatch ? histMatch[0] : '';
-
-  return [
-    '---',
-    `title: "${title}"`,
-    `status: completed`,
-    `completed_date: ${completedDate}`,
-    `author: ${author}`,
-    `created: ${created}`,
-    tags ? `tags: ${tags}` : null,
-    source ? `proposal_source: ${source}` : null,
-    '---',
-    '',
-    `# ${title}`,
-    '',
-    '*This document was generated when the plan was marked complete.*',
-    '',
-    history,
-  ].filter(l => l !== null).join('\n');
-}
-
 /**
  * POST /api/lifecycle/transition-completed
  * Body: { plan: "plan-name-without-extension" }
@@ -54,7 +29,7 @@ function generateDoc(title: string, text: string, completedDate: string): string
  * Mirrors the MCP transition_to_completed tool — called automatically by the
  * Web UI when the user clicks Complete in the properties pane.
  */
-export async function POST({ request }) {
+export const POST = requireAuth(async ({ request, locals }) => {
   const body = await request.json().catch(() => null);
   const planArg: string = (body?.plan ?? '').trim();
   if (!planArg) return json({ error: 'missing plan name' }, { status: 400 });
@@ -89,7 +64,6 @@ export async function POST({ request }) {
   const gateErr = checkCompletionGate(text, docSlug);
   if (gateErr) return json({ error: gateErr }, { status: 422 });
 
-  const title       = getFmField(text, 'title') || safe.replace('.md', '');
   const completedDate = new Date().toISOString().slice(0, 10);
 
   // Inject completed_date into plan frontmatter if missing, so the archived
@@ -103,9 +77,26 @@ export async function POST({ request }) {
   // Updates _path:, cascades wikilinks, and updates cross-refs atomically.
   moveDocument(REPO, `plans/${safe}`, `plans/completed/${safe}`);
 
-  // Generate doc
+  // Generate the completion doc via the shared dispatch generator (#142) —
+  // fresh minimal frontmatter, byte-identical to the MCP surface, never a
+  // re-serialization of the plan's own frontmatter block.
   fs.mkdirSync(path.dirname(docPath), { recursive: true });
-  fs.writeFileSync(docPath, generateDoc(title, text, completedDate));
+  fs.writeFileSync(docPath, generateCompletionDoc(text, safe, completedDate));
 
-  return json({ doc: `docs/${docSlug}.md` });
-}
+  // Persist the transition so it isn't left as a silent, uncommitted change
+  // (#147, same pattern as approve-proposal/#110). The authenticated click is
+  // the seal: commit locally, authored as the user, with HUMAN_APPROVED.
+  // Never pushes. Non-fatal: files are already written, so a commit failure
+  // is surfaced in the response, not thrown.
+  const commit = commitPaths(REPO, {
+    message: `docs: complete ${docSlug} (plan → completed)\n\nHUMAN-APPROVED:${docSlug}`,
+    stagePaths: [`plans/${safe}`, `plans/completed/${safe}`, `docs/${safe}`],
+    user: locals.user,
+  });
+
+  return json({
+    doc: `docs/${docSlug}.md`,
+    committed: commit.ok ? commit.sha : null,
+    commitError: commit.ok ? null : commit.error,
+  });
+});

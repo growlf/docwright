@@ -6,6 +6,7 @@ import { rebuildRelationships } from '../../../../../dispatch/relationships';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
 import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -52,7 +53,7 @@ function etag(content: string): string {
   return `"${createHash('sha256').update(content).digest('hex').slice(0, 16)}"`;
 }
 
-export const POST = requireAuth(async ({ url, request }) => {
+export const POST = requireAuth(async ({ url, request, locals }) => {
   const filePath = url.searchParams.get('path');
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
@@ -90,5 +91,20 @@ export const POST = requireAuth(async ({ url, request }) => {
     }, 0);
   }
 
-  return json({ ok: true, path: filePath, etag: etag(finalContent) });
+  // Persist the save so it isn't left as a silent, uncommitted change (#147).
+  // The authenticated save is the seal: commit locally, authored as the user.
+  // Never pushes. Non-fatal — a no-op save reports 'nothing to commit'.
+  const commit = commitPaths(REPO_ROOT, {
+    message: `docs: edit ${filePath} (web ui save)`,
+    stagePaths: [filePath],
+    user: locals.user,
+  });
+
+  return json({
+    ok: true,
+    path: filePath,
+    etag: etag(finalContent),
+    committed: commit.ok ? commit.sha : null,
+    commitError: commit.ok ? null : commit.error,
+  });
 });
