@@ -1627,3 +1627,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: implement scope-freeze enforcement for in-progress plans
 
 **Session note:** `docs/session-notes/session_note_202607062238.md`
+
+---
+
+## Session: 2026-07-06 — endsession auto-landing + audit
+
+**Focus:** endsession auto-landing + audit
+
+**Completed:**
+- [x] docs: #146 and sibling #191 resolved in issue store (closed_by_pr #253)
+- [x] fix: end-session auto-lands protected-main commits via PR with auto-merge (#146)
+- [x] feat: implement collaboration issue model (all 7 steps)
+- [x] docs: complete wave-b-hooks-identity — BDFL-executed transition, archived with completion doc
+- [x] docs: wave-b Step 4 → done; Testing Plan evidence-checked; #140 resolved
+- [x] fix: approve-by-move requires the HUMAN-APPROVED seal; born-approved proposals too (#140)
+- [x] docs: wave-b Step 2 → done; #143 resolved in issue store
+- [x] fix: Claude hooks resolve via CLAUDE_PROJECT_DIR fallback and fail LOUD when unresolvable (#143)
+- [x] docs: propose git-native multi-session work claiming (approved: false)
+- [x] docs: wave-b Step 3 → done; #160 resolved in issue store
+
+**Session note:** `docs/session-notes/session_note_202607061550.md`
