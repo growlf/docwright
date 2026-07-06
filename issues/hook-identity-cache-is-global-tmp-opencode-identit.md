@@ -1,6 +1,8 @@
 ---
 title: Hook identity cache is global (/tmp/opencode-identity-cache) — test runs poison real commits for an hour
-status: scope-checked
+status: resolved
+closed_by_pr: "#243"
+resolved: 2026-07-06
 created: 2026-07-05
 category: bug
 priority: high
