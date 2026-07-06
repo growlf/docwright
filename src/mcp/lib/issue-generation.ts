@@ -94,7 +94,7 @@ export function generateIssuesFromDeliverables(
   let existingIssues = new Set<string>();
   try {
     const issueDir = 'issues';
-    const dirContent = require('node:fs').readdirSync(issueDir);
+    const dirContent = fs.readdirSync(issueDir);
     existingIssues = new Set(dirContent);
   } catch {
     // Directory might not exist or be readable; continue with empty set
