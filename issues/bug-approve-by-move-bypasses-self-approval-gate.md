@@ -1,7 +1,8 @@
 ---
-title: "Approving by moving a proposal to proposals/approved/ bypasses the HUMAN-APPROVED gate"
-status: open
-github_issue: 140
+title: Approving by moving a proposal to proposals/approved/ bypasses the HUMAN-APPROVED gate
+status: resolved
+closed_by_pr: "#247"
+resolved: 2026-07-06
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
@@ -9,15 +10,18 @@ category: bug
 priority: high
 complexity: low
 estimated_effort: S
-tags:
-  - governance
-  - hooks
-  - approval
-  - security
-  - data-integrity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-milestone: v0.5.0
+tags: []
+triage_date: 2026-07-01
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-01
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 140
+milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Found by dogfooding on 2026-07-01 while committing the approval of

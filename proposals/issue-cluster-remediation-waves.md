@@ -14,6 +14,7 @@ deferred: true
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 priority: medium
+milestone: backlog
 ---
 
 ## Problem
@@ -25,6 +26,8 @@ The remaining three are captured here so they aren't lost (per
 
 ## Wave B — Hook & identity integrity (`.githooks`/`scripts` enforcement plumbing)
 
+> **Promoted 2026-07-06** → [[plans/wave-b-hooks-identity]] per BDFL in-session directive. Waves C and D remain deferred here.
+
 - #140 — approving by moving a proposal to `proposals/approved/` bypasses the HUMAN-APPROVED gate
 - #143 — governance hooks silently disabled when `DOCWRIGHT_PATH` is unset
 - #144 — hook source drift (.githooks vs scripts/pre-commit.sh); commit-msg never installed for vaults
@@ -34,6 +37,8 @@ Shared shape: the enforcement layer itself has integrity gaps. Fixing #144 first
 (single hook source + install both hooks) makes the others one-place fixes.
 
 ## Wave C — Report/intake UX (the bug-report bridge and governance panel)
+
+**PROMOTED TO v0.5.0:** [[proposals/improve-bug-feature-reporting-tool.md|Wave C proposal]]
 
 - #175 — Report Bug doesn't create the linked GH issue
 - #176 — issues have no forward path in the UI (issue → plan promotion)

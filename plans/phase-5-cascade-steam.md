@@ -20,7 +20,7 @@ phase: 5
 total_steps: 0
 completed_steps: 0
 github_epic: null
-milestone: future
+milestone: backlog
 ---
 
 # Phase 5 — Cascade STEAM Production Infrastructure

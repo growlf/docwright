@@ -1,6 +1,6 @@
 ---
-title: "/api/plugins 500s on a dangling plugin symlink; repo committed a dev-home symlink"
-status: open
+title: /api/plugins 500s on a dangling plugin symlink; repo committed a dev-home symlink
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -8,14 +8,10 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - plugins
-  - api
-  - reproducibility
-  - dogfooding
-milestone: v0.5.0
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+tags: []
+milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Found by dogfooding on 2026-07-05 — a headless-browser render of the dev-cloud instances

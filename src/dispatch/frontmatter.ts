@@ -79,6 +79,24 @@ export function setFrontmatterField(text: string, field: string, value: any): st
   const match = text.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return text;
   const fmBlock = match[1];
+
+  // Array values replace the whole block-list (the key line plus any
+  // following `  - item` lines), byte-preserving everything else.
+  if (Array.isArray(value)) {
+    const replacement = `${field}:${formatYamlList(value)}`;
+    const lines = fmBlock.split('\n');
+    const idx = lines.findIndex(l => l.startsWith(`${field}:`));
+    let newFmBlock: string;
+    if (idx < 0) {
+      newFmBlock = fmBlock.trimEnd() + `\n${replacement}`;
+    } else {
+      let end = idx + 1;
+      while (end < lines.length && /^\s+-\s/.test(lines[end])) end++;
+      newFmBlock = [...lines.slice(0, idx), replacement, ...lines.slice(end)].join('\n');
+    }
+    return text.replace(match[0], `---\n${newFmBlock}\n---`);
+  }
+
   const regex = new RegExp(`^${field}:.*$`, 'm');
   let valStr: string;
   if (typeof value === 'boolean') {

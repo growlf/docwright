@@ -13,6 +13,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 status: deferred
 deferred_reason: "Requires Phase 3 vault write API and knowledge graph foundations before the MCP adapter layer can be cleanly abstracted."
+milestone: backlog
 ---
 
 ## Problem

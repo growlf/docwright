@@ -1,7 +1,6 @@
 ---
-title: "Web UI cannot consume/supersede or process one proposal or plan into another"
-status: open
-github_issue: 150
+title: Web UI cannot consume/supersede or process one proposal or plan into another
+status: scope-checked
 author: NetYeti
 author-role: contributor
 created: 2026-07-04
@@ -9,17 +8,17 @@ category: feature
 priority: medium
 complexity: medium
 estimated_effort: M
-tags:
-  - ui
-  - ux
-  - lifecycle
-  - governance
-  - proposals
-  - plans
-  - dogfooding
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-milestone: v0.5.0
+tags: []
+triage_date: 2026-07-04
+triage_by: NetYeti
+triage_notes: Triaged as feature / medium.
+scope_check_date: 2026-07-04
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 150
+assigned_to: []
+created_by: NetYeti@cluster-llm
 ---
 
 > Found by dogfooding on 2026-07-04 while reconciling

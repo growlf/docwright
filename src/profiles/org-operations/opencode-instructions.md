@@ -89,6 +89,32 @@ architecture is fail-closed: no mutation is better than an unvalidated one.
 
 ---
 
+## Plan structure — deliverables format
+
+When a plan has workable deliverables that will become issues at plan-start, specify them
+in the `deliverables:` frontmatter field as a YAML array. This enables the issue-generation
+tool to parse them reliably.
+
+**Format (YAML array in frontmatter):**
+
+```yaml
+deliverables:
+  - title: "Deliverable name"
+    description: "Brief description of what this delivers"
+    acceptance_criteria:
+      - "AC 1: Measurable outcome or acceptance criterion"
+      - "AC 2: Another criterion"
+  - title: "Second deliverable"
+    description: "Details"
+    acceptance_criteria: []
+```
+
+All fields except `title` are optional. At plan-start, each deliverable becomes one issue
+in `issues/` and is added to the plan's `tracked_by:` list. The plan's progress becomes a
+derived view of issue state (no longer hand-edited step tables).
+
+---
+
 ## Plan pre-flight checklist
 
 Before beginning work on any plan, verify all of the following. These rules are enforced

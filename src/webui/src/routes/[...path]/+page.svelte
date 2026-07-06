@@ -10,19 +10,26 @@
   import { showToast, dismissToast } from '$lib/toast';
   import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab, triggerImprovePending } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
-  import TurndownService from 'turndown';
-  import { tables, strikethrough } from 'turndown-plugin-gfm';
-  import markdownit from 'markdown-it';
-  import taskLists from 'markdown-it-task-lists';
   import DiffMatchPatch from 'diff-match-patch';
+  import {
+    createTurndown,
+    createMarkdownIt,
+    splitFrontmatter,
+    buildRawFromText,
+    applyFrontmatterEdits,
+  } from '$lib/markdown-roundtrip';
 
-  const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
-  td.use(tables);
-  td.use(strikethrough);
-  const md = markdownit({ html: true, linkify: false }).use(taskLists, { enabled: true });
+  const td = createTurndown();
+  const md = createMarkdownIt();
 
   let raw = $state('');
   let content = $state('');
+  // Track the body from the last confirmed file state (load or save) to detect
+  // whether the body has been edited — avoids false positives from state staleness (#218)
+  let confirmedBody = $state('');
+  // Original frontmatter text block — reattached verbatim on save; parsed
+  // `frontmatter` is a display/logic view and is NEVER re-serialized (#149).
+  let fmText = $state<string | null>(null);
   let frontmatter = $state<Record<string, any> | null>(null);
   let error = $state<string | null>(null);
   let mode = $state<'read' | 'edit' | 'source'>('read');
@@ -76,72 +83,6 @@
     : filePath().startsWith('docs/')      ? 'doc'
     : 'page'
   );
-
-  // ---------------------------------------------------------------------------
-  // YAML parsing — handles strings, booleans, numbers, and block arrays
-  // ---------------------------------------------------------------------------
-  function parseFm(yaml: string): Record<string, any> {
-    const result: Record<string, any> = {};
-    const lines = yaml.split('\n');
-    let i = 0;
-    while (i < lines.length) {
-      const line = lines[i];
-      if (!line.trim() || line.trim().startsWith('#')) { i++; continue; }
-      const colonIdx = line.indexOf(':');
-      if (colonIdx <= 0) { i++; continue; }
-      const key = line.slice(0, colonIdx).trim();
-      const rest = line.slice(colonIdx + 1).trim();
-      if (rest === '' || rest === '[]') {
-        i++;
-        if (rest === '[]') { result[key] = []; continue; }
-        // Peek for array items
-        if (i < lines.length && /^\s+-\s/.test(lines[i])) {
-          const arr: string[] = [];
-          while (i < lines.length && /^\s+-\s/.test(lines[i])) {
-            arr.push(lines[i].replace(/^\s+-\s*/, '').trim());
-            i++;
-          }
-          result[key] = arr;
-        } else {
-          result[key] = '';
-        }
-        continue;
-      }
-      let val: any = rest;
-      if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-      else if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
-      else if (val === 'true')  val = true;
-      else if (val === 'false') val = false;
-      else if (val === 'null' || val === '~') val = null;
-      result[key] = val;
-      i++;
-    }
-    return result;
-  }
-
-  function stringifyFm(data: Record<string, any>): string {
-    return Object.entries(data).map(([k, v]) => {
-      if (Array.isArray(v)) {
-        return v.length === 0 ? k + ': []' : k + ':\n' + v.map(i => '  - ' + i).join('\n');
-      }
-      if (typeof v === 'boolean') return k + ': ' + v;
-      if (v === null || v === undefined) return k + ':';
-      const s = String(v);
-      if (s === '') return k + ': ""';
-      if (s.includes(':') || s.includes('#') || s.startsWith('{')) return k + ': "' + s.replace(/"/g, '\\"') + '"';
-      return k + ': ' + s;
-    }).join('\n');
-  }
-
-  function splitFrontmatter(raw: string): { frontmatter: Record<string, any> | null; body: string } {
-    const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-    if (!match) return { frontmatter: null, body: raw };
-    return { frontmatter: parseFm(match[1]), body: match[2] };
-  }
-
-  function buildRaw(fm: Record<string, any>, body: string): string {
-    return '---\n' + stringifyFm(fm) + '\n---\n' + body;
-  }
 
   // ---------------------------------------------------------------------------
   // File loading
@@ -200,7 +141,7 @@
           if (foundPath) { goto('/' + foundPath.replace(/\.md$/, ''), { replaceState: true }); return; }
         }
         // Truly missing — show not-found state
-        raw = ''; content = ''; frontmatter = null; error = '404';
+        raw = ''; content = ''; confirmedBody = ''; fmText = null; frontmatter = null; error = '404';
       } else {
         error = 'Failed to load file';
       }
@@ -211,8 +152,10 @@
     const data = await res.json();
     raw = data.content;
     const parsed = splitFrontmatter(data.content);
+    fmText = parsed.fmText;
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
+    confirmedBody = parsed.body;
     html = md.render(content);
     // Auto-improve when navigating from proposal approval
     if (pendingAutoImprove) {
@@ -268,7 +211,9 @@
   function syncHtmlToRaw() {
     if (!editorEl) return;
     content = td.turndown(editorEl.innerHTML);
-    raw = frontmatter ? buildRaw(frontmatter, content) : content;
+    // Body-only round-trip: the original frontmatter block is reattached
+    // byte-identical — never re-serialized (#149).
+    raw = buildRawFromText(fmText, content);
   }
 
   function execCmd(cmd: string, val?: string) {
@@ -314,7 +259,10 @@
   async function save() {
     try {
       if (mode === 'edit') syncHtmlToRaw();
-      if (frontmatter) raw = buildRaw(frontmatter, content);
+      // In source mode `raw` is textarea-bound and IS the truth; in read mode
+      // (property-pane saves) the caller already rebuilt it. Never rebuild
+      // from parsed state here — that re-serialized frontmatter and clobbered
+      // source-mode edits (#149).
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (loadedEtag) headers['If-Match'] = loadedEtag;
       const res = await fetch('/api/write?path=' + encodeURIComponent(filePath()), {
@@ -336,8 +284,10 @@
         loadedEtag = saved.etag ?? null;
         mode = 'read';
         const parsed = splitFrontmatter(raw);
+        fmText = parsed.fmText;
         frontmatter = parsed.frontmatter;
         content = parsed.body;
+        confirmedBody = parsed.body;
         html = md.render(content);
         showToast('Saved', 2000);
         if (docType === 'plan' && frontmatter?.status === 'completed') {
@@ -367,14 +317,20 @@
     const prevApproved = prevParsed.frontmatter?.approved;
     if (fm) frontmatter = { ...fm };
     // If the plan body was edited (not just frontmatter), reset tests_defined
-    // so the user must re-run tests before completing.
+    // so the user must re-run tests before completing. Compare against confirmedBody
+    // (the body from the last confirmed file state) to avoid false positives from
+    // state staleness or SSE reloads (#218).
     if (docType === 'plan' && frontmatter?.tests_defined === true) {
-      const prevContent = splitFrontmatter(raw).body;
-      if (content !== prevContent) {
+      if (content !== confirmedBody) {
         frontmatter = { ...frontmatter, tests_defined: false };
       }
     }
-    if (frontmatter) raw = buildRaw(frontmatter, content);
+    // Apply property edits as per-field, byte-preserving text edits on the
+    // original frontmatter block — never a full re-serialization (#149).
+    if (fmText !== null && frontmatter) {
+      fmText = applyFrontmatterEdits(fmText, prevParsed.frontmatter ?? {}, frontmatter);
+      raw = buildRawFromText(fmText, content);
+    }
     await save();  // save() already triggers transition for completed plans
 
     // When a proposal is saved with approved: true and is still in proposals/ root
@@ -457,9 +413,12 @@
     if (!res.ok) return;
     const { content: relRaw } = await res.json();
     const parsed = splitFrontmatter(relRaw);
-    if (!parsed.frontmatter) return;
-    parsed.frontmatter.subsumed_by = filePath().replace(/\.md$/, '');
-    const updated = buildRaw(parsed.frontmatter, parsed.body);
+    if (parsed.fmText === null || !parsed.frontmatter) return;
+    const newFmText = applyFrontmatterEdits(parsed.fmText, parsed.frontmatter, {
+      ...parsed.frontmatter,
+      subsumed_by: filePath().replace(/\.md$/, ''),
+    });
+    const updated = buildRawFromText(newFmText, parsed.body);
     await fetch('/api/write?path=' + encodeURIComponent(relPath), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -558,8 +517,10 @@
     conflictDialog = null;
     raw = serverContent;
     const parsed = splitFrontmatter(serverContent);
+    fmText = parsed.fmText;
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
+    confirmedBody = parsed.body;
     html = md.render(content);
     // Re-load to get the fresh ETag from the server
     loadFile();
@@ -609,7 +570,9 @@
           <button class="btn del" onclick={deleteFile} title="Delete this document">🗑 Delete</button>
         {/if}
         <button class="btn mode-toggle" onclick={cycleMode}
-          title={mode === 'read' ? 'Switch to WYSIWYG editor' : mode === 'edit' ? 'Switch to raw Markdown / frontmatter source' : 'Switch to read-only preview'}>
+          title={mode === 'read'
+            ? 'Switch to WYSIWYG editor'
+            : mode === 'edit' ? 'Switch to raw Markdown / frontmatter source' : 'Switch to read-only preview'}>
           {mode === 'read' ? '✏ Edit' : mode === 'edit' ? '⟨/⟩ Source' : '👁 Preview'}
         </button>
       </div>

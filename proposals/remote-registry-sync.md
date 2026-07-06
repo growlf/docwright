@@ -17,6 +17,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/project-registry.md
 _path: proposals/remote-registry-sync.md
+milestone: backlog
 ---
 ## Problem
 

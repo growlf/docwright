@@ -66,13 +66,27 @@ export const POST = requireAuth(async ({ request, locals }) => {
     return json({ error: 'proposal must have non-empty assigned_to' }, { status: 400 });
   }
 
-  // Check whether proposal already has a plan — reject duplicate creation (#115)
+  // Check whether proposal already has a plan — reject duplicate creation (#115).
+  // Self-heal (#141): only short-circuit when the consumed_by target actually
+  // exists. A stale pointer at a deleted/renamed plan used to make Approve a
+  // silent no-op; now it's noted in the audit log and the approval proceeds,
+  // overwriting the stale pointer with the new plan below.
   if (fm.consumed_by) {
-    return json({
-      ok: true,
-      alreadyExists: true,
-      planPath: fm.consumed_by,
-    });
+    const consumedSafe = String(fm.consumed_by).endsWith('.md')
+      ? String(fm.consumed_by)
+      : `${fm.consumed_by}.md`;
+    const consumedResolved = path.resolve(REPO_ROOT, consumedSafe);
+    if (consumedResolved.startsWith(REPO_ROOT) && fs.existsSync(consumedResolved)) {
+      return json({
+        ok: true,
+        alreadyExists: true,
+        planPath: fm.consumed_by,
+      });
+    }
+    logAudit(
+      'CONSUMED_BY_SELF_HEAL',
+      `proposals/${norm}: stale consumed_by '${fm.consumed_by}' points at a missing plan — proceeding with approval`,
+    );
   }
 
   // Also check the create-plan slug path for cross-path collisions (#115)
@@ -223,7 +237,7 @@ export const POST = requireAuth(async ({ request, locals }) => {
 
   const planContent = assemblePlan({
     title, author, created: now, tags: tagList, priority,
-    proposalSource: approvedRel, assigned, summary,
+    proposalSource: approvedRel, planPath: planRel, assigned, summary,
     steps: stepsBody, testingPlan: testingBody, rollback: rollbackBody, riskAssessment: riskBody,
   });
   const planPath = path.join(REPO_ROOT, planRel);

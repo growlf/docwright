@@ -1,19 +1,15 @@
 ---
-title: "Centralize the duplicated frontmatter parser (parseFm copied across 4+ files)"
+title: Centralize the duplicated frontmatter parser (parseFm copied across 4+ files)
 status: resolved
-github_issue: 94
-closed_by_pr: "#187"
+created: 2026-07-05
 category: feature
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-  - enhancement
-  - tech-debt
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
-milestone: future
+tags: []
+github_issue: 94
+milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
+closed_by_pr: #187
 ---
 
 `parseFm` is copy-pasted into `src/dispatch/release.ts`, `src/dispatch/bridge.ts`, `api/release/channel/+server.ts`, and `api/issues/report/+server.ts` (and elsewhere) — despite `src/dispatch/frontmatter.ts` already exporting `parseFrontmatter`, and despite #89's commit claiming "centralization."

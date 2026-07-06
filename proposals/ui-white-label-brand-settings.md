@@ -16,6 +16,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/ui-settings-activity-bar.md
 _path: proposals/ui-white-label-brand-settings.md
+milestone: backlog
 ---
 ## Problem
 

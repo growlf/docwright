@@ -11,6 +11,7 @@ describe('assemblePlan (approve→plan generation, #108)', () => {
     tags: ['governance', 'process'],
     priority: 'high',
     proposalSource: 'proposals/approved/widget-overhaul.md',
+    planPath: 'plans/widget-overhaul.md',
     assigned: 'NetYeti',
     summary: 'Overhaul the widget subsystem.',
     steps: '| Step | Action | Details | Status |\n|--|--|--|--|\n| 1 | Do it | | ⏳ Pending |',
@@ -54,6 +55,14 @@ describe('assemblePlan (approve→plan generation, #108)', () => {
 
   it('keeps tests_defined false (set only by run-tests / toggle)', () => {
     assert.match(assemblePlan(base), /^tests_defined: false$/m);
+  });
+
+  // The MCP plan generator (transitions.ts) writes `_path`; the UI generator omitted it,
+  // so an out-of-band normalize later backfilled it → uncommitted churn on a governed plan
+  // file (bug-plan-file-runtime-writeback-churn). Emit it at generation time so the plan is
+  // complete and consistent from birth.
+  it('writes _path so nothing backfills it later (matches transitions.ts)', () => {
+    assert.match(assemblePlan(base), /^_path: plans\/widget-overhaul\.md$/m);
   });
 
   it('places the derived sections', () => {

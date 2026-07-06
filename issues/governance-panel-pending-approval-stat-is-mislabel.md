@@ -1,16 +1,20 @@
 ---
-title: "Governance panel: 'Pending Approval' stat is mislabeled (it's approved-awaiting-plan, not awaiting approval)"
-status: open
-github_issue: 112
+title: Governance panel: 'Pending Approval' stat is mislabeled (it's approved-awaiting-plan, not awaiting approval)
+status: scope-checked
+created: 2026-07-05
 category: bug
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
-milestone: future
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 112
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 Found dogfooding 2026-07-02. In the Governance panel (`src/webui/src/lib/GovernancePanel.svelte:147-150`), the stat tile labeled **"Pending Approval"** is bound to `approvedPending` (`d.proposals.approved_pending`).

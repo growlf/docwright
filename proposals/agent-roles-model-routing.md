@@ -26,6 +26,7 @@ related_to:
   - policies/core/code-over-memory.md
   - .claude/agents/docwright-lifecycle.md
   - .claude/agents/docwright-incident.md
+milestone: backlog
 ---
 
 > **⚠ Development happens on the `agent-roles` branch — not `main`.**

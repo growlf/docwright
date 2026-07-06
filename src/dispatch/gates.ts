@@ -147,8 +147,11 @@ export function getGatesForTransition(
 ): GateDefinition[] {
   return gates.filter((g) => {
     if (g.trigger === 'all-plans-in-phase-completed') {
-      // Phase completion — matches when a phase-level document transitions
-      return doc.document_type === 'phase' || typeof doc.phase === 'number';
+      // Phase completion gate — fires only on phase-level plans (document_type 'phase').
+      // Phase fields on issues/proposals are internal only; milestone tags are the
+      // visible per-item governance axis. This gate is part of the phase versioning
+      // backbone, not item triage.
+      return doc.document_type === 'phase';
     }
     if (g.trigger === 'status-transition') {
       if (g.document_type && g.document_type !== doc.document_type) return false;

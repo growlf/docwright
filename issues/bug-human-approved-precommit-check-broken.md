@@ -1,7 +1,6 @@
 ---
-title: "Pre-commit HUMAN-APPROVED check is broken — reads stale COMMIT_EDITMSG"
+title: Pre-commit HUMAN-APPROVED check is broken — reads stale COMMIT_EDITMSG
 status: resolved
-closed_by_pr: "#70"
 author: NetYeti
 author-role: contributor
 created: 2026-06-30
@@ -9,14 +8,11 @@ category: bug
 priority: high
 complexity: low
 estimated_effort: S
-tags:
-  - governance
-  - hooks
-  - approval
-  - data-integrity
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-milestone: future
+tags: []
+milestone: backlog
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #70
 ---
 
 > Root cause of the entire #59 (fix-or-retire-version-js) approval saga on

@@ -1,16 +1,20 @@
 ---
-title: "complete_issue_branch --merge always fails: tries to merge before required checks finish"
-status: open
-github_issue: 166
+title: complete_issue_branch --merge always fails: tries to merge before required checks finish
+status: scope-checked
+created: 2026-07-05
 category: bug
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
-milestone: future
+tags: []
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 166
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 Hit on every single use this session (PRs #154, #161, #164): `complete_issue_branch(num, merge=true)` pushes, creates the PR, then immediately calls `gh pr merge` — but branch protection requires 3 status checks that have barely started, so the merge fails with `GraphQL: 3 of 3 required status checks are expected` and a human (or AI) has to watch checks and merge manually. The `merge: true` option is effectively dead code under branch protection.

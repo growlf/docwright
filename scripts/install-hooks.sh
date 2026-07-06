@@ -59,13 +59,13 @@ if [ -n "$VAULT_TARGET" ]; then
   DOCWRIGHT_PATH="$(cd "$DOCWRIGHT_PATH" && pwd)"
   [ -f "$DOCWRIGHT_PATH/scripts/pre-commit.sh" ] || fail "DocWright not found at $DOCWRIGHT_PATH (missing scripts/pre-commit.sh)"
 
-  SOURCE_HOOK="$DOCWRIGHT_PATH/scripts/pre-commit.sh"
+  SOURCE_DIR="$DOCWRIGHT_PATH/scripts"
   echo "Installing DocWright hooks in vault: $REPO_ROOT"
   echo "  DocWright path: $DOCWRIGHT_PATH"
 else
   # Self installation — install hooks in the DocWright repo itself
   REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-  SOURCE_HOOK="$REPO_ROOT/scripts/pre-commit.sh"
+  SOURCE_DIR="$REPO_ROOT/scripts"
   DOCWRIGHT_PATH="$REPO_ROOT"
   echo "DocWright Hook Installer (self)"
 fi
@@ -74,34 +74,49 @@ cd "$REPO_ROOT" || exit 1
 echo "========================="
 echo ""
 
-# Check source exists
-[ ! -f "$SOURCE_HOOK" ] && fail "Source hook not found at $SOURCE_HOOK"
+# Check canonical sources exist — scripts/ is the single hook source (#144);
+# .githooks/ holds thin exec-shims for the DocWright repo's core.hooksPath.
+for h in pre-commit.sh commit-msg.sh; do
+  [ ! -f "$SOURCE_DIR/$h" ] && fail "Canonical hook source not found at $SOURCE_DIR/$h"
+done
 
-# Determine install target.
-# DocWright uses core.hooksPath=.githooks so hooks are version-controlled.
-# Vault repos use the standard .git/hooks path (no custom hooksPath).
+# Determine install target dir.
+# DocWright uses core.hooksPath=.githooks (tracked shims exec the canonical
+# scripts) — self-install only verifies. Vault repos get real copies in
+# .git/hooks (both hooks, #144: commit-msg was previously never installed).
 HOOKS_PATH=$(git -C "$REPO_ROOT" config --local core.hooksPath 2>/dev/null || true)
 if [ -z "$VAULT_TARGET" ] && [ -n "$HOOKS_PATH" ]; then
-  HOOK_TARGET="$REPO_ROOT/$HOOKS_PATH/pre-commit"
-  mkdir -p "$REPO_ROOT/$HOOKS_PATH"
+  TARGET_DIR="$REPO_ROOT/$HOOKS_PATH"
 else
-  HOOK_TARGET="$REPO_ROOT/.git/hooks/pre-commit"
-  mkdir -p "$REPO_ROOT/.git/hooks"
+  TARGET_DIR="$REPO_ROOT/.git/hooks"
 fi
+mkdir -p "$TARGET_DIR"
 
-# Copy with validation.
-# For vault installs: bake the absolute js-yaml require path so the hook works
-# without node_modules in the vault. Self-installs use plain cp so the integrity
-# check (diff source vs installed) still passes.
-if [ -n "$VAULT_TARGET" ]; then
-  sed "s|require('js-yaml')|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g;
-       s|require(\"js-yaml\")|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g" \
-    "$SOURCE_HOOK" > "$HOOK_TARGET"
-else
-  cp "$SOURCE_HOOK" "$HOOK_TARGET"
-fi
-chmod +x "$HOOK_TARGET"
-pass "Copied hook -> ${HOOK_TARGET#$REPO_ROOT/}"
+for hook in pre-commit commit-msg; do
+  SOURCE_HOOK="$SOURCE_DIR/$hook.sh"
+  HOOK_TARGET="$TARGET_DIR/$hook"
+  if [ -n "$VAULT_TARGET" ]; then
+    # Vault: bake the absolute js-yaml require path so the hook works without
+    # node_modules in the vault (no-op for hooks that don't use js-yaml).
+    sed "s|require('js-yaml')|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g;
+         s|require(\"js-yaml\")|require(\"$DOCWRIGHT_PATH/node_modules/js-yaml\")|g" \
+      "$SOURCE_HOOK" > "$HOOK_TARGET"
+    chmod +x "$HOOK_TARGET"
+    pass "Copied $hook -> ${HOOK_TARGET#$REPO_ROOT/}"
+  elif [ "$TARGET_DIR" = "$REPO_ROOT/$HOOKS_PATH" ] && [ -n "$HOOKS_PATH" ]; then
+    # Self with hooksPath: the tracked shim IS the hook — verify, never copy
+    # (copying the canonical source back over the shim recreates the drift).
+    [ -x "$HOOK_TARGET" ] || fail "$hook shim missing/not executable at ${HOOK_TARGET#$REPO_ROOT/}"
+    grep -q "scripts/$hook.sh" "$HOOK_TARGET" || fail "$hook at ${HOOK_TARGET#$REPO_ROOT/} is not the canonical shim"
+    pass "Verified $hook shim -> scripts/$hook.sh"
+  else
+    # Self without hooksPath: install shims into .git/hooks (rev-parse in the
+    # shim resolves the repo, so the exec target is always the live source).
+    printf '#!/bin/bash\n# Thin shim — canonical source is scripts/%s.sh (#144).\nexec "$(git rev-parse --show-toplevel)/scripts/%s.sh" "$@"\n' "$hook" "$hook" > "$HOOK_TARGET"
+    chmod +x "$HOOK_TARGET"
+    pass "Installed $hook shim -> ${HOOK_TARGET#$REPO_ROOT/}"
+  fi
+done
 
 # For vault installations, write a .env if not present
 if [ -n "$VAULT_TARGET" ] && [ ! -f "$REPO_ROOT/.env" ]; then
@@ -148,22 +163,15 @@ MCPEOF
   pass "Created .mcp.json with dw-vault + dw-upstream"
 fi
 
-# Verify match (self-install only)
-if [ -z "$VAULT_TARGET" ]; then
-  if diff -q "$SOURCE_HOOK" "$HOOK_TARGET" > /dev/null 2>&1; then
-    pass "Integrity verified: source and installed hook match"
-  else
-    fail "Integrity FAILED: files differ after copy"
-  fi
-fi
+# Both hooks executable
+for hook in pre-commit commit-msg; do
+  [ -x "$TARGET_DIR/$hook" ] && pass "$hook is executable" || fail "$hook not executable"
+done
 
-# Test hook is executable
-[ -x "$HOOK_TARGET" ] && pass "Hook is executable" || fail "Hook not executable"
-
-# Quick smoke test
+# Quick smoke test against the actual install target
 echo ""
 echo "Running smoke test..."
-if bash .git/hooks/pre-commit > /dev/null 2>&1; then
+if bash "$TARGET_DIR/pre-commit" > /dev/null 2>&1; then
     pass "Smoke test: pre-commit runs cleanly"
 else
     warn "Smoke test: pre-commit found issues (expected on dirty tree)"

@@ -4,8 +4,9 @@ import { createHash } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import { rebuildRelationships } from '../../../../../dispatch/relationships';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
-import { syncTestCriteria } from '../../../../../dispatch/test-criteria';
+import { syncTestCriteria, stepsChanged } from '../../../../../dispatch/test-criteria';
 import { requireAuth } from '$lib/server/auth.js';
+import { commitPaths } from '$lib/server/git-commit.js';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -41,8 +42,14 @@ function updateTestsDefined(filePath: string, resolved: string, content: string)
   if (updated !== raw) fs.writeFileSync(resolved, updated);
 }
 
-function applySyncTestCriteria(filePath: string, content: string): string {
+function applySyncTestCriteria(filePath: string, resolved: string, content: string): string {
   if (!isPlanDoc(filePath)) return content;
+  // Sync only when the Implementation Steps table actually changed (#148) —
+  // a plain save must never rewrite the Testing Plan. New files always sync.
+  if (fs.existsSync(resolved)) {
+    const existing = fs.readFileSync(resolved, 'utf-8');
+    if (!stepsChanged(existing, content)) return content;
+  }
   const fm = parseFrontmatter(content);
   const title = String(fm.title || '');
   return syncTestCriteria(content, title);
@@ -52,7 +59,7 @@ function etag(content: string): string {
   return `"${createHash('sha256').update(content).digest('hex').slice(0, 16)}"`;
 }
 
-export const POST = requireAuth(async ({ url, request }) => {
+export const POST = requireAuth(async ({ url, request, locals }) => {
   const filePath = url.searchParams.get('path');
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
@@ -75,8 +82,8 @@ export const POST = requireAuth(async ({ url, request }) => {
   const dir = path.dirname(resolved);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-  // Sync test criteria before writing — ensures Testing Plan section stays current
-  const finalContent = applySyncTestCriteria(filePath, content);
+  // Sync test criteria before writing — only when the step table changed (#148)
+  const finalContent = applySyncTestCriteria(filePath, resolved, content);
   fs.writeFileSync(resolved, finalContent, 'utf-8');
 
   // Auto-detect tests_defined for plan docs
@@ -90,5 +97,20 @@ export const POST = requireAuth(async ({ url, request }) => {
     }, 0);
   }
 
-  return json({ ok: true, path: filePath, etag: etag(finalContent) });
+  // Persist the save so it isn't left as a silent, uncommitted change (#147).
+  // The authenticated save is the seal: commit locally, authored as the user.
+  // Never pushes. Non-fatal — a no-op save reports 'nothing to commit'.
+  const commit = commitPaths(REPO_ROOT, {
+    message: `docs: edit ${filePath} (web ui save)`,
+    stagePaths: [filePath],
+    user: locals.user,
+  });
+
+  return json({
+    ok: true,
+    path: filePath,
+    etag: etag(finalContent),
+    committed: commit.ok ? commit.sha : null,
+    commitError: commit.ok ? null : commit.error,
+  });
 });

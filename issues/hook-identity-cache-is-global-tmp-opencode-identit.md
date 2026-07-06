@@ -1,18 +1,25 @@
 ---
-title: "Hook identity cache is global (/tmp/opencode-identity-cache) — test runs poison real commits for an hour"
-status: open
-github_issue: 160
+title: Hook identity cache is global (/tmp/opencode-identity-cache) — test runs poison real commits for an hour
+status: resolved
+closed_by_pr: "#243"
+resolved: 2026-07-06
+created: 2026-07-05
 category: bug
 priority: high
-tags:
-  - github-issue
-  - issue-workflow
-created: 2026-07-05
-created_by: "NetYeti@host"
-assigned_to: ""
-milestone: future
-demand_count: 2
+tags: []
 reported_dates: [2026-07-05]
+demand_count: 2
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / high.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 160
+milestone: backlog
+assigned_to: []
+created_by: NetYeti@host
 ---
 
 Observed live 2026-07-05: after `npm test` (which runs `test/hooks/test-human-approved-hook.sh` in a throwaway repo with `git config user.name "Hook Test"`), the very next real commit's pre-commit banner asserted `Human: Hook Test (hooktest@example.com)` — the throwaway repo's hook wrote the shared cache at `/tmp/opencode-identity-cache`, and `resolve_identity()` trusts it for 3600s regardless of which repo it came from.

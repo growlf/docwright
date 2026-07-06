@@ -1,20 +1,27 @@
 ---
 title: Issues created from Report Bug dont create the GH link
-status: open
-github_issue: 175
-created: 2026-07-05
+status: scope-checked
 author: NetYeti
 author-role: user
+created: 2026-07-05
 category: bug
 priority: medium
 complexity: medium
 estimated_effort: S
-demand_count: 1
+tags: []
 reported_dates: [2026-07-05]
-milestone: future
+demand_count: 1
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / medium.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
+github_issue: 175
+assigned_to: []
+created_by: NetYeti@cluster-llm
 channel: dev
-tags:
-  - reported-bug
 ---
 
 # Issues created from Report Bug dont create the GH link

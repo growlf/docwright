@@ -19,6 +19,7 @@ related_to:
   - proposals/approved/bundle-chat-session-panel.md
   - proposals/bundle-enterprise-tier.md
 deferred_reason: "Gate condition not met: proposals/bundle-enterprise-tier.md must be approved before this work begins. Deferred from chat-session-panel.md Tier 3 (steps 13–15)."
+milestone: backlog
 ---
 
 ## Problem

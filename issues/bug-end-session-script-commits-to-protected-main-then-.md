@@ -1,20 +1,27 @@
 ---
 title: end-session script commits to protected main then push is rejected, stranding commits
-status: open
-created: 2026-07-05
+status: scope-checked
 author: NetYeti
 author-role: user
+created: 2026-07-05
 category: bug
 priority: medium
 complexity: medium
 estimated_effort: S
-demand_count: 1
+tags: []
 reported_dates: [2026-07-05]
-milestone: future
-channel: dev
+demand_count: 1
+triage_date: 2026-07-05
+triage_by: NetYeti
+triage_notes: Triaged as bug / medium.
+scope_check_date: 2026-07-05
+scope_check_by: NetYeti
+scope_assessment: Issue is in active backlog.
+scope_decision: in-scope
 github_issue: https://github.com/growlf/docwright/issues/191
-tags:
-  - reported-bug
+assigned_to: []
+created_by: NetYeti@cluster-llm
+channel: dev
 ---
 
 # end-session script commits to protected main then push is rejected, stranding commits

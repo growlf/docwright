@@ -19,7 +19,7 @@ scenario_synthesis: VSCodium extension development; requires Node.js + VS Code A
 _path: plans/vscodium-extension.md
 proposal_source: phase-level — scope defined in PROJECT.md §14 Phase 5; no individual proposal
 github_epic: null
-milestone: future
+milestone: backlog
 ---
 # VSCodium Extension
 

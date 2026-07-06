@@ -21,10 +21,13 @@ print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 print_status()  { echo -e "${GREEN}[✓]${NC} $1"; }
 
 # =============================================================================
-# 1. Identity + Network (cached in /tmp/)
+# 1. Identity + Network
+#    Identity cache is PER-REPO (under .git/) — identity resolves from this
+#    repo's .env, and a global /tmp cache let test-fixture identities poison
+#    real commit banners for an hour (#160). Network cache stays machine-global.
 # =============================================================================
 resolve_identity() {
-    local CACHE_FILE="/tmp/opencode-identity-cache"
+    local CACHE_FILE="$(git rev-parse --git-dir)/docwright-identity-cache"
     if [ -f "$CACHE_FILE" ] && [ "$(( $(date +%s) - $(stat -c %Y "$CACHE_FILE") ))" -lt 3600 ]; then
         cat "$CACHE_FILE"; return
     fi
@@ -231,12 +234,24 @@ try {
 # =============================================================================
 validate_no_self_approval() {
     local FILE=$1
+    # Approval-by-location (#140): a file NEWLY appearing in proposals/approved/
+    # with approved: true is an approval exactly like flipping the flag — moving
+    # the file must not bypass the human seal. Files already in approved/ at
+    # HEAD are untouched (edits to previously-approved proposals need no seal).
+    if [[ "$FILE" =~ ^proposals/approved/[^/]+\.md$ ]]; then
+        git cat-file -e "HEAD:$FILE" 2>/dev/null && return 0
+        local MOVED_APPROVED=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+        [ "$MOVED_APPROVED" = "true" ] || return 0
+        touch "$(git rev-parse --git-dir)/dw-needs-human-approval"
+        return 0
+    fi
     [[ ! "$FILE" =~ ^proposals/[^/]+\.md$ ]] && return 0
-    [[ "$FILE" =~ ^proposals/approved/ ]] && return 0
     local OLD NEW
     OLD=$(git show "HEAD:$FILE" 2>/dev/null | grep "^approved:" | sed 's/^approved: *//')
     NEW=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
-    [ "$OLD" = "false" ] && [ "$NEW" = "true" ] || return 0
+    # Arm on a false→true flip AND on a brand-new proposal born approved: true
+    # (empty OLD) — the same bypass family as the move (#140).
+    [ "$NEW" = "true" ] && { [ "$OLD" = "false" ] || [ -z "$OLD" ]; } || return 0
     # A proposal's `approved` flipped false→true. The HUMAN-APPROVED:<name> marker
     # that authorizes this lives in the commit MESSAGE, which pre-commit cannot
     # read reliably: at this stage .git/COMMIT_EDITMSG still holds the PREVIOUS
@@ -337,6 +352,70 @@ validate_no_duplicate_locations() {
 }
 
 # =============================================================================
+# 12. Issue workflow validation
+#     Enforces issue status transitions: new → triaged → scope-checked →
+#     awaiting-proposal → proposal-linked → resolved/deferred/duplicate
+#     Checks:
+#     - Valid status enum
+#     - Milestone can only be set after proposal is linked (or if deferred)
+#     - scope-checked requires scope_assessment and scope_decision
+#     - Deferred requires target milestone in scope_notes
+#     - Duplicate requires canonical issue reference in scope_notes
+# =============================================================================
+validate_issue_workflow() {
+    local FILE=$1 FM=$(get_frontmatter "$FILE")
+    [ -z "$FM" ] && return 0
+
+    local STATUS=$(echo "$FM" | grep "^status:" | sed 's/^status:[[:space:]]*//' | xargs)
+    [ -z "$STATUS" ] && return 0  # No status field, skip
+
+    local MILESTONE=$(echo "$FM" | grep "^milestone:" | sed 's/^milestone:[[:space:]]*//' | xargs)
+    local SCOPE_DECISION=$(echo "$FM" | grep "^scope_decision:" | sed 's/^scope_decision:[[:space:]]*//' | xargs)
+    local SCOPE_ASSESSMENT=$(echo "$FM" | grep "^scope_assessment:" | sed 's/^scope_assessment:[[:space:]]*//' | xargs)
+    local SCOPE_NOTES=$(echo "$FM" | grep "^scope_notes:" | sed 's/^scope_notes:[[:space:]]*//' | xargs)
+
+    # Valid statuses
+    if ! echo "$STATUS" | grep -qE '^(new|triaged|scope-checked|awaiting-proposal|proposal-linked|resolved|deferred|duplicate)$'; then
+        print_error "$FILE: Invalid status '$STATUS'. Must be one of: new, triaged, scope-checked, awaiting-proposal, proposal-linked, resolved, deferred, duplicate"
+        return 1
+    fi
+
+    # Rule 1: Milestone can only be set after proposal is linked (or if deferred)
+    if [ -n "$MILESTONE" ] && [ "$STATUS" != "proposal-linked" ] && [ "$STATUS" != "resolved" ] && [ "$STATUS" != "deferred" ]; then
+        print_error "$FILE: Cannot set milestone on status='$STATUS'. Milestone is only allowed when status is proposal-linked, resolved, or deferred."
+        return 1
+    fi
+
+    # Rule 2: Scope-checked must have scope_assessment and scope_decision
+    if [ "$STATUS" = "scope-checked" ]; then
+        [ -z "$SCOPE_ASSESSMENT" ] && print_error "$FILE: status=scope-checked but scope_assessment is missing" && return 1
+        [ -z "$SCOPE_DECISION" ] && print_error "$FILE: status=scope-checked but scope_decision is missing" && return 1
+        if ! echo "$SCOPE_DECISION" | grep -qE '^(in-scope|out-of-scope|duplicate|deferred)$'; then
+            print_error "$FILE: Invalid scope_decision='$SCOPE_DECISION'. Must be: in-scope, out-of-scope, duplicate, or deferred"
+            return 1
+        fi
+    fi
+
+    # Rule 3: If deferred, must specify target milestone in scope_notes
+    if [ "$STATUS" = "deferred" ] || [ "$SCOPE_DECISION" = "deferred" ]; then
+        echo "$SCOPE_NOTES" | grep -qE '(v0\.|backlog|future)' || {
+            print_error "$FILE: Deferred issue but scope_notes doesn't mention target milestone (v0.5.0, v0.6.0, backlog, etc.)"
+            return 1
+        }
+    fi
+
+    # Rule 4: If duplicate, must specify canonical issue in scope_notes
+    if [ "$STATUS" = "duplicate" ] || [ "$SCOPE_DECISION" = "duplicate" ]; then
+        echo "$SCOPE_NOTES" | grep -qE '(issues/|duplicate|canonical)' || {
+            print_error "$FILE: Duplicate issue but scope_notes doesn't reference the canonical issue"
+            return 1
+        }
+    fi
+
+    return 0
+}
+
+# =============================================================================
 # 13. Phase plan activation gate
 #     Warns when a phase plan is being activated (moved to in-progress) but
 #     has not been reviewed since the previous phase's gate was approved.
@@ -399,6 +478,7 @@ for FILE in $STAGED; do
     [[ "$FILE" =~ ^docs/SOPs/ ]] && { validate_agent_instructions "$FILE" || ((ERRORS++)); }
     validate_no_self_approval "$FILE" || ((ERRORS++))
     validate_location_invariant "$FILE" || ((ERRORS++))
+    [[ "$FILE" =~ ^issues/[^/]+\.md$ ]] && { validate_issue_workflow "$FILE" || ((ERRORS++)); }
     validate_phase_review_gate "$FILE" || ((ERRORS++))
     validate_parent_plan_sync "$FILE" || ((WARNINGS++))
     validate_no_duplicate_locations "$FILE" || ((ERRORS++))

@@ -3,6 +3,47 @@
   "title": "DocWright Profile Schema — org-operations",
   "description": "Frontmatter validation schema for document types in this profile. Each key in documentTypes is a document type name; its value is a JSON Schema object.",
   "documentTypes": {
+    "issue": {
+      "description": "A reported bug, feature request, or infrastructure issue. Stored in issues/ directory. Flows through triage → scope-check → awaiting-proposal → proposal-linked → resolved/deferred/duplicate.",
+      "required": ["title", "status", "author", "created", "author-role", "created_by"],
+      "properties": {
+        "title":                { "type": "string", "minLength": 1 },
+        "status":               { "type": "string", "enum": ["new", "triaged", "scope-checked", "awaiting-proposal", "proposal-linked", "resolved", "deferred", "duplicate"] },
+        "author":               { "type": "string", "minLength": 1 },
+        "author-role":          { "type": "string", "default": "contributor" },
+        "created":              { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "created_by":           { "type": "string", "minLength": 1, "description": "Identity stamp: Name@Machine or Name@Model" },
+        "category":             { "type": "string", "enum": ["bug", "feature", "infrastructure", "docs", "ux", "refactor"] },
+        "priority":             { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "complexity":           { "type": "string", "enum": ["XS", "S", "M", "L", "XL"] },
+        "estimated_effort":     { "type": "string", "enum": ["XS", "S", "M", "L", "XL"] },
+        "tags":                 { "type": "array", "items": { "type": "string" } },
+        "reported_dates":       { "type": "array", "items": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }, "description": "Dates this issue was reported" },
+        "demand_count":         { "type": "integer", "minimum": 0, "description": "Number of times this issue has been reported or voted for" },
+        "github_issue":         { "type": "integer", "description": "GitHub issue number if mirrored" },
+        "milestone":            { "type": "string", "enum": ["v0.5.0", "v0.6.0", "backlog"], "description": "Only set after proposal is linked" },
+        "assigned_to":          { "type": "array", "items": { "type": "string" }, "default": [] },
+        "triage_date":          { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "When issue was triaged (set when status: triaged)" },
+        "triage_by":            { "type": "string", "description": "Who triaged the issue (set when status: triaged)" },
+        "triage_notes":         { "type": "string", "minLength": 20, "description": "Assessment of the issue's nature and priority (required when status: triaged)" },
+        "scope_check_date":     { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "When issue was scope-checked (set when status: scope-checked)" },
+        "scope_check_by":       { "type": "string", "description": "Who scope-checked the issue (set when status: scope-checked)" },
+        "scope_assessment":     { "type": "string", "minLength": 20, "description": "Assessment of whether issue is in scope and any overlaps (required when status: scope-checked)" },
+        "scope_decision":       { "type": "string", "enum": ["in-scope", "out-of-scope", "duplicate", "deferred"], "description": "Outcome of scope check (required when status: scope-checked)" },
+        "scope_notes":          { "type": "string", "description": "If duplicate: link to canonical; if out-of-scope: justification; if deferred: target milestone" },
+        "proposal_source":      { "type": "string", "description": "Path to proposal that addresses this issue (set when status: proposal-linked)" },
+        "consumed_by":          { "type": "string", "description": "Alias for proposal_source, for clarity" },
+        "plan":                 { "type": "string", "description": "Filename of plan this issue is tracked by" },
+        "cross_link":           { "type": "string", "description": "Full path to plan (for wikilink and bidirectional reference)" }
+      },
+      "if": {
+        "properties": { "status": { "const": "triaged" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["triage_date", "triage_by", "triage_notes", "priority", "category"]
+      }
+    },
     "plan": {
       "description": "An execution plan for delivering a proposal's objectives. Stored in plans/ directory.",
       "properties": {
@@ -15,7 +56,9 @@
         "phase":                { "type": "integer" },
         "parent_plan":          { "type": "string", "description": "Filename of parent plan (omit if top-level)" },
         "parent_deliverable":   { "type": "string", "description": "Row number in parent's Deliverables table" },
-        "tags":                 { "type": "array", "items": { "type": "string" } }
+        "tags":                 { "type": "array", "items": { "type": "string" } },
+        "tracked_by":           { "type": "array", "items": { "type": "string" }, "description": "Issue filenames or paths tracked by this plan" },
+        "deliverables":         { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "description": { "type": "string" }, "acceptance_criteria": { "type": "array", "items": { "type": "string" } } }, "required": ["title"] }, "description": "Workable deliverables; each becomes an issue at plan-start" }
       }
     },
     "research": {

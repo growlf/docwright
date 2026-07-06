@@ -1,7 +1,6 @@
 ---
-title: "Plugin loader reads DOCWRIGHT_VAULT_ROOT only — plugins silently don't load in the container"
+title: Plugin loader reads DOCWRIGHT_VAULT_ROOT only — plugins silently don't load in the container
 status: resolved
-closed_by_pr: "#131"
 author: NetYeti
 author-role: contributor
 created: 2026-07-05
@@ -9,14 +8,11 @@ category: bug
 priority: medium
 complexity: low
 estimated_effort: S
-tags:
-  - plugins
-  - docker
-  - deployment
-  - dogfooding
-created_by: "NetYeti@cluster-llm"
-assigned_to: ""
-milestone: v0.5.0
+tags: []
+milestone: v0.6.0
+assigned_to: []
+created_by: NetYeti@cluster-llm
+closed_by_pr: #131
 ---
 
 > Found by dogfooding on 2026-07-05 standing up the cs-erp-images deployment (#3), whose

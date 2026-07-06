@@ -253,6 +253,7 @@ export interface AssemblePlanInput {
   tags: string[];           // inherited from the proposal, emitted as a YAML list
   priority: string;         // inherited from the proposal
   proposalSource: string;   // proposals/approved/<slug>.md
+  planPath: string;         // this plan's own path, e.g. plans/<slug>.md (kept in sync on move)
   assigned: string;
   summary: string;          // the proposal's own Summary section (bounded — NOT the whole body)
   steps: string;
@@ -284,6 +285,7 @@ automated: guided
 assigned_to: ${i.assigned}
 tests_defined: false
 tests_human_reviewed: false
+_path: ${i.planPath}
 ---
 
 # ${i.title}

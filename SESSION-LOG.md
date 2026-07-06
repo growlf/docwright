@@ -1450,6 +1450,46 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 ---
 
+## Session: 2026-07-05 — write-integrity Step 2 shared gate
+
+**Focus:** write-integrity Step 2 shared gate
+
+**Completed:**
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it (#172)
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it
+- [x] chore: leap-frog dogfood from main — opencode.jsonc untrack/ignore
+- [x] fix: stop committing runtime-generated opencode.jsonc (perpetual clone churn)
+- [x] chore: capture #191 via bug-report bridge — endsession strands commits on protected main
+- [x] docs: webui-write-integrity Step 1 → done; #94 resolved in issue store
+- [x] docs: propose scoped agent roles with per-role model routing (ai-stack bridge)
+- [x] chore: leap-frog dogfood from main — branch-list shell fix
+
+**Session note:** `docs/session-notes/session_note_202607051631.md`
+
+---
+
+## Session: 2026-07-05 — write-integrity Step 3 auto-commit
+
+**Focus:** write-integrity Step 3 auto-commit
+
+**Completed:**
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] docs: approve git-panel-branch-switcher (proposal → plan)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+
+**Session note:** `docs/session-notes/session_note_202607051732.md`
+
+---
+
 ## Session: 2026-07-05 — agent-roles PR + Round 6 rig
 
 **Focus:** agent-roles PR + Round 6 rig
@@ -1467,3 +1507,120 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] chore: leap-frog dogfood from main — opencode.jsonc untrack/ignore
 
 **Session note:** `docs/session-notes/session_note_202607051749.md`
+## Session: 2026-07-06 — Plan _path fix + milestone taxonomy
+
+**Focus:** Plan _path fix + milestone taxonomy
+
+**Completed:**
+- [x] chore: version-based milestone taxonomy + drop Phase from roadmap + tag proposals
+- [x] chore: version-based milestone taxonomy + drop Phase from roadmap + tag proposals
+- [x] docs: webui-write-integrity Step 4 → done; #148 resolved in issue store
+- [x] fix: syncTestCriteria only on step-table change; sweep phantom Testing Plan duplicates (#148)
+- [x] chore: leap-frog dogfood from main — v0.4.9 (gate parity + auto-commit UI writes)
+- [x] chore: bump version to 0.4.9 — write-integrity gate + auto-commit UI writes
+- [x] fix: Web UI approve→plan generator emits _path (kills out-of-band backfill churn)
+- [x] fix: Web UI approve→plan generator emits _path (kills out-of-band backfill churn)
+- [x] chore: bump version to 0.4.9 — write-integrity gate + auto-commit UI writes
+- [x] chore: capture #205 via bug-report bridge — release bump never lands on main (VERSION drift)
+
+**Session note:** `docs/session-notes/session_note_202607060130.md`
+
+---
+
+## Session: 2026-07-06 — merge origin/main with step 6 completed and new is
+
+**Focus:** merge origin/main with step 6 completed and new is
+
+**Completed:**
+- [x] docs: merge origin/main with step 6 completed and new issues migrated
+- [x] fix: approve idempotency self-heal — clear stale consumed_by pointers
+- [x] chore: capture #220 via bug-report bridge — Certify Tests unreachable with out-of-band test evidence
+- [x] chore: capture #218 — pane save demotes tests_defined on unchanged body; restore field
+- [x] docs: assign phase 4 and v0.6.0 milestone to collaboration-issue-model-and-roadmap-sync plan
+- [x] feat: sync issue workflow validation to scripts/pre-commit.sh
+- [x] docs: migrate issues to new schema with explicit triage and scope-check
+- [x] docs: add explicit issue schema with triage and scope-check stages
+- [x] docs: webui-write-integrity Step 6 → done; all Testing Plan boxes evidence-checked; #141 resolved
+- [x] docs: promote Wave C (report/intake UX) to v0.5.0 — full scope linked
+
+**Session note:** `docs/session-notes/session_note_202607060821.md`
+
+---
+
+## Session: 2026-07-06 — v0.4.9 release + plan completed
+
+**Focus:** v0.4.9 release + plan completed
+
+**Completed:**
+- [x] docs: complete webui-write-integrity (plan → completed)
+- [x] docs: complete webui-write-integrity (plan → completed)
+- [x] fix: approve idempotency self-heal — clear stale consumed_by pointers (#141)
+- [x] chore: capture #224; land BDFL certification + restore tests_defined
+- [x] chore: capture #224 (test/certify button state machine UX); land BDFL certification + restore tests_defined
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] chore: merge origin/main into feature branch
+
+**Session note:** `docs/session-notes/session_note_202607060140.md`
+
+---
+
+## Session: 2026-07-06 — webui-write-integrity completion + collaboration model
+
+**Focus:** webui-write-integrity completion + collaboration model
+
+**Completed:**
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: propose git-native multi-session work claiming (approved: false)
+- [x] docs: mark #220 as resolved by PR #230
+- [x] docs: mark #220 as resolved by PR #230
+- [x] fix: show Certify Tests affordance for out-of-band test verification (#220)
+- [x] fix: show Certify Tests affordance for out-of-band test verification
+- [x] docs: mark #218 as resolved by PR #227
+
+**Session note:** `docs/session-notes/session_note_202607062042.md`
+
+---
+
+## Session: 2026-07-06 — AI health stewardship framework + collaboration model
+
+**Focus:** AI health stewardship framework + collaboration model
+
+**Completed:**
+- [x] docs: establish AI health audit cycle and skill invocation clarity
+- [x] fix: restore skills-table-start marker in CLAUDE.md for auto-generation
+- [x] fix: make the plan test/certify state machine legible — visible checklist, honest Uncertify, confirm
+- [x] docs: establish AI health audit cycle and skill invocation clarity
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: generate 7 tracked issues for collaboration-issue-model plan
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: scaffold collaboration-issue-model plan with critical gaps and implementation steps
+- [x] docs: propose git-native multi-session work claiming (approved: false)
+- [x] docs: mark #220 as resolved by PR #230
+
+**Session note:** `docs/session-notes/session_note_202607062103.md`
+
+---
+
+## Session: 2026-07-06 — Wave B complete + healthcheck adopted
+
+**Focus:** Wave B complete + healthcheck adopted
+
+**Completed:**
+- [x] docs: complete wave-b-hooks-identity — BDFL-executed transition, archived with completion doc
+- [x] docs: complete wave-b-hooks-identity (plan → completed)
+- [x] docs: edit plans/wave-b-hooks-identity.md (web ui save)
+- [x] docs: edit plans/wave-b-hooks-identity.md (web ui save)
+- [x] docs: wave-b Step 4 → done; Testing Plan evidence-checked; #140 resolved
+- [x] docs: wave-b Step 4 → done; Testing Plan evidence-checked; #140 resolved
+- [x] fix: approve-by-move requires the HUMAN-APPROVED seal; born-approved proposals too (#140)
+- [x] fix: approve-by-move requires the HUMAN-APPROVED seal; born-approved proposals too
+- [x] docs: wave-b Step 2 → done; #143 resolved in issue store
+- [x] docs: wave-b Step 2 → done; #143 resolved in issue store
+
+**Session note:** `docs/session-notes/session_note_202607061527.md`

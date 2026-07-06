@@ -32,8 +32,10 @@ git config user.email "hooktest@example.com"
 git config commit.gpgsign false
 git config core.hooksPath .git/hooks   # override any inherited global hooksPath
 mkdir -p .git/hooks proposals/approved
-cp "$REPO/.githooks/pre-commit" .git/hooks/pre-commit
-cp "$REPO/.githooks/commit-msg" .git/hooks/commit-msg
+# Copy the CANONICAL sources (#144) — .githooks/ holds thin shims whose exec
+# target does not exist inside this throwaway repo.
+cp "$REPO/scripts/pre-commit.sh" .git/hooks/pre-commit
+cp "$REPO/scripts/commit-msg.sh" .git/hooks/commit-msg
 chmod +x .git/hooks/pre-commit .git/hooks/commit-msg
 
 write_prop() {  # $1 = approved value (true|false)

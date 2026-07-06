@@ -64,8 +64,8 @@ export function compareMilestones(a: string, b: string): number {
   return va.rest.localeCompare(vb.rest);
 }
 
-export function buildRoadplan(plans: any[], issues: any[]): { current: { name: string; items: any[] }; next: { name: string; items: any[] }; future: { name: string; items: any[] } } {
-  // Combine all open plans and open issues, excluding phase overview plans
+export function buildRoadplan(plans: any[], issues: any[], proposals: any[] = []): { current: { name: string; items: any[] }; next: { name: string; items: any[] }; future: { name: string; items: any[] } } {
+  // Combine all open plans, open issues, and pending proposals, excluding phase overview plans
   const roadplanPlans = plans.filter(p => {
     const filename = p.path ? p.path.split('/').pop() : '';
     return !/^phase-/.test(filename || '');
@@ -73,13 +73,16 @@ export function buildRoadplan(plans: any[], issues: any[]): { current: { name: s
   const allItems = [
     ...roadplanPlans.map(p => ({ ...p, itemType: 'plan' })),
     ...issues.map(i => ({ ...i, itemType: 'issue' })),
+    ...proposals.map(p => ({ ...p, itemType: 'proposal' })),
   ];
 
-  // Find all unique milestone names (except 'future' and empty strings)
+  // Find all unique milestone names (except the 'backlog'/'future' sentinel and empty strings).
+  // The two lowest-sorting version milestones become the Current + Next buckets; everything
+  // else (later versions, backlog) falls into the Backlog pool.
   const milestoneSet = new Set<string>();
   for (const item of allItems) {
     const m = String(item.milestone ?? '').trim();
-    if (m && m.toLowerCase() !== 'future') {
+    if (m && !['future', 'backlog'].includes(m.toLowerCase())) {
       milestoneSet.add(m);
     }
   }
@@ -110,6 +113,6 @@ export function buildRoadplan(plans: any[], issues: any[]): { current: { name: s
   return {
     current: { name: currentName, items: sortBucket(currentItems) },
     next: { name: nextName, items: sortBucket(nextItems) },
-    future: { name: 'Future Pool', items: sortBucket(futureItems) },
+    future: { name: 'backlog', items: sortBucket(futureItems) },
   };
 }

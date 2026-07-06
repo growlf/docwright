@@ -73,20 +73,6 @@ Key deliverables:
 ## Testing Plan
 
 ### Step Verification
-- [ ] Step 1: Fix js-yaml path in `install-hooks.sh`
-- [ ] Step 2: Add `.claude/skills/endsession.md` to DocWright
-- [ ] Step 3: Add manifest + stamp to `init.ts`
-- [ ] Step 4: `scripts/open-vault.ts` + `npm run open`
-- [ ] Step 5: `scripts/adopt-vault.ts` — core + lightweight mode
-- [ ] Step 6: `adopt-vault.ts` — full mode additions
-- [ ] Step 7: `adopt-vault.ts` — three-surface skills bridge
-- [ ] Step 8: `adopt-vault.ts` — `--upgrade` path
-- [ ] Step 9: `.claude/skills/docwright-adopt-vault.md`
-- [ ] Step 10: Session-start adoption health check
-- [ ] Step 11: `docs/vault-portability.md`
-- [ ] Step 12: Validation — DAFO fresh adoption
-- [ ] Step 13: Validation — DAFO upgrade
-- [ ] Step 14: Validation — Cascade STEAM
 
 - [x] Step 1: `npm run hook:install` on test vault — hook resolves `js-yaml` via baked absolute path; self-install integrity check passes
 - [x] Step 2: `.claude/skills/endsession.md` created; `/endsession` invocable from Claude Code
