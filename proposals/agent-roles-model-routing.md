@@ -116,7 +116,16 @@ plan writes), no-telemetry, dispatch-module invariants. These stay in
 CLAUDE.md/AGENTS.md + hooks + dispatch-layer validation and bind *every*
 role on *every* model.
 
-### B. Per-role model routing
+### B. Per-role model routing (stretch goal — amended after Rounds 2–4)
+
+> **Status (2026-07-05, post-Round 3):** OpenCode today has no per-agent
+> `model:` in `.md` agent frontmatter, no per-agent MCP tool scoping, and
+> no fallback chain for unreachable models (see
+> [OpenCode Compatibility](#opencode-compatibility-sdk-support-vs-gaps)).
+> The matrix below is a design target, **not** a committed spec. Committed
+> scope is the single-model Critic pilot (§D); each routing row activates
+> only when its condition in [Plan-Drafting Gates](#plan-drafting-gates)
+> is met.
 
 Match each role to the model class its work actually needs:
 
@@ -147,6 +156,17 @@ among several. No role's model may be granted credentials broader than
 its tool allowlist implies; local endpoints get LAN-only exposure per
 docwright-infra standards.
 
+**Amendment (Round 4 synthesis):** Rounds 2–3 showed this requirement
+extends beyond the constitution to capability scoping itself. Neither
+surface can enforce per-role tool allowlists client-side today — Claude
+Code scopes built-in tools only; OpenCode scopes neither MCP tools nor
+per-agent models (see OpenCode Compatibility). Therefore the dw MCP
+server is the **primary** enforcement point for role scoping, not a
+backstop: each session carries a role identity, and the MCP tools
+themselves validate that the calling role is permitted the operation.
+Client-side allowlists remain defense-in-depth where a harness supports
+them, but no scoping claim in this proposal may depend on them.
+
 ### C. Multi-chat, multi-AI research process
 
 Per [[policies/core/multi-perspective-review.md]], refine this proposal by
@@ -155,21 +175,127 @@ should itself be reviewed by multiple independent models:
 
 1. **Round 1 — Claude (this thread's lineage):** taxonomy draft (done,
    captured above) + open questions below.
-2. **Round 2 — BigPickle (OpenCode's configured LLM):** review the
-   taxonomy from the OpenCode-surface perspective — what does its agent
-   format support today (per-agent `model:`, permission dialects)?
-3. **Round 3 — Gemini (guest AI):** critique role granularity and the
-   model-routing matrix; Gemini is a candidate assignee, so it should
-   review its own proposed lane.
-4. **Round 4 — a local ollama model via ai-stack:** dry-run the Surveyor
-   or Triage role prompt on a small local model to test whether the role
-   spec is executable at that capability tier — the real feasibility gate
-   for the local-model rows in the matrix.
-5. **Synthesis:** fold findings back into this proposal (append, don't
-   rewrite history); when stable, promote to a plan.
+2. **Round 2 — Claude (Sonnet 4.6) via Cowork, independent context:**
+   Critic pass on the drafted proposal (done — executed ahead of the
+   originally planned BigPickle slot; see Research Log).
+3. **Round 3 — BigPickle (OpenCode's configured LLM):** OpenCode-surface
+   review — what the agent format actually supports today (done; see
+   Research Log and
+   [OpenCode Compatibility](#opencode-compatibility-sdk-support-vs-gaps)).
+4. **Round 4 — Synthesis (Claude, Fable 5) + amendments:** fold Rounds
+   2–3 back into the proposal body (done — this revision; append, don't
+   rewrite history).
+5. **Round 5 — Gemini via Antigravity (guest AI + third harness):**
+   critique role granularity and the (now stretch-goal) routing matrix on
+   the *amended* proposal. Rationale: Rounds 1–2 were both Claude-family
+   models, so genuine model diversity is still owed; Gemini is a
+   candidate assignee reviewing its own proposed lane; and Antigravity's
+   agent/tool model adds a third harness perspective alongside Claude
+   Code and OpenCode.
+6. **Round 6 — a local ollama model via ai-stack:** dry-run the Surveyor
+   or Triage role prompt on a small local model — the feasibility gate
+   for the local-model routing rows.
+7. **Promotion:** when stable, promote to a plan, subject to
+   [Plan-Drafting Gates](#plan-drafting-gates).
 
 Findings from each round land in the `## Research Log` section appended to
 this proposal, dated, with the reviewing model named.
+
+### D. Pilot — Critic as invocation layer (committed scope)
+
+(Added Round 4, consolidating Round 2 f.2/f.6 and Round 3 f.1/f.6.)
+The pilot implements exactly one role, the **Critic**, defined as the
+invocation layer over the existing `scripts/critique-plan.js` +
+`skill-plan-critique` flow — not a replacement for it. On OpenCode it is
+implemented as an inline `agent:` block in `opencode.json` (the only
+format supporting per-agent `model:` today), with a hand-mirrored
+`.claude/agents/` definition; the sync-layer prerequisite is deferred
+until after the pilot (resolving the two-paths question, Round 2 f.6 —
+hand-mirror limit: the Critic only). The pilot validates, in order:
+
+1. the inline-config pathway works end to end;
+2. dispatch-layer role validation works — the Critic's MCP calls are
+   identified and checked server-side (§B amendment);
+3. the Critic produces review value beyond invoking the bare script.
+
+Only after all three pass does taxonomy build-out begin. This also
+resolves the Critic bootstrapping dependency (Round 2 f.2): the amended
+proposal has been critiqued by independent models before the Critic role
+exists, and a **Critic self-review of this proposal is required before
+any second role ships**.
+
+### Role / skill / hook — decision criterion
+
+(Added per Round 2 f.3 and Round 3 f.5.) For each candidate behavior,
+apply in order — first match wins:
+
+1. **Hook / CI check / dispatch validation** — if the rule is
+   mechanically decidable, enforce it in code and stop
+   ([[policies/core/code-over-memory.md]]). No role.
+2. **Skill** — if it is a procedure that must run in main-conversation
+   context (session bookends) or is only ever invoked inside another
+   flow.
+3. **Role (subagent)** — only if it needs all three: (a) a distinct tool
+   surface enforceable at the dispatch layer, (b) isolation benefit
+   (short fresh context, high instruction density), and (c) recurring
+   standalone invocation.
+
+Applied to the draft taxonomy: Session confirmed a skill; Triage likely
+fails (c) and becomes a hook-triggered skill; the Surveyor + Incident
+Responder merge stays open; the taxonomy is expected to shrink. Whether
+survivors are real subagents or dispatched behavioral roles inside fewer
+agents (Round 3 f.5) is settled by the pilot: if scoping is enforced
+server-side, the count of client-side agent definitions becomes an
+ergonomics choice, not a security one.
+
+### OpenCode Compatibility (SDK support vs. gaps)
+
+As of `@opencode-ai/sdk v1.15.13` (Round 3, BigPickle — verified against
+`AgentConfig` types, `.opencode/agents/*.md`, and local config):
+
+| Capability the proposal needs | OpenCode support today |
+|---|---|
+| Per-agent `model:` in `.opencode/agents/*.md` frontmatter | **Absent** — `model` exists only on inline `agent:` blocks in `opencode.json` |
+| Per-agent MCP tool allowlists | **Absent** — `permission` scopes built-in tools only; MCP tools are global to all agents |
+| `tools: { skill: true }` enforcement | **Absent** — DocWright-custom field, not engine-enforced |
+| Per-agent small/fast model routing | **Absent** — `Config.small_model` is one global string |
+| Fallback chain on model unreachability | **Absent** — local-model roles stop hard when ollama is down |
+| Hierarchical permissions for 7+ distinct allowlists | **Absent** — two privilege levels, no MCP scoping |
+
+Consequence: every structural-scoping claim in this proposal is delivered
+at the dispatch/MCP layer (§B amendment) or not at all. The gaps above
+are tracked as upstream-contribution candidates but sit off the critical
+path.
+
+### Plan-Drafting Gates
+
+No plan is drafted from this proposal until (consolidated from Rounds
+2–4):
+
+1. **Dispatch-layer role enforcement is designed** — the mechanism by
+   which dw MCP tools identify and validate the calling role (Round 2
+   f.1; Round 3 f.2/f.3).
+2. **Routing-drift countermeasure is specified** — how main-session work
+   gets routed to roles instead of done in place, with named detection
+   heuristics (Round 2 f.1).
+3. **Data classification is decided** — which roles' data may be sent to
+   which endpoints (hosted vs. LAN); gates every hosted-small-model
+   routing row (Round 2 f.5).
+4. **The Critic pilot passes** its three validations (§D).
+5. **Local-model rows only:** Round-6 ollama dry-run transcripts attached
+   to the Research Log (Round 2 f.4) — gates those rows' activation, not
+   the plan itself, since the routing matrix is now a stretch goal.
+
+### Exit criteria
+
+(Added per Round 2 f.8.) The experiment is re-scoped or abandoned — the
+`agent-roles` branch archived and salvageable pieces captured as deferred
+proposals per [[policies/core/capture-deferred-ideas.md]] — if any of:
+the Critic pilot cannot pass its three validations; dispatch-layer role
+validation proves impractical without forking OpenCode; or two
+consecutive research rounds conclude the taxonomy adds process weight
+without measurable drift reduction. Failure must be as legible as
+success.
 
 ## Development Model — parallel branch `agent-roles`
 
@@ -205,12 +331,21 @@ AI agents alike:
 
 ## Open Questions (research targets)
 
+*(Round 4 annotations mark questions resolved, elevated to gates, or
+narrowed by Rounds 2–3. Original text retained.)*
+
 - **Granularity:** 7 roles or fewer? Surveyor + Incident Responder may
   merge (same domain, different tempo). Triage may be too thin to be an
   agent vs. a hook-triggered skill.
+  *→ Partially resolved (R4): decision criterion added (§ Role / skill /
+  hook); taxonomy expected to shrink; merge question stays open for
+  Round 5.*
 - **Routing layer:** OpenCode per-agent `model:` vs. meshy-side routing
   vs. both. What happens when the assigned model is unreachable — fallback
   chain per role?
+  *→ Narrowed (R3): only inline `agent:` config supports per-agent
+  `model:` today; fallback chains don't exist in OpenCode — now a
+  must-implement behind the stretch-goal matrix, not an open choice.*
 - **Capability floor:** which roles are actually executable on 7–13B
   local models? Needs empirical dry-runs (Round 4), not assumptions.
 - **Constitution portability:** exact mechanism for enforcing governance
@@ -219,15 +354,22 @@ AI agents alike:
 - **Cost/telemetry tension:** hosted small models (Gemini) send vault
   content off-LAN. Which roles' data is acceptable to send where? May
   need a per-role data classification.
+  *→ Elevated (R2 f.5): now Plan-Drafting Gate 3 — a security
+  architecture decision, not an open question.*
 - **Sync prerequisite:** does [[proposals/deferred-sync-agents-cross-tool.md]]
   need to land first, or can the first new role (Critic) be hand-mirrored
   as a pilot?
+  *→ Resolved (R4, per R2 f.6 + R3 recommendation): hand-mirror pilot
+  first, limited to the Critic; sync layer deferred until after the
+  pilot. See §D.*
 - **Routing drift (the failure mode moves up a level):** capability
   scoping fixes in-lane drift but creates a new one — the main session
   doing lifecycle-shaped work itself instead of delegating to the
   Registrar. Trigger/detection heuristics in agent descriptions become
   load-bearing; do they eventually need their own enforcement (e.g. a
   hook that flags role-lane mutations performed outside that role)?
+  *→ Elevated (R2 f.1): now Plan-Drafting Gate 2 — the central failure
+  mode of the design, must be specified before any plan.*
 - **Prompts are still prompts:** role prompts improve compliance; only
   tool scoping + MCP/dispatch-side validation make violations impossible.
   Where exactly is the line between what scoped roles *reduce* and what
@@ -259,8 +401,15 @@ AI agents alike:
 - CI check (extends the deferred sync proposal): every role has
   matching `.opencode/agents/` and `.claude/agents/` definitions, and no
   role's tool list includes a constitution-violating tool.
-- Round-4 dry-run transcripts for local-model roles are attached to the
+- Round-6 dry-run transcripts for local-model roles are attached to the
   Research Log before any local routing is enabled.
+- Role-level audit stamping ships **with the pilot**, not later:
+  `ai-last-action:` records the role and model that performed each action
+  (moved from Future per Round 2 f.7 — it is the observability that makes
+  routing drift detectable at all).
+- Dispatch-layer role validation has its own negative test: an MCP call
+  carrying the wrong (or no) role identity for a scoped operation is
+  rejected server-side, on every surface, hooks or no hooks.
 
 ## Future
 
@@ -268,8 +417,12 @@ AI agents alike:
   organizations (Cascade STEAM first) get the roles + routing matrix as a
   governed default — the multi-perspective philosophy transmitted as
   code, not advice.
-- Role-level audit stamping: extend `ai-last-action:` to record which
-  role (and which model) performed an action.
+- Upstream contributions to OpenCode closing the gaps in
+  [OpenCode Compatibility](#opencode-compatibility-sdk-support-vs-gaps)
+  (per-agent `model:` in `.md` frontmatter, per-agent MCP tool scoping,
+  fallback chains).
+- ~~Role-level audit stamping~~ — moved to Verification (V1, ships with
+  the pilot) per Round 2 f.7.
 
 ## Research Log
 
@@ -302,3 +455,110 @@ AI agents alike:
   parallel branch `agent-roles` (dogfood precedent), governance docs only
   flowing back to `main`, selective non-destructive forward-pulls,
   wholesale merge deferred to BDFL vetting.
+- **2026-07-05 — Claude (Sonnet 4.6) via Cowork, Round 2 — Critic pass
+  (independent context, no memory of drafting session):** Eight findings
+  across two severity tiers. Three flagged as plan-drafting gates:
+  (1) **Routing drift** — "main session bypasses Registrar" is the central
+  failure mode of the design, not an open question; dispatch mechanism must
+  be defined before a plan is drafted. (4) **Round 4 local-model dry-run**
+  — currently optional but its failure collapses the Surveyor/Security
+  Auditor rows; must become a hard gate on proposal approval, not just on
+  implementation. (5) **Data classification** — "which roles' data goes
+  where" is a security architecture decision disguised as an open question;
+  resolving it constrains the hosted-small-model rows before the plan is
+  written.
+  Medium findings: (2) Critic bootstrapping dependency — the Critic role
+  was not reviewed by the mechanism it creates; a Round 5 (Critic
+  self-review post-implementation) should be required before further roles
+  ship. (3) No role/skill/hook decision criterion — taxonomy is intuitive,
+  not principled; a stated criterion must be defined and applied to each
+  entry. (6) Two implementation paths (sync prerequisite vs. hand-mirror
+  pilot) with no decision point or hand-mirror limit named. (7) Role-level
+  audit stamping (`ai-last-action:` + role + model) is in Future but
+  belongs in V1 verification criteria. Low: (8) No exit criteria for the
+  experiment — failure conditions should be as explicit as success criteria.
+  Full finding table recorded in Cowork session. BDFL direction: log entry
+  first, then OpenCode (BigPickle) Round 3 review, then amendments.
+- **2026-07-05 — BigPickle (OpenCode's configured LLM) via OpenCode, Round 3
+  — OpenCode-surface review of agent taxonomy and model-routing
+  assumptions:** Reviewed proposal against actual OpenCode agent support
+  (inspected `.opencode/agents/*.md`, `AgentConfig` type definitions from
+  `@opencode-ai/sdk v1.15.13`, and all config files). Nine findings across
+  three tiers.
+  **Block — must resolve before plan drafting:**
+  (1) **Per-agent model assignment impossible in `.md` frontmatter.**
+  `.opencode/agents/*.md` has no `model` field in YAML frontmatter —
+  `model` only exists on `AgentConfig` in inline `agent:` blocks within
+  `opencode.json`. Every DocWright subagent uses the `.md` format. The sync
+  layer must either migrate to inline config, extend frontmatter schema,
+  or both. Without this, the model-routing matrix has no implementation
+  path on OpenCode. Gate the pilot on confirming at least one pathway works.
+  (2) **No MCP tool access scoping exists.** `permission` scopes only
+  built-in tools (edit, bash, webfetch, doom_loop, external_directory).
+  MCP tools are globally available to every agent — no per-agent allowlist.
+  There is no way to say "Critic has `run_dry_run` and `collate` but not
+  `update_plan_status`." Until this exists, capability scoping rests on
+  prompt discipline alone — the very thing the proposal aims to replace.
+  (3) **`tools: { skill: true }` is custom, not engine-enforced.** Both
+  existing subagents use `tools: { skill: true }` — a DocWright-custom
+  extension field, not the standard `AgentConfig.tools: { [name]: bool }`
+  format. The OpenCode engine does not enforce it. The tool-allowlisting
+  in the role taxonomy is aspirational.
+  **Warn — likely to cause problems; address before starting:**
+  (4) **Small/fast model routing is global, not per-agent.**
+  `Config.small_model` is a single global string — no per-agent equivalent.
+  The model-routing matrix is a visualization of intent, not a spec of
+  OpenCode capability. Move "Routing layer" from open question to
+  must-implement. (5) **No hierarchical permission model for tools.** 7+
+  roles with distinct tool allowlists cannot be modeled in a system with
+  two privilege levels and no MCP tool scoping. Determine whether roles
+  should be actual OpenCode subagents or dispatched behavioral roles within
+  a smaller number of real agents. (6) **Critic role overlaps existing
+  `skill-plan-critique`.** The completed critique skill uses
+  `scripts/critique-plan.js` + human review and is model-agnostic. A Critic
+  subagent duplicates this in a model-specific harness — define the Critic
+  as the invocation layer for the existing script, not a replacement.
+  **Note — worth considering:**
+  (7) `docwright-incident` proves capability scoping for `bash` only — not
+  for the wider MCP tool scoping the taxonomy requires. (8) No fallback
+  chain for model unreachability exists in OpenCode; when ollama is down,
+  local-model roles stop with no graceful degradation. (9) `assigned_to`
+  and role assignment collide — "Registrar" and "Critic" as roles conflict
+  with `assigned_to: NetYeti` as a separately defined concept.
+  **Round 3 summary:** Three hard blocks (no per-agent model in `.md` format,
+  no MCP tool scoping, custom `tools:` field unenforced) mean the proposal's
+  core structural guarantee cannot be delivered on OpenCode today. Recommend
+  a pilot Critic role implemented via inline `agent:` config in
+  `opencode.json` (bypassing the `.md` format gap) to validate the full
+  stack before committing to the 7-role taxonomy. Recommend adding an
+  `## OpenCode Compatibility` section documenting SDK support vs. gaps, and
+  shifting the model-routing table from design spec to stretch goal behind
+  identified SDK gaps.
+- **2026-07-05 — Claude (Fable 5) via Cowork, Round 4 — synthesis +
+  amendments:** Rounds 2–3 converge on one conclusion: the proposal's
+  structural guarantee ("cannot violate its lane") exists today only on
+  Claude Code, and only for built-in tools — R2's routing-drift gate and
+  R3's three blocks are the same finding at two levels. The proposal's
+  own §B security consideration already contained the fix, under-weighted:
+  since no client harness can enforce role scoping, the dw MCP/dispatch
+  layer is promoted from constitution backstop to **primary scoping
+  mechanism** (role identity per session, validated server-side by the
+  tools themselves) — which dissolves R3 blocks 2–3 rather than waiting
+  on upstream SDK features. Amendments made in this revision: §B routing
+  matrix demoted to stretch goal behind a status banner; §B amendment
+  paragraph (dispatch-layer scoping primary); new §D committed-scope
+  Critic pilot (invocation layer over `critique-plan`, inline `agent:`
+  config, hand-mirror limited to Critic, three validations, Critic
+  self-review required before second role — resolves R2 f.2/f.6, R3
+  f.1/f.6); new role/skill/hook decision criterion (R2 f.3, R3 f.5); new
+  `## OpenCode Compatibility` gap table (R3 recommendation); new
+  `## Plan-Drafting Gates` (5 gates consolidating R2 f.1/f.4/f.5, R3
+  f.2/f.3); new `## Exit criteria` (R2 f.8); role-level `ai-last-action:`
+  stamping moved Future → Verification V1 (R2 f.7); §C round plan
+  renumbered to match actuals — Gemini via Antigravity becomes Round 5
+  (on the amended doc; also restores model diversity, since Rounds 1–2
+  were both Claude-family), local ollama dry-run becomes Round 6. Open
+  questions annotated with resolution status; original text retained.
+  Still open for Round 5: role granularity / Surveyor–Incident merge,
+  routing-drift countermeasure design (gate 2), data classification
+  (gate 3), `assigned_to`-vs-role collision (R3 f.9).
