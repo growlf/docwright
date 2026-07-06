@@ -1,6 +1,8 @@
 ---
 title: Approving by moving a proposal to proposals/approved/ bypasses the HUMAN-APPROVED gate
-status: scope-checked
+status: resolved
+closed_by_pr: "#247"
+resolved: 2026-07-06
 author: NetYeti
 author-role: contributor
 created: 2026-07-01
