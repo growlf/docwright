@@ -17,7 +17,7 @@ tests_defined: false
 tests_human_reviewed: false
 phase: 4
 total_steps: 4
-completed_steps: 2
+completed_steps: 3
 github_epic: ""
 automated: full
 milestone: v0.5.0
@@ -55,7 +55,7 @@ Wave B).
 | Step | Action | Details | Status | Issue | Branch |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Single hook source + commit-msg for vaults | Make `scripts/pre-commit.sh` the one canonical source; `.githooks/pre-commit` becomes a thin exec-shim (or install copies verbatim from scripts/); `install-hooks.sh` installs BOTH pre-commit and commit-msg in repo and vault modes. Add a drift-guard test that fails when shim and source diverge. | ✅ Done | #144 | — |
-| 2 | Hooks fail loudly when DOCWRIGHT_PATH is unset | A vault hook that cannot resolve the DocWright tool repo must refuse the commit with a clear remediation message (or degrade to explicitly-warned minimal checks) — never silently pass. Cover non-interactive shells (no .zshrc/.bashrc env). | ⏳ Pending | #143 | — |
+| 2 | Hooks fail loudly when DOCWRIGHT_PATH is unset | A vault hook that cannot resolve the DocWright tool repo must refuse the commit with a clear remediation message (or degrade to explicitly-warned minimal checks) — never silently pass. Cover non-interactive shells (no .zshrc/.bashrc env). | ✅ Done | #143 | — |
 | 3 | Scope the identity cache per-repo | Replace `/tmp/opencode-identity-cache` with a per-repo location (`.git/docwright-identity-cache`) so test fixtures and real repos cannot cross-poison; drop the manual `rm -f` ritual from the step workflow. | ✅ Done | #160 | — |
 | 4 | Block approve-by-move | Pre-commit detects a proposal appearing in `proposals/approved/` (add or rename) in the staged diff and requires the HUMAN-APPROVED seal exactly as the frontmatter `approved: true` path does — moving the file is no longer a bypass. | ⏳ Pending | #140 | — |
 
@@ -105,3 +105,4 @@ Step 3 falls back to the /tmp path if the .git-scoped cache is unwritable.
 | 2026-07-06 | Created from Wave B of [[proposals/issue-cluster-remediation-waves]] per BDFL in-session directive 2026-07-06 ("all 3"); consumes #140 #143 #144 #160. Approved and started per the same directive — provenance recorded in lieu of separate proposal approval, matching the webui-write-integrity precedent. | NetYeti |
 | 2026-07-06 | Step 1 delivered (GH #144, PR #240): scripts/pre-commit.sh + new scripts/commit-msg.sh are the only hook sources; .githooks/* reduced to 3-line exec-shims (drift structurally impossible — the fixed divergence was 10+ changes); install-hooks.sh installs BOTH hooks in both modes (vaults get commit-msg for the first time, js-yaml baked); self-install verifies shims instead of copying. Drift guard test-hook-source-unification.sh first in test:hooks chain. The PR's own commit ran through the new shim live. #160 cache poisoning reproduced during this step's test run — Step 3's motivation, live again. | NetYeti |
 | 2026-07-06 | Step 3 delivered (GH #160, PR #243): identity cache moved from global /tmp to $(git rev-parse --git-dir)/docwright-identity-cache — fixture repos own their caches, poisoning structurally impossible; network cache stays machine-global by design. Two-repo isolation test + grep-guard in test:hooks. Live proof: the PR's own commit banner resolved the real identity immediately after a full hook-test run, no manual cache clear. The rm -f /tmp ritual is retired from the step workflow. | NetYeti |
+| 2026-07-06 | Step 2 delivered (GH #143, PR #245): all four .claude/settings.json hook commands resolve via ${DOCWRIGHT_PATH:-$CLAUDE_PROJECT_DIR} (no interactive-shell dependency); unresolvable lifecycle gate BLOCKS writes (exit 2) with loud remediation instead of silently passing; advisory hooks fail loud non-blocking (exit 1); adopt-vault bakes the absolute path over the whole fallback expression. test-claude-hook-resolution.sh in test:hooks covers fallback, precedence, and both failure modes. | NetYeti |
