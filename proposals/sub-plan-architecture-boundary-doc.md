@@ -14,6 +14,7 @@ priority: low
 complexity: low
 parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "9"
+milestone: backlog
 ---
 
 ## Problem

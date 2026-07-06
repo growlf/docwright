@@ -17,7 +17,7 @@ tags:
   - data-integrity
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-milestone: v0.5.0
+milestone: v0.6.0
 ---
 
 > Found by dogfooding on 2026-07-01 while committing the approval of

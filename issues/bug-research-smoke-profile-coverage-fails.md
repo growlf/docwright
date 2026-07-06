@@ -17,7 +17,7 @@ created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 closed_by_pr: "#164"
 cross_link: ""
-milestone: v0.5.0
+milestone: v0.6.0
 ---
 
 > Found 2026-07-01 during the test-isolation work — surfaced when the full `npm test`

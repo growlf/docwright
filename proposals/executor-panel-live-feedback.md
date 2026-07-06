@@ -19,6 +19,7 @@ related_to:
   - src/webui/src/routes/api/plan-execute/+server.ts
   - src/executor/session.ts
   - proposals/deferred-watcher-presence-indicator.md
+milestone: v0.6.0
 ---
 
 ## Problem

@@ -10,7 +10,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 Found while archiving `separate-dev-tracking-milestones-and-beta-channel` via `transition_to_completed` (see PR #135).

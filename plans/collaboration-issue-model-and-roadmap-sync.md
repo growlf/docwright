@@ -16,6 +16,7 @@ automated: guided
 assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
+milestone: v0.6.0
 ---
 
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy

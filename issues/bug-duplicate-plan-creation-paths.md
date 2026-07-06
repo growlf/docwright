@@ -16,7 +16,7 @@ tags:
   - governance
 created_by: "NetYeti@phoenix"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 > Found dogfooding 2026-07-02 (recurring — also hit at session start).

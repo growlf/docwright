@@ -20,7 +20,7 @@ phase: 4
 total_steps: 12
 completed_steps: 1
 github_epic: null
-milestone: future
+milestone: backlog
 ---
 # Phase 4 — Profile Engine, ACL & AI Integration
 

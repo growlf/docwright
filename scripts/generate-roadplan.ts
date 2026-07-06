@@ -55,37 +55,48 @@ function main() {
     path: i.path,
     title: String(i.fm.title || i.path.replace(/^.*\//, '').replace(/\.md$/, '')),
     priority: String(i.fm.priority ?? ''),
-    phase: i.fm.phase !== undefined && i.fm.phase !== '' ? String(i.fm.phase) : '',
     status: String(i.fm.status ?? ''),
     assigned_to: String(i.fm.assigned_to ?? ''),
     milestone: String(i.fm.milestone ?? '')
   }));
 
-  const roadplan = buildRoadplan(mappedPlans, mappedIssues);
+  // Read pending proposals — top-level proposals/*.md only (scanDir is non-recursive, so
+  // proposals/approved/** is excluded). These are ideas not yet approved into a plan.
+  const proposals = scanDir('proposals');
+  const mappedProposals = proposals.map(p => ({
+    path: p.path,
+    title: String(p.fm.title || p.path.replace(/^.*\//, '').replace(/\.md$/, '')),
+    priority: String(p.fm.priority ?? ''),
+    status: p.fm.approved === true ? 'approved' : 'proposal',
+    assigned_to: Array.isArray(p.fm.assigned_to) ? p.fm.assigned_to.join(', ') : String(p.fm.assigned_to ?? ''),
+    milestone: String(p.fm.milestone ?? '')
+  }));
+
+  const roadplan = buildRoadplan(mappedPlans, mappedIssues, mappedProposals);
 
   // Generate markdown tables
   let md = '';
 
   const renderTable = (title: string, name: string, items: any[]) => {
-    let sectionMd = `### ${title} Milestone (${name})\n\n`;
+    let sectionMd = `### ${title}${name ? ` — ${name}` : ''}\n\n`;
     if (items.length === 0) {
       sectionMd += '_No items assigned to this milestone_\n\n';
     } else {
-      sectionMd += '| Type | Title | Phase | Priority | Status | Assigned |\n';
-      sectionMd += '| :--- | :--- | :--- | :--- | :--- | :--- |\n';
+      sectionMd += '| Type | Title | Priority | Status | Assigned |\n';
+      sectionMd += '| :--- | :--- | :--- | :--- | :--- |\n';
       for (const item of items) {
-        const itemTypeStr = item.itemType === 'plan' ? '✨ Plan' : '🐛 Issue';
-        const phaseStr = item.phase ? `Phase ${item.phase}` : '—';
-        sectionMd += `| ${itemTypeStr} | [[${item.path}\\|${item.title}]] | ${phaseStr} | ${item.priority || '—'} | ${item.status || 'open'} | ${item.assigned_to || '—'} |\n`;
+        const itemTypeStr =
+          item.itemType === 'plan' ? '✨ Plan' : item.itemType === 'proposal' ? '💡 Proposal' : '🐛 Issue';
+        sectionMd += `| ${itemTypeStr} | [[${item.path}\\|${item.title}]] | ${item.priority || '—'} | ${item.status || 'open'} | ${item.assigned_to || '—'} |\n`;
       }
       sectionMd += '\n';
     }
     return sectionMd;
   };
 
-  md += renderTable('🎯 Current', roadplan.current.name, roadplan.current.items);
-  md += renderTable('🚀 Next', roadplan.next.name, roadplan.next.items);
-  md += renderTable('🗺 Future Pool', roadplan.future.name, roadplan.future.items);
+  md += renderTable('🎯 Current Milestone', roadplan.current.name, roadplan.current.items);
+  md += renderTable('🚀 Next Milestone', roadplan.next.name, roadplan.next.items);
+  md += renderTable('🗺 Backlog', '', roadplan.future.items);
 
   // Read roadmap.md and replace
   const roadmapPath = path.join(ROOT, 'docs', 'roadmap.md');

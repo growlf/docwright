@@ -18,6 +18,7 @@ related_to:
   - plans/completed/collation.md
   - plans/completed/status-page.md
 _path: proposals/gantt-view-dependencies.md
+milestone: backlog
 ---
 ## Problem
 

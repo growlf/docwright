@@ -17,6 +17,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/web-ui-ai-chat-panel.md
   - plans/phase-3-profile-acl-ai.md
+milestone: backlog
 ---
 
 ## Problem

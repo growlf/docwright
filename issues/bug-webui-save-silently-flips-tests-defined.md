@@ -20,7 +20,7 @@ created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 closed_by_pr: ""
 cross_link: "issues/bug-webui-lifecycle-actions-not-committed-to-git"
-milestone: future
+milestone: backlog
 ---
 
 > Found 2026-07-01 while dogfooding #68. Originally filed as "rewrites plan frontmatter

@@ -13,6 +13,7 @@ assigned_to: []
 related_to: [docs/roadmap.md, policies/core/workflow-layer-governance.md, policies/core/code-over-memory.md]
 depends_on: [plans/completed/sub-plan-ts-mcp-server.md]
 blocks: []
+milestone: backlog
 ---
 
 # Formalize mechanical enforcement of roadmap sequencing

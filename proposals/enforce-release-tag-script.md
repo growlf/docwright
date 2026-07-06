@@ -19,6 +19,7 @@ related_to:
   - scripts/release-tag.sh
   - policies/ci-watch-on-tag-push/atom.yaml
   - policies/core/versioning.md
+milestone: v0.6.0
 ---
 
 ## Problem

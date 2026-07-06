@@ -15,7 +15,7 @@ tags:
   - git
   - ssh
   - dogfooding
-milestone: v0.5.0
+milestone: v0.6.0
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 ---

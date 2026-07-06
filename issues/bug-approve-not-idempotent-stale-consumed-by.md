@@ -16,7 +16,7 @@ tags:
   - idempotency
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 > Found by dogfooding on 2026-07-01 approving

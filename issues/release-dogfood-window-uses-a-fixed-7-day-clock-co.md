@@ -10,7 +10,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 `src/dispatch/release.ts` computes the dogfood window as `actualDays >= 7` measured from the earliest `created` date of milestone items.

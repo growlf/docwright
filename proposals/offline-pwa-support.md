@@ -16,6 +16,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/mobile-friendly.md
 _path: proposals/offline-pwa-support.md
+milestone: backlog
 ---
 ## Problem
 

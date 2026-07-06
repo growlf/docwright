@@ -18,6 +18,7 @@ related_to:
   - plans/completed/lifecycle-graph.md
   - plans/phase-4-profile-acl-ai.md
 deferred_reason: "Requires Phase 3 backlink index. Deferred from lifecycle-graph.md Step 6."
+milestone: backlog
 ---
 
 ## Problem

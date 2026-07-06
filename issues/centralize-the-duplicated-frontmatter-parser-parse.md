@@ -13,7 +13,7 @@ tags:
 created: 2026-07-05
 created_by: "NetYeti@host"
 assigned_to: ""
-milestone: future
+milestone: backlog
 ---
 
 `parseFm` is copy-pasted into `src/dispatch/release.ts`, `src/dispatch/bridge.ts`, `api/release/channel/+server.ts`, and `api/issues/report/+server.ts` (and elsewhere) — despite `src/dispatch/frontmatter.ts` already exporting `parseFrontmatter`, and despite #89's commit claiming "centralization."

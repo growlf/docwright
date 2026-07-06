@@ -16,6 +16,7 @@ assigned_to: NetYeti
 related_to:
   - proposals/approved/project-registry.md
   - plans/phase-3-profile-acl-ai.md
+milestone: backlog
 ---
 
 ## Problem

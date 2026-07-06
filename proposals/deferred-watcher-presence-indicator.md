@@ -15,6 +15,7 @@ created_by: "NetYeti@phoenix"
 assigned_to: ""
 related_to:
   - plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
+milestone: backlog
 ---
 
 ## Problem
