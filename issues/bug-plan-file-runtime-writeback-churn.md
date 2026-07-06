@@ -1,5 +1,5 @@
 ---
-title: "Runtime writes derived fields (_path, automated) back into tracked plan files → churn"
+title: "Web UI approve→plan generator omits _path → out-of-band backfill churns the plan file"
 status: open
 author: NetYeti
 author-role: contributor
@@ -35,33 +35,38 @@ back **modified but uncommitted** — a runtime process rewrote it:
 +_path: plans/git-panel-branch-switcher.md
 ```
 
-Two problems:
-1. **`_path` is a derived/internal field leaking into the persisted file** — it just repeats the
-   file's own path. It should never be written back into the doc.
-2. **An `automated: guided → full` flip** appeared as an untracked write-back (not via a
-   deliberate MCP mutation), so its provenance is unclear.
+## Investigation findings (2026-07-06)
 
-This is the same **"runtime modifies a tracked file"** class as the `opencode.jsonc` churn (#194)
-and the `.docwright` cache — but here it's a **governed plan file**, which is supposed to change
-only through the MCP tools (`set_plan_field`, `append_history`, …), not be passively rewritten on
-read/normalize.
+The original framing above was partly wrong. Reproduced on the dogfood-dev instance:
+reverted the plan to its committed state, then triggered every read path
+(`GET /plans/<slug>.md`, `GET /api/status`, `GET /api/read?path=…`) — the file **stayed
+clean**. So this is **not** a perpetual read-time write-back; reads do not touch the file,
+and `get_plan` is read-only. The churn was a **one-time out-of-band write** during the
+approve flow.
 
-## Impact
+1. **`_path` is NOT a derived leak — it's a legitimate persisted self-locator.**
+   `moveDocument` ([[src/dispatch/vault-write.ts]] step 4) and `src/mcp/lib/paths.ts`
+   deliberately keep `_path:` in sync when a doc moves, and **108 committed docs already
+   carry it**. The MCP plan generator (`src/mcp/tools/transitions.ts:191`) writes it at
+   generation time. The actual defect: the **Web UI** plan generator
+   (`src/webui/.../approve-proposal/plan-generator.ts`) was the **one generator that omitted
+   it**, so a subsequent normalize/move backfilled `_path` out-of-band → the uncommitted
+   diff. Fix: emit `_path` at generation time so the plan is born complete and consistent
+   with `transitions.ts` and the rest of the vault — nothing has to backfill it later.
+2. **`automated: guided → full`** was a **one-time, non-recurring** change (reads never
+   reproduce it) whose source could not be pinned — most likely a deliberate UI
+   automation-mode set or a one-time normalize, not a passive write-back. Not chased
+   further; if a systematic flip surfaces again, file it separately with a repro.
 
-- The vault goes **perpetually dirty** (any read/process re-writes the plan), which — among other
-  things — trips the git branch-switcher's dirty-guard we just added.
-- Noisy `git status`; risk of derived/internal fields being committed into governed docs.
+## Fix
 
-## Investigation / Fix direction
-
-- Find what persists these fields (a `get_plan` / plan-normalize / executor path that writes the
-  in-memory plan — including derived `_path` — back to disk).
-- **Never serialize derived/internal fields** (`_path`, etc.) into the on-disk plan; strip them
-  before any write.
-- Confirm whether `automated: guided → full` is an intended normalization; if so it should happen
-  once via an explicit MCP mutation, not as a passive read-time write-back.
+- `plan-generator.ts` / `AssemblePlanInput` now emit `_path: plans/<slug>.md` (caller passes
+  `planPath: planRel`), matching `transitions.ts` and the 108 existing docs.
+- Regression test in `test/webui/plan-generator.test.ts` asserts `_path` is written.
 
 ## Acceptance
 
-- Reading/opening/processing a plan does **not** modify its file on disk.
-- Derived fields (`_path`) never appear in a committed/serialized plan.
+- Reading/opening/processing a plan does **not** modify its file on disk. ✅ (verified — reads
+  are clean)
+- The Web UI approve→plan generator emits `_path` at birth, so no out-of-band backfill
+  re-dirties the file. ✅
