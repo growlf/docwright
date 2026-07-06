@@ -1,6 +1,8 @@
 ---
 title: Plan test/certify button state machine is opaque — session-local state, ambiguous labels, silent flips
-status: open
+status: resolved
+closed_by_pr: "#236"
+resolved: 2026-07-06
 github_issue: 224
 created: 2026-07-06
 author: NetYeti
