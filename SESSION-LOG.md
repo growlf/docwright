@@ -1447,3 +1447,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: propose git-panel branch switcher (approved: false)
 
 **Session note:** `docs/session-notes/session_note_202607051433.md`
+
+---
+
+## Session: 2026-07-05 — agent-roles PR + Round 6 rig
+
+**Focus:** agent-roles PR + Round 6 rig
+
+**Completed:**
+- [x] docs: record round-6 dry-run rig in agent-roles research log
+- [x] docs: fold rounds 2-4 review findings into agent-roles proposal
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] docs: approve git-panel-branch-switcher (proposal → plan)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it (#172)
+- [x] chore: leap-frog dogfood from main — opencode.jsonc untrack/ignore
+
+**Session note:** `docs/session-notes/session_note_202607051749.md`
