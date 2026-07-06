@@ -530,4 +530,39 @@ describe('Plan/issue linkage fields', () => {
     const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
     assert.ok(!err, 'plans without tracked_by should still be valid');
   });
+
+  it('accepts deliverables as YAML array with title required', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      deliverables: [
+        { title: 'First deliverable', description: 'Details here', acceptance_criteria: ['Criterion 1', 'Criterion 2'] },
+        { title: 'Second deliverable' },
+      ],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'deliverables' && r.severity === 'error');
+    assert.ok(!err, 'deliverables array with title should be valid');
+  });
+
+  it('does not require deliverables on plans (optional)', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'deliverables' && r.severity === 'error');
+    assert.ok(!err, 'plans without deliverables should still be valid');
+  });
+
+  it('accepts empty deliverables array on plans', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      deliverables: [],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'deliverables' && r.severity === 'error');
+    assert.ok(!err, 'empty deliverables array should be valid');
+  });
 });
