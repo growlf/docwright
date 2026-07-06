@@ -62,11 +62,10 @@ describe('Canonical frontmatter parser (#94)', () => {
 describe('No duplicate frontmatter parsers (#94 grep-guard)', () => {
   const ROOT = path.resolve(__dirname, '..', '..');
 
-  // Client-side +page.svelte parser/serializer is Step 5 scope (WYSIWYG
-  // round-trip); plain-node .js scripts can't import TS dispatch without a
-  // loader and are tracked in the plan. No NEW copies may appear anywhere.
+  // Plain-node .js scripts can't import TS dispatch without a loader and are
+  // tracked in the plan. No NEW copies may appear anywhere. (The client-side
+  // +page.svelte copy was consolidated into $lib/markdown-roundtrip in Step 5.)
   const ALLOWED = new Set([
-    'src/webui/src/routes/[...path]/+page.svelte',
     'scripts/vault-status.js',
     'scripts/plan-health.js',
     'scripts/lifecycle-gate.js',

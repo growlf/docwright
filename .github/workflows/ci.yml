@@ -41,6 +41,9 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Install webui dependencies (webui unit + round-trip tests)
+        run: npm ci --prefix src/webui
+
       - name: Lint
         run: npm run lint
 
@@ -61,6 +64,12 @@ jobs:
 
       - name: Test cross-tool compatibility (skills table, agent roles, spec docs)
         run: npm run test:compat
+
+      - name: Test cross-surface integration (gate parity, auto-commit, save gating)
+        run: npm run test:integration
+
+      - name: Test webui units (auth, editors, round-trip, git commit)
+        run: npm run test:webui
 
   branch-policy:
     name: Branch policy check
