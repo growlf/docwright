@@ -293,17 +293,29 @@ ${nextBlock}
         try {
           git(['branch', '-f', prBranch], wt);
           git(['push', '-u', 'origin', prBranch], wt);
+          let prUrl = '';
           try {
-            const prUrl = execFileSync('gh', ['pr', 'create', '--base', 'main', '--head', prBranch,
+            prUrl = execFileSync('gh', ['pr', 'create', '--base', 'main', '--head', prBranch,
               '--title', `docs: session note ${date} — ${focus}`,
               '--body', 'Automated session shutdown artifacts, landed via PR because main is protected (end-session auto-landing, #146). Auto-merge is armed — merges when required checks pass.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)',
             ], { cwd: wt, encoding: 'utf-8' }).trim();
-            execFileSync('gh', ['pr', 'merge', prBranch, '--squash', '--auto'],
-              { cwd: wt, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
-            ok(`landed via PR with auto-merge armed: ${prUrl}`);
+            ok(`PR created: ${prUrl}`);
           } catch {
-            warn(`branch '${prBranch}' pushed but gh PR create/auto-merge failed —`);
+            warn(`branch '${prBranch}' pushed but PR creation failed —`);
             warn(`  finish manually: gh pr create --base main --head ${prBranch} && gh pr merge --squash --auto`);
+          }
+          if (prUrl) {
+            try {
+              execFileSync('gh', ['pr', 'merge', prBranch, '--squash', '--auto'],
+                { cwd: wt, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
+              ok(`auto-merge armed — lands when required checks pass`);
+            } catch (e: any) {
+              const msg = String(e?.stderr ?? e?.message ?? e).split('\n')[0];
+              warn(`PR created but auto-merge failed (${msg})`);
+              warn(`  if it mentions 'Auto merge is not allowed': enable it once via`);
+              warn(`    gh api -X PATCH repos/{owner}/{repo} -f allow_auto_merge=true`);
+              warn(`  then arm this PR: gh pr merge ${prBranch} --squash --auto`);
+            }
           }
           gitTry(['fetch', '--quiet', 'origin'], wt);
           git(['reset', '--hard', 'origin/main'], wt);
