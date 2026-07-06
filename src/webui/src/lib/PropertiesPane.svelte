@@ -125,6 +125,10 @@
     onsave?.(frontmatter);
   }
   function uncertifyTests() {
+    // Destructive: revokes certification and re-enters the Run Tests loop.
+    // Confirm because the old '✓ Tests' label was mistaken for a status
+    // indicator and clicked casually (#224).
+    if (!confirm('Revoke test certification?\n\nThis resets tests_defined and returns the plan to the Run Tests state.')) return;
     setField('tests_defined', false);
     onsave?.(frontmatter);
   }
@@ -371,6 +375,23 @@
           {/if}
         {/if}
         {#if frontmatter.status === 'in-progress'}
+          {#if pendingSteps === 0}
+            <!-- Certification checklist (#224): the state machine's inputs,
+                 visible — so every button transition is explainable. Driven by
+                 persisted plan state, not session state. -->
+            <div class="cert-checklist" title="These three inputs drive the buttons below">
+              <span class="cert-item" class:met={frontmatter.tests_defined === true}>
+                {frontmatter.tests_defined === true ? '✓' : '✗'} tests defined
+              </span>
+              <span class="cert-item" class:met={frontmatter.tests_last_result === 'pass' || testPassed === true}>
+                {frontmatter.tests_last_result === 'pass' || testPassed === true ? '✓' : '✗'}
+                last run{frontmatter.tests_last_result === 'pass' && frontmatter.tests_last_commit ? ` pass @ ${frontmatter.tests_last_commit}` : frontmatter.tests_last_result === 'pass' || testPassed === true ? ' pass' : ''}
+              </span>
+              <span class="cert-item" class:met={frontmatter.tests_human_reviewed === true}>
+                {frontmatter.tests_human_reviewed === true ? '✓' : '✗'} human certified
+              </span>
+            </div>
+          {/if}
           {#if pendingSteps > 0}
             <!-- Progress — execution panel triggers next step -->
             <button class="act start" onclick={startExecution}
@@ -411,8 +432,8 @@
               {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
             </button>
             <button class="act unapprove" onclick={uncertifyTests}
-              title="Re-run tests — resets back to Run Tests button">
-              ✓ Tests
+              title="Revoke test certification (confirms first) — resets tests_defined and returns to the Run Tests state">
+              ↺ Uncertify
             </button>
           {/if}
         {/if}
@@ -596,6 +617,18 @@
     margin-top: 2px;
   }
 
+  .cert-checklist {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+  .cert-item {
+    color: $muted;
+    &.met { color: $green; }
+  }
   .sub-plan-section {
     width: 100%;
     margin-top: 4px;
