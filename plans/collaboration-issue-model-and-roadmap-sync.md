@@ -19,7 +19,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 total_steps: 7
-completed_steps: 6
+completed_steps: 7
 tracked_by:
   - issues/collaboration-schema-linkage-fields.md
   - issues/collaboration-lock-deliverables-format.md
@@ -29,6 +29,7 @@ tracked_by:
   - issues/collaboration-scope-freeze-enforcement.md
   - issues/collaboration-sync-strategy.md
 scenario_synthesis: Developer collaboration - single store of record, bidirectional plan-issue linkage, auto-generation at plan-start, derived progress, enforcement linting, scope-freeze, sync to GitHub/Forgejo
+gate_note: "Changed files are untestable types: issues/collaboration-sync-strategy.md, plans/collaboration-issue-model-and-roadmap-sync.md"
 ---
 
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
@@ -64,7 +65,7 @@ All 7 critical gaps are now tracked as implementation deliverables (see Implemen
 | 4 | Derived plan progress (compute from issue state) | ✅ Done |
 | 5 | Enforcement linting (priority, epic, tracked_by required) | ✅ Done |
 | 6 | Scope-freeze enforcement (optional v0.6.0, required v0.7.0) | ✅ Done |
-| 7 | Sync strategy (one-way mirror mechanics) | ⏳ Pending |
+| 7 | Sync strategy (one-way mirror mechanics) | ✅ Done |
 
 ## Tracked Issues
 
@@ -77,6 +78,31 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 - collaboration-scope-freeze-enforcement
 - collaboration-sync-strategy
 
+## Sync Strategy (GitHub/Forgejo mirror)
+
+**Direction:** One-way, `issues/` → tracker (file is source of truth; tracker is read-only projection)
+
+**Field Mapping:**
+| Vault field | GitHub/Forgejo field | Notes |
+|---|---|---|
+| `status` | Issue state (open/closed) | open = new/triaged/scope-checked/awaiting/proposal-linked/in-progress; closed = resolved/duplicate/deferred |
+| `priority` | Label (priority-high, priority-medium, priority-low) | Always set |
+| `milestone` | Milestone (v0.5.0, v0.6.0, future) | Synced from issue frontmatter |
+| `assigned_to` | Assignees (multi-select) | Synced as list of GitHub usernames |
+| `plan` | Epic (GitHub) or Link (Forgejo) | Bidirectional: issue → plan, plan → issues |
+
+**Conflict Resolution:** File always wins; tracker treated as stale mirror. Any out-of-sync state is resolved by re-syncing from `issues/` (Vault is canonical).
+
+**Trigger Method:**
+- **v0.6.0:** Manual CLI (`docwright sync --target github` or `--target forgejo`)
+- **v0.7.0:** Post-commit hook (automatic sync after each commit)
+
+**Forgejo Scope:** Same tool (uses REST API endpoint) but different host. Each organization runs its own Forgejo server. Sync logic handles both via parametrized API calls.
+
+**Implementation Timeline:**
+- v0.6.0: Manual CLI; blocks on Forgejo infra (Phase 5)
+- v0.7.0: Post-commit automation; adds GitHub → Vault backlink for product issues (separate from dev)
+
 ## Testing Plan
 
 - Round-trip test: proposal → plan → issues → completion, no drift
@@ -86,6 +112,7 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 - Linting: priority/epic required, in-progress plans need tracked_by
 - Derived progress: completion computed from issue state
 - Enforcement: proposal_source edits blocked post-Start
+- Sync strategy: field mapping correctly applies; conflict resolution favors file
 
 ## Rollback Procedures
 

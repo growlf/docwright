@@ -1,6 +1,6 @@
 ---
 title: Brief sync strategy (one-way mirror, fields, timing)
-status: new
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -22,12 +22,12 @@ tags:
 
 ## Acceptance Criteria
 
-- [ ] Decision: one-way direction (file→tracker confirmed)
-- [ ] Field mapping documented (priority→labels, milestone→milestone, assigned_to→assignees, status→state)
-- [ ] Trigger method chosen (on-demand CLI in v0.6.0; post-commit hook in v0.7.0)
-- [ ] Conflict resolution policy (file always wins; tracker treated as stale mirror)
-- [ ] Forgejo scope decision (same tool with different API endpoint, or defer?)
-- [ ] Strategy briefed in plan
+- [x] Decision: one-way direction (file→tracker confirmed)
+- [x] Field mapping documented (priority→labels, milestone→milestone, assigned_to→assignees, status→state)
+- [x] Trigger method chosen (on-demand CLI in v0.6.0; post-commit hook in v0.7.0)
+- [x] Conflict resolution policy (file always wins; tracker treated as stale mirror)
+- [x] Forgejo scope decision (same tool with different API endpoint, or defer?)
+- [x] Strategy briefed in plan
 
 ## Details
 
