@@ -1467,3 +1467,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] chore: leap-frog dogfood from main — branch-list shell fix
 
 **Session note:** `docs/session-notes/session_note_202607051631.md`
+
+---
+
+## Session: 2026-07-05 — write-integrity Step 3 auto-commit
+
+**Focus:** write-integrity Step 3 auto-commit
+
+**Completed:**
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] docs: approve git-panel-branch-switcher (proposal → plan)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+
+**Session note:** `docs/session-notes/session_note_202607051732.md`
