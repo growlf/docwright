@@ -16,10 +16,10 @@ automated: guided
 phase: 4
 milestone: v0.6.0
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 total_steps: 7
-completed_steps: 0
+completed_steps: 1
 tracked_by:
   - issues/collaboration-schema-linkage-fields.md
   - issues/collaboration-lock-deliverables-format.md
@@ -58,7 +58,7 @@ All 7 critical gaps are now tracked as implementation deliverables (see Implemen
 
 | # | Action | Status |
 |---|--------|--------|
-| 1 | Add plan/issue linkage schema fields (tracked_by, plan, cross_link) | ⏳ Pending |
+| 1 | Add plan/issue linkage schema fields (tracked_by, plan, cross_link) | ✅ Done |
 | 2 | Lock deliverables format (YAML array vs markdown table) | ⏳ Pending |
 | 3 | Issue generation at plan-start (MCP tool) | ⏳ Pending |
 | 4 | Derived plan progress (compute from issue state) | ⏳ Pending |
