@@ -202,6 +202,48 @@ export function lintDocument(
     });
   }
 
+  // Collaboration model enforcement: in-progress plans must have tracked_by issues
+  if (
+    filePath.startsWith('plans/') &&
+    !filePath.startsWith('plans/completed/') &&
+    fm.status === 'in-progress' &&
+    (!fm.tracked_by || !Array.isArray(fm.tracked_by) || fm.tracked_by.length === 0)
+  ) {
+    results.push({
+      field: 'tracked_by',
+      severity: 'error',
+      message: 'In-progress plan must have tracked_by: [issues/...] list. Generate issues at plan-start or add them manually.',
+    });
+  }
+
+  // Collaboration model enforcement: planned issues must have cross_link to plan
+  if (
+    filePath.startsWith('issues/') &&
+    fm.plan &&
+    String(fm.plan).trim() !== '' &&
+    (!fm.cross_link || String(fm.cross_link).trim() === '')
+  ) {
+    results.push({
+      field: 'cross_link',
+      severity: 'error',
+      message: 'Issue is part of a plan (plan: set) but has no cross_link. Set cross_link: to the plan path for bidirectional linkage.',
+    });
+  }
+
+  // Collaboration model enforcement: triaged/planned issues must have priority
+  if (
+    filePath.startsWith('issues/') &&
+    fm.status &&
+    ['triaged', 'scope-checked', 'awaiting-proposal', 'proposal-linked', 'in-progress'].includes(String(fm.status)) &&
+    (!fm.priority || String(fm.priority).trim() === '')
+  ) {
+    results.push({
+      field: 'priority',
+      severity: 'error',
+      message: `Issue status is '${fm.status}' but priority is not set. Set priority: high | medium | low.`,
+    });
+  }
+
   // Research document rules
   if (filePath.startsWith('research/')) {
     if (fm.status !== undefined && !VALID_RESEARCH_STATUS.has(String(fm.status))) {

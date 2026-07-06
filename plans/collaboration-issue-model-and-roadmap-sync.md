@@ -19,7 +19,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 total_steps: 7
-completed_steps: 4
+completed_steps: 5
 tracked_by:
   - issues/collaboration-schema-linkage-fields.md
   - issues/collaboration-lock-deliverables-format.md
@@ -62,7 +62,7 @@ All 7 critical gaps are now tracked as implementation deliverables (see Implemen
 | 2 | Lock deliverables format (YAML array vs markdown table) | ✅ Done |
 | 3 | Issue generation at plan-start (MCP tool) | ✅ Done |
 | 4 | Derived plan progress (compute from issue state) | ✅ Done |
-| 5 | Enforcement linting (priority, epic, tracked_by required) | ⏳ Pending |
+| 5 | Enforcement linting (priority, epic, tracked_by required) | ✅ Done |
 | 6 | Scope-freeze enforcement (optional v0.6.0, required v0.7.0) | ⏳ Pending |
 | 7 | Sync strategy (one-way mirror mechanics) | ⏳ Pending |
 
