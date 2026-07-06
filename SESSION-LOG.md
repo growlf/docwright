@@ -1587,3 +1587,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: mark #220 as resolved by PR #230
 
 **Session note:** `docs/session-notes/session_note_202607062103.md`
+
+---
+
+## Session: 2026-07-06 — Wave B complete + healthcheck adopted
+
+**Focus:** Wave B complete + healthcheck adopted
+
+**Completed:**
+- [x] docs: complete wave-b-hooks-identity — BDFL-executed transition, archived with completion doc
+- [x] docs: complete wave-b-hooks-identity (plan → completed)
+- [x] docs: edit plans/wave-b-hooks-identity.md (web ui save)
+- [x] docs: edit plans/wave-b-hooks-identity.md (web ui save)
+- [x] docs: wave-b Step 4 → done; Testing Plan evidence-checked; #140 resolved
+- [x] docs: wave-b Step 4 → done; Testing Plan evidence-checked; #140 resolved
+- [x] fix: approve-by-move requires the HUMAN-APPROVED seal; born-approved proposals too (#140)
+- [x] fix: approve-by-move requires the HUMAN-APPROVED seal; born-approved proposals too
+- [x] docs: wave-b Step 2 → done; #143 resolved in issue store
+- [x] docs: wave-b Step 2 → done; #143 resolved in issue store
+
+**Session note:** `docs/session-notes/session_note_202607061527.md`
