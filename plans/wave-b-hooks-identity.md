@@ -1,6 +1,6 @@
 ---
 title: "Wave B — hook & identity integrity: one hook source, loud failures, scoped cache, no approve-by-move bypass"
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-06
 tags:
