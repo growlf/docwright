@@ -1,6 +1,6 @@
 ---
 title: Properties-pane save demotes tests_defined on an unchanged body — false positive in the body-edited heuristic
-status: scope-checked
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -19,6 +19,8 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog for the current phase.
 scope_decision: in-scope
 github_issue: 218
+closed_by_pr: "#227"
+resolved: 2026-07-06
 channel: dev
 tags:
   - reported-bug
