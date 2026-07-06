@@ -13,7 +13,7 @@ priority: high
 mode: autonomous
 scenario_synthesis: Web UI write-integrity cluster — centralize frontmatter parse/serialize in dispatch, share the completion gate across surfaces, auto-commit all UI lifecycle writes, stop syncTestCriteria save rewrites, safe WYSIWYG round-trip, approve idempotency self-heal
 assigned_to: NetYeti
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: true
 phase: 4
 total_steps: 6

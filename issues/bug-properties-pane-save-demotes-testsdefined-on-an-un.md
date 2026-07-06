@@ -9,7 +9,7 @@ category: bug
 priority: high
 complexity: medium
 estimated_effort: S
-demand_count: 1
+demand_count: 2
 reported_dates: [2026-07-06]
 milestone: future
 channel: dev
@@ -26,3 +26,10 @@ Live repro 2026-07-06 during webui-write-integrity completion: the BDFL's proper
 ## System Info
 
 DocWright main @ c5e4df8 (local dev instance, AUTH_MODE=none Dev User), phoenix
+
+## Additional reports
+
+### Additional report — 2026-07-06 (NetYeti)
+
+Second live repro, same session: the BDFL's Certify Tests click (which sets tests_defined AND tests_human_reviewed true) saved with tests_human_reviewed: true but tests_defined: false — the demote heuristic fired inside the very save meant to certify, confirming the mechanism operates on saves with no body edit (UI-save commit 5a5cdbc).
+
