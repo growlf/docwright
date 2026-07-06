@@ -1,6 +1,6 @@
 ---
 title: Certify Tests button unreachable when tests were verified out-of-band — no UI affordance for tests_human_reviewed
-status: scope-checked
+status: resolved
 author: NetYeti
 author-role: contributor
 created: 2026-07-06
@@ -19,6 +19,8 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog for the current phase.
 scope_decision: in-scope
 github_issue: 220
+closed_by_pr: "#230"
+resolved: 2026-07-06
 channel: dev
 tags:
   - reported-bug
