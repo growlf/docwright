@@ -1,6 +1,8 @@
 ---
 title: "Completing a plan writes a stray docs/ duplicate and doesn't live-refresh the panel"
-status: open
+status: resolved
+closed_by_pr: "#199"
+resolved: 2026-07-06
 github_issue: 142
 author: NetYeti
 author-role: contributor
