@@ -1507,3 +1507,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] chore: capture #205 via bug-report bridge — release bump never lands on main (VERSION drift)
 
 **Session note:** `docs/session-notes/session_note_202607060130.md`
+
+---
+
+## Session: 2026-07-06 — merge origin/main with step 6 completed and new is
+
+**Focus:** merge origin/main with step 6 completed and new is
+
+**Completed:**
+- [x] docs: merge origin/main with step 6 completed and new issues migrated
+- [x] fix: approve idempotency self-heal — clear stale consumed_by pointers
+- [x] chore: capture #220 via bug-report bridge — Certify Tests unreachable with out-of-band test evidence
+- [x] chore: capture #218 — pane save demotes tests_defined on unchanged body; restore field
+- [x] docs: assign phase 4 and v0.6.0 milestone to collaboration-issue-model-and-roadmap-sync plan
+- [x] feat: sync issue workflow validation to scripts/pre-commit.sh
+- [x] docs: migrate issues to new schema with explicit triage and scope-check
+- [x] docs: add explicit issue schema with triage and scope-check stages
+- [x] docs: webui-write-integrity Step 6 → done; all Testing Plan boxes evidence-checked; #141 resolved
+- [x] docs: promote Wave C (report/intake UX) to v0.5.0 — full scope linked
+
+**Session note:** `docs/session-notes/session_note_202607060821.md`

@@ -1,6 +1,6 @@
 ---
 title: "Web UI write integrity: shared parser, shared gate, committed transitions, safe saves"
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-05
 tags:
@@ -14,7 +14,7 @@ mode: autonomous
 scenario_synthesis: Web UI write-integrity cluster — centralize frontmatter parse/serialize in dispatch, share the completion gate across surfaces, auto-commit all UI lifecycle writes, stop syncTestCriteria save rewrites, safe WYSIWYG round-trip, approve idempotency self-heal
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 phase: 4
 total_steps: 6
 completed_steps: 6
@@ -22,10 +22,10 @@ github_epic: ""
 automated: full
 milestone: v0.5.0
 channel: dev
-gate_note: "Changed files are untestable types: plans/webui-write-integrity.md"
 tests_last_run: "2026-07-06T03:57:36.908Z"
 tests_last_result: pass
 tests_last_commit: b308e2b
+completed_date: 2026-07-06
 ---
 # Web UI write integrity: shared parser, shared gate, committed transitions, safe saves
 
