@@ -62,6 +62,12 @@ jobs:
       - name: Test cross-tool compatibility (skills table, agent roles, spec docs)
         run: npm run test:compat
 
+      - name: Test cross-surface integration (gate parity, auto-commit, save gating)
+        run: npm run test:integration
+
+      - name: Test webui units (auth, editors, round-trip, git commit)
+        run: npm run test:webui
+
   branch-policy:
     name: Branch policy check
     runs-on: ubuntu-latest
