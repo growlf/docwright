@@ -26,6 +26,8 @@ The remaining three are captured here so they aren't lost (per
 
 ## Wave B — Hook & identity integrity (`.githooks`/`scripts` enforcement plumbing)
 
+> **Promoted 2026-07-06** → [[plans/wave-b-hooks-identity]] per BDFL in-session directive. Waves C and D remain deferred here.
+
 - #140 — approving by moving a proposal to `proposals/approved/` bypasses the HUMAN-APPROVED gate
 - #143 — governance hooks silently disabled when `DOCWRIGHT_PATH` is unset
 - #144 — hook source drift (.githooks vs scripts/pre-commit.sh); commit-msg never installed for vaults
