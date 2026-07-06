@@ -453,3 +453,81 @@ describe('Milestone rule + issues/ handling', () => {
     assert.strictEqual(results.length, 0, 'README is documentation, not a governed doc');
   });
 });
+
+describe('Plan/issue linkage fields', () => {
+  it('accepts optional tracked_by field on plans (array of strings)', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      tracked_by: ['issues/issue-1.md', 'issues/issue-2.md'],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(!err, 'tracked_by with array of strings should be valid');
+  });
+
+  it('accepts optional tracked_by as empty array on plans', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+      tracked_by: [],
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(!err, 'empty tracked_by array should be valid');
+  });
+
+  it('accepts optional plan field on issues (string)', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      plan: 'collaboration-issue-model-and-roadmap-sync.md',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'plan' && r.severity === 'error');
+    assert.ok(!err, 'plan field with string should be valid');
+  });
+
+  it('accepts optional cross_link field on issues (string)', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      cross_link: 'plans/collaboration-issue-model-and-roadmap-sync.md',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => r.field === 'cross_link' && r.severity === 'error');
+    assert.ok(!err, 'cross_link field with string should be valid');
+  });
+
+  it('accepts both plan and cross_link on issues together', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+      plan: 'collab-plan.md',
+      cross_link: 'plans/collab-plan.md',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.filter(r => (r.field === 'plan' || r.field === 'cross_link') && r.severity === 'error');
+    assert.strictEqual(err.length, 0, 'plan and cross_link together should be valid');
+  });
+
+  it('does not require linkage fields on issues (backward compat)', () => {
+    const fm = {
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01',
+      'author-role': 'contributor', created_by: 'A@test',
+    };
+    const results = lintDocument('issues/bug-x.md', fm, profile);
+    const err = results.find(r => (r.field === 'plan' || r.field === 'cross_link') && r.severity === 'error');
+    assert.ok(!err, 'issues without linkage fields should still be valid');
+  });
+
+  it('does not require tracked_by on plans (backward compat)', () => {
+    const fm = {
+      title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
+      assigned_to: 'A', proposal_source: 'proposals/approved/x.md',
+    };
+    const results = lintDocument('plans/p.md', fm, profile);
+    const err = results.find(r => r.field === 'tracked_by' && r.severity === 'error');
+    assert.ok(!err, 'plans without tracked_by should still be valid');
+  });
+});
