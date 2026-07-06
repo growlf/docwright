@@ -36,6 +36,8 @@ Shared shape: the enforcement layer itself has integrity gaps. Fixing #144 first
 
 ## Wave C — Report/intake UX (the bug-report bridge and governance panel)
 
+**PROMOTED TO v0.5.0:** [[proposals/improve-bug-feature-reporting-tool.md|Wave C proposal]]
+
 - #175 — Report Bug doesn't create the linked GH issue
 - #176 — issues have no forward path in the UI (issue → plan promotion)
 - #177 — report form should be a styled modal, not bottom-of-page
