@@ -14,7 +14,7 @@ mode: autonomous
 scenario_synthesis: Wave B of the issue-cluster remediation — unify the diverged pre-commit sources and install commit-msg for vaults, make hooks fail loudly when DOCWRIGHT_PATH is unset, scope the identity cache per-repo so test runs stop poisoning real commits, and close the approve-by-move HUMAN-APPROVED bypass
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 phase: 4
 total_steps: 4
 completed_steps: 4
