@@ -1527,3 +1527,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: promote Wave C (report/intake UX) to v0.5.0 — full scope linked
 
 **Session note:** `docs/session-notes/session_note_202607060821.md`
+
+---
+
+## Session: 2026-07-06 — v0.4.9 release + plan completed
+
+**Focus:** v0.4.9 release + plan completed
+
+**Completed:**
+- [x] docs: complete webui-write-integrity (plan → completed)
+- [x] docs: complete webui-write-integrity (plan → completed)
+- [x] fix: approve idempotency self-heal — clear stale consumed_by pointers (#141)
+- [x] chore: capture #224; land BDFL certification + restore tests_defined
+- [x] chore: capture #224 (test/certify button state machine UX); land BDFL certification + restore tests_defined
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] docs: edit plans/webui-write-integrity.md (web ui save)
+- [x] chore: merge origin/main into feature branch
+
+**Session note:** `docs/session-notes/session_note_202607060140.md`
