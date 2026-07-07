@@ -398,7 +398,7 @@
               title="Open execution panel to progress the plan and run pending steps">
               Progress
             </button>
-          {:else if !frontmatter.tests_defined || (!frontmatter.tests_human_reviewed && frontmatter.tests_last_result === 'pass')}
+          {:else if !frontmatter.tests_defined || (!frontmatter.tests_human_reviewed && (testPassed === true || frontmatter.tests_last_result === 'pass'))}
             {#if (testPassed === true || frontmatter.tests_last_result === 'pass') && !frontmatter.tests_human_reviewed}
               <!-- Tests passed (either in-session or via verify_plan_tests) but human review needed before auto-certify (#220) -->
               <button class="act approve" onclick={certifyTests}
@@ -431,6 +431,9 @@
                 : 'All checks pass — complete and archive this plan'}>
               {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
             </button>
+          {/if}
+          {#if frontmatter.tests_human_reviewed === true}
+            <!-- Uncertify only shows after tests have been certified — allows revoking certification to re-run tests -->
             <button class="act unapprove" onclick={uncertifyTests}
               title="Revoke test certification (confirms first) — resets tests_defined and returns to the Run Tests state">
               ↺ Uncertify
