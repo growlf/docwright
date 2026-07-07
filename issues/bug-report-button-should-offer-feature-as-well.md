@@ -23,8 +23,7 @@ assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev
 ---
-
-# Report button should offer "feature" as well
+# Report Bug button should offer "feature" as well
 
 ## Description
 
