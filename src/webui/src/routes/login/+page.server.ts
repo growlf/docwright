@@ -1,9 +1,7 @@
 import type { PageServerLoad, Actions } from './$types.js';
-import { fail, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { randomBytes } from 'node:crypto';
 import { getAuthUrl } from '$lib/server/forgejo-oauth.js';
-import { validateLocalAuth } from '$lib/server/local-auth.js';
-import { createSession, SESSION_COOKIE_MAX_AGE } from '$lib/server/session.js';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	if (locals.user) throw redirect(303, url.searchParams.get('returnTo') || '/');
@@ -38,27 +36,4 @@ export const actions: Actions = {
 		throw redirect(303, getAuthUrl(state, `${url.origin}/auth/callback`));
 	},
 
-	local: async ({ request, cookies, url }) => {
-		if ((process.env.AUTH_MODE ?? 'none') !== 'local') {
-			return fail(403, { error: 'Local auth is not enabled' });
-		}
-
-		const data = await request.formData();
-		const username = String(data.get('username') ?? '').trim();
-		const password = String(data.get('password') ?? '');
-
-		const user = await validateLocalAuth(username, password);
-		if (!user) return fail(401, { error: 'Invalid username or password' });
-
-		const sessionId = createSession(user);
-		cookies.set('dw_session', sessionId, {
-			path: '/',
-			httpOnly: true,
-			sameSite: 'strict',
-			maxAge: SESSION_COOKIE_MAX_AGE,
-			secure: url.hostname !== 'localhost',
-		});
-
-		throw redirect(303, url.searchParams.get('returnTo') || '/');
-	},
 };

@@ -31,6 +31,9 @@ import {
 
   let { data }: { data: LayoutData } = $props();
 
+  // If on login page, render without app chrome (reactive)
+  const isLoginPage = $derived($page.url.pathname === '/login');
+
   let vaultVersion = $state<string>('');
   onMount(async () => {
     try {
@@ -888,6 +891,7 @@ import {
   });
 </script>
 
+{#if !isLoginPage}
 <!-- Always-visible toolbar — all viewports -->
 <div class="app-toolbar">
   <!-- Left: sidebar toggle -->
@@ -1171,6 +1175,10 @@ import {
     {/each}
   </div>
 </div>
+{:else}
+<!-- Login page: render only the slot (login form) -->
+<slot />
+{/if}
 
 <!-- Chat toggle button — bottom of viewport, above footer -->
 <button
