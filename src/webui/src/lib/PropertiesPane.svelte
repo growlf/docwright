@@ -1,5 +1,6 @@
 <script lang="ts">
   import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName, improveResult } from './pane';
+  import { showToast } from './toast';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -175,6 +176,17 @@
     planSaving = true;
     try {
       await onsave?.(frontmatter);
+      // Provide feedback based on status
+      const statusLabel = status.replace('-', ' ');
+      if (status === 'completed') {
+        showToast(`✓ Plan marked ${statusLabel}`, 3000);
+      } else if (status === 'canceled') {
+        showToast(`Plan ${statusLabel}`, 3000);
+      } else {
+        showToast(`Plan status: ${statusLabel}`, 3000);
+      }
+    } catch (e) {
+      showToast(`Error updating plan status: ${String(e)}`, 5000);
     } finally {
       planSaving = false;
     }
@@ -415,13 +427,13 @@
               </button>
             {/if}
           {:else}
-            <!-- Complete — disabled when any blocker exists -->
+            <!-- Complete — disabled when any blocker exists or while saving -->
             <button class="act complete" onclick={() => setPlanStatus('completed')}
-              disabled={completeBlockers.length > 0}
-              title={completeBlockers.length > 0
+              disabled={completeBlockers.length > 0 || planSaving}
+              title={planSaving ? 'Completing plan...' : completeBlockers.length > 0
                 ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
                 : 'All checks pass — complete and archive this plan'}>
-              {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
+              {planSaving ? '⏳ Completing…' : completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
             </button>
           {/if}
           {#if frontmatter.tests_human_reviewed === true}
