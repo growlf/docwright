@@ -1,6 +1,7 @@
 ---
 type: issue
-status: triaged
+status: proposal-linked
+consumed_by: proposals/hide-consumed-issues-from-backlog.md
 created: 2026-07-07
 author: NetYeti
 author-role: user
