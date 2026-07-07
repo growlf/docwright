@@ -1,5 +1,5 @@
 ---
-title: "Bulk Issue Selection → Proposal Creation Workflow"
+title: Bulk Issue Selection → Proposal Creation Workflow
 author: Claude (on behalf of user)
 created: 2026-07-07
 tags:
@@ -9,8 +9,8 @@ tags:
   - proposals
   - bulk-actions
 approved: false
-created_by: "claude@claude-code"
-assigned_to: ""
+created_by: claude@claude-code
+assigned_to:
 ---
 
 ## Problem
@@ -224,3 +224,12 @@ POST /api/proposals
 This feature directly supports the [[collaboration flow|feedback-collaboration-flow.md]] pattern: issues are independent chunks that feed into proposals. The UI should make that relationship obvious and effortless.
 
 The feature is non-blocking to other Phase 4 work and can be implemented independently once issues storage is finalized.
+
+
+*(AI fill-in unavailable — OPENCODE_URL not configured)*
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-07-07 | AI-improved via Improve | NetYeti |
