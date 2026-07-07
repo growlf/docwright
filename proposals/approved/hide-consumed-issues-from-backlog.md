@@ -7,11 +7,15 @@ tags:
   - ux
   - workflow
   - issue-management
-approved: false
+approved: true
 created_by: "claude@claude-code"
-assigned_to: ""
+assigned_to: NetYeti
 sources:
   - issues/design-consumed-issues-should-not-show-as-awaiting-processing.md
+related_to:
+  - plans/implement-consumed-issues-visibility.md
+consumed_by: plans/hide-consumed-issues-from-backlog.md
+_path: proposals/approved/hide-consumed-issues-from-backlog
 ---
 
 # Hide consumed issues from backlog — fix workflow visibility
