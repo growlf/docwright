@@ -16,6 +16,8 @@ assigned_to: "NetYeti"
 depends_on:
   - plans/completed/plugin-system.md
 author-role: operator
+related_to:
+  - proposals/approved/governance-engine-view-container.md
 ---
 
 ## Problem
