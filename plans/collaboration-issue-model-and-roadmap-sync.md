@@ -1,6 +1,6 @@
 ---
 title: Developer collaboration model - issue store of record, GitHub/Forgejo sync, and ticket hierarchy
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-02
 tags:
