@@ -176,6 +176,50 @@
     }
   }
 
+  // Calculate which release criteria are blocking promotion
+  let releaseBlockers = $derived.by(() => {
+    if (!data?.releaseReadiness) return [];
+    const blockers: Array<{criterion: string; reason: string; details: string}> = [];
+
+    if (data.releaseReadiness.blockers.count > 0) {
+      blockers.push({
+        criterion: 'Blockers',
+        reason: `${data.releaseReadiness.blockers.count} blocker${data.releaseReadiness.blockers.count !== 1 ? 's' : ''}`,
+        details: data.releaseReadiness.blockers.items?.map((i: any) => i.title).join(', ') || 'Open blockers'
+      });
+    }
+
+    if (data.releaseReadiness.majors.count > 0) {
+      blockers.push({
+        criterion: 'Majors',
+        reason: `${data.releaseReadiness.majors.count} major${data.releaseReadiness.majors.count !== 1 ? 's' : ''}`,
+        details: data.releaseReadiness.majors.items?.map((i: any) => i.title).join(', ') || 'Open majors'
+      });
+    }
+
+    if (!data.releaseReadiness.dogfoodWindow.passed) {
+      const daysRemaining = data.releaseReadiness.dogfoodWindow.requiredDays - data.releaseReadiness.dogfoodWindow.actualDays;
+      blockers.push({
+        criterion: 'Dogfood Window',
+        reason: `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`,
+        details: `Started ${data.releaseReadiness.dogfoodWindow.startDate}`
+      });
+    }
+
+    if (!data.releaseReadiness.burndown.passed) {
+      const total = data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open;
+      const percent = Math.round((data.releaseReadiness.burndown.resolved / (total || 1)) * 100);
+      const targetPercent = 90; // assumed standard
+      blockers.push({
+        criterion: 'Burn-down',
+        reason: `${percent}% complete (need ${targetPercent}%)`,
+        details: `${data.releaseReadiness.burndown.open} issue${data.releaseReadiness.burndown.open !== 1 ? 's' : ''} remaining`
+      });
+    }
+
+    return blockers;
+  });
+
   let showReportBugModal = $state(false);
   let bugTitle = $state('');
   let bugDesc = $state('');
@@ -433,7 +477,19 @@
               {#if data.releaseReadiness.ready}
                 <div class="status-msg success">✨ Milestone satisfies all release criteria! Ready for promotion.</div>
               {:else}
-                <div class="status-msg warning">⏳ Awaiting all release criteria checks (Blockers, Majors, Dogfood, Burn-down).</div>
+                <div class="status-msg warning">
+                  <div class="blocker-header">⏳ Release blocked by:</div>
+                  <ul class="blocker-list">
+                    {#each releaseBlockers as blocker}
+                      <li>
+                        <strong>{blocker.criterion}:</strong> {blocker.reason}
+                        {#if blocker.details}
+                          <div class="blocker-detail">{blocker.details}</div>
+                        {/if}
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
               {/if}
 
               <div class="action-buttons">
@@ -1320,7 +1376,39 @@
       background: rgba(255, 159, 26, 0.1);
       color: #ff9f1a;
       border: 1px solid rgba(255, 159, 26, 0.2);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
     }
+  }
+  .blocker-header {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .blocker-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    li {
+      padding: 4px 0;
+      strong {
+        color: #ff9f1a;
+        font-weight: 600;
+      }
+    }
+  }
+  .blocker-detail {
+    font-size: 11px;
+    opacity: 0.75;
+    margin-top: 2px;
+    padding-left: 4px;
   }
   .release-readiness-card .promote-btn {
     border: none;
