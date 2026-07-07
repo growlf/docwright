@@ -27,6 +27,8 @@
   // Track the body from the last confirmed file state (load or save) to detect
   // whether the body has been edited — avoids false positives from state staleness (#218)
   let confirmedBody = $state('');
+  // Track the frontmatter from last confirmed state for conflict detection
+  let lastConfirmedFrontmatter = $state<Record<string, any> | null>(null);
   // Original frontmatter text block — reattached verbatim on save; parsed
   // `frontmatter` is a display/logic view and is NEVER re-serialized (#149).
   let fmText = $state<string | null>(null);
@@ -156,6 +158,7 @@
     frontmatter = parsed.frontmatter ? { ...parsed.frontmatter, _path: filePath() } : null;
     content = parsed.body;
     confirmedBody = parsed.body;
+    lastConfirmedFrontmatter = frontmatter ? { ...frontmatter } : null;
     html = md.render(content);
     // Auto-improve when navigating from proposal approval
     if (pendingAutoImprove) {
@@ -272,6 +275,29 @@
       });
       if (res.status === 409) {
         const data = await res.json();
+        // Smart conflict detection: if user hasn't made any edits to the document
+        // since loading it, this is a false conflict (file changed on disk independently).
+        // Auto-resolve by taking server version without showing dialog.
+        const userEditedBody = raw && content !== confirmedBody;
+        const userEditedFrontmatter = lastConfirmedFrontmatter && frontmatter &&
+          JSON.stringify(frontmatter) !== JSON.stringify(lastConfirmedFrontmatter);
+
+        if (!userEditedBody && !userEditedFrontmatter) {
+          // No user edits — false conflict from file changing on disk (hot-reload, etc.)
+          // Silently reload from server
+          raw = data.currentContent ?? '';
+          const parsed = splitFrontmatter(raw);
+          fmText = parsed.fmText;
+          frontmatter = parsed.frontmatter;
+          content = parsed.body;
+          confirmedBody = parsed.body;
+          lastConfirmedFrontmatter = frontmatter ? { ...frontmatter } : null;
+          html = md.render(content);
+          loadedEtag = null; // Clear ETag to prevent re-triggering on next save
+          return;
+        }
+
+        // User has made edits — show conflict dialog for manual resolution
         conflictDialog = { serverContent: data.currentContent ?? '' };
         return;
       }
@@ -288,6 +314,7 @@
         frontmatter = parsed.frontmatter;
         content = parsed.body;
         confirmedBody = parsed.body;
+        lastConfirmedFrontmatter = frontmatter ? { ...frontmatter } : null;
         html = md.render(content);
         showToast('Saved', 2000);
         if (docType === 'plan' && frontmatter?.status === 'completed') {
