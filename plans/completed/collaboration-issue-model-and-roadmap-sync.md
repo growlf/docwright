@@ -108,6 +108,14 @@ All 7 implementation steps are tracked as issues in issues/collaboration-\*.md:
 - v0.6.0: Manual CLI; blocks on Forgejo infra (Phase 5)
 - v0.7.0: Post-commit automation; adds GitHub → Vault backlink for product issues (separate from dev)
 
+### Gate Criteria
+
+- [x] All 7 implementation steps complete and verified
+- [x] Bidirectional wikilink system working end-to-end
+- [x] Enforcement linting active (priority, epic, tracked_by required)
+- [x] One-way sync architecture documented and validated
+- [x] No production deployments affected (Phase 5 scope)
+
 ## Testing Plan
 
 - Round-trip test: proposal → plan → issues → completion, no drift
