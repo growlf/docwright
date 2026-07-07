@@ -31,12 +31,11 @@ tracked_by:
 scenario_synthesis: Developer collaboration - single store of record, bidirectional plan-issue linkage, auto-generation at plan-start, derived progress, enforcement linting, scope-freeze, sync to GitHub/Forgejo
 gate_note: "Changed files are untestable types: issues/collaboration-sync-strategy.md, plans/collaboration-issue-model-and-roadmap-sync.md"
 ---
-
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
 
 ## Overview
 
-Delivers the approved proposal [[proposals/approved/collaboration-issue-model-and-roadmap-sync.md]] — see it for the full *what & why*.
+Delivers the approved proposal \[\[proposals/approved/collaboration-issue-model-and-roadmap-sync.md\]\] — see it for the full _what & why_.
 
 DocWright now tracks work in **two places** and this ambiguity already caused a concrete failure. This proposal picks a **single store of record** for developer work, defines how the other surface **mirrors** it, and codifies the **prioritized hierarchy** that lets independent contributors take clearly-scoped chunks without colliding.
 
@@ -47,18 +46,20 @@ DocWright now tracks work in **two places** and this ambiguity already caused a 
 From comprehensive 2026-07-06 code review (agent aea8d1dd):
 
 ### What's Good
+
 - Proposal is durable governance; vision is sound
 - Triage/scope-check schema aligns with 3-phase model
 - One-way mirror design respects invariants
 - Correctly prevents issue-tracking on proposals
 
 ### Critical Gaps (now implementation steps)
+
 All 7 critical gaps are now tracked as implementation deliverables (see Implementation Steps below).
 
 ## Implementation Steps
 
 | # | Action | Status |
-|---|--------|--------|
+| --- | --- | --- |
 | 1 | Add plan/issue linkage schema fields (tracked_by, plan, cross_link) | ✅ Done |
 | 2 | Lock deliverables format (YAML array vs markdown table) | ✅ Done |
 | 3 | Issue generation at plan-start (MCP tool) | ✅ Done |
@@ -69,7 +70,8 @@ All 7 critical gaps are now tracked as implementation deliverables (see Implemen
 
 ## Tracked Issues
 
-All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
+All 7 implementation steps are tracked as issues in issues/collaboration-\*.md:
+
 - collaboration-schema-linkage-fields
 - collaboration-lock-deliverables-format
 - collaboration-issue-generation-at-plan-start
@@ -83,8 +85,9 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 **Direction:** One-way, `issues/` → tracker (file is source of truth; tracker is read-only projection)
 
 **Field Mapping:**
+
 | Vault field | GitHub/Forgejo field | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `status` | Issue state (open/closed) | open = new/triaged/scope-checked/awaiting/proposal-linked/in-progress; closed = resolved/duplicate/deferred |
 | `priority` | Label (priority-high, priority-medium, priority-low) | Always set |
 | `milestone` | Milestone (v0.5.0, v0.6.0, future) | Synced from issue frontmatter |
@@ -94,12 +97,14 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 **Conflict Resolution:** File always wins; tracker treated as stale mirror. Any out-of-sync state is resolved by re-syncing from `issues/` (Vault is canonical).
 
 **Trigger Method:**
+
 - **v0.6.0:** Manual CLI (`docwright sync --target github` or `--target forgejo`)
 - **v0.7.0:** Post-commit hook (automatic sync after each commit)
 
 **Forgejo Scope:** Same tool (uses REST API endpoint) but different host. Each organization runs its own Forgejo server. Sync logic handles both via parametrized API calls.
 
 **Implementation Timeline:**
+
 - v0.6.0: Manual CLI; blocks on Forgejo infra (Phase 5)
 - v0.7.0: Post-commit automation; adds GitHub → Vault backlink for product issues (separate from dev)
 
@@ -123,7 +128,7 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 ## Risk Assessment
 
 | Risk | Mitigation |
-|------|-----------|
+| --- | --- |
 | Schema breaking change | Make optional initially, enforce post-proposal-link only |
 | Undefined deliverables format | Lock YAML array format before building tool |
 | Scope-change drift | Pre-commit blocks proposal_source edits (v0.7.0) |
@@ -134,6 +139,6 @@ All 7 implementation steps are tracked as issues in issues/collaboration-*.md:
 ## Document History
 
 | Date | Change | Author |
-|------|--------|--------|
+| --- | --- | --- |
 | 2026-07-02 | Created from approved proposal | NetYeti |
 | 2026-07-06 | Moved to in-progress, generated 7 tracked issues | NetYeti |
