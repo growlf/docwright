@@ -377,7 +377,7 @@
             <div class="card-header">
               <div class="title-section">
                 <h3>📦 Release Readiness & Governance Dashboard</h3>
-                <span class="milestone-badge">{data.releaseReadiness.milestone}</span>
+                <span class="milestone-badge" title="Target release milestone (not the current DocWright version)">Target: {data.releaseReadiness.milestone}</span>
               </div>
               <div class="channel-section">
                 <span class="channel-label">Channel:</span>
