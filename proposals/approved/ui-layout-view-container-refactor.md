@@ -18,6 +18,7 @@ depends_on:
 author-role: operator
 related_to:
   - proposals/approved/governance-engine-view-container.md
+  - plans/completed/plugin-system.md
 ---
 
 ## Problem
