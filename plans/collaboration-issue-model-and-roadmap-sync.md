@@ -17,7 +17,7 @@ phase: 4
 milestone: v0.6.0
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 total_steps: 7
 completed_steps: 7
 tracked_by:
