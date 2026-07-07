@@ -233,3 +233,7 @@ The feature is non-blocking to other Phase 4 work and can be implemented indepen
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-07-07 | AI-improved via Improve | NetYeti |
+| 2026-07-07 | AI-improved via Improve | NetYeti |
+
+
+*(AI fill-in unavailable — OPENCODE_URL not configured)*
