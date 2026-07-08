@@ -63,7 +63,7 @@ function openBugs(repoRoot: string): Array<{ relPath: string; absPath: string; f
     const absPath = path.join(issuesDir, file);
     try {
       const fm = parseFrontmatter(fs.readFileSync(absPath, 'utf-8'));
-      if (fm.category === 'bug' && ['open', 'in-progress'].includes(String(fm.status ?? ''))) {
+      if (fm.category === 'bug' && ['new', 'triaged', 'scope-checked', 'awaiting-proposal'].includes(String(fm.status ?? ''))) {
         out.push({ relPath: path.join('issues', file), absPath, fm });
       }
     } catch { /* skip unreadable */ }
@@ -163,7 +163,7 @@ export function createReportedBug(repoRoot: string, report: BugReport, related: 
 
   const content = `---
 title: ${report.title}
-status: open
+status: new
 created: ${today}
 author: ${report.reporter}
 author-role: user
@@ -173,7 +173,6 @@ complexity: medium
 estimated_effort: S
 demand_count: 1
 reported_dates: [${today}]
-milestone: future
 channel: dev
 ${relatedBlock}tags:
   - reported-bug
