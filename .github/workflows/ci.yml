@@ -38,6 +38,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      - name: Version consistency gate
+        run: |
+          V=$(cat VERSION)
+          P=$(node -e "console.log(require('./package.json').version)")
+          if [ "$V" != "$P" ]; then
+            echo "::error::Version drift: VERSION=$V != package.json=$P"
+            exit 1
+          fi
+          echo "VERSION and package.json agree: v$V"
+
       - name: Install Node dependencies
         run: npm ci
 
