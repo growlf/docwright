@@ -49,7 +49,7 @@
     currentPhase: number;
     phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
-    plans: { active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
+    plans: { draft: DocEntry[]; active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
     gates: { pending: PendingGate[]; waived: WaivedGate[]; overdue: OverdueGate[] };
     research: {
       active: ResearchEntry[];
@@ -238,6 +238,22 @@
       title: bugTitle, description: bugDesc, reporter: bugReporter,
       priority: bugPriority, system_info: bugSysInfo,
     };
+  }
+
+  let approvingDraft = $state<Record<string, boolean>>({});
+  async function approveDraft(planPath: string) {
+    approvingDraft = { ...approvingDraft, [planPath]: true };
+    const res = await fetch('/api/approve-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: planPath }),
+    });
+    approvingDraft = { ...approvingDraft, [planPath]: false };
+    if (res.ok) load();
+    else {
+      const err = await res.json().catch(() => ({ error: 'unknown error' }));
+      alert('Failed to approve: ' + (err.error || 'Unknown error'));
+    }
   }
 
   let promotingIssues = $state<Record<string, boolean>>({});
@@ -540,6 +556,48 @@
                 </div>
               {/each}
             </div>
+          </div>
+        {/if}
+
+        {#if data.plans.draft && data.plans.draft.length > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>⏳ Awaiting Approval</h2>
+              <span class="badge badge-warn">{data.plans.draft.length}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Pri</th>
+                  <th>Title</th>
+                  <th>Phase</th>
+                  <th style="width: 180px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.plans.draft as item}
+                  <tr class="item-row" onclick={() => goto('/' + item.path.replace(/\.md$/, ''))}>
+                    <td><span class="pri {priorityClass(item.priority)}">{item.priority || '—'}</span></td>
+                    <td class="item-title-cell">
+                      <span class="item-title">{item.title}</span>
+                    </td>
+                    <td>
+                      {#if item.phase}
+                        <span class="phase-tag">Phase {item.phase}</span>
+                      {:else}
+                        <span class="muted">—</span>
+                      {/if}
+                    </td>
+                    <td>
+                      <button class="approve-btn" disabled={approvingDraft[item.path]}
+                        onclick={(e) => { e.stopPropagation(); approveDraft(item.path); }}>
+                        {approvingDraft[item.path] ? '…' : '✓ Approve'}
+                      </button>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
           </div>
         {/if}
 
@@ -1221,6 +1279,13 @@
     font-weight: 500;
   }
 
+  .approve-btn {
+    background: $green-bg; border: 1px solid $green-bdr; border-radius: 4px;
+    color: $green; font-size: 11px; font-weight: 600; padding: 4px 12px; cursor: pointer;
+    &:hover { filter: brightness(1.15); }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+
   // ── Release Readiness Dashboard ──────────────────────────────────────────────
   .release-readiness-card {
     background: $bg-2;
@@ -1470,6 +1535,7 @@
     .roadplan-bucket-section { border-color: #d0d0d0; background: #fff; }
     .roadplan-bucket-header { background: #e8e8e8; border-bottom-color: #d0d0d0; h2 { color: #1a1a1a; } }
     .phase-tag { background: rgba(74, 108, 247, 0.08); color: #4a6cf7; border-color: rgba(74, 108, 247, 0.15); }
+    .approve-btn { background: #d4edda; border-color: #b8daff; color: #155724; }
   }
 
   // Two-phase bug-report suggestions

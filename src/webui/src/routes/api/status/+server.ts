@@ -153,6 +153,12 @@ export function GET({ url }: { url: URL }) {
   ).map(({ path: p, fm }) => entry(p, fm))
    .sort(byPriority);
 
+  // Draft plans — plans/ with status: draft, not yet approved
+  const draft = readDir(path.join(REPO_ROOT, 'plans'))
+    .filter(({ fm }) => String(fm.status ?? '') === 'draft')
+    .map(({ path: p, fm }) => entry(p, fm))
+    .sort(byPriority);
+
   // Active plans — in-progress first, then approved, both sorted by priority within group
   const active = readDir(path.join(REPO_ROOT, 'plans'))
     .filter(({ fm }) => ['approved', 'in-progress'].includes(String(fm.status ?? '')))
@@ -474,7 +480,7 @@ export function GET({ url }: { url: URL }) {
     currentPhase,
     phasePlans,
     proposals: { open, approved_pending: approvedPending, deferred },
-    plans: { active, completed_count: completedCount, completed },
+    plans: { draft, active, completed_count: completedCount, completed },
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,
