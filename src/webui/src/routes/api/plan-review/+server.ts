@@ -97,8 +97,9 @@ export async function POST({ request }) {
           // Run in parallel — don't await each one sequentially
           const analysisPromises = analyses.map(async (analysis) => {
             try {
+              // Send prompt immediately, before AI call
+              send('working-prompt', { aspect: analysis.key, systemPrompt: reviewerPrompt, userPrompt: analysis.prompt, model: 'claude' });
               const response = await opencodeComplete(analysis.prompt, undefined, reviewerPrompt);
-              send('working-prompt', { aspect: analysis.key, systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
               if (response.thinking) {
                 send('working-thinking', { aspect: analysis.key, thinking: response.thinking });
               }
@@ -137,9 +138,10 @@ export async function POST({ request }) {
 
           for (const call of allCalls) {
             try {
-              const response = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
               const itemKey = call.type === 'step' ? call.key : call.key;
-              send('working-prompt', { type: call.type, key: itemKey, systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
+              // Send prompt immediately, before AI call
+              send('working-prompt', { type: call.type, key: itemKey, systemPrompt: reviewerPrompt, userPrompt: call.prompt, model: 'claude' });
+              const response = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
               if (response.thinking) {
                 send('working-thinking', { type: call.type, key: itemKey, thinking: response.thinking });
               }
@@ -168,8 +170,9 @@ export async function POST({ request }) {
           send('status', { message: 'Synthesizing overview...' });
 
           try {
+            // Send prompt immediately, before AI call
+            send('working-prompt', { type: 'overview', key: 'overview', systemPrompt: reviewerPrompt, userPrompt: overviewPrompt, model: 'claude' });
             const response = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
-            send('working-prompt', { type: 'overview', key: 'overview', systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
             if (response.thinking) {
               send('working-thinking', { type: 'overview', key: 'overview', thinking: response.thinking });
             }
