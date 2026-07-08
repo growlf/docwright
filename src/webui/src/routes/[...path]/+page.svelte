@@ -7,6 +7,7 @@
   import BaseView from '$lib/BaseView.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import { fileChanged } from '$lib/fileChanges';
+  import IssueForwardPathActions from '$lib/IssueForwardPathActions.svelte';
   import { showToast, dismissToast } from '$lib/toast';
   import { showPropsPane, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, improveResult, improveLoading, showImproveTab, triggerImprovePending } from '$lib/pane';
   import { currentDoc } from '$lib/currentDoc';
@@ -595,6 +596,7 @@
           <button class="btn cancel" onclick={cancel} title="Discard changes">✕ Cancel</button>
         {:else}
           <button class="btn del" onclick={deleteFile} title="Delete this document">🗑 Delete</button>
+        <IssueForwardPathActions {frontmatter} />
         {/if}
         <button class="btn mode-toggle" onclick={cycleMode}
           title={mode === 'read'
