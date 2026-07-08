@@ -11,13 +11,13 @@
 2. Issue forward-path UI (added Create/Link Proposal buttons to issue detail)
 3. capture_bug_report validation (changed status: open→new, removed invalid milestone)
 4. Approve-by-move governance gate (PR #247 — hooks now detect approval-by-move)
+5. Governance panel UX (relabeled "Pending Approval" → "Awaiting Plan"; tiles already clickable)
 
 🔄 IN PROGRESS:
 - Testing issue buttons in UI
 - Testing bug capture after fix
 
-⏳ NEXT:
-5. Governance panel UX (mislabeled stats, non-clickable tiles)
+⏳ REMAINING:
 6. DNS resolution (.bms.local infrastructure)
 
 ---
@@ -128,9 +128,11 @@
 
 ### 5. Governance panel mislabeled and non-clickable
 
+**Status:** ✅ FIXED (commit 7e03644)
+
 **Issues:**
-- "Pending Approval" stat is mislabeled (should be "Awaiting Plan")
-- Status stat tiles aren't clickable for drill-in to proposals
+- "Pending Approval" stat is mislabeled (should be "Awaiting Plan") — FIXED
+- Status stat tiles aren't clickable — ALREADY IMPLEMENTED (buttons have onclick handlers)
 
 **Blocking:**
 - Status dashboard is confusing
