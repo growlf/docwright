@@ -33,9 +33,11 @@ services:
       # Uncomment to expose MCP SSE for external tooling:
       # - "3002:3002"
     environment:
-      GIT_USER_NAME:  ${GIT_USER_NAME:-DocWright User}
-      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-docwright@localhost}
-      GIT_TOKEN:      ${GIT_TOKEN:-}
+      GIT_USER_NAME:   ${GIT_USER_NAME:-DocWright User}
+      GIT_USER_EMAIL:  ${GIT_USER_EMAIL:-docwright@localhost}
+      GIT_TOKEN:       ${GIT_TOKEN:-}
+      # OpenCode URL — set DOCKER_GATEWAY_IP in .env to IP where OpenCode is reachable from container
+      OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
     restart: unless-stopped
 
 # ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────

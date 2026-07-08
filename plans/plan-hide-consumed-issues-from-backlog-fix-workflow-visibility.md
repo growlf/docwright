@@ -5,7 +5,7 @@ author: "NetYeti"
 created: "2026-07-07"
 created_by: "NetYeti@phoenix"
 tags: [planning]
-proposal_source: "proposals/hide-consumed-issues-from-backlog"
+proposal_source: "proposals/approved/hide-consumed-issues-from-backlog.md"
 priority: medium
 phase: 
 automated: guided
