@@ -146,7 +146,7 @@
         </button>
         <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=approved-pending')}>
           <span class="gov-stat-n">{approvedPending.length}</span>
-          <span class="gov-stat-l">Pending Approval</span>
+          <span class="gov-stat-l">Awaiting Plan</span>
         </button>
         <button class="gov-stat" onclick={() => bridge()?.navigate('/status?section=completed')}>
           <span class="gov-stat-n">{completedCount}</span>
