@@ -10,13 +10,13 @@
 1. Plan review endpoint hang (broke complex query into 4 parallel fast ones)
 2. Issue forward-path UI (added Create/Link Proposal buttons to issue detail)
 3. capture_bug_report validation (changed status: open→new, removed invalid milestone)
+4. Approve-by-move governance gate (PR #247 — hooks now detect approval-by-move)
 
 🔄 IN PROGRESS:
 - Testing issue buttons in UI
 - Testing bug capture after fix
 
 ⏳ NEXT:
-4. Approve-by-move governance gate (moving proposal to approved/ skips HUMAN_APPROVED)
 5. Governance panel UX (mislabeled stats, non-clickable tiles)
 6. DNS resolution (.bms.local infrastructure)
 
@@ -102,6 +102,8 @@
 ---
 
 ### 4. Approve-by-move bypasses HUMAN_APPROVED gate
+
+**Status:** ✅ FIXED (commit 4d89752, PR #247)
 
 **Issue:** Moving a proposal file to `proposals/approved/` bypasses governance validation.
 
