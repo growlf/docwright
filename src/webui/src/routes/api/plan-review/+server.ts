@@ -173,12 +173,20 @@ export async function POST({ request }) {
             // Send prompt immediately, before AI call
             send('working-prompt', { type: 'overview', key: 'overview', systemPrompt: reviewerPrompt, userPrompt: overviewPrompt, model: 'claude' });
             const response = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
+            if (!response || typeof response !== 'object') {
+              throw new Error(`Invalid response: ${JSON.stringify(response)}`);
+            }
             if (response.thinking) {
               send('working-thinking', { type: 'overview', key: 'overview', thinking: response.thinking });
             }
+            if (!response.text) {
+              throw new Error('Response missing text field');
+            }
             send('overview', { text: response.text });
           } catch (err: any) {
-            send('overview', { text: `Error: ${err?.message ?? err}` });
+            const errMsg = err?.message || String(err);
+            console.error('Overview error:', errMsg, err);
+            send('overview', { text: `Error: ${errMsg}` });
           }
         }
 
