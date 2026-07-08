@@ -4,6 +4,7 @@
   let {
     steps = {} as Record<string, string>,
     sections = {} as Record<string, string>,
+    analyses = {} as Record<string, string>,
     overview = '',
     status = '',
     loading = false,
@@ -15,6 +16,7 @@
   }: {
     steps?: Record<string, string>;
     sections?: Record<string, string>;
+    analyses?: Record<string, string>;
     overview?: string;
     status?: string;
     loading?: boolean;
@@ -50,15 +52,20 @@
   });
 
   const hasResults = $derived(
-    Object.keys(steps).length > 0 || Object.keys(sections).length > 0 || overview.length > 0
+    Object.keys(steps).length > 0 || Object.keys(sections).length > 0 || Object.keys(analyses).length > 0 || overview.length > 0
   );
 
   const stepNumbers = $derived(
     Object.keys(steps).sort((a, b) => Number(a) - Number(b))
   );
   const sectionKeys = $derived(Object.keys(sections));
+  const analysisKeys = $derived(Object.keys(analyses));
 
   function groupLabel(key: string): string {
+    if (key === 'goal') return 'Core Goal';
+    if (key === 'steps') return 'Suggested Steps';
+    if (key === 'gaps') return 'Gaps & Observations';
+    if (key === 'preconditions') return 'Preconditions';
     return key.charAt(0).toUpperCase() + key.slice(1);
   }
 </script>
@@ -86,6 +93,19 @@
               <span class="item-icon">{steps[num].startsWith('Error:') ? '⚠' : '✅'}</span>
               <span class="item-label">Step {num}</span>
               <pre class="item-text">{steps[num]}</pre>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if analysisKeys.length > 0}
+        <div class="group">
+          <div class="group-header">Plan Analysis</div>
+          {#each analysisKeys as key (key)}
+            <div class="item" class:done={analyses[key] && !analyses[key].startsWith('Error:')} class:error={analyses[key].startsWith('Error:')}>
+              <span class="item-icon">{analyses[key].startsWith('Error:') ? '⚠' : '💡'}</span>
+              <span class="item-label">{groupLabel(key)}</span>
+              <pre class="item-text">{analyses[key]}</pre>
             </div>
           {/each}
         </div>

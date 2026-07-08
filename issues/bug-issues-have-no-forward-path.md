@@ -1,6 +1,7 @@
 ---
 title: Issues have no forward path
-status: scope-checked
+status: proposal-linked
+consumed_by: proposals/add-issue-forward-path-actions.md
 author: NetYeti
 author-role: user
 created: 2026-07-05
@@ -19,7 +20,6 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog.
 scope_decision: in-scope
 github_issue: 176
-milestone: backlog
 assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev

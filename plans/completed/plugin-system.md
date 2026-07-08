@@ -27,6 +27,7 @@ automated: full
 tests_defined: true
 tests_human_reviewed: true
 gate_note: "Changed files are untestable types: plans/plugin-system.md"
+consumed_by: plans/plan-ui-layout-refactor-view-container-plugin-architecture.md
 ---
 # Plugin System — Extensible Module Architecture
 

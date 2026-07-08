@@ -21,7 +21,6 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog.
 scope_decision: in-scope
 github_issue: https://github.com/growlf/docwright/issues/191
-milestone: backlog
 assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev

@@ -1490,6 +1490,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 ---
 
+## Session: 2026-07-05 — agent-roles PR + Round 6 rig
+
+**Focus:** agent-roles PR + Round 6 rig
+
+**Completed:**
+- [x] docs: record round-6 dry-run rig in agent-roles research log
+- [x] docs: fold rounds 2-4 review findings into agent-roles proposal
+- [x] docs: log bug — runtime writes derived fields back into tracked plan files
+- [x] docs: webui-write-integrity Step 3 → done; #147 and #142 resolved in issue store
+- [x] fix: auto-commit every Web UI lifecycle write; share the completion doc generator (#147, #142)
+- [x] docs: approve git-panel-branch-switcher (proposal → plan)
+- [x] docs: propose guard against committing machine-specific absolute paths (approved: false)
+- [x] docs: webui-write-integrity Step 2 → done; #172 resolved in issue store
+- [x] fix: share the completion gate across surfaces — webui Complete now enforces it (#172)
+- [x] chore: leap-frog dogfood from main — opencode.jsonc untrack/ignore
+
+**Session note:** `docs/session-notes/session_note_202607051749.md`
 ## Session: 2026-07-06 — Plan _path fix + milestone taxonomy
 
 **Focus:** Plan _path fix + milestone taxonomy
@@ -1647,3 +1664,42 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: wave-b Step 3 → done; #160 resolved in issue store
 
 **Session note:** `docs/session-notes/session_note_202607061550.md`
+
+---
+
+## Session: 2026-07-08 — Dogfood infrastructure setup & blockers
+
+**Focus:** Dogfood infrastructure setup & blockers
+
+**Completed:**
+- [x] chore: add source mount to docker-compose for dogfood development
+- [x] docs: edit plans/plan-ui-layout-refactor-view-container-plugin-architecture.md (web ui save)
+- [x] docs: mark blocker #5 as fixed (governance panel UX)
+- [x] fix: relabel governance panel stat from 'Pending Approval' to 'Awaiting Plan'
+- [x] docs: mark blocker #4 as fixed (PR #247)
+- [x] docs: update blockers — 3 of 6 major issues fixed
+- [x] fix: capture_bug_report frontmatter validation errors
+- [x] docs: update workflow blockers — 2 major issues fixed
+- [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
+- [x] feat: handle new 'analysis' event type in plan review UI
+
+**Session note:** `docs/session-notes/session_note_202607080723.md`
+
+---
+
+## Session: 2026-07-08 — Dogfood infrastructure setup
+
+**Focus:** Dogfood infrastructure setup
+
+**Completed:**
+- [x] chore: add source mount to docker-compose for dogfood development
+- [x] docs: edit plans/plan-ui-layout-refactor-view-container-plugin-architecture.md (web ui save)
+- [x] docs: mark blocker #5 as fixed (governance panel UX)
+- [x] fix: relabel governance panel stat from 'Pending Approval' to 'Awaiting Plan'
+- [x] docs: mark blocker #4 as fixed (PR #247)
+- [x] docs: update blockers — 3 of 6 major issues fixed
+- [x] fix: capture_bug_report frontmatter validation errors
+- [x] docs: update workflow blockers — 2 major issues fixed
+- [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
+
+**Session note:** `docs/session-notes/session_note_202607080724.md`

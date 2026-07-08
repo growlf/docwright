@@ -1,0 +1,181 @@
+# Workflow Blockers — Dogfooding Freeze
+
+**Status:** Active — 2 of 6 major blockers fixed, workflow improving
+**Last Updated:** 2026-07-08 (session 2)
+**Context:** Attempted to dogfood issue→proposal→plan workflow; discovered multiple critical blockers in the API and governance layer.
+
+## Progress Summary
+
+✅ FIXED:
+1. Plan review endpoint hang (broke complex query into 4 parallel fast ones)
+2. Issue forward-path UI (added Create/Link Proposal buttons to issue detail)
+3. capture_bug_report validation (changed status: open→new, removed invalid milestone)
+4. Approve-by-move governance gate (PR #247 — hooks now detect approval-by-move)
+5. Governance panel UX (relabeled "Pending Approval" → "Awaiting Plan"; tiles already clickable)
+
+🔄 IN PROGRESS:
+- Testing issue buttons in UI
+- Testing bug capture after fix
+
+⏳ REMAINING:
+6. DNS resolution (.bms.local infrastructure)
+
+---
+
+## CRITICAL (Blocks everything)
+
+### 1. Plan review endpoint hangs / ERR_INCOMPLETE_CHUNKED_ENCODING
+
+**Status:** ✅ FIXED (commit d63fa98, 28ea568)
+
+**Issue:** `/api/plan-review` times out mid-stream when user clicks "Review" button on plans in the UI.
+
+**Observed behavior:**
+- First OpenCode call succeeds and streams initial status
+- Subsequent calls (for step reviews, section reviews, synthesis) hang or fail silently
+- Browser receives incomplete chunked response: `net::ERR_INCOMPLETE_CHUNKED_ENCODING`
+- Endpoint timeout causes 504 or connection reset
+
+**Root cause:** Unknown — requires debugging
+- OPENCODE_URL is correctly set (`http://localhost:4096`)
+- OpenCode backend is responsive (confirmed via `curl`)
+- Issue is in the streaming loop or OpenCode call sequencing
+
+**Blocking:**
+- Cannot review any plan in the UI
+- Plan workflow cannot be tested end-to-end
+- User cannot approve plans without testing first
+
+**Status:** Needs investigation
+
+**Related code:**
+- Endpoint: `src/webui/src/routes/api/plan-review/+server.ts` (lines 88, 120, 146 make OpenCode calls)
+- Client: Review button in plan detail pages
+
+---
+
+## HIGH (Blocks core workflow)
+
+### 2. Issue forward path UI missing
+
+**Status:** ✅ IMPLEMENTED (commit 6417532)
+
+**Issue:** No UI button to move issues forward to proposals.
+
+**Observed behavior:**
+- Issue detail pages have no "Create Proposal" or "Link to Proposal" buttons
+- Users must manually create proposal files and link them
+- Workflow is invisible and tedious
+
+**Blocking:**
+- Issue→proposal workflow is manual and not self-documenting
+- Cannot dogfood proposal creation workflow
+
+**Status:** Proposed (proposal in `proposals/add-issue-forward-path-actions.md`, awaiting approval)
+
+**Related code:**
+- Proposal: `proposals/add-issue-forward-path-actions.md`
+- Implementation: Needs new buttons + modals in issue detail page
+
+---
+
+### 3. capture_bug_report emits invalid frontmatter
+
+**Status:** ✅ FIXED (commit c9c1f3b)
+
+**Issue:** The `capture_bug_report` command generates frontmatter that fails schema validation.
+
+**Observed behavior:**
+- Bug capture system creates new issues
+- Generated frontmatter fails pre-commit validation
+- Users cannot file bugs through the capture system
+
+**Blocking:**
+- Bug feedback system is broken
+- Cannot dogfood the issue creation workflow
+
+**Status:** Open (issue: `issues/bug-capturebugreport-emits-schema-invalid-frontmatter-.md`)
+
+**Related code:**
+- Needs investigation — check what fields capture_bug_report generates vs. what schema expects
+
+---
+
+### 4. Approve-by-move bypasses HUMAN_APPROVED gate
+
+**Status:** ✅ FIXED (commit 4d89752, PR #247)
+
+**Issue:** Moving a proposal file to `proposals/approved/` bypasses governance validation.
+
+**Observed behavior:**
+- User can move `proposals/X.md` → `proposals/approved/X.md` via git
+- Proposal approval should require `HUMAN_APPROVED=1` in commit
+- Moving file skips this gate
+
+**Blocking:**
+- Governance validation can be circumvented
+- Security/audit concern
+
+**Status:** Open (issue: `issues/bug-approve-by-move-bypasses-self-approval-gate.md`)
+
+**Related code:**
+- Pre-commit hook enforcement in `.githooks/`
+- Approval workflow in `src/webui/src/routes/api/approve-proposal/+server.ts`
+
+---
+
+## MEDIUM (Impedes workflow)
+
+### 5. Governance panel mislabeled and non-clickable
+
+**Status:** ✅ FIXED (commit 7e03644)
+
+**Issues:**
+- "Pending Approval" stat is mislabeled (should be "Awaiting Plan") — FIXED
+- Status stat tiles aren't clickable — ALREADY IMPLEMENTED (buttons have onclick handlers)
+
+**Blocking:**
+- Status dashboard is confusing
+- Cannot quickly navigate to proposals that need action
+
+**Status:** Open (2 issues: `governance-panel-pending-approval-stat-is-mislabel.md`, `governance-panel-status-stat-tiles-aren-t-clickabl.md`)
+
+**Related code:**
+- `src/webui/src/routes/status/+page.svelte` (governance panel rendering)
+
+---
+
+### 6. DNS resolution for .bms.local hostnames
+
+**Issue:** `.local` is mDNS-reserved; fails to resolve from some clients.
+
+**Observed behavior:**
+- Remote users cannot consistently reach deployment instances at `.bms.local`
+- Only works from clients with mDNS support (Bonjour, etc.)
+
+**Blocking:**
+- Inconsistent remote access
+- Deployment validation blocked
+
+**Status:** Open (issue: `issues/bug-bmslocal-deployment-hostnames-unresolvable-from-st.md`)
+
+**Related:** Infrastructure/deployment configuration
+
+---
+
+## Resolution Order
+
+1. **Plan-review hang** — unblocks all plan testing
+2. **Issue forward-path UI** — unblocks issue→proposal workflow
+3. **capture_bug_report validation** — unblocks feedback system
+4. **Approve-by-move gate** — governance enforcement
+5. **Governance panel UX** — dashboard clarity
+6. **DNS resolution** — deployment infrastructure
+
+---
+
+## Notes
+
+- Created during dogfooding session 2026-07-07
+- This document is a living registry — update as issues are fixed or new blockers appear
+- Link to specific issues/proposals in the lists above so they can be navigated quickly

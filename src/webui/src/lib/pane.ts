@@ -15,6 +15,7 @@ export const collationLoading = writable(false);
 export const planReviewSteps    = writable<Record<string, string>>({});
 export const planReviewSections = writable<Record<string, string>>({});
 export const planReviewOverview = writable('');
+export const planReviewAnalyses = writable<Record<string, string>>({}); // goal, steps, gaps, preconditions
 export const planReviewLoading  = writable(false);
 export const planReviewStatus   = writable('');
 
