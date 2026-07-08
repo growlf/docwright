@@ -1,6 +1,6 @@
 ---
 title: Enhance roadplan view — surface pending approvals and open PRs
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-08
 tags:
