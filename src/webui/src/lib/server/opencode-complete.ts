@@ -123,17 +123,19 @@ export async function opencodeComplete(
     throw new Error(`OpenCode message failed: HTTP ${msgRes.status}`);
   }
 
-  // --- 4. Extract all parts (text, thinking, etc.) ---
+  // --- 4. Extract all parts (text, thinking, reasoning, step events, etc.) ---
   const data = await msgRes.json() as { parts?: Array<{ type: string; text?: string }> };
   const textParts = (data?.parts ?? [])
     .filter(p => p.type === 'text')
     .map(p => p.text ?? '')
     .join('');
 
+  // Capture reasoning/thinking from any part type (reasoning, thinking, step-*, etc.)
   const thinkingParts = (data?.parts ?? [])
-    .filter(p => p.type === 'thinking')
+    .filter(p => ['thinking', 'reasoning', 'step-start', 'step-finish', 'step-progress'].includes(p.type))
     .map(p => p.text ?? '')
-    .join('');
+    .filter(t => t.trim().length > 0)
+    .join('\n');
 
   if (!textParts) throw new Error('OpenCode returned an empty response');
 
