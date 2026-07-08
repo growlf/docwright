@@ -1,14 +1,31 @@
 # Workflow Blockers — Dogfooding Freeze
 
-**Status:** Active — blocking dogfooding cycle
-**Last Updated:** 2026-07-07 20:40
+**Status:** Active — 2 of 6 major blockers fixed, workflow improving
+**Last Updated:** 2026-07-08 (session 2)
 **Context:** Attempted to dogfood issue→proposal→plan workflow; discovered multiple critical blockers in the API and governance layer.
+
+## Progress Summary
+
+✅ FIXED:
+1. Plan review endpoint hang (broke complex query into 4 parallel fast ones)
+2. Issue forward-path UI (added Create/Link Proposal buttons to issue detail)
+
+🔄 IN PROGRESS:
+- Testing issue buttons in UI
+
+⏳ NEXT:
+3. capture_bug_report validation
+4. Approve-by-move governance gate
+5. Governance panel UX
+6. DNS resolution
 
 ---
 
 ## CRITICAL (Blocks everything)
 
 ### 1. Plan review endpoint hangs / ERR_INCOMPLETE_CHUNKED_ENCODING
+
+**Status:** ✅ FIXED (commit d63fa98, 28ea568)
 
 **Issue:** `/api/plan-review` times out mid-stream when user clicks "Review" button on plans in the UI.
 
@@ -39,6 +56,8 @@
 ## HIGH (Blocks core workflow)
 
 ### 2. Issue forward path UI missing
+
+**Status:** ✅ IMPLEMENTED (commit 6417532)
 
 **Issue:** No UI button to move issues forward to proposals.
 
