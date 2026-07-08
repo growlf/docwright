@@ -69,27 +69,43 @@ export async function POST({ request }) {
         const noSteps = steps.length === 0 || nonEmptySteps.length === 0;
 
         if (noSteps) {
-          send('status', { message: 'Analyzing plan holistically (no steps defined yet)...' });
+          send('status', { message: 'Analyzing plan (breaking into parallel fast reviews)...' });
 
           const bodyMatch = planRaw.match(/^---[\s\S]*?\n---\n([\s\S]*)$/);
           const planBody = bodyMatch ? bodyMatch[1].trim().slice(0, 3000) : '';
 
-          const holisticPrompt =
-            `Review this governance plan holistically. No implementation steps are defined yet.\n\n` +
-            `Analyze:\n` +
-            `1. What is this plan's core goal? Summarize in 1-2 sentences.\n` +
-            `2. What 3-5 concrete implementation steps would be needed? Suggest each as a short action item.\n` +
-            `3. What approach gaps, missing considerations, or outside-the-box observations do you see?\n` +
-            `4. What preconditions or dependencies should be noted?\n\n` +
-            `Return structured notes under each heading. Be specific and actionable.\n\n` +
-            `PLAN:\n${planBody}`;
+          // Break complex analysis into 4 parallel fast calls instead of 1 slow call
+          const analyses = [
+            {
+              key: 'goal',
+              prompt: `In 1-2 sentences, what is the core goal of this plan?\n\nPLAN:\n${planBody}`,
+            },
+            {
+              key: 'steps',
+              prompt: `List 3-5 concrete implementation steps for this plan. One per line.\n\nPLAN:\n${planBody}`,
+            },
+            {
+              key: 'gaps',
+              prompt: `What are the key gaps, assumptions, or outside-the-box observations about this plan?\n\nPLAN:\n${planBody}`,
+            },
+            {
+              key: 'preconditions',
+              prompt: `What preconditions, dependencies, or prerequisites should be noted for this plan?\n\nPLAN:\n${planBody}`,
+            },
+          ];
 
-          try {
-            const overviewText = await opencodeComplete(holisticPrompt, undefined, reviewerPrompt);
-            send('overview', { text: overviewText });
-          } catch (err: any) {
-            send('overview', { text: `Error: ${err?.message ?? err}` });
-          }
+          // Run in parallel — don't await each one sequentially
+          const analysisPromises = analyses.map(async (analysis) => {
+            try {
+              const text = await opencodeComplete(analysis.prompt, undefined, reviewerPrompt);
+              send('analysis', { aspect: analysis.key, text });
+            } catch (err: any) {
+              send('analysis', { aspect: analysis.key, text: `Error: ${err?.message ?? err}` });
+            }
+          });
+
+          // Wait for all analyses to complete
+          await Promise.all(analysisPromises);
         } else {
           const stepCalls = nonEmptySteps.map(step => ({
             key: step.number,

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
   import type { PageData, ActionData } from './$types.js';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -34,7 +33,7 @@
     {/if}
 
     {#if data.authMode === 'local'}
-      <form method="POST" action="?/local" use:enhance class="local-form">
+      <form method="POST" action="/api/auth/login" class="local-form">
         <label>
           Username
           <input name="username" type="text" autocomplete="username" required />

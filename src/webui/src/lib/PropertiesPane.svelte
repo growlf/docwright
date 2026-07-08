@@ -1,5 +1,6 @@
 <script lang="ts">
   import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName, improveResult } from './pane';
+  import { showToast } from './toast';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -175,6 +176,17 @@
     planSaving = true;
     try {
       await onsave?.(frontmatter);
+      // Provide feedback based on status
+      const statusLabel = status.replace('-', ' ');
+      if (status === 'completed') {
+        showToast(`✓ Plan marked ${statusLabel}`, 3000);
+      } else if (status === 'canceled') {
+        showToast(`Plan ${statusLabel}`, 3000);
+      } else {
+        showToast(`Plan status: ${statusLabel}`, 3000);
+      }
+    } catch (e) {
+      showToast(`Error updating plan status: ${String(e)}`, 5000);
     } finally {
       planSaving = false;
     }
@@ -398,39 +410,34 @@
               title="Open execution panel to progress the plan and run pending steps">
               Progress
             </button>
-          {:else if !frontmatter.tests_defined || (!frontmatter.tests_human_reviewed && frontmatter.tests_last_result === 'pass')}
-            {#if (testPassed === true || frontmatter.tests_last_result === 'pass') && !frontmatter.tests_human_reviewed}
-              <!-- Tests passed (either in-session or via verify_plan_tests) but human review needed before auto-certify (#220) -->
+          {:else if !frontmatter.tests_human_reviewed}
+            <!-- Human certification pending — show Certify or Run Tests button -->
+            {#if testPassed === true || frontmatter.tests_last_result === 'pass'}
+              <!-- Tests passed (in-session or via verify_plan_tests) — ready to certify (#220) -->
               <button class="act approve" onclick={certifyTests}
                 title="Human certifies tests — enables auto-certify on future runs (works with both Run Tests and verify_plan_tests)">
                 Certify Tests
               </button>
-            {:else if !frontmatter.tests_defined}
-              <!-- Tests not yet run/passing — show Run Tests instead of Complete -->
+            {:else}
+              <!-- Tests not yet run or not passing — show Run Tests -->
               <button class="act estimate" onclick={runTests}
                 disabled={testRunning}
-                title="Run the test suite — Complete button appears when all tests pass">
+                title="Run the test suite — Certify Tests button appears when tests pass">
                 {testRunning ? '⏳ Running…' : '▶ Run Tests'}
-              </button>
-            {:else}
-              <!-- Fallback: shouldn't reach here, but just in case -->
-              <button class="act complete" onclick={() => setPlanStatus('completed')}
-                disabled={completeBlockers.length > 0}
-                title={completeBlockers.length > 0
-                  ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
-                  : 'All checks pass — complete and archive this plan'}>
-                {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
               </button>
             {/if}
           {:else}
-            <!-- Complete — disabled when any blocker exists -->
+            <!-- Complete — disabled when any blocker exists or while saving -->
             <button class="act complete" onclick={() => setPlanStatus('completed')}
-              disabled={completeBlockers.length > 0}
-              title={completeBlockers.length > 0
+              disabled={completeBlockers.length > 0 || planSaving}
+              title={planSaving ? 'Completing plan...' : completeBlockers.length > 0
                 ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
                 : 'All checks pass — complete and archive this plan'}>
-              {completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
+              {planSaving ? '⏳ Completing…' : completeBlockers.length > 0 ? `Complete (${completeBlockers.length} blocker${completeBlockers.length === 1 ? '' : 's'})` : 'Complete'}
             </button>
+          {/if}
+          {#if frontmatter.tests_human_reviewed === true}
+            <!-- Uncertify only shows after tests have been certified — allows revoking certification to re-run tests -->
             <button class="act unapprove" onclick={uncertifyTests}
               title="Revoke test certification (confirms first) — resets tests_defined and returns to the Run Tests state">
               ↺ Uncertify

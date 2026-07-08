@@ -11,23 +11,33 @@
 #   GIT_TOKEN       — GitHub/Forgejo personal access token for HTTPS push
 #                     (alternative: mount SSH key — see docs/docker.md)
 
-# ── Scenario 1: Standalone (local developer) ─────────────────────────────────
-# Mount a local vault directory. Access the UI at http://localhost:5173.
-# Suitable for a single developer running DocWright on their workstation.
+# ── Scenario 1: Standalone (local developer / dogfood development) ──────────
+# Mount local vault directory AND entire project source for live development.
+# Access the UI at http://localhost:5173 (or configured PORT).
+# Suitable for a single developer or dogfooding a branch.
+#
+# For dogfood development: mount entire project folder to get live changes
+# without rebuilding. This runs the exact same environment as production.
 
 services:
   docwright:
     build: .
     volumes:
+      # Project source — mounts entire folder for live development
+      # (Comment out the next line to use the built image instead)
+      - .:/app
+      # Vault data directory
       - ${VAULT_PATH:-./example-vault}:/vault
     ports:
       - "${PORT:-5173}:5173"
       # Uncomment to expose MCP SSE for external tooling:
       # - "3002:3002"
     environment:
-      GIT_USER_NAME:  ${GIT_USER_NAME:-DocWright User}
-      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-docwright@localhost}
-      GIT_TOKEN:      ${GIT_TOKEN:-}
+      GIT_USER_NAME:   ${GIT_USER_NAME:-DocWright User}
+      GIT_USER_EMAIL:  ${GIT_USER_EMAIL:-docwright@localhost}
+      GIT_TOKEN:       ${GIT_TOKEN:-}
+      # OpenCode URL — set DOCKER_GATEWAY_IP in .env to IP where OpenCode is reachable from container
+      OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
     restart: unless-stopped
 
 # ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────

@@ -1664,3 +1664,42 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: wave-b Step 3 → done; #160 resolved in issue store
 
 **Session note:** `docs/session-notes/session_note_202607061550.md`
+
+---
+
+## Session: 2026-07-08 — Dogfood infrastructure setup & blockers
+
+**Focus:** Dogfood infrastructure setup & blockers
+
+**Completed:**
+- [x] chore: add source mount to docker-compose for dogfood development
+- [x] docs: edit plans/plan-ui-layout-refactor-view-container-plugin-architecture.md (web ui save)
+- [x] docs: mark blocker #5 as fixed (governance panel UX)
+- [x] fix: relabel governance panel stat from 'Pending Approval' to 'Awaiting Plan'
+- [x] docs: mark blocker #4 as fixed (PR #247)
+- [x] docs: update blockers — 3 of 6 major issues fixed
+- [x] fix: capture_bug_report frontmatter validation errors
+- [x] docs: update workflow blockers — 2 major issues fixed
+- [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
+- [x] feat: handle new 'analysis' event type in plan review UI
+
+**Session note:** `docs/session-notes/session_note_202607080723.md`
+
+---
+
+## Session: 2026-07-08 — Dogfood infrastructure setup
+
+**Focus:** Dogfood infrastructure setup
+
+**Completed:**
+- [x] chore: add source mount to docker-compose for dogfood development
+- [x] docs: edit plans/plan-ui-layout-refactor-view-container-plugin-architecture.md (web ui save)
+- [x] docs: mark blocker #5 as fixed (governance panel UX)
+- [x] fix: relabel governance panel stat from 'Pending Approval' to 'Awaiting Plan'
+- [x] docs: mark blocker #4 as fixed (PR #247)
+- [x] docs: update blockers — 3 of 6 major issues fixed
+- [x] fix: capture_bug_report frontmatter validation errors
+- [x] docs: update workflow blockers — 2 major issues fixed
+- [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
+
+**Session note:** `docs/session-notes/session_note_202607080724.md`

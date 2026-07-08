@@ -1,6 +1,6 @@
 ---
 title: Report button should offer "feature" as well
-status: scope-checked
+status: proposal-linked
 author: NetYeti
 author-role: user
 created: 2026-07-05
@@ -19,12 +19,12 @@ scope_check_by: NetYeti
 scope_assessment: Issue is in active backlog.
 scope_decision: in-scope
 github_issue: 178
+consumed_by: proposals/improve-bug-feature-report-dialog.md
 assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev
 ---
-
-# Report button should offer "feature" as well
+# Report Bug button should offer "feature" as well
 
 ## Description
 

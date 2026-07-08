@@ -14,7 +14,7 @@
   import { notifications, notificationCounts } from '$lib/notifications';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewAnalyses, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
   showExecutionPanel, executingPlanName, executorActive, executorWaiting, executorDone
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
@@ -30,6 +30,9 @@ import {
   import type { LayoutData } from './$types.js';
 
   let { data }: { data: LayoutData } = $props();
+
+  // If on login page, render without app chrome (reactive)
+  const isLoginPage = $derived($page.url.pathname === '/login');
 
   let vaultVersion = $state<string>('');
   onMount(async () => {
@@ -204,6 +207,7 @@ import {
   let cl = $state(false);     $effect(() => { const u = collationLoading.subscribe(v => cl = v); return u; });
   let prSteps    = $state<Record<string, string>>({}); $effect(() => { const u = planReviewSteps.subscribe(v => prSteps = v); return u; });
   let prSections = $state<Record<string, string>>({}); $effect(() => { const u = planReviewSections.subscribe(v => prSections = v); return u; });
+  let prAnalyses = $state<Record<string, string>>({}); $effect(() => { const u = planReviewAnalyses.subscribe(v => prAnalyses = v); return u; });
   let prOverview = $state(''); $effect(() => { const u = planReviewOverview.subscribe(v => prOverview = v); return u; });
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
   let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
@@ -334,6 +338,7 @@ import {
     showRightPanel = true;
     planReviewSteps.set({});
     planReviewSections.set({});
+    planReviewAnalyses.set({});
     planReviewOverview.set('');
     planReviewStatus.set('');
     planReviewLoading.set(true);
@@ -365,6 +370,8 @@ import {
               planReviewSteps.update(s => { s[data.number] = data.text; return s; });
             } else if (event === 'section-review') {
               planReviewSections.update(s => { s[data.name] = data.text; return s; });
+            } else if (event === 'analysis') {
+              planReviewAnalyses.update(a => { a[data.aspect] = data.text; return a; });
             } else if (event === 'overview') {
               planReviewOverview.set(data.text);
             } else if (event === 'status') {
@@ -888,6 +895,7 @@ import {
   });
 </script>
 
+{#if !isLoginPage}
 <!-- Always-visible toolbar — all viewports -->
 <div class="app-toolbar">
   <!-- Left: sidebar toggle -->
@@ -1129,6 +1137,7 @@ import {
       <PlanReviewPanel
         steps={prSteps}
         sections={prSections}
+        analyses={prAnalyses}
         overview={prOverview}
         status={prs}
         loading={prl}
@@ -1171,6 +1180,10 @@ import {
     {/each}
   </div>
 </div>
+{:else}
+<!-- Login page: render only the slot (login form) -->
+<slot />
+{/if}
 
 <!-- Chat toggle button — bottom of viewport, above footer -->
 <button

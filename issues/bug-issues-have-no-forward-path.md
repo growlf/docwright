@@ -1,6 +1,7 @@
 ---
 title: Issues have no forward path
-status: scope-checked
+status: proposal-linked
+consumed_by: proposals/add-issue-forward-path-actions.md
 author: NetYeti
 author-role: user
 created: 2026-07-05

@@ -20,12 +20,13 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
     ...over,
   });
 
-  it('createReportedBug files a new bug with milestone: future and no auto v0.5.0', () => {
+  it('createReportedBug files a new bug with status: new and no milestone', () => {
     const res = createReportedBug(tmpDir, report({ priority: 'high', system_info: 'Linux, Node 20' }));
     assert.strictEqual(res.demandCount, 1);
     const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
     assert.ok(content.includes('category: bug'));
-    assert.ok(content.includes('milestone: future'), 'defaults to future, not v0.5.0');
+    assert.ok(content.includes('status: new'), 'new issues start with status: new');
+    assert.ok(!content.includes('milestone: future'), 'milestone not set on new issues');
     assert.ok(content.includes('priority: high'));
   });
 
