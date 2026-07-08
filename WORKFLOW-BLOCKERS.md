@@ -9,15 +9,16 @@
 ✅ FIXED:
 1. Plan review endpoint hang (broke complex query into 4 parallel fast ones)
 2. Issue forward-path UI (added Create/Link Proposal buttons to issue detail)
+3. capture_bug_report validation (changed status: open→new, removed invalid milestone)
 
 🔄 IN PROGRESS:
 - Testing issue buttons in UI
+- Testing bug capture after fix
 
 ⏳ NEXT:
-3. capture_bug_report validation
-4. Approve-by-move governance gate
-5. Governance panel UX
-6. DNS resolution
+4. Approve-by-move governance gate (moving proposal to approved/ skips HUMAN_APPROVED)
+5. Governance panel UX (mislabeled stats, non-clickable tiles)
+6. DNS resolution (.bms.local infrastructure)
 
 ---
 
@@ -79,6 +80,8 @@
 ---
 
 ### 3. capture_bug_report emits invalid frontmatter
+
+**Status:** ✅ FIXED (commit c9c1f3b)
 
 **Issue:** The `capture_bug_report` command generates frontmatter that fails schema validation.
 
