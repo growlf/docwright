@@ -21,6 +21,7 @@ related_to:
   - plans/completed/plugin-system.md
   - plans/plan-hide-consumed-issues-from-backlog-fix-workflow-visibility.md
 consumed_by: plans/plan-ui-layout-refactor-view-container-plugin-architecture.md
+automated: full
 ---
 
 ## Problem
