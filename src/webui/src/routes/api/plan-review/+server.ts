@@ -98,7 +98,11 @@ export async function POST({ request }) {
           const analysisPromises = analyses.map(async (analysis) => {
             try {
               const response = await opencodeComplete(analysis.prompt, undefined, reviewerPrompt);
-              send('analysis', { aspect: analysis.key, text: response.text, working: { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model } });
+              send('working-prompt', { aspect: analysis.key, systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
+              if (response.thinking) {
+                send('working-thinking', { aspect: analysis.key, thinking: response.thinking });
+              }
+              send('analysis', { aspect: analysis.key, text: response.text });
             } catch (err: any) {
               send('analysis', { aspect: analysis.key, text: `Error: ${err?.message ?? err}` });
             }
@@ -134,11 +138,15 @@ export async function POST({ request }) {
           for (const call of allCalls) {
             try {
               const response = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
-              const working = { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model };
+              const itemKey = call.type === 'step' ? call.key : call.key;
+              send('working-prompt', { type: call.type, key: itemKey, systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
+              if (response.thinking) {
+                send('working-thinking', { type: call.type, key: itemKey, thinking: response.thinking });
+              }
               if (call.type === 'step') {
-                send('step-review', { number: call.key, text: response.text, working });
+                send('step-review', { number: call.key, text: response.text });
               } else {
-                send('section-review', { name: call.key, text: response.text, working });
+                send('section-review', { name: call.key, text: response.text });
               }
             } catch (e: any) {
               const errText = `Error: ${e?.message ?? e}`;
@@ -161,7 +169,11 @@ export async function POST({ request }) {
 
           try {
             const response = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
-            send('overview', { text: response.text, working: { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model } });
+            send('working-prompt', { type: 'overview', key: 'overview', systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, model: response.model });
+            if (response.thinking) {
+              send('working-thinking', { type: 'overview', key: 'overview', thinking: response.thinking });
+            }
+            send('overview', { text: response.text });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
           }

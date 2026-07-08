@@ -10,10 +10,14 @@
     loading = false,
     canRerun = false,
     applying = false,
-    stepsWorking = {} as Record<string, any>,
-    sectionsWorking = {} as Record<string, any>,
-    analysesWorking = {} as Record<string, any>,
-    overviewWorking = {} as any,
+    stepsPrompts = {} as Record<string, any>,
+    stepsThinking = {} as Record<string, string>,
+    sectionsPrompts = {} as Record<string, any>,
+    sectionsThinking = {} as Record<string, string>,
+    analysesPrompts = {} as Record<string, any>,
+    analysesThinking = {} as Record<string, string>,
+    overviewPrompt = {} as any,
+    overviewThinking = '',
     ondismiss,
     onrerun,
     onapply,
@@ -26,17 +30,20 @@
     loading?: boolean;
     canRerun?: boolean;
     applying?: boolean;
-    stepsWorking?: Record<string, any>;
-    sectionsWorking?: Record<string, any>;
-    analysesWorking?: Record<string, any>;
-    overviewWorking?: any;
+    stepsPrompts?: Record<string, any>;
+    stepsThinking?: Record<string, string>;
+    sectionsPrompts?: Record<string, any>;
+    sectionsThinking?: Record<string, string>;
+    analysesPrompts?: Record<string, any>;
+    analysesThinking?: Record<string, string>;
+    overviewPrompt?: any;
+    overviewThinking?: string;
     ondismiss?: () => void;
     onrerun?: () => void;
     onapply?: () => void;
   } = $props();
 
   let scrollEl: HTMLDivElement | undefined = $state();
-  let expandedWorking = $state<Set<string>>(new Set());
 
   let elapsed = $state(0);
   let elapsedTimer: ReturnType<typeof setInterval> | undefined = $state();
@@ -77,15 +84,6 @@
     if (key === 'preconditions') return 'Preconditions';
     return key.charAt(0).toUpperCase() + key.slice(1);
   }
-
-  function toggleWorking(id: string) {
-    if (expandedWorking.has(id)) {
-      expandedWorking.delete(id);
-    } else {
-      expandedWorking.add(id);
-    }
-    expandedWorking = expandedWorking;
-  }
 </script>
 
 <div class="panel">
@@ -108,38 +106,35 @@
           <div class="group-header">Steps</div>
           {#each stepNumbers as num (num)}
             <div class="item" class:done={steps[num] && !steps[num].startsWith('Error:')} class:error={steps[num].startsWith('Error:')}>
-              <div class="item-content">
+              {#if stepsPrompts[num]}
+                <div class="working-section">
+                  {#if stepsPrompts[num].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {stepsPrompts[num].model}</div>
+                  {/if}
+                  {#if stepsPrompts[num].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{stepsPrompts[num].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if stepsPrompts[num].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{stepsPrompts[num].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if stepsThinking[num]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{stepsThinking[num]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
                 <span class="item-icon">{steps[num].startsWith('Error:') ? '⚠' : '✅'}</span>
                 <span class="item-label">Step {num}</span>
                 <pre class="item-text">{steps[num]}</pre>
-                {#if stepsWorking[num]}
-                  <button class="working-toggle" onclick={() => toggleWorking(`step-${num}`)} title="Show AI thinking and prompt">🔍 working</button>
-                  {#if expandedWorking.has(`step-${num}`)}
-                    <div class="working-panel">
-                      {#if stepsWorking[num].model}
-                        <div class="working-item"><strong>Model:</strong> {stepsWorking[num].model}</div>
-                      {/if}
-                      {#if stepsWorking[num].systemPrompt}
-                        <div class="working-item">
-                          <strong>System Prompt:</strong>
-                          <pre class="working-code">{stepsWorking[num].systemPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if stepsWorking[num].userPrompt}
-                        <div class="working-item">
-                          <strong>User Prompt:</strong>
-                          <pre class="working-code">{stepsWorking[num].userPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if stepsWorking[num].thinking}
-                        <div class="working-item">
-                          <strong>AI Thinking:</strong>
-                          <pre class="working-code">{stepsWorking[num].thinking}</pre>
-                        </div>
-                      {/if}
-                    </div>
-                  {/if}
-                {/if}
               </div>
             </div>
           {/each}
@@ -151,38 +146,35 @@
           <div class="group-header">Plan Analysis</div>
           {#each analysisKeys as key (key)}
             <div class="item" class:done={analyses[key] && !analyses[key].startsWith('Error:')} class:error={analyses[key].startsWith('Error:')}>
-              <div class="item-content">
+              {#if analysesPrompts[key]}
+                <div class="working-section">
+                  {#if analysesPrompts[key].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {analysesPrompts[key].model}</div>
+                  {/if}
+                  {#if analysesPrompts[key].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{analysesPrompts[key].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if analysesPrompts[key].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{analysesPrompts[key].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if analysesThinking[key]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{analysesThinking[key]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
                 <span class="item-icon">{analyses[key].startsWith('Error:') ? '⚠' : '💡'}</span>
                 <span class="item-label">{groupLabel(key)}</span>
                 <pre class="item-text">{analyses[key]}</pre>
-                {#if analysesWorking[key]}
-                  <button class="working-toggle" onclick={() => toggleWorking(`analysis-${key}`)} title="Show AI thinking and prompt">🔍 working</button>
-                  {#if expandedWorking.has(`analysis-${key}`)}
-                    <div class="working-panel">
-                      {#if analysesWorking[key].model}
-                        <div class="working-item"><strong>Model:</strong> {analysesWorking[key].model}</div>
-                      {/if}
-                      {#if analysesWorking[key].systemPrompt}
-                        <div class="working-item">
-                          <strong>System Prompt:</strong>
-                          <pre class="working-code">{analysesWorking[key].systemPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if analysesWorking[key].userPrompt}
-                        <div class="working-item">
-                          <strong>User Prompt:</strong>
-                          <pre class="working-code">{analysesWorking[key].userPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if analysesWorking[key].thinking}
-                        <div class="working-item">
-                          <strong>AI Thinking:</strong>
-                          <pre class="working-code">{analysesWorking[key].thinking}</pre>
-                        </div>
-                      {/if}
-                    </div>
-                  {/if}
-                {/if}
               </div>
             </div>
           {/each}
@@ -194,38 +186,35 @@
           <div class="group-header">Sections</div>
           {#each sectionKeys as key (key)}
             <div class="item" class:done={sections[key] && !sections[key].startsWith('Error:')} class:error={sections[key].startsWith('Error:')}>
-              <div class="item-content">
+              {#if sectionsPrompts[key]}
+                <div class="working-section">
+                  {#if sectionsPrompts[key].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {sectionsPrompts[key].model}</div>
+                  {/if}
+                  {#if sectionsPrompts[key].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{sectionsPrompts[key].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if sectionsPrompts[key].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{sectionsPrompts[key].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if sectionsThinking[key]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{sectionsThinking[key]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
                 <span class="item-icon">{sections[key].startsWith('Error:') ? '⚠' : '✅'}</span>
                 <span class="item-label">{groupLabel(key)}</span>
                 <pre class="item-text">{sections[key]}</pre>
-                {#if sectionsWorking[key]}
-                  <button class="working-toggle" onclick={() => toggleWorking(`section-${key}`)} title="Show AI thinking and prompt">🔍 working</button>
-                  {#if expandedWorking.has(`section-${key}`)}
-                    <div class="working-panel">
-                      {#if sectionsWorking[key].model}
-                        <div class="working-item"><strong>Model:</strong> {sectionsWorking[key].model}</div>
-                      {/if}
-                      {#if sectionsWorking[key].systemPrompt}
-                        <div class="working-item">
-                          <strong>System Prompt:</strong>
-                          <pre class="working-code">{sectionsWorking[key].systemPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if sectionsWorking[key].userPrompt}
-                        <div class="working-item">
-                          <strong>User Prompt:</strong>
-                          <pre class="working-code">{sectionsWorking[key].userPrompt}</pre>
-                        </div>
-                      {/if}
-                      {#if sectionsWorking[key].thinking}
-                        <div class="working-item">
-                          <strong>AI Thinking:</strong>
-                          <pre class="working-code">{sectionsWorking[key].thinking}</pre>
-                        </div>
-                      {/if}
-                    </div>
-                  {/if}
-                {/if}
               </div>
             </div>
           {/each}
@@ -235,36 +224,33 @@
       {#if overview}
         <div class="group">
           <div class="group-header">Overall Assessment</div>
-          <div class="overview-container">
-            <pre class="overview-text" class:error={overview.startsWith('Error:')}>{overview}</pre>
-            {#if overviewWorking}
-              <button class="working-toggle" onclick={() => toggleWorking('overview')} title="Show AI thinking and prompt">🔍 working</button>
-              {#if expandedWorking.has('overview')}
-                <div class="working-panel">
-                  {#if overviewWorking.model}
-                    <div class="working-item"><strong>Model:</strong> {overviewWorking.model}</div>
-                  {/if}
-                  {#if overviewWorking.systemPrompt}
-                    <div class="working-item">
-                      <strong>System Prompt:</strong>
-                      <pre class="working-code">{overviewWorking.systemPrompt}</pre>
-                    </div>
-                  {/if}
-                  {#if overviewWorking.userPrompt}
-                    <div class="working-item">
-                      <strong>User Prompt:</strong>
-                      <pre class="working-code">{overviewWorking.userPrompt}</pre>
-                    </div>
-                  {/if}
-                  {#if overviewWorking.thinking}
-                    <div class="working-item">
-                      <strong>AI Thinking:</strong>
-                      <pre class="working-code">{overviewWorking.thinking}</pre>
-                    </div>
-                  {/if}
+          {#if overviewPrompt}
+            <div class="working-section">
+              {#if overviewPrompt.model}
+                <div class="meta-line">📦 <strong>Model:</strong> {overviewPrompt.model}</div>
+              {/if}
+              {#if overviewPrompt.systemPrompt}
+                <div class="prompt-block">
+                  <div class="prompt-label">🔧 System Prompt:</div>
+                  <pre class="prompt-text">{overviewPrompt.systemPrompt}</pre>
                 </div>
               {/if}
-            {/if}
+              {#if overviewPrompt.userPrompt}
+                <div class="prompt-block">
+                  <div class="prompt-label">❓ User Prompt:</div>
+                  <pre class="prompt-text">{overviewPrompt.userPrompt}</pre>
+                </div>
+              {/if}
+            </div>
+          {/if}
+          {#if overviewThinking}
+            <div class="thinking-block">
+              <div class="thinking-label">💭 AI Thinking:</div>
+              <pre class="thinking-text">{overviewThinking}</pre>
+            </div>
+          {/if}
+          <div class="answer-block">
+            <pre class="overview-text" class:error={overview.startsWith('Error:')}>{overview}</pre>
           </div>
         </div>
       {/if}
@@ -311,58 +297,21 @@
   .item.done { border-left: 2px solid $green; }
   .item.error { border-left: 2px solid $red; }
 
-  .item-content { display: flex; flex-direction: column; gap: 6px; }
+  .working-section { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(100, 150, 200, 0.08); border-left: 2px solid $blue; border-radius: 3px; margin-bottom: 8px; }
+  .meta-line { font-size: 10px; color: $fg-dim; }
 
+  .prompt-block { display: flex; flex-direction: column; gap: 4px; }
+  .prompt-label { font-size: 10px; font-weight: 600; color: $fg-dim; text-transform: uppercase; letter-spacing: 0.5px; }
+  .prompt-text { font-family: monospace; font-size: 10px; line-height: 1.4; color: $fg; margin: 0; padding: 6px; background: transparent; border-radius: 3px; overflow-x: auto; max-height: 100px; overflow-y: auto; }
+
+  .thinking-block { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: rgba(200, 150, 100, 0.08); border-left: 2px solid #d4a574; border-radius: 3px; margin-bottom: 8px; }
+  .thinking-label { font-size: 10px; font-weight: 600; color: $fg-dim; text-transform: uppercase; letter-spacing: 0.5px; }
+  .thinking-text { font-family: monospace; font-size: 10px; line-height: 1.4; color: $fg; margin: 0; padding: 6px; background: transparent; border-radius: 3px; overflow-x: auto; max-height: 150px; overflow-y: auto; }
+
+  .answer-block { display: flex; align-items: flex-start; gap: 8px; }
   .item-icon { flex-shrink: 0; font-size: 12px; line-height: 1.5; }
   .item-label { flex-shrink: 0; font-size: 11px; font-weight: 600; color: $fg-dim; line-height: 1.5; min-width: 48px; }
   .item-text { flex: 1; font-family: inherit; font-size: 12px; line-height: 1.5; color: $fg; white-space: pre-wrap; margin: 0; }
-
-  .working-toggle {
-    align-self: flex-start;
-    padding: 2px 6px;
-    font-size: 11px;
-    border: 1px solid $border;
-    border-radius: 3px;
-    background: transparent;
-    color: $fg-dim;
-    cursor: pointer;
-    &:hover { color: $fg; border-color: $muted; }
-  }
-
-  .working-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    margin-top: 4px;
-    border: 1px solid $border;
-    border-radius: 4px;
-    background: transparent;
-  }
-
-  .working-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 11px;
-    strong { color: $fg-dim; font-weight: 600; }
-  }
-
-  .working-code {
-    font-family: monospace;
-    font-size: 10px;
-    line-height: 1.4;
-    color: $fg;
-    margin: 0;
-    padding: 6px;
-    background: $bg-2;
-    border-radius: 3px;
-    overflow-x: auto;
-    max-height: 150px;
-    overflow-y: auto;
-  }
-
-  .overview-container { display: flex; flex-direction: column; gap: 6px; }
 
   .overview-text { font-family: inherit; font-size: 12px; line-height: 1.6; color: $fg; white-space: pre-wrap; margin: 0; padding: 8px; background: $bg-2; border-radius: 4px; }
   .overview-text.error { color: $red; }
