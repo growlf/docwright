@@ -11,14 +11,17 @@ category:
   - ux
 complexity: medium
 priority: high
-approved: false
+approved: true
 created_by: NetYeti@cluster-llm
 author-role: governance
-assigned_to: ''
+assigned_to: NetYeti
 related_to:
   - issues/ui-roadplan-pending-work-visibility.md
+  - proposals/approved/ui-git-controlls.md
 depends_on: []
 blocks: []
+_path: proposals/approved/enhance-roadplan-pending-work-visibility
+consumed_by: plans/enhance-roadplan-pending-work-visibility.md
 ---
 
 # Enhance roadplan view — surface pending approvals and open PRs
