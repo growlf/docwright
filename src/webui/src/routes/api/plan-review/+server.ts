@@ -52,9 +52,24 @@ export async function POST({ request }) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
       function send(event: string, data: unknown) {
-        controller.enqueue(new TextEncoder().encode(sse(event, data)));
+        if (closed) return;
+        try {
+          controller.enqueue(new TextEncoder().encode(sse(event, data)));
+        } catch { closed = true; }
       }
+
+      // SSE keepalive — long AI calls (esp. the overview synthesis) produce no
+      // events for minutes; proxies kill the idle connection, and the browser
+      // surfaces it as ERR_INCOMPLETE_CHUNKED_ENCODING / "network error".
+      // A comment line (": ...") is ignored by SSE parsers but keeps bytes flowing.
+      const heartbeat = setInterval(() => {
+        if (closed) return;
+        try {
+          controller.enqueue(new TextEncoder().encode(`: keepalive ${Date.now()}\n\n`));
+        } catch { closed = true; }
+      }, 15_000);
 
       try {
         send('status', { message: 'Extracting plan sections...' });
@@ -195,7 +210,11 @@ export async function POST({ request }) {
         send('done', { error: `${err?.message ?? err}` });
       }
 
-      controller.close();
+      clearInterval(heartbeat);
+      if (!closed) {
+        closed = true;
+        try { controller.close(); } catch { /* already closed by client disconnect */ }
+      }
     },
   });
 
