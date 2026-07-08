@@ -19,6 +19,12 @@ export const planReviewAnalyses = writable<Record<string, string>>({}); // goal,
 export const planReviewLoading  = writable(false);
 export const planReviewStatus   = writable('');
 
+/** Plan review working data (prompts, thinking) — for AI transparency */
+export const planReviewStepsWorking    = writable<Record<string, any>>({});
+export const planReviewSectionsWorking = writable<Record<string, any>>({});
+export const planReviewOverviewWorking = writable<any>({});
+export const planReviewAnalysesWorking = writable<Record<string, any>>({});
+
 /** Proposal improvement panel state */
 export const improveResult  = writable<{ improved: string; critique: string } | null>(null);
 export const improveLoading = writable(false);

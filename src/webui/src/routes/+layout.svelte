@@ -14,7 +14,7 @@
   import { notifications, notificationCounts } from '$lib/notifications';
 import type { ImprovePhase } from '$lib/pane';
 import {
-  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewAnalyses, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
+  showPropsPane, showChatPanel, showMultiReview, showRelatedTab, collationMatches, collationRelationships, collationLoading, featureFlags, planReviewSteps, planReviewSections, planReviewAnalyses, planReviewOverview, planReviewLoading, planReviewStatus, planReviewBodyFingerprint, planReviewStepsWorking, planReviewSectionsWorking, planReviewAnalysesWorking, planReviewOverviewWorking, improveResult, improveLoading, improvePhase, improveStatus, showImproveTab, showReviewTab, triggerImprovePending,
   showExecutionPanel, executingPlanName, executorActive, executorWaiting, executorDone
 } from '$lib/pane';
   import ChatPanel from '$lib/ChatPanel.svelte';
@@ -212,6 +212,10 @@ import {
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
   let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
   let prFingerprint = $state(''); $effect(() => { const u = planReviewBodyFingerprint.subscribe(v => prFingerprint = v); return u; });
+  let prStepsWorking    = $state<Record<string, any>>({}); $effect(() => { const u = planReviewStepsWorking.subscribe(v => prStepsWorking = v); return u; });
+  let prSectionsWorking = $state<Record<string, any>>({}); $effect(() => { const u = planReviewSectionsWorking.subscribe(v => prSectionsWorking = v); return u; });
+  let prAnalysesWorking = $state<Record<string, any>>({}); $effect(() => { const u = planReviewAnalysesWorking.subscribe(v => prAnalysesWorking = v); return u; });
+  let prOverviewWorking = $state<any>({}); $effect(() => { const u = planReviewOverviewWorking.subscribe(v => prOverviewWorking = v); return u; });
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
@@ -341,6 +345,10 @@ import {
     planReviewAnalyses.set({});
     planReviewOverview.set('');
     planReviewStatus.set('');
+    planReviewStepsWorking.set({});
+    planReviewSectionsWorking.set({});
+    planReviewAnalysesWorking.set({});
+    planReviewOverviewWorking.set({});
     planReviewLoading.set(true);
     try {
       const res = await fetch('/api/plan-review', {
@@ -368,12 +376,24 @@ import {
             const data = JSON.parse(dataLine.slice(6));
             if (event === 'step-review') {
               planReviewSteps.update(s => { s[data.number] = data.text; return s; });
+              if (data.working) {
+                planReviewStepsWorking.update(w => { w[data.number] = data.working; return w; });
+              }
             } else if (event === 'section-review') {
               planReviewSections.update(s => { s[data.name] = data.text; return s; });
+              if (data.working) {
+                planReviewSectionsWorking.update(w => { w[data.name] = data.working; return w; });
+              }
             } else if (event === 'analysis') {
               planReviewAnalyses.update(a => { a[data.aspect] = data.text; return a; });
+              if (data.working) {
+                planReviewAnalysesWorking.update(w => { w[data.aspect] = data.working; return w; });
+              }
             } else if (event === 'overview') {
               planReviewOverview.set(data.text);
+              if (data.working) {
+                planReviewOverviewWorking.set(data.working);
+              }
             } else if (event === 'status') {
               planReviewStatus.set(data.message);
             } else if (event === 'done') {
@@ -1143,6 +1163,10 @@ import {
         loading={prl}
         canRerun={canRerun}
         applying={applyingReview}
+        stepsWorking={prStepsWorking}
+        sectionsWorking={prSectionsWorking}
+        analysesWorking={prAnalysesWorking}
+        overviewWorking={prOverviewWorking}
         ondismiss={() => { rightTab = 'properties'; }}
         onrerun={handleReview}
         onapply={handleApplyReview}

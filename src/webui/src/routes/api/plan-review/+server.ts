@@ -97,8 +97,8 @@ export async function POST({ request }) {
           // Run in parallel — don't await each one sequentially
           const analysisPromises = analyses.map(async (analysis) => {
             try {
-              const text = await opencodeComplete(analysis.prompt, undefined, reviewerPrompt);
-              send('analysis', { aspect: analysis.key, text });
+              const response = await opencodeComplete(analysis.prompt, undefined, reviewerPrompt);
+              send('analysis', { aspect: analysis.key, text: response.text, working: { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model } });
             } catch (err: any) {
               send('analysis', { aspect: analysis.key, text: `Error: ${err?.message ?? err}` });
             }
@@ -133,11 +133,12 @@ export async function POST({ request }) {
 
           for (const call of allCalls) {
             try {
-              const text = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
+              const response = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
+              const working = { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model };
               if (call.type === 'step') {
-                send('step-review', { number: call.key, text });
+                send('step-review', { number: call.key, text: response.text, working });
               } else {
-                send('section-review', { name: call.key, text });
+                send('section-review', { name: call.key, text: response.text, working });
               }
             } catch (e: any) {
               const errText = `Error: ${e?.message ?? e}`;
@@ -159,8 +160,8 @@ export async function POST({ request }) {
           send('status', { message: 'Synthesizing overview...' });
 
           try {
-            const overviewText = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
-            send('overview', { text: overviewText });
+            const response = await opencodeComplete(overviewPrompt, undefined, reviewerPrompt);
+            send('overview', { text: response.text, working: { systemPrompt: response.systemPrompt, userPrompt: response.userPrompt, thinking: response.thinking, model: response.model } });
           } catch (err: any) {
             send('overview', { text: `Error: ${err?.message ?? err}` });
           }
