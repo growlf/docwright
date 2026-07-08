@@ -1,112 +1,95 @@
 ---
 title: "Plan: Release v0.4.10 — ship what's landed, save 0.5.0 for the milestone"
-status: draft
+status: in-progress
 author: "NetYeti"
 created: "2026-07-08"
 created_by: "NetYeti@phoenix"
-tags: [planning]
+tags: [release, infrastructure]
 proposal_source: "proposals/release-v0.4.10"
 priority: medium
-phase: 
-automated: guided
-waiting_reason:  # Populated when status = waiting-for-user
+phase:
+automated: full
+waiting_reason:
 assigned_to: ["NetYeti"]
-# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
-# parent_deliverable: "1"            # row number in parent's Deliverables table
 related_to: []
 depends_on: []
 blocks: []
 reviewed_by:
 reviewed_date:
-canceled_date:  # Populated when plan is canceled
-cancellation_reason:  # Populated when plan is canceled
+canceled_date:
+cancellation_reason:
 template_version: "1.0"
 tests_defined: true
-tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
-# Gate fields — populated when a lifecycle gate applies to this document
-gate_reviewer:  # Who must review (set automatically by gate rules)
-gate_status:    # pending | approved | waived
-gate_date:      # Stamped when gate_status is set
-gate_note:      # Optional reviewer note
-gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
-gate_quorum: 1    # Phase 1a — minimum approvals needed
+tests_human_reviewed: false
+gate_reviewer:
+gate_status:
+gate_date:
+gate_note:
+gate_reviews: []
+gate_quorum: 1
+total_steps: 5
+completed_steps: 0
 ---
 
-# Plan: Release v0.4.10 — ship what's landed, save 0.5.0 for the milestone
+# Plan: Release v0.4.10
 
 ## Mode
 
-Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
+**GUIDED MODE — Agent drafts/stages, human approves**
 
-**MENTORSHIP MODE — Human leads, LLM advises**
+- Agent handles mechanical steps (bump, tag, release notes generation)
+- Human reviews, merges the release PR, and validates the dogfood deployment
+- Agent provides SOP compliance checks
 
-- Human carries out tasks their own way
-- LLM provides SOP compliance checks and safety warnings
-- LLM offers suggestions when human asks for help
+## Problem
 
-## Overview
-
-### Problem
-
-49 commits have landed since v0.4.9 (tagged Mar 2026) across Wave B hooks, collaboration model, WebUI write integrity, session auto-landing, and a dozen+ bug fixes. No tagged release captures this state. The dogfood instance already shows 0.5.0 but the code is still 0.4.9 — version drift bug #258.
-
-### Alternatives considered
-
-- **Call it 0.5.0** — rejected per BDFL direction: save the number for when the milestone items actually ship.
-
-### Future
-
-The deferred items plus the remaining 40+ approved proposals become the v0.5.0 release scope.
-
+49 commits have landed since v0.4.9 (tagged Mar 2026) across Wave B hooks, collaboration model, WebUI write integrity, session auto-landing, and a dozen+ bug fixes. No tagged release captures this state. Dogfood instance shows 0.5.0 but code is still 0.4.9 — version drift.
 
 ## Implementation Steps
 
-> When marking a task ✅ Complete, update every step row in this table
-> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
-
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | | | ⏳ Pending |
-
-## Testing Plan
-
-
-
-## Rollback Procedures
-
-
-
-## Risk Assessment
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| | | | |
-
-## Phase Gate
-
-- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
-- [ ] Test coverage defined and human-reviewed (`tests_human_reviewed: true`)
-- [ ] Deferred ideas captured as proposals before closing (see [[policies/core/capture-deferred-ideas.md]])
-- [ ] Rollback procedures documented
-- [ ] Risk assessment completed
+| 1 | Bump VERSION and package.json to 0.4.10 | Update `VERSION` file and `version` field in `package.json`; commit as `chore: bump version to 0.4.10` | ⏳ Pending |
+| 2 | Generate release notes | Run `git log v0.4.9..HEAD --oneline --no-decorate`, categorize into Features / Fixes / Docs / Chores, write to `docs/release-notes-v0.4.10.md` | ⏳ Pending |
+| 3 | Tag and push v0.4.10 | `git tag -a v0.4.10 -m "v0.4.10"` and `git push origin v0.4.10` | ⏳ Pending |
+| 4 | Add CI version-drift gate | Add step to CI workflow that fails if `VERSION` and `package.json` version mismatch, and if UI-reported version differs from `VERSION` | ⏳ Pending |
+| 5 | Verify dogfood deployment | Confirm dogfood instance pulls v0.4.10 tag, health check passes, status page shows v0.4.10 | ⏳ Pending |
 
 ## Testing Plan
 
 ### Step Verification
 
-- [ ] All implementation steps complete and outcomes verified
+- [ ] Step 1: `VERSION` file reads `0.4.10`, `package.json` version is `0.4.10`
+- [ ] Step 2: Release notes exist at `docs/release-notes-v0.4.10.md`, all 49 commits accounted for
+- [ ] Step 3: `git tag -l 'v0.4.10'` returns the tag, `git ls-remote origin refs/tags/v0.4.10` confirms pushed
+- [ ] Step 4: CI pipeline has a step that catches version mismatch — test by deliberately desyncing VERSION and package.json in a draft PR
 
 ### Integration & Regression
 
-- [ ] Existing tests pass without modification (`npm test`)
-- [ ] TypeScript compiles cleanly (`npm run typecheck`)
-- [ ] Plan: Release v0.4.10 — ship what's landed, save 0.5.0 for the milestone functionality works end-to-end
+- [ ] `npm run test:dispatch` passes
+- [ ] `npm run typecheck` passes
+- [ ] `npm run lint` reports 0 errors
 
 ### Gate Criteria
 
-- [ ] `tests_defined` set to `true` in frontmatter
-- [ ] Human reviewer has verified step outcomes above
-- [ ] No regressions introduced to adjacent workflows
+- [ ] All implementation steps complete and verified
+- [ ] Dogfood instance reports v0.4.10 on status page
+- [ ] No regressions introduced
+
+## Rollback Procedures
+
+- **Version bump reversal:** `git revert <commit-hash>` and force-push; re-tag `v0.4.10` to the revert
+- **Release notes revert:** Same revert covers the notes file
+- **Tag deletion:** `git push --delete origin v0.4.10 && git tag -d v0.4.10`
+- **CI gate revert:** Revert the workflow change
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Version mismatch after bump | Low | Low | CI drift gate catches it |
+| Release notes miss commits | Medium | Low | Review step; human validates before tagging |
+| Dogfood deployment broken by tag | Low | Medium | Verify health check in staging-like env first |
 
 ## Document History
 
