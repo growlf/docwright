@@ -15,6 +15,7 @@
  */
 
 import * as path from 'node:path';
+import { opencodeHeaders } from './opencode-auth';
 import * as fs from 'node:fs';
 import { parseFrontmatter, setFrontmatterField } from './frontmatter';
 import { GateDefinition, GateResult, getGatesForTransition, evaluateGate } from './gates';
@@ -265,7 +266,7 @@ export async function checkWithAI(
 
     const res = await fetch(`${opencodeUrl}/v2/session`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ title: `gate-review:${docPath}` }),
       signal: AbortSignal.timeout(30_000),
     });
@@ -274,7 +275,7 @@ export async function checkWithAI(
     const session = await res.json() as { id: string };
     const msgRes = await fetch(`${opencodeUrl}/v2/session/${session.id}/message`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ role: 'user', parts: [{ type: 'text', text: userPrompt }], providerOptions: { system: systemPrompt } }),
       signal: AbortSignal.timeout(60_000),
     });

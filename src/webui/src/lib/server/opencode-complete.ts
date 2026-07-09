@@ -17,6 +17,9 @@
  */
 
 import path from 'node:path';
+import { opencodeHeaders } from '../../../../dispatch/opencode-auth';
+
+export { opencodeHeaders };
 
 const OPENCODE_URL   = process.env.OPENCODE_URL ?? 'http://localhost:4096';
 const VAULT_ROOT     = process.env.DOCWRIGHT_ROOT
@@ -70,7 +73,7 @@ export async function opencodeComplete(
   try {
     sessRes = await fetch(`${OPENCODE_URL}/session?${DIR_PARAM}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(sessBody),
       signal,
     });
@@ -91,7 +94,7 @@ export async function opencodeComplete(
     try {
       await fetch(`${OPENCODE_URL}/session/${sessionId}/message?${DIR_PARAM}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ parts: [{ type: 'text', text: systemPrompt }], role: 'system' }),
         signal,
       });
@@ -103,7 +106,7 @@ export async function opencodeComplete(
   try {
     msgRes = await fetch(`${OPENCODE_URL}/session/${sessionId}/message?${DIR_PARAM}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
       signal,
     });
