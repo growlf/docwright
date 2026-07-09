@@ -11,7 +11,14 @@
     tags: string[]; category: string[]; complexity: string;
     status: string; priority: string; assigned_to: string;
     depends_on?: string[]; phase?: string | null;
+    branch?: string;
     demandCount: number; githubIssue: string; reportedDates: string[];
+  }
+  interface OpenPR {
+    number: number; title: string; url: string;
+    author: string; headRefName: string;
+    mergeable: string; ciState: string; reviewState: string;
+    planPath: string | null; planTitle: string | null;
   }
   interface PhasePlan {
     path: string; title: string; status: string; phase: number | null;
@@ -59,6 +66,7 @@
     phaseReview: PhaseReview | null;
     issues?: { open: DocEntry[] };
     heatmap?: DocEntry[];
+    openPRs?: OpenPR[];
     roadplan?: {
       current: { name: string; items: any[] };
       next: { name: string; items: any[] };
@@ -593,6 +601,60 @@
                         onclick={(e) => { e.stopPropagation(); approveDraft(item.path); }}>
                         {approvingDraft[item.path] ? '…' : '✓ Approve'}
                       </button>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
+        {#if data.openPRs && data.openPRs.length > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>🔀 Open Pull Requests</h2>
+              <span class="badge badge-active">{data.openPRs.length}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 100px;">PR #</th>
+                  <th>Title</th>
+                  <th style="width: 90px;">CI</th>
+                  <th style="width: 100px;">Review</th>
+                  <th style="width: 80px;">Merge</th>
+                  <th>Plan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.openPRs as pr}
+                  <tr class="item-row" onclick={() => window.open(pr.url, '_blank')}>
+                    <td><a href={pr.url} target="_blank" class="pr-link" onclick={(e) => e.stopPropagation()}>#{pr.number}</a></td>
+                    <td class="item-title-cell">
+                      <span class="item-title">{pr.title}</span>
+                      <span class="item-deps">branch: {pr.headRefName}</span>
+                    </td>
+                    <td>
+                      <span class="badge pr-ci-{pr.ciState}">
+                        {pr.ciState === 'passing' ? '✓' : pr.ciState === 'failing' ? '✗' : '…'}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge pr-review-{pr.reviewState}">
+                        {pr.reviewState === 'approved' ? '✓ Approved' : pr.reviewState === 'changes-requested' ? '✗ Changes' : '– None'}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge pr-merge-{pr.mergeable.toLowerCase()}">
+                        {pr.mergeable === 'MERGEABLE' ? '✓ Ready' : pr.mergeable === 'CONFLICTING' ? '✗ Conflict' : '…'}
+                      </span>
+                    </td>
+                    <td class="item-date">
+                      {#if pr.planTitle}
+                        <a href="/{pr.planPath?.replace(/\.md$/, '')}" class="pr-plan-link" onclick={(e) => e.stopPropagation()}>{pr.planTitle}</a>
+                      {:else}
+                        <span class="muted">—</span>
+                      {/if}
                     </td>
                   </tr>
                 {/each}
@@ -1242,6 +1304,19 @@
   .audit-link-row { padding: 12px 0 4px; text-align: center; }
   .audit-link { font-size: 11px; color: $muted; text-decoration: none; padding: 4px 12px; border: 1px solid $border; border-radius: 4px; &:hover { color: $blue; border-color: $blue-bdr; } }
 
+  // ── Open PRs section ─────────────────────────────────────────────────────────
+  .pr-link {
+    color: $blue; font-weight: 600; font-size: 13px; text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  .pr-ci-passing  { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-ci-failing  { background: $red-bg;   color: #e87;  border-color: $red-bdr; }
+  .pr-review-approved        { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-review-changes-requested { background: $red-bg;  color: #e87;  border-color: $red-bdr; }
+  .pr-merge-mergeable    { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-merge-conflicting  { background: $red-bg;  color: #e87;  border-color: $red-bdr; }
+  .pr-plan-link { color: $fg-dim; text-decoration: none; font-size: 12px; &:hover { color: $blue; text-decoration: underline; } }
+
   .roadplan-container {
     display: flex;
     flex-direction: column;
@@ -1536,6 +1611,12 @@
     .roadplan-bucket-header { background: #e8e8e8; border-bottom-color: #d0d0d0; h2 { color: #1a1a1a; } }
     .phase-tag { background: rgba(74, 108, 247, 0.08); color: #4a6cf7; border-color: rgba(74, 108, 247, 0.15); }
     .approve-btn { background: #d4edda; border-color: #b8daff; color: #155724; }
+    .pr-ci-passing  { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-ci-failing  { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .pr-review-approved        { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-review-changes-requested { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .pr-merge-mergeable    { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-merge-conflicting  { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
   }
 
   // Two-phase bug-report suggestions

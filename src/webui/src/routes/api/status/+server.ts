@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { json } from '@sveltejs/kit';
 import { getGateDefinition, getGatesForTransition, evaluateGate, getScheduleGatesForDocument, isOverdue, getLastGateDate, parseCadence } from '../../../../../dispatch/gates';
 import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
@@ -72,6 +73,7 @@ function entry(p: string, fm: Record<string, any>) {
     parentPlan: String(fm.parent_plan ?? ''),
     parentDeliverable: String(fm.parent_deliverable ?? ''),
     milestone: String(fm.milestone ?? ''),
+    branch: String(fm.branch ?? ''),
     demandCount: parseInt(String(fm.demand_count ?? '0'), 10),
     githubIssue: String(fm.github_issue ?? ''),
     reportedDates: Array.isArray(fm.reported_dates)
@@ -474,6 +476,68 @@ export function GET({ url }: { url: URL }) {
     cadence_days: FRICTION_REVIEW_CADENCE_DAYS,
   };
 
+  // ── Open PRs from GitHub ────────────────────────────────────────────────────
+  interface GHPR {
+    number: number; title: string; headRefName: string;
+    url: string; author: { login: string };
+    mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+    statusCheckRollup: Array<{ __typename: string; name: string; conclusion: string; status: string }>;
+    reviews: Array<{ state: string }>;
+  }
+  function getOpenPRs(): GHPR[] {
+    if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
+      try {
+        const out = execSync('gh auth token', { encoding: 'utf-8', timeout: 5000 });
+        if (!out.trim()) return [];
+      } catch { return []; }
+    }
+    try {
+      const out = execSync(
+        'gh pr list --state open --json number,title,headRefName,url,author,mergeable,statusCheckRollup,reviews --limit 50',
+        { encoding: 'utf-8', timeout: 10000 }
+      );
+      return JSON.parse(out) as GHPR[];
+    } catch { return []; }
+  }
+
+  // Build branch→plan index from active + draft plans
+  const branchToPlan = new Map<string, { path: string; title: string }>();
+  for (const p of [...draft, ...active]) {
+    if (p.branch) branchToPlan.set(p.branch, p);
+    // Also index by slug derived from filename
+    const slug = p.path.replace(/^.*\//, '').replace(/\.md$/, '');
+    const prefixMatch = slug.match(/^[a-z]+[-/]/);
+    const core = prefixMatch ? slug.slice(prefixMatch[0].length) : slug;
+    if (core) branchToPlan.set(core, p);
+  }
+
+  const openPRs = getOpenPRs().map(pr => {
+    const plan = branchToPlan.get(pr.headRefName)
+      ?? branchToPlan.get(pr.headRefName.replace(/^[^/]+\//, ''));
+    const ciConclusion = pr.statusCheckRollup?.length > 0
+      ? pr.statusCheckRollup.every(c => c.conclusion === 'SUCCESS' && c.status === 'COMPLETED')
+        ? 'passing'
+        : pr.statusCheckRollup.some(c => c.conclusion === 'FAILURE')
+          ? 'failing'
+          : 'pending'
+      : 'unknown';
+    const reviewState = pr.reviews?.length > 0
+      ? pr.reviews.some(r => r.state === 'APPROVED') ? 'approved' : 'changes-requested'
+      : 'none';
+    return {
+      number: pr.number,
+      title: pr.title,
+      url: pr.url,
+      author: pr.author?.login ?? 'unknown',
+      headRefName: pr.headRefName,
+      mergeable: pr.mergeable ?? 'UNKNOWN',
+      ciState: ciConclusion,
+      reviewState,
+      planPath: plan?.path ?? null,
+      planTitle: plan?.title ?? null,
+    };
+  });
+
   const data = {
     vaultName,
     version,
@@ -481,6 +545,7 @@ export function GET({ url }: { url: URL }) {
     phasePlans,
     proposals: { open, approved_pending: approvedPending, deferred },
     plans: { draft, active, completed_count: completedCount, completed },
+    openPRs,
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,
