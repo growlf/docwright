@@ -5,6 +5,8 @@
 #   DocWright                       run native Vite + OpenCode in the foreground
 #                                   (hot reload; Ctrl+C stops everything)
 #   DocWright start [--web-only]    start services DETACHED in the background and return
+#   DocWright start --oc-only      (re)start ONLY OpenCode serve detached — use when the
+#                                   web UI runs in Docker and only the AI backend is native
 #   DocWright stop                  stop the detached services
 #   DocWright restart [--web-only]  stop then start (detached)
 #   DocWright status                show what is running
@@ -27,6 +29,7 @@ VITE_PID=""
 OC_PID=""
 VAULT_ARG=""
 WEB_ONLY=0
+OC_ONLY=0
 
 # ── output helpers ────────────────────────────────────────────────────────────
 _c() { printf "\033[${1}m${2}\033[0m"; }
@@ -98,6 +101,17 @@ compute_net() {
     CORS_ARGS=(--cors "http://localhost:${VITE_PORT}")
     [ -n "$TAILSCALE_IP" ] && CORS_ARGS+=(--cors "http://${TAILSCALE_IP}:${VITE_PORT}")
     [ -n "$LAN_IP"       ] && CORS_ARGS+=(--cors "http://${LAN_IP}:${VITE_PORT}")
+}
+
+# Report whether OpenCode basic auth will be active (OPENCODE_SERVER_PASSWORD
+# comes from src/webui/.env, sourced before serve starts). Security: the
+# server should not run unauthenticated — see plan live-ai-visibility 1.2.
+report_oc_auth() {
+    if [ -n "${OPENCODE_SERVER_PASSWORD:-}" ]; then
+        ok "OpenCode auth: ENABLED (basic auth, user: ${OPENCODE_SERVER_USERNAME:-opencode})"
+    else
+        warn "OpenCode auth: DISABLED — set OPENCODE_SERVER_PASSWORD in src/webui/.env"
+    fi
 }
 
 ensure_logdir() {
@@ -177,16 +191,20 @@ native_mode() {
     compute_net
 
     log "starting Vite dev server..."
-    OPENCODE_URL="http://localhost:${OC_PORT}" \
-    DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-$PWD}" \
-    npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT" >"$LOG_DIR/vite.log" 2>&1 &
-    VITE_PID=$!
-    wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; exit 1; }
+    if [ "$OC_ONLY" -eq 0 ]; then
+        OPENCODE_URL="http://localhost:${OC_PORT}" \
+        DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-$PWD}" \
+        npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT" >"$LOG_DIR/vite.log" 2>&1 &
+        VITE_PID=$!
+        wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; exit 1; }
+    fi
 
     if [ "$WEB_ONLY" -eq 0 ]; then
         log "starting OpenCode serve..."
-        # Source webui .env so API keys (ANTHROPIC_API_KEY, etc.) reach OpenCode.
+        # Source webui .env so API keys (ANTHROPIC_API_KEY, etc.) and
+        # OPENCODE_SERVER_PASSWORD (basic auth) reach OpenCode.
         [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
+        report_oc_auth
         opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT" >"$LOG_DIR/opencode.log" 2>&1 &
         OC_PID=$!
         wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || { err "OpenCode failed — check $LOG_DIR/opencode.log"; exit 1; }
@@ -224,13 +242,16 @@ cmd_start() {
     log "starting Vite dev server..."
     export OPENCODE_URL="http://localhost:${OC_PORT}"
     export DOCWRIGHT_ROOT="${DOCWRIGHT_ROOT:-${VAULT_ARG:-$PWD}}"
-    start_detached "$VITE_PIDFILE" "$LOG_DIR/vite.log" \
-        npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT"
-    wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; return 1; }
+    if [ "$OC_ONLY" -eq 0 ]; then
+        start_detached "$VITE_PIDFILE" "$LOG_DIR/vite.log" \
+            npm --prefix "$WEBUI" run dev -- --host 0.0.0.0 --port "$VITE_PORT"
+        wait_for_port "$VITE_PORT" "Vite :${VITE_PORT}" || { err "Vite failed — check $LOG_DIR/vite.log"; return 1; }
+    fi
 
     if [ "$WEB_ONLY" -eq 0 ]; then
         log "starting OpenCode serve..."
         [ -f "$WEBUI/.env" ] && set -a && source "$WEBUI/.env" && set +a
+        report_oc_auth
         start_detached "$OC_PIDFILE" "$LOG_DIR/opencode.log" \
             opencode serve "${CORS_ARGS[@]}" --hostname 0.0.0.0 --port "$OC_PORT"
         wait_for_port "$OC_PORT" "OpenCode :${OC_PORT}" || { err "OpenCode failed — check $LOG_DIR/opencode.log"; return 1; }
@@ -322,10 +343,11 @@ while [[ $# -gt 0 ]]; do
             VAULT_ARG="$(cd "$1" 2>/dev/null && pwd)" || die "--vault path does not exist: $1"
             ;;
         --web-only) WEB_ONLY=1 ;;
+        --oc-only)  OC_ONLY=1 ;;
         --docker|-d) ACTION="docker" ;;
         --help|-h) ACTION="help" ;;
         vite|opencode|all|-f) LOG_ARGS+=("$1") ;;   # operands for `logs`
-        *) die "unknown option: $1 (try a subcommand, --vault /path, --web-only, --docker, or --help)" ;;
+        *) die "unknown option: $1 (try a subcommand, --vault /path, --web-only, --oc-only, --docker, or --help)" ;;
     esac
     shift
 done

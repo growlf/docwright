@@ -140,6 +140,22 @@ Each developer's machine:
 
 ---
 
+## Securing the OpenCode server (all scenarios)
+
+`opencode serve` is an agent server with shell and file access. **Never run it
+unauthenticated on a reachable interface.** In every scenario:
+
+1. Set `OPENCODE_SERVER_PASSWORD` in `src/webui/.env` — `scripts/DocWright`
+   sources that file before starting the server, so both the serve process and
+   the native web UI pick it up. Docker deployments must set the same value in
+   the repo-root `.env` (passed through by `docker-compose.yml`).
+2. Restart just the AI backend with `scripts/DocWright restart --oc-only`.
+3. Verify: `curl -s -o /dev/null -w '%{http_code}' http://localhost:4096/session`
+   must return `401`; with `-u opencode:$PASSWORD` it must return `200`.
+4. Browsers never talk to the OpenCode port directly — all Web UI traffic goes
+   through DocWright's authenticated server-side proxy/clients
+   (plan `live-ai-visibility-event-relay`, Constraint 1).
+
 ## Comparison
 
 | Concern | Standalone | Team Server | Enterprise |
