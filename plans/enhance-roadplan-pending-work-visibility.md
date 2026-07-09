@@ -12,7 +12,7 @@ priority: high
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 part_of: plans/release-v0.5.0.md
 related_to:
   - issues/ui-roadplan-pending-work-visibility.md
