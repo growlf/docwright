@@ -36,6 +36,8 @@ above.
 | `VAULT_PATH` | No | `./example-vault` | Host path to mount as the vault (standalone scenario) |
 | `PORT` | No | `5173` | Port the Web UI listens on |
 | `MCP_PORT` | No | `3002` | Port the MCP SSE server listens on (internal) |
+| `OPENCODE_SERVER_PASSWORD` | Recommended | — | Basic-auth password for the OpenCode server; must match the value the `opencode serve` process runs with. Never run an agent server unauthenticated — it has shell and file access |
+| `OPENCODE_SERVER_USERNAME` | No | `opencode` | Basic-auth username override |
 | `DOCWRIGHT_ROOT` | No | `/vault` | Container path to the vault root (change only if you remap the volume) |
 | `DOCWRIGHT_CACHE_DIR` | No | `/tmp` | Directory for the status cache file |
 
