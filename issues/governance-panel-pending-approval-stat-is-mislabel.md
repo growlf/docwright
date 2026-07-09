@@ -3,6 +3,7 @@ title: Governance panel: 'Pending Approval' stat is mislabeled (it's approved-aw
 status: scope-checked
 created: 2026-07-05
 category: bug
+part_of: plans/release-v0.5.0.md
 priority: high
 tags: []
 triage_date: 2026-07-05

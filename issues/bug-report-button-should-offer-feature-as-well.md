@@ -3,6 +3,7 @@ title: Report button should offer "feature" as well
 status: proposal-linked
 author: NetYeti
 author-role: user
+part_of: plans/release-v0.5.0.md
 created: 2026-07-05
 category: bug
 priority: medium

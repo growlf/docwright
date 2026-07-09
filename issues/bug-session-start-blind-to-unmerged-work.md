@@ -3,6 +3,7 @@ title: Session-start is blind to unmerged branches and open issues — parked wo
 status: resolved
 author: NetYeti
 author-role: contributor
+part_of: plans/release-v0.5.0.md
 created: 2026-07-01
 category: bug
 priority: high

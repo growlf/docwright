@@ -3,6 +3,7 @@ title: Governance panel: Status stat tiles aren't clickable — no drill-in to p
 status: scope-checked
 created: 2026-07-05
 category: feature
+part_of: plans/release-v0.5.0.md
 priority: high
 tags: []
 triage_date: 2026-07-05

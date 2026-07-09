@@ -13,6 +13,7 @@ tags:
   - bms
 approved: false
 created_by: "NetYeti@phoenix"
+part_of: plans/release-v0.5.0.md
 assigned_to: ""
 priority: 2
 milestone: v0.5.0
