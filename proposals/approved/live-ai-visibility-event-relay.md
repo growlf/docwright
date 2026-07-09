@@ -8,11 +8,13 @@ tags:
   - security
   - architecture
   - phase-4
-approved: false
+approved: true
 created_by: "NetYeti@cluster-llm"
-assigned_to: ""
+assigned_to: NetYeti
 priority: high
 complexity: high
+_path: proposals/approved/approved/live-ai-visibility-event-relay
+consumed_by: plans/live-ai-visibility-event-relay.md
 ---
 
 ## Problem
