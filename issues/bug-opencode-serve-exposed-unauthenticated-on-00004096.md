@@ -1,6 +1,6 @@
 ---
 title: opencode serve exposed unauthenticated on 0.0.0.0:4096 — agent server with shell access reachable from LAN
-status: new
+status: resolved
 created: 2026-07-09
 author: NetYeti
 author-role: user
@@ -11,9 +11,16 @@ estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-09]
 channel: dev
+resolved_by: plans/live-ai-visibility-event-relay.md
 tags:
   - reported-bug
 ---
+
+> **Resolved 2026-07-09** by live-ai-visibility steps 1.1–1.3: OpenCode server
+> now runs with `OPENCODE_SERVER_PASSWORD` basic auth + restricted `--cors`;
+> all DocWright clients send the auth header via `opencodeHeaders()`; browsers
+> never contact :4096 directly. Verified: unauth 401, auth 200, foreign Origin
+> not echoed, all five AI features regression-green against the hardened server.
 
 # opencode serve exposed unauthenticated on 0.0.0.0:4096 — agent server with shell access reachable from LAN
 
