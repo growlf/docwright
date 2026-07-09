@@ -89,7 +89,9 @@
   }
 
   let ocUrl  = $state(lsGet(LS_URL, DEFAULT_URL));
-  let mode   = $state<ConnMode>(lsGet(LS_MODE, 'direct') as ConnMode);
+  // Default = proxy: browser must not talk to OpenCode directly (plan live-ai-visibility
+  // Constraint 1); direct mode remains a power-user opt-in until step 3.3 removes it.
+  let mode   = $state<ConnMode>(lsGet(LS_MODE, 'proxy') as ConnMode);
   let vaultPath = $state('');
 
   function saveConfig() {

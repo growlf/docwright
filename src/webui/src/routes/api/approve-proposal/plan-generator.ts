@@ -16,6 +16,8 @@
  * Falls back to null on any failure — the caller uses the old template parser.
  */
 
+import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
+
 interface PlanSections {
   steps: string;
   testingPlan: string;
@@ -46,7 +48,7 @@ async function callOpenCode(
   // Create session
   const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(sessionBody),
   });
   if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
@@ -57,7 +59,7 @@ async function callOpenCode(
   // Send message (POST returns SSE stream — we don't read the body)
   const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
   });
   if (!msgRes.ok) throw new Error(`Message send failed: ${msgRes.status}`);
@@ -69,7 +71,7 @@ async function callOpenCode(
   const MAX_POLLS = 40;
   for (let i = 0; i < MAX_POLLS; i++) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-    const histRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`);
+    const histRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, { headers: opencodeHeaders() });
     if (!histRes.ok) continue;
     const messages: Array<{ role?: string; parts?: Array<{ type: string; text?: string }> }> =
       await histRes.json();
