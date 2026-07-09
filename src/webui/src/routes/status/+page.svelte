@@ -663,6 +663,43 @@
           </div>
         {/if}
 
+        {#if (data.issues?.open?.length ?? 0) + (data.proposals.open?.length ?? 0) > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>📋 Action Items</h2>
+              <span class="badge badge-warn">{(data.issues?.open?.length ?? 0) + (data.proposals.open?.length ?? 0)}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Type</th>
+                  <th style="width: 60px;">Pri</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.proposals.open as p}
+                  <tr class="item-row" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>
+                    <td><span class="cat-badge cat-thought">💭 Proposal</span></td>
+                    <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
+                    <td class="item-title-cell"><span class="item-title">{p.title}</span></td>
+                    <td><span class="badge badge-default">open</span></td>
+                  </tr>
+                {/each}
+                {#each data.issues?.open ?? [] as issue}
+                  <tr class="item-row" onclick={() => goto('/' + issue.path.replace(/\.md$/, ''))}>
+                    <td><span class="cat-badge cat-bug">🐛 Issue</span></td>
+                    <td><span class="pri {priorityClass(issue.priority)}">{issue.priority || '—'}</span></td>
+                    <td class="item-title-cell"><span class="item-title">{issue.title}</span></td>
+                    <td><span class="badge badge-default">{issue.status || 'open'}</span></td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
         {#each ['current', 'next', 'future'] as bucketKey}
           {@const bucket = data.roadplan?.[bucketKey]}
           {#if bucket}
