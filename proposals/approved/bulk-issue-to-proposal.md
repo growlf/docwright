@@ -8,9 +8,11 @@ tags:
   - issues
   - proposals
   - bulk-actions
-approved: false
+approved: true
 created_by: claude@claude-code
-assigned_to:
+assigned_to: NetYeti
+_path: proposals/approved/bulk-issue-to-proposal
+consumed_by: plans/bulk-issue-to-proposal.md
 ---
 
 ## Problem
@@ -89,7 +91,6 @@ title: "..."
 author: NetYeti
 created: 2026-07-07
 tags: [...]
-approved: false
 sources:                                   # new: issues that informed this proposal
   - issues/ISS-0001.md
   - issues/ISS-0002.md

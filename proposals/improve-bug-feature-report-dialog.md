@@ -7,9 +7,9 @@ tags:
   - ux
   - bug-reporting
   - feature-requests
-approved: false
+approved: true
 created_by: "claude@claude-code"
-assigned_to: ""
+assigned_to: NetYeti
 sources:
   - issues/bug-report-bug-button-should-pop-up-a-form.md
   - issues/bug-report-button-should-offer-feature-as-well.md
