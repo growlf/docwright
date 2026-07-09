@@ -1720,3 +1720,20 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Build passes (`npm run build`)
 
 **Session note:** `docs/session-notes/session_note_202607080917.md`
+
+---
+
+## Session: 2026-07-09 — roadplan UX pending-work visibility
+
+**Focus:** roadplan UX pending-work visibility
+
+**Completed:**
+- [x] Awaiting Approval section with Approve button (Step 1)
+- [x] Open PRs section via gh pr list (Step 2)
+- [x] Action Items section for open issues/proposals (Step 3)
+- [x] Release-target box with part_of burndown (Step 4)
+- [x] Release criteria emoji badges + per-item status (Step 5)
+- [x] Plan archived, docs generated, PR #266 created
+- [x] Session note committed via auto-merge PR #267
+
+**Session note:** `docs/session-notes/session_note_202607091335.md`
