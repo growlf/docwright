@@ -345,12 +345,27 @@
     } finally { reportSubmitting = false; }
   }
 
+  function statusEmoji(status: string): string {
+    const s = status.toLowerCase();
+    if (s === 'completed')  return '✅';
+    if (s === 'canceled')   return '❌';
+    if (s === 'in-progress') return '⏳';
+    if (s === 'blocked')    return '🚧';
+    if (s === 'approved')   return '👍';
+    if (s === 'draft' || s === '') return '📋';
+    return '📋';
+  }
+
   function statusBadgeClass(status: string): string {
     if (status === 'in-progress') return 'badge-active';
     if (status === 'approved')    return 'badge-approved';
     if (status === 'completed')   return 'badge-done';
     if (status === 'canceled')    return 'badge-canceled';
     return 'badge-default';
+  }
+
+  function isReleaseItem(path: string): boolean {
+    return (data?.releaseTarget?.items ?? []).some((i: any) => i.path === path);
   }
 
   function priorityClass(p: string): string {
@@ -480,7 +495,7 @@
 
             <div class="metrics-grid">
               <div class="metric-card" class:passed={data.releaseReadiness.blockers.count === 0}>
-                <div class="metric-value">{data.releaseReadiness.blockers.count}</div>
+                <div class="metric-value">{data.releaseReadiness.blockers.count === 0 ? '✅' : '❌'} {data.releaseReadiness.blockers.count}</div>
                 <div class="metric-label">Open Blockers (High/Critical)</div>
                 {#if data.releaseReadiness.blockers.count > 0}
                   <div class="metric-sublist">
@@ -492,7 +507,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.majors.count === 0}>
-                <div class="metric-value">{data.releaseReadiness.majors.count}</div>
+                <div class="metric-value">{data.releaseReadiness.majors.count === 0 ? '✅' : '❌'} {data.releaseReadiness.majors.count}</div>
                 <div class="metric-label">Open Majors (Demand ≥ 5)</div>
                 {#if data.releaseReadiness.majors.count > 0}
                   <div class="metric-sublist">
@@ -504,7 +519,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.dogfoodWindow.passed}>
-                <div class="metric-value">{data.releaseReadiness.dogfoodWindow.actualDays}d / {data.releaseReadiness.dogfoodWindow.requiredDays}d</div>
+                <div class="metric-value">{data.releaseReadiness.dogfoodWindow.passed ? '✅' : '❌'} {data.releaseReadiness.dogfoodWindow.actualDays}d / {data.releaseReadiness.dogfoodWindow.requiredDays}d</div>
                 <div class="metric-label">Dogfood Window ({data.releaseReadiness.dogfoodWindow.startDate})</div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {Math.min(100, (data.releaseReadiness.dogfoodWindow.actualDays / data.releaseReadiness.dogfoodWindow.requiredDays) * 100)}%"></div>
@@ -512,7 +527,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.burndown.passed}>
-                <div class="metric-value">{data.releaseReadiness.burndown.resolved} / {data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open}</div>
+                <div class="metric-value">{data.releaseReadiness.burndown.passed ? '✅' : '❌'} {data.releaseReadiness.burndown.resolved} / {data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open}</div>
                 <div class="metric-label">Milestone Burn-down Trend</div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {(data.releaseReadiness.burndown.resolved / (data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open || 1)) * 100}%"></div>
@@ -779,7 +794,10 @@
                           {/if}
                         </td>
                         <td>
-                          <span class="badge {statusBadgeClass(item.status)}">{item.status}</span>
+                          <span class="badge {statusBadgeClass(item.status)}">{statusEmoji(item.status)} {item.status}</span>
+                          {#if isReleaseItem(item.path)}
+                            <span class="release-tag" title="Part of current release target">📦</span>
+                          {/if}
                         </td>
                         <td class="item-date">
                           {item.assigned_to || '—'}
@@ -886,7 +904,12 @@
                         <span class="item-deps">↳ parent: <a href="/plans/{p.parentPlan.replace(/\.md$/, '')}" onclick={(e) => { e.stopPropagation(); navTo({ path: 'plans/' + p.parentPlan }); }}>{p.parentPlan.replace(/\.md$/, '')}</a></span>
                       {/if}
                     </td>
-                    <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
+                    <td>
+                      <span class="badge {statusBadgeClass(p.status)}">{statusEmoji(p.status)} {p.status}</span>
+                      {#if isReleaseItem(p.path)}
+                        <span class="release-tag" title="Part of current release target">📦</span>
+                      {/if}
+                    </td>
                     <td class="item-date">{p.assigned_to || '—'}</td>
                   </tr>
                 {/each}
@@ -1465,6 +1488,9 @@
   }
   .rti-title { flex: 1; }
   .rti-status-text { font-size: 11px; color: $muted; }
+  .release-tag {
+    font-size: 14px; cursor: help; margin-left: 4px;
+  }
 
   // ── Release Readiness Dashboard ──────────────────────────────────────────────
   .release-readiness-card {
