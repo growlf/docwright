@@ -4,7 +4,7 @@ import { json } from '@sveltejs/kit';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
 const OPENCODE_JSON = path.join(REPO_ROOT, 'opencode.json');
-import { opencodeHeaders } from '../../../../dispatch/opencode-auth';
+import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
 
 const OPENCODE_URL = process.env.OPENCODE_URL ?? 'http://localhost:4096';
 
