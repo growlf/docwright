@@ -1720,3 +1720,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Build passes (`npm run build`)
 
 **Session note:** `docs/session-notes/session_note_202607080917.md`
+
+---
+
+## Session: 2026-07-09 — roadplan UX pending-work visibility
+
+**Focus:** roadplan UX pending-work visibility
+
+**Completed:**
+- [x] chore: complete enhance-roadplan-pending-work-visibility and related transitions
+- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
+- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
+- [x] feat: add release criteria status badges to roadplan (Step 5)
+- [x] feat: add release-target box with part_of burndown (Step 4)
+- [x] feat: add Action Items section to roadplan view (Step 3)
+- [x] feat: add Open PRs section to roadplan view (Step 2)
+- [x] feat: add Awaiting Approval section to roadplan view (Step 1)
+- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
+- [x] docs: approve enhance-roadplan-pending-work-visibility (proposal → plan)
+
+**Session note:** `docs/session-notes/session_note_202607091335.md`
