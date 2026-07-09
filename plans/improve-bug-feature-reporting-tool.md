@@ -12,7 +12,7 @@ priority: medium
 complexity: medium
 automated: guided
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 related_to:
   - plans/release-v0.5.0.md
@@ -23,7 +23,7 @@ related_to:
   - issues/governance-panel-status-stat-tiles-aren-t-clickabl.md
   - issues/bug-issues-have-no-forward-path.md
 total_steps: 6
-completed_steps: 0
+completed_steps: 3
 scenario_synthesis: "Svelte UI + SvelteKit API route changes (modal form, governance panel, issue promotion) plus a one-off backfill script to backfill github_issue: links on already-reported issues via the existing Frappe HD -> GitHub sync API; no infrastructure or deployment steps. Happy path: user reports a bug/feature via modal, it lands in issues/ with a github_issue: backlink and appears in the heatmap; governance panel tiles are correctly labeled and clickable through to the filtered list; an issue can be promoted to a proposal from its detail view. Failure path: GH API is unreachable during report submit -- issue is still created locally, github_issue: stays unset, and the backfill script picks it up on a later run."
 ---
 
@@ -42,9 +42,9 @@ Wave C of the issue-cluster-remediation-waves — the full report/intake/governa
 | 1 | **Modal report form** — Replace inline page-bottom form with Svelte modal dialog. Add category toggle (Bug/Feature). Add success toast on submit. | `src/webui/src/lib/components/ReportModal.svelte` — reusable modal; `src/webui/src/routes/+page.svelte` — wire report button to modal; `src/webui/src/routes/api/issues/report/+server.ts` — accept `category: bug|feature` | ⏳ Pending |
 | 2 | **Feature request support** — Extend backend to accept feature requests. Surface in demand heatmap alongside bugs. Update `issues/` frontmatter schema to support `category: feature`. | Backend intake handler; heatmap data source; frontmatter templates | ⏳ Pending |
 | 3 | **GitHub issue linkage** — Auto-create GitHub issues on report submit. Wire `github_issue:` backlink into frontmatter. Sync existing reported issues. | `src/webui/src/routes/api/issues/report/create/+server.ts` — GH API integration; backfill script | ⏳ Pending |
-| 4 | **Fix governance panel stats** — "Pending Approval" → correct label. Verify stat counts match proposal/issue state. | `src/webui/src/routes/status/+page.svelte` or governance panel component | ⏳ Pending |
-| 5 | **Make governance stat tiles clickable** — Each tile drills into its filtered list (proposals, plans, issues). | Click handler + route navigation from governance panel | ⏳ Pending |
-| 6 | **Issue promotion path** — Add "Create proposal from issue" button on issue detail view. Wire to proposal creation flow. | Issue page UI; `/api/proposals/create-from-issue` endpoint | ⏳ Pending |
+| 4 | **Fix governance panel stats** — "Pending Approval" → correct label. Verify stat counts match proposal/issue state. | `src/webui/src/routes/status/+page.svelte` or governance panel component | ✅ Done |
+| 5 | **Make governance stat tiles clickable** — Each tile drills into its filtered list (proposals, plans, issues). | Click handler + route navigation from governance panel | ✅ Done |
+| 6 | **Issue promotion path** — Add "Create proposal from issue" button on issue detail view. Wire to proposal creation flow. | Issue page UI; `/api/proposals/create-from-issue` endpoint | ✅ Done |
 
 ## Testing Plan
 
@@ -75,3 +75,4 @@ Wave C of the issue-cluster-remediation-waves — the full report/intake/governa
 | --- | --- | --- |
 | 2026-07-09 | Created from approved proposal | NetYeti |
 | 2026-07-09 | Filled implementation steps, testing plan, risk assessment | NetYeti |
+| 2026-07-09 | Steps 4-6 verified live via Playwright against the running dev server rather than assumed from source. Steps 4 (governance panel label) and 5 (clickable stat tiles) were already correctly implemented by earlier merged work -- confirmed working, no code change needed. Step 6 (issue forward-path buttons) was NOT actually working: IssueForwardPathActions.svelte gated visibility on frontmatter.type === 'issue', a field the org-operations schema never requires and only 6/62 existing issue files happen to have. Fixed by passing the document path into the component and detecting issue documents by their issues/ path prefix instead; re-verified live (buttons render, Create Proposal modal opens correctly). | NetYeti |
