@@ -52,6 +52,26 @@ and changelog updates happen here; tagging `v*.*.*` triggers the Docker
 deployment to ghcr.io. The bump is merged back to `main` via PR. Urgent fixes
 use `hotfix/*`.
 
+### Plan-scoped work (branch until complete)
+
+Work that executes a **plan** (anything under `plans/`) does **not** merge to
+`main` step-by-step. All of a plan's changes land on a **long-lived integration
+branch** (e.g. `dogfood`) — one PR per step, merged into that branch as you go —
+and `main` sees the plan only once, as a **single completion PR** when the whole
+plan is finished. That completion PR **MUST include at minimum a patch-level
+version bump**.
+
+Why: `main` should never carry a half-finished plan (partial plans mislead other
+work and can ship broken intermediate states). The completion PR is the atomic,
+versioned, reviewable unit. The integration branch is also what the dogfood
+container serves, so code and plan-tracking stay together while the plan is in
+flight. Plans should be attached to a milestone / sub-milestone for roadmap
+tracking. This operationalizes the phase-driven scheme (`0.{phase}.{completed
+plans}` — patch = completed plans; see [[policies/core/versioning.md]]).
+
+One-off fixes, docs, and chores that are **not** part of a plan still follow the
+normal trunk flow above.
+
 ### Quick start
 
 ```bash
