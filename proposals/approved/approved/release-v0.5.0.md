@@ -9,6 +9,8 @@ tags:
 approved: true
 created_by: "NetYeti@phoenix"
 assigned_to: NetYeti
+_path: proposals/approved/approved/release-v0.5.0
+consumed_by: plans/approved/release-v0.5.0.md
 ---
 
 ## Problem

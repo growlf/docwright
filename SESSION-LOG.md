@@ -1703,3 +1703,20 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
 
 **Session note:** `docs/session-notes/session_note_202607080724.md`
+
+---
+
+## Session: 2026-07-08 — Roadplan Step 1: Awaiting Approval section
+
+**Focus:** Implement Step 1 of enhance-roadplan-pending-work-visibility plan
+
+**Completed:**
+- [x] Added `draftPlans` to `/api/status` response (reads plans with `status: draft`)
+- [x] Created `/api/approve-draft` endpoint that sets `status: approved` on plan files + commits
+- [x] Added `draftPlans` to `StatusData` interface
+- [x] Added `approveDraft()` function in status page
+- [x] Added Awaiting Approval section in roadplan view with Approve button
+- [x] CSS for dark + light themes
+- [x] Build passes (`npm run build`)
+
+**Session note:** `docs/session-notes/session_note_202607080917.md`
