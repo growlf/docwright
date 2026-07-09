@@ -11,6 +11,7 @@ estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-09]
 channel: dev
+github_issue: https://github.com/growlf/docwright/issues/272
 related:
   - plans/live-ai-visibility-event-relay.md
 tags:
