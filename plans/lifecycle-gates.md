@@ -16,6 +16,7 @@ depends_on:
   - plans/completed/lifecycle-gates-extension-bundle.md
   - plans/phase-4-profile-acl-ai.md
 blocks: []
+part_of: plans/release-v0.5.0.md
 tests_defined: true
 tests_human_reviewed: true
 total_steps: 5

@@ -14,6 +14,7 @@ related_to:
   - "[[proposals/three-docwright-instance-deployment]]"
 depends_on: []
 blocks: []
+part_of: plans/release-v0.5.0.md
 milestone: v0.5.0
 ---
 

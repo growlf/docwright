@@ -4,6 +4,7 @@
  * Falls back to the first sentence of the description when OpenCode is unavailable.
  */
 import { json } from '@sveltejs/kit';
+import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
 import path from 'node:path';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
@@ -36,7 +37,7 @@ export async function POST({ request }) {
 
     const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({}),
       signal: AbortSignal.timeout(30_000),
     });
@@ -47,7 +48,7 @@ export async function POST({ request }) {
 
     const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
       signal: AbortSignal.timeout(60_000),
     });

@@ -59,7 +59,7 @@ rc=$?
 
 [ $rc -eq 0 ] && ok "end-session exits 0" || err "exit=$rc\n$out"
 echo "$out" | grep -q 'STRANDED' && err "still reports STRANDED commits" || ok "no stranded commits"
-echo "$out" | grep -q 'landed via PR with auto-merge armed' && ok "auto-landing reported" || err "no auto-landing in output:
+echo "$out" | grep -q 'PR created:' && echo "$out" | grep -q 'auto-merge armed' && ok "auto-landing reported" || err "no auto-landing in output:
 $out"
 
 cd "$WORK/vault"

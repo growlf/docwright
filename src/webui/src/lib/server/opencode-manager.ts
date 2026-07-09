@@ -12,6 +12,8 @@ let proc: ChildProcess | null = null;
 let _status: OCStatus = 'stopped';
 let _startLog: string[] = [];
 
+import { opencodeHeaders } from '../../../../dispatch/opencode-auth';
+
 const OPENCODE_BASE = process.env.OPENCODE_URL ?? 'http://127.0.0.1:4096';
 
 export function getStatus(): OCStatus { return _status; }
@@ -20,6 +22,7 @@ export function getLog(): string[] { return [..._startLog]; }
 async function isRunning(): Promise<boolean> {
   try {
     const res = await fetch(`${OPENCODE_BASE}/global/health`, {
+      headers: opencodeHeaders(),
       signal: AbortSignal.timeout(1500),
     });
     return res.ok;

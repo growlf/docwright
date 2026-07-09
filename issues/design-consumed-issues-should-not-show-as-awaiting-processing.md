@@ -2,6 +2,7 @@
 type: issue
 status: proposal-linked
 consumed_by: proposals/hide-consumed-issues-from-backlog.md
+part_of: plans/release-v0.5.0.md
 created: 2026-07-07
 author: NetYeti
 author-role: user

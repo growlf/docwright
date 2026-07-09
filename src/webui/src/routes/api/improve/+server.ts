@@ -6,6 +6,7 @@
  * "thinking" as it arrives.
  */
 import fs from 'node:fs';
+import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter, stripFrontmatter } from '../../../../../dispatch/frontmatter';
@@ -96,7 +97,7 @@ async function callAndSendSession(
   send('status', { message: 'Creating session...' });
   const sessRes = await fetch(`${opencodeUrl}/session?${dirParam}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({}),
     signal,
   });
@@ -109,7 +110,7 @@ async function callAndSendSession(
 
   const msgRes = await fetch(`${opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
     signal,
   });

@@ -11,7 +11,14 @@
     tags: string[]; category: string[]; complexity: string;
     status: string; priority: string; assigned_to: string;
     depends_on?: string[]; phase?: string | null;
+    branch?: string;
     demandCount: number; githubIssue: string; reportedDates: string[];
+  }
+  interface OpenPR {
+    number: number; title: string; url: string;
+    author: string; headRefName: string;
+    mergeable: string; ciState: string; reviewState: string;
+    planPath: string | null; planTitle: string | null;
   }
   interface PhasePlan {
     path: string; title: string; status: string; phase: number | null;
@@ -49,7 +56,7 @@
     currentPhase: number;
     phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
-    plans: { active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
+    plans: { draft: DocEntry[]; active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
     gates: { pending: PendingGate[]; waived: WaivedGate[]; overdue: OverdueGate[] };
     research: {
       active: ResearchEntry[];
@@ -59,6 +66,7 @@
     phaseReview: PhaseReview | null;
     issues?: { open: DocEntry[] };
     heatmap?: DocEntry[];
+    openPRs?: OpenPR[];
     roadplan?: {
       current: { name: string; items: any[] };
       next: { name: string; items: any[] };
@@ -240,6 +248,22 @@
     };
   }
 
+  let approvingDraft = $state<Record<string, boolean>>({});
+  async function approveDraft(planPath: string) {
+    approvingDraft = { ...approvingDraft, [planPath]: true };
+    const res = await fetch('/api/approve-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: planPath }),
+    });
+    approvingDraft = { ...approvingDraft, [planPath]: false };
+    if (res.ok) load();
+    else {
+      const err = await res.json().catch(() => ({ error: 'unknown error' }));
+      alert('Failed to approve: ' + (err.error || 'Unknown error'));
+    }
+  }
+
   let promotingIssues = $state<Record<string, boolean>>({});
   async function promoteToGH(issuePath: string) {
     promotingIssues = { ...promotingIssues, [issuePath]: true };
@@ -321,12 +345,27 @@
     } finally { reportSubmitting = false; }
   }
 
+  function statusEmoji(status: string): string {
+    const s = status.toLowerCase();
+    if (s === 'completed')  return '✅';
+    if (s === 'canceled')   return '❌';
+    if (s === 'in-progress') return '⏳';
+    if (s === 'blocked')    return '🚧';
+    if (s === 'approved')   return '👍';
+    if (s === 'draft' || s === '') return '📋';
+    return '📋';
+  }
+
   function statusBadgeClass(status: string): string {
     if (status === 'in-progress') return 'badge-active';
     if (status === 'approved')    return 'badge-approved';
     if (status === 'completed')   return 'badge-done';
     if (status === 'canceled')    return 'badge-canceled';
     return 'badge-default';
+  }
+
+  function isReleaseItem(path: string): boolean {
+    return (data?.releaseTarget?.items ?? []).some((i: any) => i.path === path);
   }
 
   function priorityClass(p: string): string {
@@ -416,6 +455,29 @@
       />
     {:else if viewMode === 'roadplan'}
       <div class="roadplan-container">
+        {#if data.releaseTarget}
+          <div class="release-target-box">
+            <div class="release-target-header">
+              <h3>🎯 Current Release Target: <a href="/plans/{data.releaseTarget.planPath.replace(/\.md$/, '').replace('plans/', '')}">v{data.roadplan.current.name}</a></h3>
+              <span class="release-target-badge" class:ready={data.releaseTarget.ready}>
+                {data.releaseTarget.ready ? '✅ Ready' : `${data.releaseTarget.completedItems}/${data.releaseTarget.totalItems} Complete`}
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {(data.releaseTarget.totalItems > 0 ? (data.releaseTarget.completedItems / data.releaseTarget.totalItems) * 100 : 0)}%"></div>
+            </div>
+            <div class="release-target-items">
+              {#each data.releaseTarget.items as item}
+                <a href="/{item.path.replace(/\.md$/, '')}" class="release-target-item" class:completed={item.completed}>
+                  <span class="rti-status">{item.completed ? '✅' : '⏳'}</span>
+                  <span class="rti-type-badge rti-{item.type}">{item.type}</span>
+                  <span class="rti-title">{item.title}</span>
+                  <span class="rti-status-text">{item.status || 'open'}</span>
+                </a>
+              {/each}
+            </div>
+          </div>
+        {/if}
         {#if data.releaseReadiness}
           <div class="release-readiness-card">
             <div class="card-header">
@@ -433,7 +495,7 @@
 
             <div class="metrics-grid">
               <div class="metric-card" class:passed={data.releaseReadiness.blockers.count === 0}>
-                <div class="metric-value">{data.releaseReadiness.blockers.count}</div>
+                <div class="metric-value">{data.releaseReadiness.blockers.count === 0 ? '✅' : '❌'} {data.releaseReadiness.blockers.count}</div>
                 <div class="metric-label">Open Blockers (High/Critical)</div>
                 {#if data.releaseReadiness.blockers.count > 0}
                   <div class="metric-sublist">
@@ -445,7 +507,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.majors.count === 0}>
-                <div class="metric-value">{data.releaseReadiness.majors.count}</div>
+                <div class="metric-value">{data.releaseReadiness.majors.count === 0 ? '✅' : '❌'} {data.releaseReadiness.majors.count}</div>
                 <div class="metric-label">Open Majors (Demand ≥ 5)</div>
                 {#if data.releaseReadiness.majors.count > 0}
                   <div class="metric-sublist">
@@ -457,7 +519,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.dogfoodWindow.passed}>
-                <div class="metric-value">{data.releaseReadiness.dogfoodWindow.actualDays}d / {data.releaseReadiness.dogfoodWindow.requiredDays}d</div>
+                <div class="metric-value">{data.releaseReadiness.dogfoodWindow.passed ? '✅' : '❌'} {data.releaseReadiness.dogfoodWindow.actualDays}d / {data.releaseReadiness.dogfoodWindow.requiredDays}d</div>
                 <div class="metric-label">Dogfood Window ({data.releaseReadiness.dogfoodWindow.startDate})</div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {Math.min(100, (data.releaseReadiness.dogfoodWindow.actualDays / data.releaseReadiness.dogfoodWindow.requiredDays) * 100)}%"></div>
@@ -465,7 +527,7 @@
               </div>
 
               <div class="metric-card" class:passed={data.releaseReadiness.burndown.passed}>
-                <div class="metric-value">{data.releaseReadiness.burndown.resolved} / {data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open}</div>
+                <div class="metric-value">{data.releaseReadiness.burndown.passed ? '✅' : '❌'} {data.releaseReadiness.burndown.resolved} / {data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open}</div>
                 <div class="metric-label">Milestone Burn-down Trend</div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {(data.releaseReadiness.burndown.resolved / (data.releaseReadiness.burndown.resolved + data.releaseReadiness.burndown.open || 1)) * 100}%"></div>
@@ -543,6 +605,139 @@
           </div>
         {/if}
 
+        {#if data.plans.draft && data.plans.draft.length > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>⏳ Awaiting Approval</h2>
+              <span class="badge badge-warn">{data.plans.draft.length}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Pri</th>
+                  <th>Title</th>
+                  <th>Phase</th>
+                  <th style="width: 180px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.plans.draft as item}
+                  <tr class="item-row" onclick={() => goto('/' + item.path.replace(/\.md$/, ''))}>
+                    <td><span class="pri {priorityClass(item.priority)}">{item.priority || '—'}</span></td>
+                    <td class="item-title-cell">
+                      <span class="item-title">{item.title}</span>
+                    </td>
+                    <td>
+                      {#if item.phase}
+                        <span class="phase-tag">Phase {item.phase}</span>
+                      {:else}
+                        <span class="muted">—</span>
+                      {/if}
+                    </td>
+                    <td>
+                      <button class="approve-btn" disabled={approvingDraft[item.path]}
+                        onclick={(e) => { e.stopPropagation(); approveDraft(item.path); }}>
+                        {approvingDraft[item.path] ? '…' : '✓ Approve'}
+                      </button>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
+        {#if data.openPRs && data.openPRs.length > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>🔀 Open Pull Requests</h2>
+              <span class="badge badge-active">{data.openPRs.length}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 100px;">PR #</th>
+                  <th>Title</th>
+                  <th style="width: 90px;">CI</th>
+                  <th style="width: 100px;">Review</th>
+                  <th style="width: 80px;">Merge</th>
+                  <th>Plan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.openPRs as pr}
+                  <tr class="item-row" onclick={() => window.open(pr.url, '_blank')}>
+                    <td><a href={pr.url} target="_blank" class="pr-link" onclick={(e) => e.stopPropagation()}>#{pr.number}</a></td>
+                    <td class="item-title-cell">
+                      <span class="item-title">{pr.title}</span>
+                      <span class="item-deps">branch: {pr.headRefName}</span>
+                    </td>
+                    <td>
+                      <span class="badge pr-ci-{pr.ciState}">
+                        {pr.ciState === 'passing' ? '✓' : pr.ciState === 'failing' ? '✗' : '…'}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge pr-review-{pr.reviewState}">
+                        {pr.reviewState === 'approved' ? '✓ Approved' : pr.reviewState === 'changes-requested' ? '✗ Changes' : '– None'}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge pr-merge-{pr.mergeable.toLowerCase()}">
+                        {pr.mergeable === 'MERGEABLE' ? '✓ Ready' : pr.mergeable === 'CONFLICTING' ? '✗ Conflict' : '…'}
+                      </span>
+                    </td>
+                    <td class="item-date">
+                      {#if pr.planTitle}
+                        <a href="/{pr.planPath?.replace(/\.md$/, '')}" class="pr-plan-link" onclick={(e) => e.stopPropagation()}>{pr.planTitle}</a>
+                      {:else}
+                        <span class="muted">—</span>
+                      {/if}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
+        {#if (data.issues?.open?.length ?? 0) + (data.proposals.open?.length ?? 0) > 0}
+          <div class="roadplan-bucket-section">
+            <div class="roadplan-bucket-header">
+              <h2>📋 Action Items</h2>
+              <span class="badge badge-warn">{(data.issues?.open?.length ?? 0) + (data.proposals.open?.length ?? 0)}</span>
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Type</th>
+                  <th style="width: 60px;">Pri</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.proposals.open as p}
+                  <tr class="item-row" onclick={() => goto('/' + p.path.replace(/\.md$/, ''))}>
+                    <td><span class="cat-badge cat-thought">💭 Proposal</span></td>
+                    <td><span class="pri {priorityClass(p.priority)}">{p.priority || '—'}</span></td>
+                    <td class="item-title-cell"><span class="item-title">{p.title}</span></td>
+                    <td><span class="badge badge-default">open</span></td>
+                  </tr>
+                {/each}
+                {#each data.issues?.open ?? [] as issue}
+                  <tr class="item-row" onclick={() => goto('/' + issue.path.replace(/\.md$/, ''))}>
+                    <td><span class="cat-badge cat-bug">🐛 Issue</span></td>
+                    <td><span class="pri {priorityClass(issue.priority)}">{issue.priority || '—'}</span></td>
+                    <td class="item-title-cell"><span class="item-title">{issue.title}</span></td>
+                    <td><span class="badge badge-default">{issue.status || 'open'}</span></td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
         {#each ['current', 'next', 'future'] as bucketKey}
           {@const bucket = data.roadplan?.[bucketKey]}
           {#if bucket}
@@ -599,7 +794,10 @@
                           {/if}
                         </td>
                         <td>
-                          <span class="badge {statusBadgeClass(item.status)}">{item.status}</span>
+                          <span class="badge {statusBadgeClass(item.status)}">{statusEmoji(item.status)} {item.status}</span>
+                          {#if isReleaseItem(item.path)}
+                            <span class="release-tag" title="Part of current release target">📦</span>
+                          {/if}
                         </td>
                         <td class="item-date">
                           {item.assigned_to || '—'}
@@ -706,7 +904,12 @@
                         <span class="item-deps">↳ parent: <a href="/plans/{p.parentPlan.replace(/\.md$/, '')}" onclick={(e) => { e.stopPropagation(); navTo({ path: 'plans/' + p.parentPlan }); }}>{p.parentPlan.replace(/\.md$/, '')}</a></span>
                       {/if}
                     </td>
-                    <td><span class="badge {statusBadgeClass(p.status)}">{p.status}</span></td>
+                    <td>
+                      <span class="badge {statusBadgeClass(p.status)}">{statusEmoji(p.status)} {p.status}</span>
+                      {#if isReleaseItem(p.path)}
+                        <span class="release-tag" title="Part of current release target">📦</span>
+                      {/if}
+                    </td>
                     <td class="item-date">{p.assigned_to || '—'}</td>
                   </tr>
                 {/each}
@@ -1184,6 +1387,19 @@
   .audit-link-row { padding: 12px 0 4px; text-align: center; }
   .audit-link { font-size: 11px; color: $muted; text-decoration: none; padding: 4px 12px; border: 1px solid $border; border-radius: 4px; &:hover { color: $blue; border-color: $blue-bdr; } }
 
+  // ── Open PRs section ─────────────────────────────────────────────────────────
+  .pr-link {
+    color: $blue; font-weight: 600; font-size: 13px; text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  .pr-ci-passing  { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-ci-failing  { background: $red-bg;   color: #e87;  border-color: $red-bdr; }
+  .pr-review-approved        { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-review-changes-requested { background: $red-bg;  color: #e87;  border-color: $red-bdr; }
+  .pr-merge-mergeable    { background: $green-bg; color: $green; border-color: $green-bdr; }
+  .pr-merge-conflicting  { background: $red-bg;  color: #e87;  border-color: $red-bdr; }
+  .pr-plan-link { color: $fg-dim; text-decoration: none; font-size: 12px; &:hover { color: $blue; text-decoration: underline; } }
+
   .roadplan-container {
     display: flex;
     flex-direction: column;
@@ -1219,6 +1435,61 @@
     padding: 1px 6px;
     font-size: 10px;
     font-weight: 500;
+  }
+
+  .approve-btn {
+    background: $green-bg; border: 1px solid $green-bdr; border-radius: 4px;
+    color: $green; font-size: 11px; font-weight: 600; padding: 4px 12px; cursor: pointer;
+    &:hover { filter: brightness(1.15); }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+
+  // ── Release-target box ──────────────────────────────────────────────────────
+  .release-target-box {
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+  }
+  .release-target-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .release-target-header h3 {
+    margin: 0; font-size: 16px;
+  }
+  .release-target-header a {
+    color: $accent; text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  .release-target-badge {
+    font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    background: $bg-3; color: $muted;
+    &.ready { background: $accent; color: #fff; }
+  }
+  .release-target-items {
+    display: flex; flex-direction: column; gap: 4px; margin-top: 8px;
+  }
+  .release-target-item {
+    display: flex; align-items: center; gap: 8px; padding: 4px 8px;
+    border-radius: 4px; text-decoration: none; color: $fg;
+    font-size: 13px;
+    transition: background 0.15s;
+    &:hover { background: $bg-hover; }
+    &.completed { opacity: 0.65; }
+  }
+  .rti-status { font-size: 14px; width: 20px; text-align: center; }
+  .rti-type-badge {
+    font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px;
+    text-transform: uppercase; width: 60px; text-align: center;
+    &.rti-plan { background: $accent; color: #fff; }
+    &.rti-issue { background: $bg-3; color: $muted; }
+    &.rti-proposal { background: $accent; color: #fff; }
+  }
+  .rti-title { flex: 1; }
+  .rti-status-text { font-size: 11px; color: $muted; }
+  .release-tag {
+    font-size: 14px; cursor: help; margin-left: 4px;
   }
 
   // ── Release Readiness Dashboard ──────────────────────────────────────────────
@@ -1470,6 +1741,13 @@
     .roadplan-bucket-section { border-color: #d0d0d0; background: #fff; }
     .roadplan-bucket-header { background: #e8e8e8; border-bottom-color: #d0d0d0; h2 { color: #1a1a1a; } }
     .phase-tag { background: rgba(74, 108, 247, 0.08); color: #4a6cf7; border-color: rgba(74, 108, 247, 0.15); }
+    .approve-btn { background: #d4edda; border-color: #b8daff; color: #155724; }
+    .pr-ci-passing  { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-ci-failing  { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .pr-review-approved        { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-review-changes-requested { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .pr-merge-mergeable    { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .pr-merge-conflicting  { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
   }
 
   // Two-phase bug-report suggestions

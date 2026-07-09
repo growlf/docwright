@@ -14,6 +14,7 @@ tags:
 category:
   - ux
   - intake
+part_of: plans/release-v0.5.0.md
 created_by: "NetYeti@cluster-llm"
 assigned_to: []
 depends_on:

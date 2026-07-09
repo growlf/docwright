@@ -5,6 +5,8 @@ created: 2026-07-07
 author: NetYeti
 author-role: contributor
 ai-last-action: file issue 2026-07-07
+part_of: plans/release-v0.5.0.md
+consumed_by: plans/enhance-roadplan-pending-work-visibility.md
 ---
 
 # UX: Release criteria checks lack visibility — "1/2 done" but no details on blockers

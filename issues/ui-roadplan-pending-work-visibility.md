@@ -6,6 +6,8 @@ author-role: governance
 created: 2026-07-06
 created_by: NetYeti@cluster-llm
 category: ux
+part_of: plans/release-v0.5.0.md
+consumed_by: plans/enhance-roadplan-pending-work-visibility.md
 priority: high
 complexity: M
 estimated_effort: M

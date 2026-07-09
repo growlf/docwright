@@ -1703,3 +1703,37 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] feat: add issue forward-path actions (Create/Link Proposal buttons)
 
 **Session note:** `docs/session-notes/session_note_202607080724.md`
+
+---
+
+## Session: 2026-07-08 — Roadplan Step 1: Awaiting Approval section
+
+**Focus:** Implement Step 1 of enhance-roadplan-pending-work-visibility plan
+
+**Completed:**
+- [x] Added `draftPlans` to `/api/status` response (reads plans with `status: draft`)
+- [x] Created `/api/approve-draft` endpoint that sets `status: approved` on plan files + commits
+- [x] Added `draftPlans` to `StatusData` interface
+- [x] Added `approveDraft()` function in status page
+- [x] Added Awaiting Approval section in roadplan view with Approve button
+- [x] CSS for dark + light themes
+- [x] Build passes (`npm run build`)
+
+**Session note:** `docs/session-notes/session_note_202607080917.md`
+
+---
+
+## Session: 2026-07-09 — roadplan UX pending-work visibility
+
+**Focus:** roadplan UX pending-work visibility
+
+**Completed:**
+- [x] Awaiting Approval section with Approve button (Step 1)
+- [x] Open PRs section via gh pr list (Step 2)
+- [x] Action Items section for open issues/proposals (Step 3)
+- [x] Release-target box with part_of burndown (Step 4)
+- [x] Release criteria emoji badges + per-item status (Step 5)
+- [x] Plan archived, docs generated, PR #266 created
+- [x] Session note committed via auto-merge PR #267
+
+**Session note:** `docs/session-notes/session_note_202607091335.md`

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { stripFrontmatter, getFrontmatterTitle } from './frontmatter';
+import { opencodeHeaders } from './opencode-auth';
 export { stripFrontmatter, getFrontmatterTitle } from './frontmatter';
 
 export interface Section {
@@ -224,7 +225,7 @@ export class OpenCodeEngine implements AIEngine {
     const q = `directory=${encodeURIComponent(dir)}`;
     const sessRes = await fetch(`${this.url}/session?${q}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({}),
     });
     if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
@@ -234,7 +235,7 @@ export class OpenCodeEngine implements AIEngine {
 
     const msgRes = await fetch(`${this.url}/session/${sessionId}/message?${q}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
     });
     if (!msgRes.ok) throw new Error(`Message failed: ${msgRes.status}`);

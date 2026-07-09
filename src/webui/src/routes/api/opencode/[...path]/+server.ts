@@ -1,17 +1,15 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+import { opencodeHeaders } from '../../../../../../dispatch/opencode-auth';
+
 const OPENCODE_BASE = process.env.OPENCODE_URL ?? 'http://127.0.0.1:4096';
-const OPENCODE_PASSWORD = process.env.OPENCODE_SERVER_PASSWORD ?? '';
 const VAULT_DIR = process.env.DOCWRIGHT_ROOT ?? '';
 
 function buildHeaders(incoming: Headers): HeadersInit {
-  const h: Record<string, string> = {
+  const h: Record<string, string> = opencodeHeaders({
     'Content-Type': incoming.get('content-type') ?? 'application/json',
-  };
-  if (OPENCODE_PASSWORD) {
-    h['Authorization'] = 'Basic ' + Buffer.from(':' + OPENCODE_PASSWORD).toString('base64');
-  }
+  });
   if (VAULT_DIR) {
     h['x-opencode-directory'] = VAULT_DIR;
   }
