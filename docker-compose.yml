@@ -38,6 +38,11 @@ services:
       GIT_TOKEN:       ${GIT_TOKEN:-}
       # OpenCode URL — set DOCKER_GATEWAY_IP in .env to IP where OpenCode is reachable from container
       OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
+      # OpenCode basic auth — must match the values the `opencode serve` process
+      # was started with (scripts/DocWright sources src/webui/.env for those).
+      # Set in repo-root .env; never commit values.
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-}
     restart: unless-stopped
 
 # ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────
