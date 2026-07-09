@@ -1728,15 +1728,12 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 **Focus:** roadplan UX pending-work visibility
 
 **Completed:**
-- [x] chore: complete enhance-roadplan-pending-work-visibility and related transitions
-- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
-- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
-- [x] feat: add release criteria status badges to roadplan (Step 5)
-- [x] feat: add release-target box with part_of burndown (Step 4)
-- [x] feat: add Action Items section to roadplan view (Step 3)
-- [x] feat: add Open PRs section to roadplan view (Step 2)
-- [x] feat: add Awaiting Approval section to roadplan view (Step 1)
-- [x] docs: edit plans/enhance-roadplan-pending-work-visibility.md (web ui save)
-- [x] docs: approve enhance-roadplan-pending-work-visibility (proposal → plan)
+- [x] Awaiting Approval section with Approve button (Step 1)
+- [x] Open PRs section via gh pr list (Step 2)
+- [x] Action Items section for open issues/proposals (Step 3)
+- [x] Release-target box with part_of burndown (Step 4)
+- [x] Release criteria emoji badges + per-item status (Step 5)
+- [x] Plan archived, docs generated, PR #266 created
+- [x] Session note committed via auto-merge PR #267
 
 **Session note:** `docs/session-notes/session_note_202607091335.md`
