@@ -538,6 +538,53 @@ export function GET({ url }: { url: URL }) {
     };
   });
 
+  // ── Release-target box: items with part_of linking to the current release plan ─
+  const releasePlanName = String(roadplan.current.name ?? '').trim();
+  const releasePlanPath = releasePlanName
+    ? `plans/release-v${releasePlanName.replace(/^v/i, '')}.md`
+    : '';
+  const allLifecyclePaths = [
+    ...readDir(path.join(REPO_ROOT, 'plans')),
+    ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
+    ...readDir(path.join(REPO_ROOT, 'proposals')),
+    ...readDir(path.join(REPO_ROOT, 'proposals', 'approved')),
+    ...readDir(path.join(REPO_ROOT, 'issues')),
+  ];
+  interface ReleaseTargetItem {
+    path: string; title: string; type: string; status: string;
+    completed: boolean;
+  }
+  const releaseTargetItems: ReleaseTargetItem[] = [];
+  if (releasePlanPath) {
+    for (const doc of allLifecyclePaths) {
+      const po = doc.fm.part_of ?? doc.fm['part-of'] ?? '';
+      const partOfList: string[] = Array.isArray(po) ? po : [String(po)];
+      if (partOfList.some(p => p.trim() === releasePlanPath)) {
+        const completed = ['completed', 'canceled', 'resolved', 'wont-fix'].includes(
+          String(doc.fm.status ?? '').toLowerCase()
+        );
+        releaseTargetItems.push({
+          path: doc.path,
+          title: String(doc.fm.title ?? path.basename(doc.path).replace(/\.md$/, '')),
+          type: doc.path.includes('/plans/') ? 'plan'
+            : doc.path.includes('/issues/') ? 'issue'
+            : 'proposal',
+          status: String(doc.fm.status ?? ''),
+          completed,
+        });
+      }
+    }
+  }
+  const releaseTarget = releasePlanPath && releaseTargetItems.length > 0
+    ? {
+        planPath: releasePlanPath,
+        totalItems: releaseTargetItems.length,
+        completedItems: releaseTargetItems.filter(i => i.completed).length,
+        items: releaseTargetItems,
+        ready: releaseTargetItems.every(i => i.completed),
+      }
+    : null;
+
   const data = {
     vaultName,
     version,
@@ -546,6 +593,7 @@ export function GET({ url }: { url: URL }) {
     proposals: { open, approved_pending: approvedPending, deferred },
     plans: { draft, active, completed_count: completedCount, completed },
     openPRs,
+    releaseTarget,
     gates: { pending: pendingGates, waived: waivedGates, overdue: overdueGates },
     research: { active: activeResearch, recent_conclusions: recentConclusions, no_research_proposals: noResearchProposals },
     phaseReview,

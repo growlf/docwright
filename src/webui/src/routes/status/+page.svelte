@@ -440,6 +440,29 @@
       />
     {:else if viewMode === 'roadplan'}
       <div class="roadplan-container">
+        {#if data.releaseTarget}
+          <div class="release-target-box">
+            <div class="release-target-header">
+              <h3>🎯 Current Release Target: <a href="/plans/{data.releaseTarget.planPath.replace(/\.md$/, '').replace('plans/', '')}">v{data.roadplan.current.name}</a></h3>
+              <span class="release-target-badge" class:ready={data.releaseTarget.ready}>
+                {data.releaseTarget.ready ? '✅ Ready' : `${data.releaseTarget.completedItems}/${data.releaseTarget.totalItems} Complete`}
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {(data.releaseTarget.totalItems > 0 ? (data.releaseTarget.completedItems / data.releaseTarget.totalItems) * 100 : 0)}%"></div>
+            </div>
+            <div class="release-target-items">
+              {#each data.releaseTarget.items as item}
+                <a href="/{item.path.replace(/\.md$/, '')}" class="release-target-item" class:completed={item.completed}>
+                  <span class="rti-status">{item.completed ? '✅' : '⏳'}</span>
+                  <span class="rti-type-badge rti-{item.type}">{item.type}</span>
+                  <span class="rti-title">{item.title}</span>
+                  <span class="rti-status-text">{item.status || 'open'}</span>
+                </a>
+              {/each}
+            </div>
+          </div>
+        {/if}
         {#if data.releaseReadiness}
           <div class="release-readiness-card">
             <div class="card-header">
@@ -1397,6 +1420,51 @@
     &:hover { filter: brightness(1.15); }
     &:disabled { opacity: 0.5; cursor: default; }
   }
+
+  // ── Release-target box ──────────────────────────────────────────────────────
+  .release-target-box {
+    background: $bg-2;
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+  }
+  .release-target-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .release-target-header h3 {
+    margin: 0; font-size: 16px;
+  }
+  .release-target-header a {
+    color: $accent; text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  .release-target-badge {
+    font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    background: $bg-3; color: $muted;
+    &.ready { background: $accent; color: #fff; }
+  }
+  .release-target-items {
+    display: flex; flex-direction: column; gap: 4px; margin-top: 8px;
+  }
+  .release-target-item {
+    display: flex; align-items: center; gap: 8px; padding: 4px 8px;
+    border-radius: 4px; text-decoration: none; color: $fg;
+    font-size: 13px;
+    transition: background 0.15s;
+    &:hover { background: $bg-hover; }
+    &.completed { opacity: 0.65; }
+  }
+  .rti-status { font-size: 14px; width: 20px; text-align: center; }
+  .rti-type-badge {
+    font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px;
+    text-transform: uppercase; width: 60px; text-align: center;
+    &.rti-plan { background: $accent; color: #fff; }
+    &.rti-issue { background: $bg-3; color: $muted; }
+    &.rti-proposal { background: $accent; color: #fff; }
+  }
+  .rti-title { flex: 1; }
+  .rti-status-text { font-size: 11px; color: $muted; }
 
   // ── Release Readiness Dashboard ──────────────────────────────────────────────
   .release-readiness-card {
