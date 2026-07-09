@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
+import { opencodeHeaders } from '../../../../../../dispatch/opencode-auth';
 
 const OPENCODE_BASE = process.env.OPENCODE_URL ?? 'http://127.0.0.1:4096';
 const VAULT_DIR = process.env.DOCWRIGHT_ROOT ?? '';
