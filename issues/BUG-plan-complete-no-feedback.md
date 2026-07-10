@@ -1,6 +1,7 @@
 ---
 type: issue
-status: triaged
+status: resolved
+resolved: 2026-07-10
 created: 2026-07-07
 author: NetYeti
 author-role: contributor
@@ -55,3 +56,9 @@ The plan file WAS updated (confirmed via git), so backend logic works. Issue is 
 ## Severity
 
 Medium — action works, but UX is broken
+
+## Resolution (2026-07-10)
+
+The immediate complaint (no success message) was fixed by commit 6b64350 ("fix: plan completion now shows success feedback") -- a toast now appears. Bookkeeping on this issue was never updated to reflect that fix, found while auditing outstanding issues.
+
+The deeper part of this report -- "navigate to completed plans view" and "Plan UI changes" -- was never actually built: the Complete button still only sets `status: completed` in frontmatter, without moving the file to `plans/completed/`, generating the completion doc, or navigating anywhere. That remaining scope is now tracked precisely (with root cause) by `issues/bug-web-ui-complete-button-only-sets-status-field-neve.md`, filed 2026-07-10 after reproducing it live on `plans/improve-bug-feature-reporting-tool.md`.
