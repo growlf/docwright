@@ -11,6 +11,13 @@ export interface SessionConfig {
 export interface SessionEvents {
   onLog: (text: string) => void;
   onWaiting: (question: string, sessionId: string) => Promise<string>;
+  /**
+   * Called with the OpenCode session id as soon as it is created, BEFORE the
+   * prompt is sent. The live executor (LIVE_AI_EXECUTOR) uses this to tell the
+   * panel which session to stream via /api/ai/stream. Optional — the legacy
+   * blocking path leaves it unset.
+   */
+  onSession?: (sessionId: string) => void;
 }
 
 export interface SessionResult {
@@ -19,12 +26,23 @@ export interface SessionResult {
   error?: string;
 }
 
-function buildStepPrompt(
-  step: PlanStep,
-  total: number,
-  planName: string,
-  repoRoot: string,
-): string {
+/**
+ * Pluggable per-step transport. The control flow (retries, timeout, marker
+ * parsing, WAITING follow-ups) lives in runStepSession and never changes; only
+ * HOW a session is created and a turn is sent differs:
+ *   - blocking (default): POST /session + blocking POST /message (legacy).
+ *   - live (injected by the webui route): owned session + prompt_async streamed
+ *     on the /event bus, so the panel can render it live.
+ * `send` returns the assistant's full text for marker parsing either way.
+ */
+export interface StepTransport {
+  createSession(signal: AbortSignal): Promise<string>;
+  send(sessionId: string, text: string, signal: AbortSignal): Promise<string>;
+}
+
+// ── Pure helpers (exported so the live transport/tests can reuse them) ───────
+
+export function buildStepPrompt(step: PlanStep, total: number, planName: string, repoRoot: string): string {
   return [
     `You are executing Step ${step.stepNumber}/${total} of plan "${planName}".`,
     '',
@@ -43,21 +61,69 @@ function buildStepPrompt(
   ].filter(Boolean).join('\n');
 }
 
-function extractMarker(text: string): 'done' | 'failed' | 'waiting' | null {
+export function extractMarker(text: string): 'done' | 'failed' | 'waiting' | null {
   if (text.includes('STEP DONE')) return 'done';
   if (text.includes('STEP FAILED:')) return 'failed';
   if (text.includes('WAITING:')) return 'waiting';
   return null;
 }
 
-function extractFailedReason(text: string): string {
+export function extractFailedReason(text: string): string {
   const m = text.match(/STEP FAILED:\s*(.+)/);
   return m ? m[1].trim() : 'No reason given';
 }
 
-function extractWaitingQuestion(text: string): string {
+export function extractWaitingQuestion(text: string): string {
   const m = text.match(/WAITING:\s*(.+)/);
   return m ? m[1].trim() : 'No question provided';
+}
+
+/**
+ * Default (legacy) transport: create a plain session and send via the blocking
+ * /message endpoint. Behavior is byte-for-byte what runStepSession did inline
+ * before the transport was extracted.
+ */
+export function createBlockingTransport(config: SessionConfig): StepTransport {
+  const dirParam = `directory=${encodeURIComponent(config.repoRoot)}`;
+  return {
+    async createSession(signal) {
+      let sessionBody: Record<string, string> = {};
+      if (config.model) {
+        const slash = config.model.indexOf('/');
+        if (slash > 0) {
+          sessionBody = { providerID: config.model.slice(0, slash), modelID: config.model.slice(slash + 1) };
+        }
+      }
+      const sessRes = await fetch(`${config.opencodeUrl}/session?${dirParam}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionBody),
+        signal,
+      });
+      if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
+      const sess = await sessRes.json();
+      const sessionId: string = sess?.id ?? sess?.sessionID;
+      if (!sessionId) throw new Error('OpenCode returned no session ID');
+      return sessionId;
+    },
+    async send(sessionId, text, signal) {
+      const msgRes = await fetch(`${config.opencodeUrl}/session/${sessionId}/message?${dirParam}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parts: [{ type: 'text', text }] }),
+        signal,
+      });
+      if (!msgRes.ok) {
+        const friendly = msgRes.status === 500
+          ? 'AI unavailable — model backend not responding. Check that ollama/Olla is running.'
+          : `Message failed: ${msgRes.status}`;
+        throw new Error(friendly);
+      }
+      const data = await msgRes.json();
+      const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
+      return parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+    },
+  };
 }
 
 export async function runStepSession(
@@ -66,9 +132,9 @@ export async function runStepSession(
   planFilepath: string,
   config: SessionConfig,
   events: SessionEvents,
+  transport: StepTransport = createBlockingTransport(config),
 ): Promise<SessionResult> {
   const planName = planFilepath.replace(/\.md$/, '').split('/').pop() || planFilepath;
-  const dirParam = `directory=${encodeURIComponent(config.repoRoot)}`;
   const prompt = buildStepPrompt(step, total, planName, config.repoRoot);
 
   let lastError: string | undefined;
@@ -83,24 +149,8 @@ export async function runStepSession(
 
     try {
       events.onLog('Creating session…\n');
-      // Pass model if configured — splits "provider/modelID" into parts OpenCode expects
-      let sessionBody: Record<string, string> = {};
-      if (config.model) {
-        const slash = config.model.indexOf('/');
-        if (slash > 0) {
-          sessionBody = { providerID: config.model.slice(0, slash), modelID: config.model.slice(slash + 1) };
-        }
-      }
-      const sessRes = await fetch(`${config.opencodeUrl}/session?${dirParam}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionBody),
-        signal: abortCtrl.signal,
-      });
-      if (!sessRes.ok) throw new Error(`Session create failed: ${sessRes.status}`);
-      const sess = await sessRes.json();
-      const sessionId: string = sess?.id ?? sess?.sessionID;
-      if (!sessionId) throw new Error('OpenCode returned no session ID');
+      const sessionId = await transport.createSession(abortCtrl.signal);
+      events.onSession?.(sessionId);
 
       events.onLog('Sending prompt to AI…\n');
 
@@ -112,29 +162,12 @@ export async function runStepSession(
         events.onLog(`⏳ BigPickle thinking… ${waitSecs}s\n`);
       }, 5000);
 
-      let msgRes: Response;
+      let fullText: string;
       try {
-        msgRes = await fetch(
-          `${config.opencodeUrl}/session/${sessionId}/message?${dirParam}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ parts: [{ type: 'text', text: prompt }] }),
-            signal: abortCtrl.signal,
-          },
-        );
+        fullText = await transport.send(sessionId, prompt, abortCtrl.signal);
       } finally {
         clearInterval(heartbeat);
       }
-      if (!msgRes!.ok) {
-        const friendly = msgRes!.status === 500
-          ? 'AI unavailable — model backend not responding. Check that ollama/Olla is running.'
-          : `Message failed: ${msgRes!.status}`;
-        throw new Error(friendly);
-      }
-      const data = await msgRes!.json();
-      const parts: Array<{ type: string; text?: string }> = data?.parts ?? [];
-      const fullText = parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
 
       clearTimeout(abortTimer);
 
@@ -160,21 +193,7 @@ export async function runStepSession(
           const humanResponse = await events.onWaiting(question, sessionId);
 
           // Send human response to the same session
-          const followRes = await fetch(
-            `${config.opencodeUrl}/session/${sessionId}/message?${dirParam}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                parts: [{ type: 'text', text: humanResponse }],
-              }),
-              signal: abortCtrl.signal,
-            },
-          );
-          if (!followRes.ok) throw new Error(`Follow-up message failed: ${followRes.status}`);
-          const followData = await followRes.json();
-          const followParts: Array<{ type: string; text?: string }> = followData?.parts ?? [];
-          const followText = followParts.filter(p => p.type === 'text').map(p => p.text ?? '').join('');
+          const followText = await transport.send(sessionId, humanResponse, abortCtrl.signal);
 
           // Stream follow-up tokens
           for (let i = 0; i < followText.length; i += chunkSize) {
@@ -189,7 +208,7 @@ export async function runStepSession(
           // If still waiting, loop until resolved or failed
           if (followMarker === 'waiting') {
             // Recursive call to handle chained WAITING
-            const subResult = await runStepSession(step, total, planFilepath, config, events);
+            const subResult = await runStepSession(step, total, planFilepath, config, events, transport);
             return subResult;
           }
 
