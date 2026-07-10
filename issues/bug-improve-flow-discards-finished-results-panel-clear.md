@@ -1,6 +1,6 @@
 ---
 title: Improve flow discards finished results — panel clears with no Apply/dismiss decision, user cannot tell what happened
-status: new
+status: resolved
 created: 2026-07-09
 author: NetYeti
 author-role: user
@@ -11,9 +11,20 @@ estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-09]
 channel: dev
+resolved_by: plans/live-ai-visibility-event-relay.md
 tags:
   - reported-bug
 ---
+
+> **Resolved 2026-07-10** (live-ai step 3.4, PR #279). Root cause: the nav-clear
+> `$effect` in `+layout.svelte` fired on ANY `$currentDoc` store update — including
+> same-file SSE watch-reloads — and unconditionally cleared `improveResult`/review
+> state and switched `rightTab` away, so a reload mid/post-Improve wiped the result
+> with no Apply decision. Fix: a `lastNavPath` guard clears the AI panels only on an
+> ACTUAL file change. **Verified at runtime 2026-07-10** (browser reproduction on a
+> sandbox vault): with the Review panel open, modifying the doc file fired a real
+> `filechange` → `currentDoc` reload (marker confirmed rendered in the DOM), and the
+> panel + active tab **survived** — no vanish. Zero console errors.
 
 # Improve flow discards finished results — panel clears with no Apply/dismiss decision, user cannot tell what happened
 
