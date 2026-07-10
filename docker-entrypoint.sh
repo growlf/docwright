@@ -23,6 +23,16 @@ MCP_PID=$!
 
 trap 'kill "$MCP_PID" 2>/dev/null; exit' INT TERM EXIT
 
-# ── Web UI (Vite dev server) ──────────────────────────────────────────────────
+# ── Web UI ────────────────────────────────────────────────────────────────────
 cd /app/src/webui
-exec npm run dev -- --host 0.0.0.0 --port "${PORT:-5173}"
+if [ "${DOCWRIGHT_DEV_SERVER}" = "1" ]; then
+    # Dev mode (dogfood box only): Vite dev server over a source mount.
+    # Requires the source bind-mounted at /app; writes .svelte-kit at runtime.
+    exec npm run dev -- --host 0.0.0.0 --port "${PORT:-5173}"
+else
+    # Production (default): run the adapter-node build baked into the image.
+    # adapter-node reads HOST/PORT/ORIGIN from the environment.
+    export HOST="${HOST:-0.0.0.0}"
+    export PORT="${PORT:-5173}"
+    exec node build
+fi
