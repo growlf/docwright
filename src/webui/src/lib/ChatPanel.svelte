@@ -221,6 +221,8 @@
   let startMsg      = $state('');
   let sessions      = $state<Session[]>([]);
   let currentID     = $state<string | null>(null);
+  let liveChat      = $state(false); // LIVE_AI_CHAT: send via prompt_async + render from the /event stream
+  let liveTurnActive = false;        // a live turn is in flight (cleared by session.idle)
   let messages      = $state<Message[]>([]);
   let input         = $state('');
   let statusText    = $state('');
@@ -536,6 +538,9 @@
     if (ev.type === 'session.idle' && sessionID === currentID) {
       statusText = '';
       sending = false;
+      liveTurnActive = false;
+      if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+      if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
     }
   }
 
@@ -649,6 +654,7 @@
       console.warn('[DocWright chat] Send safety timeout — forcing idle');
       sending = false;
       statusText = '';
+      liveTurnActive = false;
       if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
     }, 60000);
 
@@ -667,6 +673,27 @@
             ``,
           ].join('\n')
         : '';
+
+      // Live path (LIVE_AI_CHAT): fire prompt_async (HTTP 204) and let the /event
+      // stream (openEventStream → handleEvent) render the reply; session.idle clears
+      // `sending`. The blocking /message below emits NOTHING to /event — which is
+      // why chat never streamed. An explicit failure surfaces an error immediately
+      // instead of an indefinite "thinking…".
+      if (liveChat) {
+        const r = await ocFetch('POST', `session/${currentID}/prompt_async`, {
+          parts: [{ type: 'text', text: docCtx + text }],
+        });
+        if (!r.ok && r.status !== 204) {
+          statusText = `Send failed (${r.status}) — check console`;
+          console.error('[DocWright chat] prompt_async failed:', r.status, r.statusText);
+          sending = false;
+          if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+          if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
+        } else {
+          liveTurnActive = true; // keep sending/thinking until session.idle
+        }
+        return;
+      }
 
       // POST /session/:id/message is synchronous — it blocks until the AI
       // finishes and returns the complete response. SSE streams the partial
@@ -739,10 +766,14 @@
       console.error('[DocWright chat] Send error:', e);
       statusText = 'Send failed — is OpenCode still running?';
     } finally {
-      sending = false;
-      statusText = '';
-      if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
-      if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+      // In live mode a turn is still generating after prompt_async returns 204;
+      // session.idle (or the safety timeout) clears these, not this finally.
+      if (!liveTurnActive) {
+        sending = false;
+        statusText = '';
+        if (sendTimeout) { clearTimeout(sendTimeout); sendTimeout = null; }
+        if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
+      }
     }
   }
 
@@ -751,6 +782,7 @@
       try { await ocFetch('POST', `session/${currentID}/abort`, {}); } catch { /* ignore */ }
     }
     sending = false;
+    liveTurnActive = false;
     statusText = 'Cancelled';
     setTimeout(() => { if (statusText === 'Cancelled') statusText = ''; }, 2000);
     if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
@@ -837,6 +869,10 @@
   }
 
   onMount(async () => {
+    try {
+      const f = await fetch('/api/ai/flags');
+      if (f.ok) { const fj = await f.json(); liveChat = !!fj.chat; }
+    } catch { /* default: legacy blocking send */ }
     try {
       const r = await fetch('/api/brand');
       if (r.ok) { const d = await r.json(); vaultPath = d.vaultPath ?? ''; }
