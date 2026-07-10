@@ -1,6 +1,7 @@
 ---
 title: "Wave C — Report/Intake UX: modal form, feature requests, GitHub linkage, governance panel drill-in, issue promotion"
 status: completed
+completed_date: 2026-07-10
 author: NetYeti
 created: 2026-07-09
 tags:
@@ -25,6 +26,9 @@ related_to:
 total_steps: 6
 completed_steps: 6
 scenario_synthesis: "Svelte UI + SvelteKit API route changes (modal form, governance panel, issue promotion) plus a one-off backfill script to backfill github_issue: links on already-reported issues via the existing Frappe HD -> GitHub sync API; no infrastructure or deployment steps. Happy path: user reports a bug/feature via modal, it lands in issues/ with a github_issue: backlink and appears in the heatmap; governance panel tiles are correctly labeled and clickable through to the filtered list; an issue can be promoted to a proposal from its detail view. Failure path: GH API is unreachable during report submit -- issue is still created locally, github_issue: stays unset, and the backfill script picks it up on a later run."
+tests_last_run: "2026-07-10T06:05:09.553Z"
+tests_last_result: pass
+tests_last_commit: 87ac2b1
 ---
 
 # Wave C — Report/Intake UX: modal form, feature requests, GitHub linkage, governance panel drill-in, issue promotion
@@ -95,3 +99,4 @@ Wave C of the issue-cluster-remediation-waves — the full report/intake/governa
 | 2026-07-10 | Step 3 scope narrowed after checking with the human: the plan text said "auto-create GitHub issues on report submit," but the app already had a deliberate anti-spam design -- the heatmap's promote button only appears once demand_count >= 3, specifically to avoid flooding the public repo with an issue for every first-time report. Confirmed to keep that gate rather than override it. Delivered: factored the promote endpoint's duplicated logic into a shared promoteIssueToGithub() in dispatch/bridge.ts, fixed it to use category-aware GitHub labels (bug -> "bug", feature -> "enhancement", it previously hardcoded "bug" for everything), and added scripts/backfill-github-issues.ts (dry-run by default, --execute to actually create) for issues that crossed the demand threshold before this fix existed. Added 3 guard-logic tests (no live network calls in tests). Verified live: crafted a feature-category test issue at demand_count 4, confirmed it ranks #1 in the heatmap with the correct icon and the promote button appears -- did not click it, since that creates a real public GitHub issue and this session did not run --execute or click-promote for real. | NetYeti |
 | 2026-07-10 | Repair: update_step's row-replacement corrupted Step 1's table row when marking it done -- the original Details cell contained a raw, unescaped `\|` inside a code span (`` `category: bug\|feature` ``), which desynced the tool's column parsing, truncating the cell text and duplicating the Status cell (`✅ Done \| ⏳ Pending`). Also found `tests_defined` had flipped from `true` to `false` at some point during the step updates, with no corresponding edit from me. Rewrote the full plan via write_plan to fix both, refreshed Step 1-6 Details cells to describe what was actually built (some diverged from the original speculative plan -- e.g. no separate ReportModal.svelte component was created; the existing inline modal was fixed in place), and filled in the Testing Plan's checkboxes and Gate Criteria based on this session's verification. Filing a bug for the update_step pipe-corruption issue separately. | NetYeti |
 | 2026-07-10 | NetYeti certified tests via the Web UI (tests_human_reviewed: true). Ran npm run test:webui per the last open gate criterion -- 96 passing, no regressions (pre-existing suite; unrelated to this plan's own changes, which have no dedicated automated webui coverage and were verified manually via Playwright instead). All gate criteria now met. | NetYeti |
+| 2026-07-10 | Test run recorded via verify_plan_tests: npm run test:dispatch → PASS @ 87ac2b1 | NetYeti |
