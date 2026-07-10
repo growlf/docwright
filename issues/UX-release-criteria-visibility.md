@@ -1,6 +1,7 @@
 ---
 type: issue
-status: triaged
+status: resolved
+resolved: 2026-07-10
 created: 2026-07-07
 author: NetYeti
 author-role: contributor
