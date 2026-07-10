@@ -1,6 +1,7 @@
 ---
 title: Roadplan view lacks visibility for pending approvals and PRs
-status: triaged
+status: resolved
+resolved: 2026-07-10
 author: NetYeti
 author-role: governance
 created: 2026-07-06

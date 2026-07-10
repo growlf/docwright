@@ -1,6 +1,7 @@
 ---
 type: issue
-status: triaged
+status: resolved
+resolved: 2026-07-10
 created: 2026-07-07
 author: NetYeti
 author-role: contributor
@@ -54,3 +55,7 @@ Likely causes:
 ## Severity
 
 Medium — annoying but can be worked around by selecting any version
+
+## Resolution (2026-07-10)
+
+Fixed by commit cf86169 ("fix: smart conflict detection — auto-resolve false conflicts") — tracks confirmed frontmatter/body state, and on a 409 silently reloads the server version when the user made no actual edits instead of showing a conflict dialog. Bookkeeping on this issue was never updated to reflect that fix; found while auditing outstanding issues.
