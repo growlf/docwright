@@ -189,3 +189,24 @@ export function textFor(state: ActivityState, role: Role): string {
 export function reasoningText(state: ActivityState): string {
   return state.parts.filter((p) => p.type === 'reasoning').map((p) => p.text).join('');
 }
+
+/**
+ * Assistant answer text grouped by message, in first-seen order — one string per
+ * assistant message (turn). Used to pull structured multi-turn output (e.g. the
+ * live Improve flow: turn 0 = improved body, turn 1 = critique) back out of the
+ * streamed event log for the downstream Apply step.
+ */
+export function assistantMessageTexts(state: ActivityState): string[] {
+  const order: string[] = [];
+  const byMsg = new Map<string, string>();
+  for (const p of state.parts) {
+    if (p.type !== 'text' || p.role !== 'assistant') continue;
+    const key = p.messageID ?? p.id;
+    if (!byMsg.has(key)) {
+      byMsg.set(key, '');
+      order.push(key);
+    }
+    byMsg.set(key, byMsg.get(key)! + p.text);
+  }
+  return order.map((k) => byMsg.get(k)!);
+}

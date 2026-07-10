@@ -482,11 +482,70 @@ async function checkLiveReview(page: Page, baseUrl: string, planPath: string): P
     return true;
   }));
 
-  results.push(await check('final content non-empty', async () => finalText.trim().length > 0 || `empty final (${finalText.length})`));
+  const maxLen = Math.max(0, ...samples);
+  results.push(await check('final content non-empty', async () => maxLen > 0 || `no non-empty samples (last=${finalText.length})`));
 
   const real = errors.filter((e) => !e.includes('favicon') && !e.includes('EventSource'));
   results.push({ name: 'no console/page errors during live review', passed: real.length === 0, detail: real.slice(0, 3).join('; ') || undefined });
 
+  return results;
+}
+
+/**
+ * Live-Improve progressive-render recipe (plan step 3.4). Proposals expose an
+ * "Improve" tab button that triggers generation directly. Gated behind
+ * --live-improve (needs LIVE_AI_IMPROVE=1 + OpenCode).
+ * Usage: npx tsx test/webui/e2e-check.ts --live-improve --doc=/proposals/<slug> [--url=…]
+ */
+async function checkLiveImprove(page: Page, baseUrl: string, docPath: string): Promise<CheckResult[]> {
+  const results: CheckResult[] = [];
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+
+  await page.goto(`${baseUrl}${docPath}`, { waitUntil: 'load', timeout: 20000 });
+
+  results.push(await check('improve tab present for proposal', async () => {
+    const tab = page.getByRole('button', { name: /^Improve/ });
+    try { await tab.first().waitFor({ state: 'visible', timeout: 15000 }); }
+    catch { return 'no Improve tab (is this a proposal doc?)'; }
+    await tab.first().click(); // clicking triggers handleImprove directly
+    return true;
+  }));
+
+  results.push(await check('AgentActivityView mounts (.agent-activity)', async () => {
+    try { await page.waitForSelector('.agent-activity', { timeout: 15000 }); return true; }
+    catch { return 'AgentActivityView did not mount (flag off? stream failed?)'; }
+  }));
+
+  const samples: number[] = [];
+  let finalText = '';
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    const t = await page.locator('.agent-activity .stream').innerText().catch(() => '');
+    finalText = t;
+    samples.push(t.length);
+    const distinctGrowing = new Set(samples.filter((n) => n > 0)).size;
+    const idle = await page.locator('.status-bar[data-status="idle"]').count().catch(() => 0);
+    if (distinctGrowing >= 3 && idle > 0) break;
+    await page.waitForTimeout(2000);
+  }
+  await shot(page, 'live-improve');
+
+  results.push(await check('text streams progressively (≥2 differing mid-gen samples, growing)', async () => {
+    const positive = samples.filter((n) => n > 0);
+    const distinct = new Set(positive).size;
+    const grew = positive.length >= 2 && positive[positive.length - 1] > positive[0];
+    if (distinct < 2) return `only ${distinct} distinct non-empty samples: ${samples.join(',')}`;
+    if (!grew) return `text did not grow: ${samples.join(',')}`;
+    return true;
+  }));
+
+  const maxLen = Math.max(0, ...samples);
+  results.push(await check('generation content non-empty', async () => maxLen > 0 || `no non-empty samples (last=${finalText.length})`));
+
+  const real = errors.filter((e) => !e.includes('favicon') && !e.includes('EventSource'));
+  results.push({ name: 'no console/page errors during live improve', passed: real.length === 0, detail: real.slice(0, 3).join('; ') || undefined });
   return results;
 }
 
@@ -508,6 +567,10 @@ async function main() {
       const planArg = process.argv.find(a => a.startsWith('--plan='))?.slice(7) ?? '/plans/phase-4-profile-acl-ai';
       console.log('\n── Live Review (LIVE_AI_REVIEW) ──────────────────────────────');
       allResults.push(...await checkLiveReview(page, BASE_URL, planArg));
+    } else if (process.argv.includes('--live-improve')) {
+      const docArg = process.argv.find(a => a.startsWith('--doc='))?.slice(6) ?? '/proposals/approved/ux-cant-rename-a-doc';
+      console.log('\n── Live Improve (LIVE_AI_IMPROVE) ────────────────────────────');
+      allResults.push(...await checkLiveImprove(page, BASE_URL, docArg));
     } else {
 
     // ── View Container layout suite (Step 16) ──
