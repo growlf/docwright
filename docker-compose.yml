@@ -1,151 +1,36 @@
-# DocWright — docker compose scenarios
+# DocWright — DEVELOPMENT compose (live source, Vite HMR)
 #
-# Three scenarios are provided. Uncomment the one that fits your deployment.
-# Only ONE scenario should be active at a time.
+# This file is for LOCAL DEVELOPMENT / dogfooding a branch: it builds the image,
+# bind-mounts the project source, and runs the Vite dev server (DOCWRIGHT_DEV_SERVER=1)
+# so code edits are picked up live without a rebuild.
 #
-# Required for all scenarios:
-#   GIT_USER_NAME   — name used for git commits from the web UI
-#   GIT_USER_EMAIL  — email used for git commits from the web UI
+# ▶ For PRODUCTION deployment use docker-compose.prod.yml instead (published
+#   image, config via app.env, single vault mount, no source tree). See its header
+#   and app.env.example for the environment contract.
 #
-# Optional:
-#   GIT_TOKEN       — GitHub/Forgejo personal access token for HTTPS push
-#                     (alternative: mount SSH key — see docs/docker.md)
-
-# ── Scenario 1: Standalone (local developer / dogfood development) ──────────
-# Mount local vault directory AND entire project source for live development.
-# Access the UI at http://localhost:5173 (or configured PORT).
-# Suitable for a single developer or dogfooding a branch.
-#
-# For dogfood development: mount entire project folder to get live changes
-# without rebuilding. This runs the exact same environment as production.
+# Env (.env in this dir): VAULT_PATH, PORT, DOCKER_GATEWAY_IP. Auth in dev is read
+# by Vite from src/webui/.env (production reads app.env instead).
 
 services:
   docwright:
     build: .
+    # DEV: run the Vite dev server over the mounted source (live reload).
+    environment:
+      DOCWRIGHT_DEV_SERVER: "1"
+      GIT_USER_NAME:  ${GIT_USER_NAME:-DocWright User}
+      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-docwright@localhost}
+      GIT_TOKEN:      ${GIT_TOKEN:-}
+      # OpenCode URL — set DOCKER_GATEWAY_IP in .env to the IP where OpenCode is
+      # reachable from the container.
+      OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-}
     volumes:
-      # Project source — mount for LIVE DEV (vite dev / HMR). This box now runs
-      # the built PRODUCTION image (adapter-node `node build`), so the source
-      # mount is disabled. To return to live-dev mode: uncomment the next line
-      # AND set DOCWRIGHT_DEV_SERVER=1 in the environment below.
-      # - .:/app
-      # Vault data directory
+      # Project source — live-dev mount (Vite HMR). Removed in the prod compose.
+      - .:/app
       - ${VAULT_PATH:-./example-vault}:/vault
     ports:
       - "${PORT:-5173}:5173"
-      # Uncomment to expose MCP SSE for external tooling:
+      # Uncomment to expose the MCP SSE port for external tooling:
       # - "3002:3002"
-    # Local auth (AUTH_MODE + LOCAL_AUTH_*) loaded verbatim so the bcrypt hash's
-    # $ is not interpolated. Gitignored; production node build does NOT read
-    # src/webui/.env, so config must come through the container environment.
-    env_file:
-      - .env.auth
-    environment:
-      GIT_USER_NAME:   ${GIT_USER_NAME:-DocWright User}
-      GIT_USER_EMAIL:  ${GIT_USER_EMAIL:-docwright@localhost}
-      GIT_TOKEN:       ${GIT_TOKEN:-}
-      # OpenCode URL — set DOCKER_GATEWAY_IP in .env to IP where OpenCode is reachable from container
-      OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
-      # OpenCode basic auth — must match the values the `opencode serve` process
-      # was started with (scripts/DocWright sources src/webui/.env for those).
-      # Set in repo-root .env; never commit values.
-      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
-      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-}
-      # adapter-node origin/CSRF (production build): SvelteKit rejects form POSTs
-      # (including /api/auth/login) unless it knows its own origin. Set ORIGIN to
-      # the URL users hit for direct access, OR set PROTOCOL_HEADER + HOST_HEADER
-      # when behind a reverse proxy (Caddy). Replaces vite's DOCWRIGHT_ALLOWED_HOSTS.
-      ORIGIN: ${ORIGIN:-}
-      PROTOCOL_HEADER: ${PROTOCOL_HEADER:-}
-      HOST_HEADER: ${HOST_HEADER:-}
     restart: unless-stopped
-
-# ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────
-# Caddy handles TLS termination and routes public traffic to DocWright.
-# Suitable for a shared team installation behind a domain name.
-# Uncomment this block and comment out Scenario 1 above.
-
-# services:
-#   docwright:
-#     build: .
-#     expose:
-#       - "5173"
-#     volumes:
-#       - vault_data:/vault
-#     environment:
-#       GIT_USER_NAME:  ${GIT_USER_NAME}
-#       GIT_USER_EMAIL: ${GIT_USER_EMAIL}
-#       GIT_TOKEN:      ${GIT_TOKEN:-}
-#     restart: unless-stopped
-#
-#   caddy:
-#     image: caddy:2-alpine
-#     ports:
-#       - "80:80"
-#       - "443:443"
-#     volumes:
-#       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-#       - caddy_data:/data
-#       - caddy_config:/config
-#     restart: unless-stopped
-#
-# volumes:
-#   vault_data:
-#   caddy_data:
-#   caddy_config:
-
-# ── Scenario 3: Enterprise (OpenCode sidecar) ─────────────────────────────────
-# OpenCode serve runs as a companion container, sharing the vault volume.
-# Suitable for air-gapped or enterprise deployments with a managed AI backend.
-# Uncomment this block and comment out Scenario 1 above.
-#
-# Note: requires opencode to have a published Docker image, or build from source.
-# See https://opencode.ai for the latest deployment options.
-
-# services:
-#   docwright:
-#     build: .
-#     expose:
-#       - "5173"
-#     volumes:
-#       - vault_data:/vault
-#     environment:
-#       GIT_USER_NAME:  ${GIT_USER_NAME}
-#       GIT_USER_EMAIL: ${GIT_USER_EMAIL}
-#       GIT_TOKEN:      ${GIT_TOKEN:-}
-#       # Tell the UI where OpenCode serve lives
-#       OPENCODE_URL: http://opencode:4096
-#     depends_on:
-#       - opencode
-#     restart: unless-stopped
-#
-#   opencode:
-#     image: ghcr.io/sst/opencode:latest   # replace with actual image when published
-#     command:
-#       - serve
-#       - --cors
-#       - http://docwright:5173
-#       - --hostname
-#       - 0.0.0.0
-#     expose:
-#       - "4096"
-#     volumes:
-#       - vault_data:/vault
-#     environment:
-#       OPENCODE_DIR: /vault
-#     restart: unless-stopped
-#
-#   caddy:
-#     image: caddy:2-alpine
-#     ports:
-#       - "80:80"
-#       - "443:443"
-#     volumes:
-#       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-#       - caddy_data:/data
-#       - caddy_config:/config
-#     restart: unless-stopped
-#
-# volumes:
-#   vault_data:
-#   caddy_data:
-#   caddy_config:
