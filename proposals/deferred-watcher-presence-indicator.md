@@ -16,7 +16,13 @@ assigned_to: ""
 related_to:
   - plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
 milestone: backlog
+consumed_by: plans/live-ai-visibility-event-relay.md
 ---
+
+> **Consumed 2026-07-10** by live-ai-visibility step 3.6: the toolbar presence
+> chip (`/api/ai/presence`, ownership-filtered bus tap) delivers this — busy/idle
+> visibility of AI activity across the user's sessions, including other tabs/agents.
+
 
 ## Problem
 
