@@ -16,9 +16,13 @@ sources:
 github_issues:
   - 177
   - 178
+_path: proposals/approved/improve-bug-feature-report-dialog
+consumed_by: plans/improve-bug-feature-reporting-tool.md
 ---
 
 # Improve bug/feature report dialog — modal UI and feature support
+
+> **Note (2026-07-09):** This proposal's scope overlaps with — and was ultimately delivered by — Steps 1-2 of `plans/improve-bug-feature-reporting-tool.md` (Wave C), which independently covered the same two source issues. Never got its own plan; superseding rather than duplicating the work.
 
 ## Problem
 
