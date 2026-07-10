@@ -194,3 +194,56 @@ ${report.system_info || 'None provided'}
   fs.writeFileSync(path.join(issuesDir, `${prefix}-${slug}.md`), content, 'utf-8');
   return { path: relPath, demandCount: 1 };
 }
+
+/**
+ * Promote an already-filed local issue to a real GitHub issue. Manual/deliberate only --
+ * reports are never auto-created on GitHub at submit time (see #68 §3 demand-gated
+ * promotion: the UI only offers this once demand_count crosses a threshold, to avoid
+ * flooding the public tracker with first-time or duplicate-prone reports).
+ */
+export function promoteIssueToGithub(repoRoot: string, issuePath: string): { url: string; number: number } {
+  const fullPath = path.resolve(repoRoot, issuePath);
+  const issuesRoot = path.resolve(repoRoot, 'issues');
+  if (!fullPath.startsWith(issuesRoot + path.sep)) {
+    throw new Error('issuePath must be under issues/');
+  }
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`File not found: ${issuePath}`);
+  }
+
+  const content = fs.readFileSync(fullPath, 'utf-8');
+  const fm = parseFrontmatter(content);
+  if (fm.github_issue) {
+    throw new Error(`Already linked to GitHub issue #${fm.github_issue}`);
+  }
+
+  const category = String(fm.category ?? 'bug');
+  const label = category === 'feature' ? 'enhancement' : 'bug';
+  const body = [
+    `**Description:** ${fm.description || '(no description)'}`,
+    `**Reporter:** ${fm.reporter || fm.author || 'unknown'}`,
+    `**Priority:** ${fm.priority || 'none'}`,
+    `**Demand Count:** ${fm.demand_count || '1'}`,
+    `**Source:** DocWright vault (\`${issuePath}\`)`,
+    '',
+    '---',
+    '',
+    '_Auto-promoted from DocWright demand heatmap._',
+  ].join('\n');
+
+  let ghOutput: string;
+  try {
+    ghOutput = execSync(
+      `gh issue create --title ${JSON.stringify(String(fm.title || 'Untitled report'))} --body ${JSON.stringify(body)} --label "${label},docwright-auto"`,
+      { cwd: repoRoot, encoding: 'utf-8', timeout: 30000 },
+    ).trim();
+  } catch (e: any) {
+    throw new Error(`GitHub CLI failed: ${e.stderr || e.message}`);
+  }
+
+  const ghNumMatch = ghOutput.match(/\/(\d+)$/);
+  const ghNumber = parseInt(ghNumMatch ? ghNumMatch[1] : '0', 10);
+  fs.writeFileSync(fullPath, setFrontmatterField(content, 'github_issue', ghNumber), 'utf-8');
+
+  return { url: ghOutput, number: ghNumber };
+}

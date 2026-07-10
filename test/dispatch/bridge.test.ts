@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { suggestDuplicates, confirmDuplicate, createReportedBug } from '../../src/dispatch/bridge';
+import { suggestDuplicates, confirmDuplicate, createReportedBug, promoteIssueToGithub } from '../../src/dispatch/bridge';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -94,5 +94,26 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
 
     const featureSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'feature');
     assert.ok(featureSuggestions.length >= 1, 'the same-category feature request should still be suggested');
+  });
+
+  // promoteIssueToGithub shells out to the real `gh` CLI -- these cases only cover the
+  // guard logic that runs before that call, not live issue creation (never hit the
+  // network from a test).
+  describe('promoteIssueToGithub (guard logic only, never hits the network)', () => {
+    it('throws if the issue is already linked to a GitHub issue', () => {
+      const first = createReportedBug(tmpDir, report());
+      let raw = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
+      raw = raw.replace(/^status: new$/m, 'status: new\ngithub_issue: 999');
+      fs.writeFileSync(path.join(tmpDir, first.path), raw, 'utf-8');
+      assert.throws(() => promoteIssueToGithub(tmpDir, first.path), /Already linked to GitHub issue #999/);
+    });
+
+    it('throws if the issue file does not exist', () => {
+      assert.throws(() => promoteIssueToGithub(tmpDir, 'issues/does-not-exist.md'), /File not found/);
+    });
+
+    it('throws if issuePath escapes the issues/ directory', () => {
+      assert.throws(() => promoteIssueToGithub(tmpDir, '../outside.md'), /must be under issues\//);
+    });
   });
 });
