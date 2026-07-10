@@ -5,12 +5,19 @@ import { runStepSession } from '../../../../../executor/session';
 import { createWaitingPromise } from '../../../../../executor/waiting';
 import type { SessionConfig } from '../../../../../executor/session';
 import type { PlanStep } from '../../../../../executor/plan-parser';
+import { createLiveExecutorTransport } from '$lib/server/executor-live.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
 
 const OPENCODE_URL = process.env.OPENCODE_URL;
+
+// Per-surface flag (plan Constraint 2). Default ON after the sandbox e2e passed
+// (2026-07-10). When ON, each step runs in an OWNED session streamed live to the
+// panel (AgentActivityView); escape hatch: LIVE_AI_EXECUTOR=0/false/off/no
+// restores the legacy blocking per-step path (removed in 3.7).
+const LIVE_AI_EXECUTOR = !['0', 'false', 'off', 'no'].includes((process.env.LIVE_AI_EXECUTOR ?? '').toLowerCase());
 // Read at request time so .env changes take effect without a server restart
 function getStepTimeout(): number {
   return parseInt(process.env.DOCWRIGHT_EXECUTOR_TIMEOUT_SECONDS || '900', 10) * 1000;
@@ -34,7 +41,7 @@ function sse(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
   const { path: planPath } = await request.json();
   if (!planPath) return new Response('missing path', { status: 400 });
 
@@ -72,13 +79,22 @@ export async function POST({ request }) {
         controller.enqueue(new TextEncoder().encode(sse(event, data)));
       };
 
+      // Live per-step transport when the flag is on and we know the owner;
+      // undefined → runStepSession falls back to the legacy blocking transport.
+      const liveTransport = LIVE_AI_EXECUTOR && locals?.user
+        ? createLiveExecutorTransport({ owner: locals.user.username, docPath: planPath, model: sessionConfig.model, idleTimeoutMs: sessionConfig.stepTimeout })
+        : undefined;
+
       async function runStep(step: PlanStep, total: number, stepSend: (event: string, data: unknown) => void) {
         const result = await runStepSession(step, total, resolved, sessionConfig, {
           onLog: (text: string) => stepSend('log', { text }),
           onWaiting: async (_question: string, sessionId: string) => {
             return await createWaitingPromise(sessionId);
           },
-        });
+          onSession: liveTransport
+            ? (sessionId: string) => stepSend('step_session', { step: step.stepNumber, sessionId })
+            : undefined,
+        }, liveTransport);
         return result;
       }
 
