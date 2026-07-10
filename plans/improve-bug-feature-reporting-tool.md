@@ -1,6 +1,6 @@
 ---
 title: "Wave C — Report/Intake UX: modal form, feature requests, GitHub linkage, governance panel drill-in, issue promotion"
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-09
 tags:
