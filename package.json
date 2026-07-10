@@ -48,6 +48,7 @@
     "init": "npx tsx scripts/init.ts",
     "open": "npx tsx scripts/open-vault.ts",
     "adopt": "npx tsx scripts/adopt-vault.ts",
+    "deploy:scaffold": "npx tsx scripts/scaffold-deploy.ts",
     "migrate:plan-steps": "npx tsx scripts/migrate-plan-steps.ts",
     "migrate:mode-field": "npx tsx scripts/migrate-mode-field.ts",
     "vault:migrate": "npx tsx scripts/vault-migrate.ts",
