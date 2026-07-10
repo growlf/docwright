@@ -257,7 +257,7 @@ export async function syncIssueFile(num: number, force?: boolean): Promise<strin
 
   const frontmatter = `---
 title: "${issue.title.replace(/"/g, '\\"')}"
-status: open
+status: new
 github_issue: ${num}
 category: ${Array.isArray(issue.labels) && issue.labels.some((l: any) => l.name === 'bug') ? 'bug' : 'feature'}
 priority: ${Array.isArray(issue.labels) && issue.labels.some((l: any) => l.name.startsWith('priority:')) ? 'high' : 'medium'}
@@ -267,7 +267,6 @@ tags:
 created: ${new Date().toISOString().slice(0, 10)}
 created_by: "${process.env.OPCODE_USER_NAME || 'NetYeti'}@${process.env.HOSTNAME || 'host'}"
 assigned_to: ""
-milestone: future
 ---
 
 ${bodySnippet}

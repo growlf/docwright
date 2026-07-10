@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { suggestDuplicates, confirmDuplicate, createReportedBug } from '../../src/dispatch/bridge';
+import { suggestDuplicates, confirmDuplicate, createReportedBug, promoteIssueToGithub } from '../../src/dispatch/bridge';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -73,5 +73,47 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
     // the related canonical's demand is untouched (association, not a +1 lie)
     const firstContent = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
     assert.ok(firstContent.includes('demand_count: 1'));
+  });
+
+  it('createReportedBug files a feature request with category: feature and a feature- prefixed filename', () => {
+    const res = createReportedBug(tmpDir, report({
+      title: 'Bulk-export issues to CSV',
+      category: 'feature',
+    }));
+    assert.ok(res.path.startsWith(path.join('issues', 'feature-')), `expected feature- prefix, got ${res.path}`);
+    const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
+    assert.ok(content.includes('category: feature'));
+    assert.ok(content.includes('status: new'));
+    assert.ok(content.includes('reported-feature'));
+  });
+
+  it('suggestDuplicates only matches within the same category (bug vs feature never cross-suggest)', () => {
+    createReportedBug(tmpDir, report({ category: 'feature' }));
+    const bugSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel', 'bug');
+    assert.strictEqual(bugSuggestions.length, 0, 'a feature request must not surface as a bug duplicate');
+
+    const featureSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'feature');
+    assert.ok(featureSuggestions.length >= 1, 'the same-category feature request should still be suggested');
+  });
+
+  // promoteIssueToGithub shells out to the real `gh` CLI -- these cases only cover the
+  // guard logic that runs before that call, not live issue creation (never hit the
+  // network from a test).
+  describe('promoteIssueToGithub (guard logic only, never hits the network)', () => {
+    it('throws if the issue is already linked to a GitHub issue', () => {
+      const first = createReportedBug(tmpDir, report());
+      let raw = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
+      raw = raw.replace(/^status: new$/m, 'status: new\ngithub_issue: 999');
+      fs.writeFileSync(path.join(tmpDir, first.path), raw, 'utf-8');
+      assert.throws(() => promoteIssueToGithub(tmpDir, first.path), /Already linked to GitHub issue #999/);
+    });
+
+    it('throws if the issue file does not exist', () => {
+      assert.throws(() => promoteIssueToGithub(tmpDir, 'issues/does-not-exist.md'), /File not found/);
+    });
+
+    it('throws if issuePath escapes the issues/ directory', () => {
+      assert.throws(() => promoteIssueToGithub(tmpDir, '../outside.md'), /must be under issues\//);
+    });
   });
 });

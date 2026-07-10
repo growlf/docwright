@@ -3,9 +3,11 @@
 
   let {
     frontmatter = null as Record<string, any> | null,
+    path = '' as string,
     onProposalCreated,
   }: {
     frontmatter?: Record<string, any> | null;
+    path?: string;
     onProposalCreated?: (proposalPath: string) => void;
   } = $props();
 
@@ -20,8 +22,11 @@
   let isCreating = $state(false);
   let isLinking = $state(false);
 
-  // Check if this is an issue and can be processed
-  const isIssue = $derived(frontmatter?.type === 'issue');
+  // Check if this is an issue and can be processed. Issue documents are identified by
+  // their location under issues/ (the schema doesn't require a `type: issue` field —
+  // most issue files never set one), with the frontmatter field kept as a fallback
+  // for any document that does set it explicitly.
+  const isIssue = $derived(path?.startsWith('issues/') || frontmatter?.type === 'issue');
   const canForwardPath = $derived(
     isIssue &&
     ['triaged', 'scope-checked', 'awaiting-proposal'].includes(frontmatter?.status)

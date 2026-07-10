@@ -5,7 +5,7 @@ created: 2026-07-06
 priority: medium
 complexity: medium
 estimated_effort: M
-approved: false
+approved: true
 milestone: v0.5.0
 tags:
   - reporting
@@ -16,7 +16,7 @@ category:
   - intake
 part_of: plans/release-v0.5.0.md
 created_by: "NetYeti@cluster-llm"
-assigned_to: []
+assigned_to: NetYeti
 depends_on:
   - "[[proposals/issue-cluster-remediation-waves.md]]"
 related_to:
@@ -26,6 +26,8 @@ related_to:
   - "[[issues/governance-panel-pending-approval-stat-is-mislabel.md]]"
   - "[[issues/governance-panel-status-stat-tiles-aren-t-clickabl.md]]"
   - "[[issues/bug-issues-have-no-forward-path.md]]"
+_path: proposals/approved/improve-bug-feature-reporting-tool
+consumed_by: plans/improve-bug-feature-reporting-tool.md
 ---
 
 # Improve Bug & Feature Reporting Tool

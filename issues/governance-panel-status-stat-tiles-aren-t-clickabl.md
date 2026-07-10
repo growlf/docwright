@@ -1,6 +1,7 @@
 ---
 title: Governance panel: Status stat tiles aren't clickable — no drill-in to proposals
-status: scope-checked
+status: resolved
+resolved: 2026-07-09
 created: 2026-07-05
 category: feature
 part_of: plans/release-v0.5.0.md
@@ -23,6 +24,10 @@ Found dogfooding 2026-07-02. In the Governance panel's **Status** subview (`src/
 So a user who sees "Open Proposals: N" or "Pending Approval: 4" **can't click the tile to see those items** from the Status view — the clickable proposal list only exists in the separate **Lifecycle** subview. Users expect to click a count and see what's behind it.
 
 ## Acceptance criteria
-- [ ] Clicking a Status stat tile drills into its items (navigate to the Lifecycle subview filtered to that set, or expand a list inline like Active Plans does).
-- [ ] Consistent behavior across all four tiles.
-- [ ] Keyboard/button semantics (the tiles become real buttons/links).
+- [x] Clicking a Status stat tile drills into its items (navigate to the Lifecycle subview filtered to that set, or expand a list inline like Active Plans does).
+- [x] Consistent behavior across all four tiles.
+- [x] Keyboard/button semantics (the tiles become real buttons/links).
+
+## Resolution (2026-07-09)
+
+Already fixed by earlier merged work — all four tiles are real `<button>` elements wired to `bridge()?.navigate(...)`. Confirmed live via Playwright: clicking "Awaiting Plan" navigates to `/status?section=approved-pending` and expands the matching filtered section. Tracked under `plans/improve-bug-feature-reporting-tool.md` (Wave C, Step 5).

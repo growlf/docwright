@@ -596,7 +596,7 @@
           <button class="btn cancel" onclick={cancel} title="Discard changes">✕ Cancel</button>
         {:else}
           <button class="btn del" onclick={deleteFile} title="Delete this document">🗑 Delete</button>
-        <IssueForwardPathActions {frontmatter} />
+        <IssueForwardPathActions {frontmatter} path={filePath()} />
         {/if}
         <button class="btn mode-toggle" onclick={cycleMode}
           title={mode === 'read'
