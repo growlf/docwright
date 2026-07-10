@@ -1757,3 +1757,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: file bug — CI gap: webui production build never exercised
 
 **Session note:** `docs/session-notes/session_note_202607092132.md`
+
+---
+
+## Session: 2026-07-10 — Wave C completion + lifecycle tooling hardening
+
+**Focus:** Wave C completion + lifecycle tooling hardening
+
+**Completed:**
+- [x] On main: wip: pending human-approval proposal edits (harden-lifecycle-tooling, fix-completion-doc-generator)
+- [x] index on main: 433fe46 docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] untracked files on main: 433fe46 docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] chore: remove duplicate orphan plan from executor-panel-live-feedback transition
+- [x] release: live-AI visibility v0.4.11 — dogfood → main
+- [x] fix: plan-review endpoint reviews steps in parallel, not sequentially
+- [x] chore: bump version 0.4.10 → 0.4.11 (live-AI visibility plan completion release)
+- [x] docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] docs: approve executor-panel-live-feedback (proposal → plan)
+
+**Session note:** `docs/session-notes/session_note_202607100142.md`
