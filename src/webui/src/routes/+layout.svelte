@@ -24,6 +24,8 @@ import {
   import CollationPanel from '$lib/CollationPanel.svelte';
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
   import AgentActivityView from '$lib/AgentActivityView.svelte';
+  import { reduceEvents, assistantMessageTexts } from '$lib/agent-activity-model';
+  import { stripAIWrapper } from '$lib/ai-text';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import UserBadge from '$lib/UserBadge.svelte';
@@ -117,6 +119,12 @@ import {
   let reviewIsLive = $state(false);
   let liveReviewEvents = $state<any[]>([]);
   let liveReviewES: EventSource | null = null;
+
+  // Live Improve (LIVE_AI_IMPROVE): stream generation in AgentActivityView, then
+  // hand the extracted {improved, critique} to ImprovementPanel for the Apply step.
+  let improveIsLive = $state(false);
+  let liveImproveEvents = $state<any[]>([]);
+  let liveImproveES: EventSource | null = null;
 
   // Right panel priority model — null = no VC claim, show standard tabs
   let rpc = $state<RightPanelClaim | null>(null);
@@ -282,6 +290,9 @@ import {
     improvePhase.set('improve-thinking');
     improveStatus.set('');
     improveIsCritiqueOnly = false;
+    if (liveImproveES) { liveImproveES.close(); liveImproveES = null; }
+    improveIsLive = false;
+    liveImproveEvents = [];
     // untrack: rightTab reads/writes must not become effect dependencies —
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
@@ -504,6 +515,68 @@ import {
     es.onerror = () => { if (idleCount >= expected) finishLive(); };
   }
 
+  // Live Improve/Critique: subscribe to the session stream, tell the server to run
+  // the improve+critique turns, then extract the structured result for Apply.
+  function startLiveImprove(sessionID: string, docPath: string, mode: 'full' | 'critique') {
+    improveIsLive = true;
+    liveImproveEvents = [];
+    rightTab = 'improve';
+    showRightPanel = true;
+    improveResult.set(null);
+    improvePhase.set(mode === 'critique' ? 'critique-thinking' : 'improve-thinking');
+    let expected = Infinity;
+    let idleCount = 0;
+
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
+    liveImproveES = es;
+
+    function finishImprove() {
+      if (liveImproveES) { liveImproveES.close(); liveImproveES = null; }
+      const state = reduceEvents(liveImproveEvents);
+      const msgs = assistantMessageTexts(state); // one per turn (improve, critique)
+      let improved = '';
+      let critique = '';
+      if (mode === 'critique') {
+        critique = (msgs[0] ?? '').trim();
+      } else {
+        improved = stripAIWrapper(msgs[0] ?? '');
+        critique = (msgs[1] ?? '').trim();
+      }
+      improveResult.set({ improved, critique });
+      improvePhase.set('done');
+      improveLoading.set(false);
+      improveIsLive = false; // hand off to ImprovementPanel for the Apply decision
+    }
+
+    es.onopen = async () => {
+      try {
+        const r = await fetch('/api/improve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', sessionID, path: docPath, mode }),
+        });
+        const info = await r.json().catch(() => ({}));
+        if (typeof info?.prompts === 'number') expected = info.prompts;
+        if (!r.ok) { showToast('Failed to start improve', 4000); finishImprove(); }
+      } catch {
+        showToast('Failed to start improve', 4000);
+        finishImprove();
+      }
+    };
+
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveImproveEvents = [...liveImproveEvents, evt];
+      if (evt?.type === 'session.idle') {
+        idleCount++;
+        if (idleCount >= expected) finishImprove();
+      }
+    };
+
+    es.onerror = () => { if (idleCount >= expected) finishImprove(); };
+  }
+
   // React to signal to switch to Review tab (just show tab, don't auto-run)
   $effect(() => {
     if ($showReviewTab) {
@@ -550,6 +623,10 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp, mode: 'critique' }),
       });
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) { startLiveImprove(info.sessionID, fp, 'critique'); return; }
+      }
       const reader = res.body?.getReader();
       if (!reader) { showToast('No response stream', 4000); return; }
       const decoder = new TextDecoder();
@@ -609,6 +686,10 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) { startLiveImprove(info.sessionID, fp, 'full'); return; }
+      }
       const reader = res.body?.getReader();
       if (!reader) { showToast('No response stream', 4000); return; }
       const decoder = new TextDecoder();
@@ -1232,6 +1313,14 @@ import {
           <div class="right-empty">Open a document to see its properties</div>
         {/if}
       {/key}
+    {:else if rightTab === 'improve' && improveIsLive}
+      <div style="display:flex;flex-direction:column;height:100%;min-height:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.55rem;border-bottom:1px solid var(--border,#ddd);font-size:0.8rem;color:var(--muted,#666);">
+          <span>Live {improveIsCritiqueOnly ? 'critique' : 'improve'}</span>
+          <button class="right-tab" title="Close" onclick={() => { if (liveImproveES) { liveImproveES.close(); liveImproveES = null; } improveIsLive = false; rightTab = 'properties'; }}>✕</button>
+        </div>
+        <AgentActivityView events={liveImproveEvents} />
+      </div>
     {:else if rightTab === 'improve'}
       <ImprovementPanel
         improved={ir?.improved ?? ''}
