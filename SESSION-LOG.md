@@ -1777,3 +1777,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: approve executor-panel-live-feedback (proposal → plan)
 
 **Session note:** `docs/session-notes/session_note_202607100142.md`
+
+---
+
+## Session: 2026-07-10 — process overhaul plan + critique
+
+**Focus:** process overhaul plan + critique
+
+**Completed:**
+- [x] docs: Phase 3 complete (3.1 scaffold + 3.2 docs)
+- [x] docs: rewrite docker.md for image-based deployment; point .env.example to scaffold (3.2)
+- [x] feat: deploy-dir scaffold generator + fix empty-ORIGIN crash (step 3.1)
+- [x] docs: Phase 2 complete (2.1-2.3) — image-based prod compose + dev split + Watchtower
+- [x] feat: opt-in outbound-only Watchtower update channel (step 2.3)
+- [x] feat: dev/prod compose split — image-based docker-compose.prod.yml + env contract (2.1/2.2)
+- [x] docs: Phase 1 complete (1.0-1.3) — production image verified, #288 eliminated
+- [x] chore: dogfood prod config — env_file auth + adapter-node ORIGIN/proxy-header contract
+- [x] docs: mark step 1.0 done — production image verified (Review e2e on dogfood)
+- [x] chore: run dogfood box on the production image (disable source mount)
+
+**Session note:** `docs/session-notes/session_note_202607101607.md`

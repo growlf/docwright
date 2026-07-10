@@ -15,7 +15,7 @@ author-role: contributor
 created_by: NetYeti@phoenix
 assigned_to: NetYeti
 related_to:
-  - proposals/sub-plan-docwright-init-scaffold.md
+  - proposals/approved/sub-plan-docwright-init-scaffold.md
   - plans/phase-3-vault-foundation.md
 _path: proposals/approved/docwright-adopt-existing-vault.md
 consumed_by: plans/completed/plan-script-skill-docwright-adopt-initialize-docwright-on-existing-vaults.md
