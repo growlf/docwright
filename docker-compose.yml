@@ -23,9 +23,11 @@ services:
   docwright:
     build: .
     volumes:
-      # Project source — mounts entire folder for live development
-      # (Comment out the next line to use the built image instead)
-      - .:/app
+      # Project source — mount for LIVE DEV (vite dev / HMR). This box now runs
+      # the built PRODUCTION image (adapter-node `node build`), so the source
+      # mount is disabled. To return to live-dev mode: uncomment the next line
+      # AND set DOCWRIGHT_DEV_SERVER=1 in the environment below.
+      # - .:/app
       # Vault data directory
       - ${VAULT_PATH:-./example-vault}:/vault
     ports:
