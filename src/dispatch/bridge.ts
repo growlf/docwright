@@ -8,8 +8,7 @@
  *       `related` (the association tier — never a full demand increment, so counts don't lie).
  *
  * Invariant: explicit reports only. There is no passive/automatic detection path here
- * (that would be telemetry — forbidden). New bugs default to `milestone: future`, consistent
- * with the rest of the vault until a determination cycle schedules them.
+ * (that would be telemetry — forbidden).
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -23,6 +22,7 @@ export interface BugReport {
   priority?: 'low' | 'medium' | 'high';
   system_info?: string;
   milestone?: string;
+  category?: 'bug' | 'feature';
 }
 
 export interface DuplicateSuggestion {
@@ -54,7 +54,7 @@ export function getSimilarity(a: string, b: string): number {
   return inter.size / union.size;
 }
 
-function openBugs(repoRoot: string): Array<{ relPath: string; absPath: string; fm: Record<string, any> }> {
+function openBugs(repoRoot: string, category: 'bug' | 'feature' = 'bug'): Array<{ relPath: string; absPath: string; fm: Record<string, any> }> {
   const issuesDir = path.join(repoRoot, 'issues');
   if (!fs.existsSync(issuesDir)) return [];
   const out: Array<{ relPath: string; absPath: string; fm: Record<string, any> }> = [];
@@ -63,7 +63,7 @@ function openBugs(repoRoot: string): Array<{ relPath: string; absPath: string; f
     const absPath = path.join(issuesDir, file);
     try {
       const fm = parseFrontmatter(fs.readFileSync(absPath, 'utf-8'));
-      if (fm.category === 'bug' && ['new', 'triaged', 'scope-checked', 'awaiting-proposal'].includes(String(fm.status ?? ''))) {
+      if (String(fm.category ?? '') === category && ['new', 'triaged', 'scope-checked', 'awaiting-proposal'].includes(String(fm.status ?? ''))) {
         out.push({ relPath: path.join('issues', file), absPath, fm });
       }
     } catch { /* skip unreadable */ }
@@ -73,10 +73,11 @@ function openBugs(repoRoot: string): Array<{ relPath: string; absPath: string; f
 
 interface GhIssue { number: number; title: string; }
 
-/** Query GitHub for open bug-tracked issues. Returns empty array if gh CLI is unavailable. */
-function queryGhIssues(): GhIssue[] {
+/** Query GitHub for open issues tracked under the given category's label. Returns empty array if gh CLI is unavailable. */
+function queryGhIssues(category: 'bug' | 'feature' = 'bug'): GhIssue[] {
+  const label = category === 'feature' ? 'enhancement' : 'bug';
   try {
-    const out = execSync('gh issue list --label bug --state open --json number,title', {
+    const out = execSync(`gh issue list --label ${label} --state open --json number,title`, {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['ignore', 'pipe', 'ignore'],
@@ -87,9 +88,9 @@ function queryGhIssues(): GhIssue[] {
   }
 }
 
-/** Phase 1 — read-only. Similar open bugs, best match first. Never writes. */
-export function suggestDuplicates(repoRoot: string, title: string): DuplicateSuggestion[] {
-  const local: DuplicateSuggestion[] = openBugs(repoRoot)
+/** Phase 1 — read-only. Similar open bugs/feature requests (same category only), best match first. Never writes. */
+export function suggestDuplicates(repoRoot: string, title: string, category: 'bug' | 'feature' = 'bug'): DuplicateSuggestion[] {
+  const local: DuplicateSuggestion[] = openBugs(repoRoot, category)
     .map(b => ({
       path: b.relPath,
       title: String(b.fm.title ?? ''),
@@ -99,7 +100,7 @@ export function suggestDuplicates(repoRoot: string, title: string): DuplicateSug
     }))
     .filter(s => s.score >= SUGGEST_THRESHOLD);
 
-  const gh: DuplicateSuggestion[] = queryGhIssues()
+  const gh: DuplicateSuggestion[] = queryGhIssues(category)
     .map(issue => ({
       path: `gh:${issue.number}`,
       title: issue.title,
@@ -146,15 +147,17 @@ export function confirmDuplicate(repoRoot: string, canonicalPath: string, report
   return { path: canonicalPath, demandCount: nextDemand };
 }
 
-/** Phase 2b — no match: file a new bug, associating any near-misses via `related`. */
+/** Phase 2b — no match: file a new bug or feature request, associating any near-misses via `related`. */
 export function createReportedBug(repoRoot: string, report: BugReport, related: string[] = []): { path: string; demandCount: number } {
   const issuesDir = path.join(repoRoot, 'issues');
   if (!fs.existsSync(issuesDir)) fs.mkdirSync(issuesDir, { recursive: true });
 
+  const category = report.category === 'feature' ? 'feature' : 'bug';
+  const prefix = category === 'feature' ? 'feature' : 'bug';
   const base = report.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 50) || 'report';
   let slug = base, n = 1;
-  while (fs.existsSync(path.join(issuesDir, `bug-${slug}.md`))) { slug = `${base}-${n++}`; }
-  const relPath = path.join('issues', `bug-${slug}.md`);
+  while (fs.existsSync(path.join(issuesDir, `${prefix}-${slug}.md`))) { slug = `${base}-${n++}`; }
+  const relPath = path.join('issues', `${prefix}-${slug}.md`);
   const today = new Date().toISOString().slice(0, 10);
 
   const relatedBlock = related.length
@@ -167,7 +170,7 @@ status: new
 created: ${today}
 author: ${report.reporter}
 author-role: user
-category: bug
+category: ${category}
 priority: ${report.priority || 'medium'}
 complexity: medium
 estimated_effort: S
@@ -175,7 +178,7 @@ demand_count: 1
 reported_dates: [${today}]
 channel: dev
 ${relatedBlock}tags:
-  - reported-bug
+  - reported-${category}
 ---
 
 # ${report.title}
@@ -188,6 +191,6 @@ ${report.description}
 
 ${report.system_info || 'None provided'}
 `;
-  fs.writeFileSync(path.join(issuesDir, `bug-${slug}.md`), content, 'utf-8');
+  fs.writeFileSync(path.join(issuesDir, `${prefix}-${slug}.md`), content, 'utf-8');
   return { path: relPath, demandCount: 1 };
 }

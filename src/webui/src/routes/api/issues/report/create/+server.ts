@@ -10,13 +10,13 @@ const REPO_ROOT = process.env.DOCWRIGHT_ROOT
 // reporter was shown (the association tier: `related`, not a demand increment).
 export async function POST({ request }) {
   try {
-    const { title, description, reporter, priority, system_info, milestone, related } = await request.json();
+    const { title, description, reporter, priority, system_info, milestone, category, related } = await request.json();
     if (!title || !description || !reporter) {
       return json({ error: 'title, description and reporter are required' }, { status: 400 });
     }
     const result = createReportedBug(
       REPO_ROOT,
-      { title, description, reporter, priority, system_info, milestone },
+      { title, description, reporter, priority, system_info, milestone, category },
       Array.isArray(related) ? related : [],
     );
     return json({ ok: true, ...result });

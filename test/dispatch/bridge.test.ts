@@ -74,4 +74,25 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
     const firstContent = fs.readFileSync(path.join(tmpDir, first.path), 'utf-8');
     assert.ok(firstContent.includes('demand_count: 1'));
   });
+
+  it('createReportedBug files a feature request with category: feature and a feature- prefixed filename', () => {
+    const res = createReportedBug(tmpDir, report({
+      title: 'Bulk-export issues to CSV',
+      category: 'feature',
+    }));
+    assert.ok(res.path.startsWith(path.join('issues', 'feature-')), `expected feature- prefix, got ${res.path}`);
+    const content = fs.readFileSync(path.join(tmpDir, res.path), 'utf-8');
+    assert.ok(content.includes('category: feature'));
+    assert.ok(content.includes('status: new'));
+    assert.ok(content.includes('reported-feature'));
+  });
+
+  it('suggestDuplicates only matches within the same category (bug vs feature never cross-suggest)', () => {
+    createReportedBug(tmpDir, report({ category: 'feature' }));
+    const bugSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel', 'bug');
+    assert.strictEqual(bugSuggestions.length, 0, 'a feature request must not surface as a bug duplicate');
+
+    const featureSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'feature');
+    assert.ok(featureSuggestions.length >= 1, 'the same-category feature request should still be suggested');
+  });
 });

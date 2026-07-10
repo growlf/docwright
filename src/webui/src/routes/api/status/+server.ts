@@ -427,15 +427,18 @@ export function GET({ url }: { url: URL }) {
     .map(({ path: p, fm }) => entry(p, fm))
     .sort(byPriority);
 
-  // ── Heatmap: top bugs by demand (time-weighted) ─────────────────────────────
+  // ── Heatmap: top bugs + feature requests by demand (time-weighted) ──────────
   const heatmap = readDir(path.join(REPO_ROOT, 'issues'))
     .filter(({ path: p, fm }) =>
       !p.endsWith('README.md') &&
-      String(fm.category ?? '') === 'bug' &&
+      ['bug', 'feature'].includes(String(fm.category ?? '')) &&
       !['resolved', 'wont-fix'].includes(String(fm.status ?? ''))
     )
     .map(({ path: p, fm }) => {
-      const e = entry(p, fm);
+      // entry()'s `category` field is tags-shaped (array), while issues store category
+      // as a plain scalar (`category: bug|feature`) -- read it directly here rather
+      // than widen the shared helper's semantics for every other consumer.
+      const e = { ...entry(p, fm), reportCategory: String(fm.category ?? 'bug') };
       const dates: string[] = e.reportedDates;
       if (window === '30d') {
         // Only count reports in the last 30 days

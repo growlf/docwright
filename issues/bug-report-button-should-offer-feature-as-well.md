@@ -1,6 +1,7 @@
 ---
 title: Report button should offer "feature" as well
-status: proposal-linked
+status: resolved
+resolved: 2026-07-09
 author: NetYeti
 author-role: user
 part_of: plans/release-v0.5.0.md
@@ -34,3 +35,7 @@ If we could request new features via the current "Report Bug" button, it would b
 ## System Info
 
 None provided
+
+## Resolution (2026-07-09)
+
+Delivered via `plans/improve-bug-feature-reporting-tool.md` (Wave C, Steps 1-2): the report modal now has a Bug/Feature category toggle, `createReportedBug` writes `category: feature` with a `feature-` filename prefix, and the demand heatmap includes feature requests alongside bugs (with a distinct 💡 icon). Verified live: submitted a real feature request through the modal, confirmed the file, the toast, and its heatmap appearance.
