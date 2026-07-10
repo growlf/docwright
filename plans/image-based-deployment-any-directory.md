@@ -1,6 +1,6 @@
 ---
 title: Image-Based Deployment — Run on Any Directory (Vault Mount + Env, No Source Checkout)
-status: draft
+status: in-progress
 author: NetYeti
 created: 2026-07-10
 tags:
@@ -13,11 +13,11 @@ proposal_source: proposals/image-based-deployment-any-directory.md
 priority: high
 complexity: medium
 automated: guided
-assigned_to: ""
+assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: an operator creates an empty directory, drops a .env + points VAULT_PATH at a vault, runs `docker compose up -d` against the shipped production compose, and gets a healthy instance on the published image with ZERO edits to any tracked file. Update path: `docker compose pull && up -d` (or Watchtower auto-recreate) moves it to a new release with no git ops. Failure paths: empty .env still boots (image-baked defaults); a foreign/absent vault path fails fast with a clear error; pull of an unavailable tag leaves the running container intact. Root-cause elimination: no source tree is mounted on a production instance, so GH #288 (root-owned .svelte-kit written into the source mount) cannot reproduce. The dogfood dev box keeps its source-mount build compose untouched throughout."
-total_steps: 0
+total_steps: 14
 completed_steps: 0
 ---
 
@@ -60,15 +60,19 @@ ghcr.io/growlf/docwright:<tag/digest>   ── mounts only ──▶  /vault
    Watchtower auto-update channel, documented as such.
 5. **Updates are outbound-only.** Prefer Watchtower (polls the registry) over an
    inbound webhook; do NOT open an inbound endpoint on a deploy host in this plan.
-6. **Plan mutations via MCP tools only** (`update_step` / `append_history` /
-   `update_plan_status`). Direct writes to `plans/*.md` are blocked. Keep history
-   text free of `|` pipe characters (avoids the known table-corruption bug, GH #272).
-7. **Git flow (branch-only until completion):** all repo changes land on
-   `feat/image-based-deployment` (branched off `origin/main`). Work in this worktree.
-   Ops steps in Phase 4 act on the `docwright-deploy` checkouts + docker on
+6. **Plan mutations via MCP tools only** (`update_step` / `update_plan_status` /
+   `append_history` / `set_plan_field` / `write_plan`). Direct writes to `plans/*.md`
+   are blocked. Keep history text free of `|` pipe characters (avoids the known
+   table-corruption bug, GH #272).
+7. **Git flow:** governance docs (this plan, the proposal, issues) are authored via the
+   MCP tools into the `dogfood` integration checkout and committed on `dogfood`. Code /
+   config / docs deliverables (compose files, entrypoint, `docs/*`, `scripts/*`) also
+   land on `dogfood`; the source-mounted dogfood container picks them up live for
+   testing. Phase 4 ops steps act on the `docwright-deploy` checkouts + docker on
    `cluster-llm` and are NOT repo commits — record their evidence in the step history.
-   On completion: one `feat/image-based-deployment → main` PR with at least a
-   patch-level version bump. Typed commit prefixes (`feat|fix|docs|chore|refactor`).
+   On completion: one `dogfood → main` PR with at least a patch-level version bump.
+   Typed commit prefixes (`feat|fix|docs|chore|refactor`); do NOT self-attest
+   HUMAN_APPROVED on governance-state commits — propose them for the human.
 8. **The three dev-cloud instances (csdocs :5274, erp-images :5275, msp :5276) are
    currently on a throwaway image pin** (`docker-compose.pin-v0.4.11.yml`, applied
    2026-07-10). They must stay healthy throughout; Phase 4 replaces the throwaway pin
@@ -76,13 +80,14 @@ ghcr.io/growlf/docwright:<tag/digest>   ── mounts only ──▶  /vault
 9. **Verify every image-runnable claim by RUNNING the image**, not by reading the
    Dockerfile: `docker run`/`compose up` + `curl /api/health` → 200.
 
-## Steps
+## Implementation Steps
 
 | # | Action | Details | Status |
 | --- | --- | --- | --- |
-| 1.1 | Enumerate the env config contract | Grep the app + entrypoint for every consumed env var: `grep -rnoE "process\\.env\\.[A-Z_]+" src/ scripts/ \| sort -u` and read the container entrypoint (`docwright-entrypoint`). Produce a canonical list (name, purpose, default, secret?). Deliverable: a table in `docs/deployment.md` under a new "Environment contract" heading. No code change yet. Verify: the list includes at minimum GIT_USER_NAME, GIT_USER_EMAIL, GIT_TOKEN, AUTH_MODE, LOCAL_AUTH_USER/PASSWORD/EMAIL/DISPLAY_NAME, SESSION_TTL_SECONDS, PORT, VAULT_PATH, DOCWRIGHT_ALLOWED_HOSTS, plus any others grep finds. | ⏳ Pending |
-| 1.2 | Bake sane defaults so an empty .env boots | For each non-secret knob from 1.1, ensure a working default exists in the entrypoint/app (secrets default to empty/disabled, never a real value). Verify by RUNNING the published image with NO env file, only a throwaway vault: `docker run --rm -p 5999:5173 -v $(mktemp -d):/vault ghcr.io/growlf/docwright:<current-tag>` then `curl -s -o /dev/null -w '%{http_code}' localhost:5999/api/health` → 200. Record the output in the step history. | ⏳ Pending |
-| 1.3 | Confirm zero DocWright-owned writes outside /vault | Identify every runtime write path (index.json cache, DOCWRIGHT_CACHE_DIR, ai-sessions, `.svelte-kit`). Ensure `.svelte-kit`/build output is baked into the image at build time (never written at runtime) and any runtime cache resolves under `/vault` or an explicit named volume — NOT under `/app`. Verify: run the image (no source mount), exercise one AI action, then `docker diff <container>` shows no new/changed files under `/app/src`. This is the fix for [[issues/bug-container-as-root-writes-svelte-kit-into-the-sourc]] (GH #288). | ⏳ Pending |
+| 1.0 | Production image target (adapter-node build) | Foundational, load-bearing. Switch webui from `@sveltejs/adapter-auto` to `@sveltejs/adapter-node`; add a multi-stage production build to the Dockerfile (`npm run build` in `src/webui` producing the `build/` output) and run the built server `HOST=0.0.0.0 PORT=${PORT:-5173} node build` in place of the entrypoint's `npm run dev -- --host 0.0.0.0 --port`, keeping the background MCP launch + git-identity setup. For reverse-proxied instances, honor adapter-node's `ORIGIN` (or `PROTOCOL_HEADER`/`HOST_HEADER`) rather than Vite's `DOCWRIGHT_ALLOWED_HOSTS` host-check. Keep the dogfood dev box on its `vite dev` compose (Constraint 1). Verify by RUNNING the built image (Constraint 9): build locally, `docker run` with a throwaway vault, `curl /api/health` → 200, exercise Review end-to-end, and `docker diff` shows NO new/changed files under `/app/src` (no runtime `.svelte-kit` write). This is the real root fix for [[issues/bug-container-as-root-writes-svelte-kit-into-the-sourc]] (GH #288). | ⏳ Pending |
+| 1.1 | Enumerate the env config contract | DONE (investigation): grepped every `process.env.*` in `src/`+`scripts/` and read `Dockerfile` + `docker-entrypoint.sh`. ~40 vars grouped: vault/paths (DOCWRIGHT_ROOT=/vault, DOCWRIGHT_CACHE_DIR=/tmp, DW_SESSION_ROOT), server (PORT=5173, MCP_PORT=3002, DOCWRIGHT_ALLOWED_HOSTS, VITE_HOST/PORT), auth (AUTH_MODE=none, LOCAL_AUTH_*, SESSION_TTL_SECONDS, FORGEJO_*), git (GIT_USER_NAME/EMAIL/TOKEN, *GITHUB_TOKEN), AI (OPENCODE_URL, OPENCODE_SERVER_USER/PASS, OLLA_*, LIVE_AI_*), behavior (DOCWRIGHT_PROFILE, DOCWRIGHT_LOG_LEVEL, executor knobs). Remaining deliverable: write the canonical table into `docs/deployment.md` under an "Environment contract" heading (defer final wording to 3.2, which rewrites that doc). Note: DOCWRIGHT_ALLOWED_HOSTS is a Vite-dev artifact and should be superseded by ORIGIN once 1.0 lands. | ⏳ Pending |
+| 1.2 | Bake sane defaults so an empty .env boots | For each non-secret knob from 1.1, ensure a working default exists in the entrypoint/app (secrets default to empty/disabled, never a real value). Build on the 1.0 production image. Verify by RUNNING the image with NO env file, only a throwaway vault: `docker run --rm -p 5999:5173 -v $(mktemp -d):/vault <local-prod-image>` then `curl -s -o /dev/null -w '%{http_code}' localhost:5999/api/health` → 200. Record the output in the step history. | ⏳ Pending |
+| 1.3 | Confirm zero DocWright-owned writes outside /vault | Identify every runtime write path (index.json cache, DOCWRIGHT_CACHE_DIR, ai-sessions, `.svelte-kit`). With 1.0 in place the SvelteKit build is baked at image-build time (never written at runtime); confirm any runtime cache resolves under `/vault` or an explicit named volume — NOT under `/app`. Verify: run the prod image (no source mount), exercise one AI action, then `docker diff <container>` shows no new/changed files under `/app/src`. Confirms the GH #288 fix from 1.0 end-to-end. | ⏳ Pending |
 | 2.1 | Ship a production compose (image-based) | Add `docker-compose.prod.yml` (or `deploy/docker-compose.yml`): `image: ghcr.io/growlf/docwright:${DOCWRIGHT_IMAGE:-latest}` (support a digest via the same var), `env_file: .env`, exactly one bind mount `${VAULT_PATH:?set VAULT_PATH}:/vault`, `ports: ${PORT:-5173}:5173`, `restart: unless-stopped`. NO `build:`. Do NOT enumerate individual env vars (env_file carries them). Verify: `docker compose -f docker-compose.prod.yml config` resolves; `up -d` against a temp .env + vault → `/api/health` 200. | ⏳ Pending |
 | 2.2 | Label the existing compose dev-only | Add a header comment to the current `docker-compose.yml` (Scenario 1) marking `build: .` + source mount as DEV-ONLY (dogfood), and cross-reference the prod compose from 2.1. No behavior change to the dev box. Verify: dogfood container still builds + serves (`curl localhost:5174/api/health` → 200 after a `docker compose up -d --build` on the dogfood dir). | ⏳ Pending |
 | 2.3 | Add opt-in Watchtower update channel | Add a documented, opt-in Watchtower service (compose fragment `deploy/watchtower.yml` + docs): registry-poll only, label-scoped (`com.centurylinklabs.watchtower.enable=true`) to DocWright containers, `--cleanup`, outbound-only, no inbound port. Document the CI-push-webhook alternative and why it is deferred (inbound attack surface). No secrets committed. Verify: `docker compose -f deploy/watchtower.yml config` resolves; docs explain enable/disable. | ⏳ Pending |
@@ -92,10 +97,13 @@ ghcr.io/growlf/docwright:<tag/digest>   ── mounts only ──▶  /vault
 | 4.2 | Cut over erp-images + msp | Repeat 4.1 for `docwright-deploy/erp-images` (:5275) and `msp` (:5276), preserving each instance's `.env` + SSH key + allowed-hosts. Verify both healthy on the published image via the prod compose (`/api/health` → 200 on 5275 and 5276). | ⏳ Pending |
 | 4.3 | Enable Watchtower + retire the checkout deploy | Bring up the opt-in Watchtower (2.3) on cluster-llm scoped to the three instances. Then retire the legacy path: remove the throwaway `docker-compose.pin-*.yml` files and archive/remove the git-checkout trees + `docwright-deploy/auto-release-update.sh` (the hourly cron was already removed 2026-07-10). Verify: pushing a subsequent release tag results in Watchtower pulling + recreating the three instances automatically (or, if testing without a real bump, `docker compose pull` shows the mechanism); confirm no `auto-release-update.sh` remains referenced by cron (`crontab -l`). | ⏳ Pending |
 | 5.1 | End-to-end acceptance from a clean directory | From a brand-new empty directory (not a repo checkout), scaffold (3.1) + `docker compose up -d` → healthy instance, ZERO tracked-file edits. Bump the image var to a newer digest + `docker compose pull && up -d` → instance updates with no git ops. Confirm GH #288 does not reproduce (no `.svelte-kit` written into any source tree). Close #288 with a note. Verify: paste all curl/health outputs into the step history. | ⏳ Pending |
-| 5.2 | Version bump + completion PR | Bump VERSION + package.json (≥ patch). Open one `feat/image-based-deployment → main` PR summarizing the new deployment model, the env contract, the Watchtower channel, and the #288 fix. Propose the commit command for the human to attest (do NOT self-attest HUMAN_APPROVED). Verify: CI green on the PR (Lint/Typecheck/Test, Docker build + health, Branch policy). | ⏳ Pending |
+| 5.2 | Version bump + completion PR | Bump VERSION + package.json (≥ patch). Open one `dogfood → main` PR summarizing the new deployment model, the env contract, the Watchtower channel, and the #288 fix. Propose the commit command for the human to attest (do NOT self-attest HUMAN_APPROVED). Verify: CI green on the PR (Lint/Typecheck/Test, Docker build + health, Branch policy). | ⏳ Pending |
 
 ## Document History
 
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-07-10 | Drafted from proposal image-based-deployment-any-directory; status draft, awaiting human review/approval. | NetYeti |
+| 2026-07-10 | Approved by BDFL; renamed steps heading to Implementation Steps so the tracker parses the steps; moved to in-progress. Phase 1 started. | NetYeti |
+| 2026-07-10 | Step 1.1 finding: the Dockerfile is a DEV image (runs vite dev; webui on adapter-auto, no production build). This is the true root of GH #288 and why DOCWRIGHT_ALLOWED_HOSTS exists. Env contract enumerated. | NetYeti |
+| 2026-07-10 | BDFL: fold the adapter-node production-image work into this plan as step 1.0 ahead of 1.2; total_steps 13 to 14. Executing 1.0 next. | NetYeti |
