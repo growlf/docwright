@@ -15,6 +15,8 @@ complexity: medium
 parent_plan: plans/phase-3-vault-foundation.md
 parent_deliverable: "3"
 milestone: v0.6.0
+_path: proposals/approved/sub-plan-docwright-init-scaffold
+consumed_by: plans/sub-plan-docwright-init-scaffold.md
 ---
 
 ## Problem
