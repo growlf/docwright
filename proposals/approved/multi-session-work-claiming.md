@@ -8,11 +8,13 @@ tags:
   - workflow
   - multi-agent
   - tooling
-approved: false
+approved: true
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: NetYeti
 priority: high
 complexity: medium
+_path: proposals/approved/multi-session-work-claiming
+consumed_by: plans/multi-session-work-claiming.md
 ---
 
 ## Problem
