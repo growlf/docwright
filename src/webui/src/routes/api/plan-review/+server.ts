@@ -131,7 +131,12 @@ export async function POST({ request }) {
             ...sectionCalls.map(sc => ({ ...sc, type: 'section' as const })),
           ];
 
-          for (const call of allCalls) {
+          send('status', { message: `Reviewing ${allCalls.length} item${allCalls.length === 1 ? '' : 's'} in parallel...` });
+
+          // Run every step/section review concurrently (not one-at-a-time) so a single
+          // slow or hung call can't stall everything behind it -- matches the "no steps"
+          // branch above, which was already fixed this way for the same reason.
+          await Promise.all(allCalls.map(async (call) => {
             try {
               const text = await opencodeComplete(call.prompt, undefined, reviewerPrompt);
               if (call.type === 'step') {
@@ -147,7 +152,7 @@ export async function POST({ request }) {
                 send('section-review', { name: call.key, text: errText });
               }
             }
-          }
+          }));
 
           const stepHeadlines = nonEmptySteps.map(s => `Step ${s.number}: ${s.action.slice(0, 80)}`).join('\n');
           const testingPreview = (testingSection || 'Not defined').slice(0, 150);
