@@ -1,4 +1,7 @@
 <script lang="ts">
+  import AgentActivityView from './AgentActivityView.svelte';
+  import { reduceEvents, textFor } from './agent-activity-model';
+
   interface Perspective {
     label: string;
     text: string;
@@ -10,6 +13,12 @@
   let loading = $state(false);
   let error = $state('');
 
+  // Live synthesis (LIVE_AI_IMPROVE, client opt-in): stream generation in
+  // AgentActivityView, then keep the final answer as the synthesis text.
+  let isLive = $state(false);
+  let liveEvents = $state<any[]>([]);
+  let liveES: EventSource | null = null;
+
   async function runSynthesis() {
     const active = responses.filter(r => r.text && r.text !== '(empty response)');
     if (active.length < 2) { error = 'Need at least 2 completed perspectives to synthesize.'; return; }
@@ -17,20 +26,58 @@
     loading = true;
     error = '';
     synthesis = '';
+    if (liveES) { liveES.close(); liveES = null; }
+    isLive = false;
+    liveEvents = [];
 
     try {
       const res = await fetch('/api/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responses: active }),
+        body: JSON.stringify({ responses: active, live: true }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (data.live && data.sessionID) { startLiveSynthesis(data.sessionID, active); return; }
       synthesis = data.synthesis || '(empty synthesis)';
     } catch (e: any) {
       error = e.message || 'Synthesis failed';
     }
     loading = false;
+  }
+
+  function startLiveSynthesis(sessionID: string, active: Perspective[]) {
+    isLive = true;
+    liveEvents = [];
+    let idleSeen = false;
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
+    liveES = es;
+
+    function finish() {
+      if (liveES) { liveES.close(); liveES = null; }
+      const text = textFor(reduceEvents(liveEvents), 'assistant').trim();
+      synthesis = text || '(empty synthesis)';
+      isLive = false;
+      loading = false;
+    }
+
+    es.onopen = async () => {
+      try {
+        const r = await fetch('/api/synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', sessionID, responses: active }),
+        });
+        if (!r.ok) { error = 'Failed to start synthesis'; finish(); }
+      } catch { error = 'Failed to start synthesis'; finish(); }
+    };
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveEvents = [...liveEvents, evt];
+      if (evt?.type === 'session.idle') { idleSeen = true; finish(); }
+    };
+    es.onerror = () => { if (idleSeen) finish(); };
   }
 
   let sections = $derived.by(() => {
@@ -73,7 +120,13 @@
     </div>
   {/if}
 
-  {#if loading}
+  {#if isLive}
+    <div class="syn-live" style="height:360px;min-height:0;border:1px solid var(--border,#ddd);border-radius:4px;margin:6px 0;">
+      <AgentActivityView events={liveEvents} />
+    </div>
+  {/if}
+
+  {#if loading && !isLive}
     <div class="syn-loading">
       <span class="spinner"></span>
       <span>Synthesizing {responses.filter(r => r.text && r.text !== '(empty response)').length} perspectives...</span>
