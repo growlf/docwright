@@ -52,6 +52,9 @@ export type EventCallback = (event: OpencodeEvent) => void;
 export interface OpencodeEventBus {
   subscribe(sessionID: string, cb: EventCallback): void;
   unsubscribe(sessionID: string, cb: EventCallback): void;
+  /** Global tap: receives EVERY event (any session). For presence/observability. */
+  subscribeAll(cb: EventCallback): void;
+  unsubscribeAll(cb: EventCallback): void;
   getBusStatus(): BusStatus;
   /** Number of sessions with at least one active subscriber (observability/tests). */
   subscriberCount(): number;
@@ -135,6 +138,7 @@ export function createOpencodeEventBus(config: BusConfig = {}): OpencodeEventBus
   const log = config.log ?? ((m: string) => console.log(`[opencode-events] ${m}`));
 
   const subscribers = new Map<string, Set<EventCallback>>();
+  const allSubscribers = new Set<EventCallback>(); // global taps (presence/observability)
   const status: BusStatus = {
     connected: false,
     lastEventAt: null,
@@ -174,7 +178,15 @@ export function createOpencodeEventBus(config: BusConfig = {}): OpencodeEventBus
     const sid = event.properties?.sessionID;
     if (typeof sid === 'string') deliver(sid, event);
     // Events with no sessionID (server.connected, heartbeats) are bus-level
-    // only and intentionally not fanned out.
+    // only and intentionally not fanned out to per-session subscribers.
+    // Global taps see everything (they self-filter by ownership).
+    for (const cb of allSubscribers) {
+      try {
+        cb(event);
+      } catch (e) {
+        log(`global subscriber threw: ${(e as Error)?.message ?? e}`);
+      }
+    }
   }
 
   function scheduleReconnect(reason: string): void {
@@ -262,6 +274,13 @@ export function createOpencodeEventBus(config: BusConfig = {}): OpencodeEventBus
       set.delete(cb);
       if (set.size === 0) subscribers.delete(sessionID);
     },
+    subscribeAll(cb) {
+      allSubscribers.add(cb);
+      ensureConnected();
+    },
+    unsubscribeAll(cb) {
+      allSubscribers.delete(cb);
+    },
     getBusStatus() {
       return { ...status };
     },
@@ -305,4 +324,13 @@ export function unsubscribe(sessionID: string, cb: EventCallback): void {
 /** Observability snapshot of the shared bus. */
 export function getBusStatus(): BusStatus {
   return getSharedBus().getBusStatus();
+}
+
+/** Subscribe to EVERY event on the shared bus (presence/observability). */
+export function subscribeAll(cb: EventCallback): void {
+  getSharedBus().subscribeAll(cb);
+}
+
+export function unsubscribeAll(cb: EventCallback): void {
+  getSharedBus().unsubscribeAll(cb);
 }

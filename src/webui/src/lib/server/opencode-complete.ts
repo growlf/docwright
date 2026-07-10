@@ -35,6 +35,14 @@ export interface OpenCodeModel {
   providerID: string;
 }
 
+export interface OpenCodeResponse {
+  text: string;
+  systemPrompt?: string;
+  userPrompt: string;
+  thinking?: string;
+  model?: string;
+}
+
 /**
  * Run a single-turn completion through OpenCode.
  *
@@ -43,7 +51,7 @@ export interface OpenCodeModel {
  * @param systemPrompt - Optional system prompt injected as a role:system message before
  *                       the user prompt. Use AI_ROLES[roleId].systemPrompt to get the
  *                       DocWright-standard prompt for a given specialist role.
- * @returns The assistant's text response (joining all text parts).
+ * @returns Object with text response and metadata (systemPrompt, userPrompt, thinking).
  * @throws  Error with a human-readable message when OpenCode is unreachable
  *          or returns an error status.
  */
@@ -51,7 +59,7 @@ export async function opencodeComplete(
   prompt: string,
   model?: OpenCodeModel,
   systemPrompt?: string,
-): Promise<string> {
+): Promise<OpenCodeResponse> {
   const signal = AbortSignal.timeout(TIMEOUT_MS);
 
   // --- 1. Resolve model ---
@@ -118,14 +126,27 @@ export async function opencodeComplete(
     throw new Error(`OpenCode message failed: HTTP ${msgRes.status}`);
   }
 
-  // --- 4. Extract text parts ---
+  // --- 4. Extract all parts (text, thinking, reasoning, step events, etc.) ---
   const data = await msgRes.json() as { parts?: Array<{ type: string; text?: string }> };
-  const text = (data?.parts ?? [])
+  const textParts = (data?.parts ?? [])
     .filter(p => p.type === 'text')
     .map(p => p.text ?? '')
     .join('');
 
-  if (!text) throw new Error('OpenCode returned an empty response');
+  // Capture reasoning/thinking from any part type (reasoning, thinking, step-*, etc.)
+  const thinkingParts = (data?.parts ?? [])
+    .filter(p => ['thinking', 'reasoning', 'step-start', 'step-finish', 'step-progress'].includes(p.type))
+    .map(p => p.text ?? '')
+    .filter(t => t.trim().length > 0)
+    .join('\n');
 
-  return text;
+  if (!textParts) throw new Error('OpenCode returned an empty response');
+
+  return {
+    text: textParts,
+    systemPrompt,
+    userPrompt: prompt,
+    thinking: thinkingParts || undefined,
+    model: resolvedModel?.id,
+  };
 }

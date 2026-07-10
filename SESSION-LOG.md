@@ -1737,3 +1737,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] Session note committed via auto-merge PR #267
 
 **Session note:** `docs/session-notes/session_note_202607091335.md`
+
+---
+
+## Session: 2026-07-09 — Live AI visibility — Phase 1 hardening
+
+**Focus:** Live AI visibility — Phase 1 hardening
+
+**Completed:**
+- [x] docs: live-ai step 1.3 done (automated regression green); resolve opencode-exposure bug
+- [x] docs: live-ai step 1.2 done (smoke passed); file bug — Improve discards results without Apply decision
+- [x] docs: file bug — container recreate loses ephemeral compose env (vault mount + port)
+- [x] docs: live-ai plan history — 1.2 ops executed, awaiting UI smoke test
+- [x] chore: merge main into dogfood — live-ai 1.2 config (launcher --oc-only, compose auth passthrough, docs)
+- [x] feat: opencode server auth wiring — launcher --oc-only, compose passthrough, docs (live-ai 1.2)
+- [x] feat: opencode server auth wiring — launcher --oc-only, compose passthrough, docs (live-ai 1.2)
+- [x] docs: live-ai plan history — 1.1 hotfix (#269) + 1.2 gate passed
+- [x] fix: correct opencode-auth import depths broken in #268
+- [x] docs: file bug — CI gap: webui production build never exercised
+
+**Session note:** `docs/session-notes/session_note_202607092132.md`

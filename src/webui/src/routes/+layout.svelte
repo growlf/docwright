@@ -23,6 +23,9 @@ import {
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
+  import AgentActivityView from '$lib/AgentActivityView.svelte';
+  import { reduceEvents, assistantMessageTexts } from '$lib/agent-activity-model';
+  import { stripAIWrapper } from '$lib/ai-text';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import UserBadge from '$lib/UserBadge.svelte';
@@ -110,6 +113,30 @@ import {
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
+
+  // Live plan-review (LIVE_AI_REVIEW): when the server returns a live session, the
+  // review renders in AgentActivityView fed by /api/ai/stream instead of PlanReviewPanel.
+  let reviewIsLive = $state(false);
+  let liveReviewEvents = $state<any[]>([]);
+  let liveReviewES: EventSource | null = null;
+
+  // Live Improve (LIVE_AI_IMPROVE): stream generation in AgentActivityView, then
+  // hand the extracted {improved, critique} to ImprovementPanel for the Apply step.
+  let improveIsLive = $state(false);
+  let liveImproveEvents = $state<any[]>([]);
+  let liveImproveES: EventSource | null = null;
+
+  // Live-AI presence chip (3.6): busy when any of the current user's owned
+  // sessions is generating (fed by /api/ai/presence, a bus-wide session.status tap).
+  let aiBusy = $state(false);
+  let aiBusyCount = $state(0);
+  $effect(() => {
+    const es = new EventSource('/api/ai/presence');
+    es.onmessage = (e) => {
+      try { const p = JSON.parse(e.data); aiBusy = !!p.busy; aiBusyCount = p.count ?? 0; } catch { /* ignore */ }
+    };
+    return () => es.close();
+  });
 
   // Right panel priority model — null = no VC claim, show standard tabs
   let rpc = $state<RightPanelClaim | null>(null);
@@ -212,6 +239,14 @@ import {
   let prl = $state(false);    $effect(() => { const u = planReviewLoading.subscribe(v => prl = v); return u; });
   let prs = $state('');       $effect(() => { const u = planReviewStatus.subscribe(v => prs = v); return u; });
   let prFingerprint = $state(''); $effect(() => { const u = planReviewBodyFingerprint.subscribe(v => prFingerprint = v); return u; });
+  let prStepsPrompts = $state<Record<string, any>>({});
+  let prStepsThinking = $state<Record<string, string>>({});
+  let prSectionsPrompts = $state<Record<string, any>>({});
+  let prSectionsThinking = $state<Record<string, string>>({});
+  let prAnalysesPrompts = $state<Record<string, any>>({});
+  let prAnalysesThinking = $state<Record<string, string>>({});
+  let prOverviewPrompt = $state<any>({});
+  let prOverviewThinking = $state('');
   let ir  = $state<{ improved: string; critique: string } | null>(null);
                               $effect(() => { const u = improveResult.subscribe(v => ir = v); return u; });
   let il  = $state(false);    $effect(() => { const u = improveLoading.subscribe(v => il = v); return u; });
@@ -243,9 +278,16 @@ import {
     } catch { /* use defaults */ }
   });
 
-  // On nav: clear stale collation data; honour active tab
+  // On nav: clear stale collation data; honour active tab.
+  // GUARD: only clear on an ACTUAL file change. $currentDoc also updates on
+  // same-file SSE watch-reloads; without this guard those reloads wiped in-progress
+  // or finished Improve/Review results (and switched the tab away) with no Apply
+  // decision — the "results vanish" bug (issues/bug-improve-flow-discards-*).
+  let lastNavPath: string | null = null;
   $effect(() => {
     const fp = $currentDoc.filePath;
+    if (fp === lastNavPath) return; // same-doc reload — keep AI panels intact
+    lastNavPath = fp;
     collationMatches.set([]);
     collationRelationships.set([]);
     collationLoading.set(false);
@@ -260,6 +302,9 @@ import {
     improvePhase.set('improve-thinking');
     improveStatus.set('');
     improveIsCritiqueOnly = false;
+    if (liveImproveES) { liveImproveES.close(); liveImproveES = null; }
+    improveIsLive = false;
+    liveImproveEvents = [];
     // untrack: rightTab reads/writes must not become effect dependencies —
     // otherwise setting rightTab='review' in handleReview() would re-trigger
     // this effect and immediately reset it back to 'properties'.
@@ -341,6 +386,18 @@ import {
     planReviewAnalyses.set({});
     planReviewOverview.set('');
     planReviewStatus.set('');
+    prStepsPrompts = {};
+    prStepsThinking = {};
+    prSectionsPrompts = {};
+    prSectionsThinking = {};
+    prAnalysesPrompts = {};
+    prAnalysesThinking = {};
+    prOverviewPrompt = {};
+    prOverviewThinking = '';
+    // reset any prior live-review stream
+    if (liveReviewES) { liveReviewES.close(); liveReviewES = null; }
+    reviewIsLive = false;
+    liveReviewEvents = [];
     planReviewLoading.set(true);
     try {
       const res = await fetch('/api/plan-review', {
@@ -348,6 +405,14 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
+      // Live path: server created an owned session → render AgentActivityView from /api/ai/stream.
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) {
+          startLiveReview(info.sessionID, fp);
+          return;
+        }
+      }
       const reader = res.body?.getReader();
       if (!reader) { planReviewStatus.set('No response stream'); return; }
       const decoder = new TextDecoder();
@@ -366,7 +431,27 @@ import {
           const event = eventLine ? eventLine.slice(7).trim() : '';
           try {
             const data = JSON.parse(dataLine.slice(6));
-            if (event === 'step-review') {
+            if (event === 'working-prompt') {
+              if (data.aspect) {
+                prAnalysesPrompts[data.aspect] = data;
+              } else if (data.type === 'step') {
+                prStepsPrompts[data.key] = data;
+              } else if (data.type === 'section') {
+                prSectionsPrompts[data.key] = data;
+              } else if (data.type === 'overview') {
+                prOverviewPrompt = data;
+              }
+            } else if (event === 'working-thinking') {
+              if (data.aspect) {
+                prAnalysesThinking[data.aspect] = data.thinking;
+              } else if (data.type === 'step') {
+                prStepsThinking[data.key] = data.thinking;
+              } else if (data.type === 'section') {
+                prSectionsThinking[data.key] = data.thinking;
+              } else if (data.type === 'overview') {
+                prOverviewThinking = data.thinking;
+              }
+            } else if (event === 'step-review') {
               planReviewSteps.update(s => { s[data.number] = data.text; return s; });
             } else if (event === 'section-review') {
               planReviewSections.update(s => { s[data.name] = data.text; return s; });
@@ -391,6 +476,117 @@ import {
       const body = $currentDoc?.body;
       if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
     }
+  }
+
+  // Live review: subscribe to the per-session event stream, then tell the server
+  // to drive the prompts. Progress renders in AgentActivityView; completion is
+  // detected by counting session.idle events (one per prompt turn).
+  function startLiveReview(sessionID: string, planPath: string) {
+    reviewIsLive = true;
+    liveReviewEvents = [];
+    planReviewStatus.set('');
+    let expected = Infinity;
+    let idleCount = 0;
+
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
+    liveReviewES = es;
+
+    function finishLive() {
+      planReviewLoading.set(false);
+      if (liveReviewES) { liveReviewES.close(); liveReviewES = null; }
+      const body = $currentDoc?.body;
+      if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
+    }
+
+    es.onopen = async () => {
+      try {
+        const r = await fetch('/api/plan-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', sessionID, path: planPath }),
+        });
+        const info = await r.json().catch(() => ({}));
+        if (typeof info?.prompts === 'number') expected = info.prompts;
+        if (!r.ok) { planReviewStatus.set('Failed to start review'); finishLive(); }
+      } catch {
+        planReviewStatus.set('Failed to start review');
+        finishLive();
+      }
+    };
+
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveReviewEvents = [...liveReviewEvents, evt];
+      if (evt?.type === 'session.idle') {
+        idleCount++;
+        if (idleCount >= expected) finishLive();
+      }
+    };
+
+    es.onerror = () => { if (idleCount >= expected) finishLive(); };
+  }
+
+  // Live Improve/Critique: subscribe to the session stream, tell the server to run
+  // the improve+critique turns, then extract the structured result for Apply.
+  function startLiveImprove(sessionID: string, docPath: string, mode: 'full' | 'critique') {
+    improveIsLive = true;
+    liveImproveEvents = [];
+    rightTab = 'improve';
+    showRightPanel = true;
+    improveResult.set(null);
+    improvePhase.set(mode === 'critique' ? 'critique-thinking' : 'improve-thinking');
+    let expected = Infinity;
+    let idleCount = 0;
+
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
+    liveImproveES = es;
+
+    function finishImprove() {
+      if (liveImproveES) { liveImproveES.close(); liveImproveES = null; }
+      const state = reduceEvents(liveImproveEvents);
+      const msgs = assistantMessageTexts(state); // one per turn (improve, critique)
+      let improved = '';
+      let critique = '';
+      if (mode === 'critique') {
+        critique = (msgs[0] ?? '').trim();
+      } else {
+        improved = stripAIWrapper(msgs[0] ?? '');
+        critique = (msgs[1] ?? '').trim();
+      }
+      improveResult.set({ improved, critique });
+      improvePhase.set('done');
+      improveLoading.set(false);
+      improveIsLive = false; // hand off to ImprovementPanel for the Apply decision
+    }
+
+    es.onopen = async () => {
+      try {
+        const r = await fetch('/api/improve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', sessionID, path: docPath, mode }),
+        });
+        const info = await r.json().catch(() => ({}));
+        if (typeof info?.prompts === 'number') expected = info.prompts;
+        if (!r.ok) { showToast('Failed to start improve', 4000); finishImprove(); }
+      } catch {
+        showToast('Failed to start improve', 4000);
+        finishImprove();
+      }
+    };
+
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveImproveEvents = [...liveImproveEvents, evt];
+      if (evt?.type === 'session.idle') {
+        idleCount++;
+        if (idleCount >= expected) finishImprove();
+      }
+    };
+
+    es.onerror = () => { if (idleCount >= expected) finishImprove(); };
   }
 
   // React to signal to switch to Review tab (just show tab, don't auto-run)
@@ -439,6 +635,10 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp, mode: 'critique' }),
       });
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) { startLiveImprove(info.sessionID, fp, 'critique'); return; }
+      }
       const reader = res.body?.getReader();
       if (!reader) { showToast('No response stream', 4000); return; }
       const decoder = new TextDecoder();
@@ -498,6 +698,10 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) { startLiveImprove(info.sessionID, fp, 'full'); return; }
+      }
       const reader = res.body?.getReader();
       if (!reader) { showToast('No response stream', 4000); return; }
       const decoder = new TextDecoder();
@@ -1121,6 +1325,14 @@ import {
           <div class="right-empty">Open a document to see its properties</div>
         {/if}
       {/key}
+    {:else if rightTab === 'improve' && improveIsLive}
+      <div style="display:flex;flex-direction:column;height:100%;min-height:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.55rem;border-bottom:1px solid var(--border,#ddd);font-size:0.8rem;color:var(--muted,#666);">
+          <span>Live {improveIsCritiqueOnly ? 'critique' : 'improve'}</span>
+          <button class="right-tab" title="Close" onclick={() => { if (liveImproveES) { liveImproveES.close(); liveImproveES = null; } improveIsLive = false; rightTab = 'properties'; }}>✕</button>
+        </div>
+        <AgentActivityView events={liveImproveEvents} />
+      </div>
     {:else if rightTab === 'improve'}
       <ImprovementPanel
         improved={ir?.improved ?? ''}
@@ -1133,6 +1345,14 @@ import {
         ondismiss={() => { rightTab = 'properties'; improveResult.set(null); improveIsCritiqueOnly = false; }}
         onrerun={improveIsCritiqueOnly ? handleCritique : handleImprove}
       />
+    {:else if rightTab === 'review' && reviewIsLive}
+      <div style="display:flex;flex-direction:column;height:100%;min-height:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.55rem;border-bottom:1px solid var(--border,#ddd);font-size:0.8rem;color:var(--muted,#666);">
+          <span>Live review</span>
+          <button class="right-tab" title="Close" onclick={() => { if (liveReviewES) { liveReviewES.close(); liveReviewES = null; } reviewIsLive = false; rightTab = 'properties'; }}>✕</button>
+        </div>
+        <AgentActivityView events={liveReviewEvents} />
+      </div>
     {:else if rightTab === 'review'}
       <PlanReviewPanel
         steps={prSteps}
@@ -1143,6 +1363,14 @@ import {
         loading={prl}
         canRerun={canRerun}
         applying={applyingReview}
+        stepsPrompts={prStepsPrompts}
+        stepsThinking={prStepsThinking}
+        sectionsPrompts={prSectionsPrompts}
+        sectionsThinking={prSectionsThinking}
+        analysesPrompts={prAnalysesPrompts}
+        analysesThinking={prAnalysesThinking}
+        overviewPrompt={prOverviewPrompt}
+        overviewThinking={prOverviewThinking}
         ondismiss={() => { rightTab = 'properties'; }}
         onrerun={handleReview}
         onapply={handleApplyReview}
@@ -1300,6 +1528,10 @@ import {
   </a>
   <span class="footer-sep">·</span>
   <span class="version-badge" title="DocWright release version">{vaultVersion ? `v${vaultVersion}` : 'version unknown'}</span>
+  <span class="footer-sep">·</span>
+  <span class="ai-presence" class:busy={aiBusy} title={aiBusy ? `AI working — ${aiBusyCount} active session${aiBusyCount === 1 ? '' : 's'}` : 'AI idle'}>
+    <span class="ai-dot"></span>{aiBusy ? `AI working…${aiBusyCount > 1 ? ` (${aiBusyCount})` : ''}` : 'AI idle'}
+  </span>
   <span class="footer-spacer"></span>
   <a href="/settings" class="footer-link footer-settings" title="Settings">⚙ Settings</a>
   <span class="footer-sep">·</span>
@@ -1392,6 +1624,11 @@ import {
   .footer-link:hover { color: #666; }
   .footer-sep { color: #222; }
   .version-badge { color: #666; font-family: monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
+  .ai-presence { display: inline-flex; align-items: center; gap: 5px; color: #666; font-size: 10px; }
+  .ai-presence .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+  .ai-presence.busy { color: #3b82f6; }
+  .ai-presence.busy .ai-dot { background: #3b82f6; animation: ai-pulse 1.2s ease-in-out infinite; }
+  @keyframes ai-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
   /* chat-fab replaced by chat-toggle (see above) */
   /* sidebar-toggle removed — Panel.svelte provides the edge toggle */

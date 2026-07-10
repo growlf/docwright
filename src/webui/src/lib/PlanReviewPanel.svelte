@@ -10,6 +10,14 @@
     loading = false,
     canRerun = false,
     applying = false,
+    stepsPrompts = {} as Record<string, any>,
+    stepsThinking = {} as Record<string, string>,
+    sectionsPrompts = {} as Record<string, any>,
+    sectionsThinking = {} as Record<string, string>,
+    analysesPrompts = {} as Record<string, any>,
+    analysesThinking = {} as Record<string, string>,
+    overviewPrompt = {} as any,
+    overviewThinking = '',
     ondismiss,
     onrerun,
     onapply,
@@ -22,6 +30,14 @@
     loading?: boolean;
     canRerun?: boolean;
     applying?: boolean;
+    stepsPrompts?: Record<string, any>;
+    stepsThinking?: Record<string, string>;
+    sectionsPrompts?: Record<string, any>;
+    sectionsThinking?: Record<string, string>;
+    analysesPrompts?: Record<string, any>;
+    analysesThinking?: Record<string, string>;
+    overviewPrompt?: any;
+    overviewThinking?: string;
     ondismiss?: () => void;
     onrerun?: () => void;
     onapply?: () => void;
@@ -90,9 +106,36 @@
           <div class="group-header">Steps</div>
           {#each stepNumbers as num (num)}
             <div class="item" class:done={steps[num] && !steps[num].startsWith('Error:')} class:error={steps[num].startsWith('Error:')}>
-              <span class="item-icon">{steps[num].startsWith('Error:') ? '⚠' : '✅'}</span>
-              <span class="item-label">Step {num}</span>
-              <pre class="item-text">{steps[num]}</pre>
+              {#if stepsPrompts[num]}
+                <div class="working-section">
+                  {#if stepsPrompts[num].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {stepsPrompts[num].model}</div>
+                  {/if}
+                  {#if stepsPrompts[num].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{stepsPrompts[num].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if stepsPrompts[num].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{stepsPrompts[num].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if stepsThinking[num]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{stepsThinking[num]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
+                <span class="item-icon">{steps[num].startsWith('Error:') ? '⚠' : '✅'}</span>
+                <span class="item-label">Step {num}</span>
+                <pre class="item-text">{steps[num]}</pre>
+              </div>
             </div>
           {/each}
         </div>
@@ -103,9 +146,36 @@
           <div class="group-header">Plan Analysis</div>
           {#each analysisKeys as key (key)}
             <div class="item" class:done={analyses[key] && !analyses[key].startsWith('Error:')} class:error={analyses[key].startsWith('Error:')}>
-              <span class="item-icon">{analyses[key].startsWith('Error:') ? '⚠' : '💡'}</span>
-              <span class="item-label">{groupLabel(key)}</span>
-              <pre class="item-text">{analyses[key]}</pre>
+              {#if analysesPrompts[key]}
+                <div class="working-section">
+                  {#if analysesPrompts[key].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {analysesPrompts[key].model}</div>
+                  {/if}
+                  {#if analysesPrompts[key].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{analysesPrompts[key].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if analysesPrompts[key].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{analysesPrompts[key].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if analysesThinking[key]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{analysesThinking[key]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
+                <span class="item-icon">{analyses[key].startsWith('Error:') ? '⚠' : '💡'}</span>
+                <span class="item-label">{groupLabel(key)}</span>
+                <pre class="item-text">{analyses[key]}</pre>
+              </div>
             </div>
           {/each}
         </div>
@@ -116,9 +186,36 @@
           <div class="group-header">Sections</div>
           {#each sectionKeys as key (key)}
             <div class="item" class:done={sections[key] && !sections[key].startsWith('Error:')} class:error={sections[key].startsWith('Error:')}>
-              <span class="item-icon">{sections[key].startsWith('Error:') ? '⚠' : '✅'}</span>
-              <span class="item-label">{groupLabel(key)}</span>
-              <pre class="item-text">{sections[key]}</pre>
+              {#if sectionsPrompts[key]}
+                <div class="working-section">
+                  {#if sectionsPrompts[key].model}
+                    <div class="meta-line">📦 <strong>Model:</strong> {sectionsPrompts[key].model}</div>
+                  {/if}
+                  {#if sectionsPrompts[key].systemPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">🔧 System Prompt:</div>
+                      <pre class="prompt-text">{sectionsPrompts[key].systemPrompt}</pre>
+                    </div>
+                  {/if}
+                  {#if sectionsPrompts[key].userPrompt}
+                    <div class="prompt-block">
+                      <div class="prompt-label">❓ User Prompt:</div>
+                      <pre class="prompt-text">{sectionsPrompts[key].userPrompt}</pre>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              {#if sectionsThinking[key]}
+                <div class="thinking-block">
+                  <div class="thinking-label">💭 AI Thinking:</div>
+                  <pre class="thinking-text">{sectionsThinking[key]}</pre>
+                </div>
+              {/if}
+              <div class="answer-block">
+                <span class="item-icon">{sections[key].startsWith('Error:') ? '⚠' : '✅'}</span>
+                <span class="item-label">{groupLabel(key)}</span>
+                <pre class="item-text">{sections[key]}</pre>
+              </div>
             </div>
           {/each}
         </div>
@@ -127,7 +224,34 @@
       {#if overview}
         <div class="group">
           <div class="group-header">Overall Assessment</div>
-          <pre class="overview-text" class:error={overview.startsWith('Error:')}>{overview}</pre>
+          {#if overviewPrompt}
+            <div class="working-section">
+              {#if overviewPrompt.model}
+                <div class="meta-line">📦 <strong>Model:</strong> {overviewPrompt.model}</div>
+              {/if}
+              {#if overviewPrompt.systemPrompt}
+                <div class="prompt-block">
+                  <div class="prompt-label">🔧 System Prompt:</div>
+                  <pre class="prompt-text">{overviewPrompt.systemPrompt}</pre>
+                </div>
+              {/if}
+              {#if overviewPrompt.userPrompt}
+                <div class="prompt-block">
+                  <div class="prompt-label">❓ User Prompt:</div>
+                  <pre class="prompt-text">{overviewPrompt.userPrompt}</pre>
+                </div>
+              {/if}
+            </div>
+          {/if}
+          {#if overviewThinking}
+            <div class="thinking-block">
+              <div class="thinking-label">💭 AI Thinking:</div>
+              <pre class="thinking-text">{overviewThinking}</pre>
+            </div>
+          {/if}
+          <div class="answer-block">
+            <pre class="overview-text" class:error={overview.startsWith('Error:')}>{overview}</pre>
+          </div>
         </div>
       {/if}
     {:else if !loading}
@@ -169,10 +293,22 @@
 
   .group-header { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: $muted; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid $border; }
 
-  .item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; background: $bg-2; }
+  .item { display: flex; flex-direction: column; gap: 8px; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; background: $bg-2; }
   .item.done { border-left: 2px solid $green; }
   .item.error { border-left: 2px solid $red; }
 
+  .working-section { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(100, 150, 200, 0.08); border-left: 2px solid $blue; border-radius: 3px; margin-bottom: 8px; }
+  .meta-line { font-size: 10px; color: $fg-dim; }
+
+  .prompt-block { display: flex; flex-direction: column; gap: 4px; }
+  .prompt-label { font-size: 10px; font-weight: 600; color: $fg-dim; text-transform: uppercase; letter-spacing: 0.5px; }
+  .prompt-text { font-family: monospace; font-size: 10px; line-height: 1.4; color: $fg; margin: 0; padding: 6px; background: transparent; border-radius: 3px; overflow-x: auto; max-height: 100px; overflow-y: auto; }
+
+  .thinking-block { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: rgba(200, 150, 100, 0.08); border-left: 2px solid #d4a574; border-radius: 3px; margin-bottom: 8px; }
+  .thinking-label { font-size: 10px; font-weight: 600; color: $fg-dim; text-transform: uppercase; letter-spacing: 0.5px; }
+  .thinking-text { font-family: monospace; font-size: 10px; line-height: 1.4; color: $fg; margin: 0; padding: 6px; background: transparent; border-radius: 3px; overflow-x: auto; max-height: 150px; overflow-y: auto; }
+
+  .answer-block { display: flex; align-items: flex-start; gap: 8px; }
   .item-icon { flex-shrink: 0; font-size: 12px; line-height: 1.5; }
   .item-label { flex-shrink: 0; font-size: 11px; font-weight: 600; color: $fg-dim; line-height: 1.5; min-width: 48px; }
   .item-text { flex: 1; font-family: inherit; font-size: 12px; line-height: 1.5; color: $fg; white-space: pre-wrap; margin: 0; }

@@ -10,33 +10,22 @@ import { opencodeHeaders } from '../../../../../dispatch/opencode-auth';
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter, stripFrontmatter } from '../../../../../dispatch/frontmatter';
+import { createOwnedSession, getSession as getOwnedSession } from '$lib/server/ai-sessions.js';
+import { runLiveReview } from '$lib/server/plan-review-live.js';
+import { stripAIWrapper } from '$lib/ai-text.js';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
   : path.resolve(process.cwd(), '../..');
 
-/**
- * Strip AI wrapper artifacts from improved text:
- * - "Here's the improved body:" / "Sure, here is..." preamble lines
- * - Wrapping ```markdown ... ``` or ``` ... ``` code fences
- * These appear when the model ignores the "no preamble" instruction.
- */
-function stripAIWrapper(text: string): string {
-  let s = text.trim();
-  // Unwrap a leading code fence (```markdown or ```) that wraps the whole response
-  const fenced = s.match(/^```(?:markdown|md)?\n([\s\S]+?)(?:\n```\s*)?$/);
-  if (fenced) return fenced[1].trimEnd();
-  // Strip preamble lines before the first markdown heading or bold text
-  // Only strip if the preamble is short (< 200 chars) and contains no headings itself
-  const headingIdx = s.search(/^#{1,6} /m);
-  if (headingIdx > 0 && headingIdx < 300) {
-    const before = s.slice(0, headingIdx);
-    if (!before.includes('\n##') && !before.includes('\n#')) {
-      s = s.slice(headingIdx);
-    }
-  }
-  return s;
-}
+// Per-surface feature flag (plan Constraint 2). Default ON after e2e evidence
+// (Improve API smoke + browser e2e 5/5 green, 2026-07-10). When ON, Improve
+// streams generation live via /api/ai/stream + AgentActivityView; escape hatch:
+// LIVE_AI_IMPROVE=0/false/off/no restores the legacy fake-streaming path below.
+// (Synthesize is migrated onto this same flag in a follow-on increment.)
+const LIVE_AI_IMPROVE = !['0', 'false', 'off', 'no'].includes((process.env.LIVE_AI_IMPROVE ?? '').toLowerCase());
+
+// stripAIWrapper moved to $lib/ai-text (shared with the live-flow client extraction).
 
 function buildPrompt(fm: Record<string, any>, body: string): string {
   const title = fm.title || '(untitled)';
@@ -123,8 +112,46 @@ async function callAndSendSession(
   return fullText;
 }
 
-export async function POST({ request }) {
-  const { path: filePath, mode = 'full' } = await request.json();
+export async function POST({ request, locals }) {
+  const reqBody = await request.json().catch(() => ({}));
+  const filePath: string | undefined = reqBody?.path;
+  const mode: string = reqBody?.mode ?? 'full';
+  const action: string | undefined = reqBody?.action;
+  const sessionID: string | undefined = reqBody?.sessionID;
+
+  // --- Live path (LIVE_AI_IMPROVE ON): one owned session streamed via /api/ai/stream ---
+  if (LIVE_AI_IMPROVE) {
+    const user = locals?.user;
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (action === 'start') {
+      if (!sessionID) return json({ error: 'missing sessionID' }, { status: 400 });
+      const owned = getOwnedSession(sessionID);
+      if (!owned || owned.owner !== user.username) return json({ error: 'forbidden' }, { status: 403 });
+      const rs = filePath ? path.resolve(REPO_ROOT, filePath) : '';
+      if (!rs || !rs.startsWith(REPO_ROOT) || !fs.existsSync(rs)) return json({ error: 'not found' }, { status: 404 });
+      const original = fs.readFileSync(rs, 'utf-8');
+      const fm = parseFrontmatter(original);
+      const body = stripFrontmatter(original);
+      // Turn 0 = improve (full mode only), final turn = critique. Client extracts
+      // each turn's answer from the stream (assistantMessageTexts) for Apply.
+      const prompts: Array<{ key: string; label: string; prompt: string }> = [];
+      if (mode !== 'critique') prompts.push({ key: 'improve', label: 'Improve', prompt: buildPrompt(fm, body) });
+      prompts.push({ key: 'critique', label: 'Critique', prompt: buildCritique(original) });
+      void runLiveReview(sessionID, prompts).catch((e) => console.error('[improve] live run failed:', e?.message ?? e));
+      return json({ ok: true, prompts: prompts.length, mode });
+    }
+
+    // Phase 1: create the owned session.
+    if (!filePath) return json({ error: 'missing path' }, { status: 400 });
+    const rc = path.resolve(REPO_ROOT, filePath);
+    if (!rc.startsWith(REPO_ROOT)) return json({ error: 'invalid path' }, { status: 403 });
+    if (!fs.existsSync(rc)) return json({ error: 'not found' }, { status: 404 });
+    const created = await createOwnedSession({ user: user.username, feature: 'improve', docPath: filePath });
+    return json({ live: true, sessionID: created.sessionID, mode });
+  }
+
+  // --- Legacy fake-streaming path (flag OFF) — unchanged ---
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
   const resolved = path.resolve(REPO_ROOT, filePath);

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import AgentActivityView from './AgentActivityView.svelte';
   import { showExecutionPanel, executingPlanName, executorActive, executorWaiting, executorDone } from './pane';
 
   interface Step {
@@ -18,6 +19,25 @@
   let currentSessionId = $state<string | null>(null);
   let userResponse = $state('');
   let logEl: HTMLElement | null = $state(null);
+
+  // Live per-step activity (LIVE_AI_EXECUTOR): the route emits 'step_session'
+  // {step,sessionId}; we stream that session via /api/ai/stream into AgentActivityView.
+  let liveEvents = $state<any[]>([]);
+  let liveStepNum = $state(0);
+  let liveStepES: EventSource | null = null;
+
+  function openStepStream(step: number, sessionId: string) {
+    if (liveStepES) { liveStepES.close(); liveStepES = null; }
+    liveEvents = [];
+    liveStepNum = step;
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionId)}`);
+    liveStepES = es;
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveEvents = [...liveEvents, evt];
+    };
+  }
   let abortController: AbortController | null = null;
 
   // Auto-scroll logs
@@ -82,6 +102,8 @@
             if (data.steps) steps = data.steps;
           } else if (event === 'log') {
             logs = [...logs, data.text];
+          } else if (event === 'step_session') {
+            openStepStream(data.step, data.sessionId);
           } else if (event === 'step_done') {
             const idx = steps.findIndex(s => s.stepNumber === data.step);
             if (idx !== -1) steps[idx].status = 'done';
@@ -149,9 +171,11 @@
     abortController?.abort();
     executorActive.set(false);
     executorWaiting.set(false);
+    if (liveStepES) { liveStepES.close(); liveStepES = null; }
   });
 
   function close() {
+    if (liveStepES) { liveStepES.close(); liveStepES = null; }
     showExecutionPanel.set(false);
   }
 
@@ -196,13 +220,18 @@
       {/each}
     </div>
 
-    <div class="log-area" bind:this={logEl}>
-      {#each logs as log}
-        <pre>{log}</pre>
-      {/each}
-      {#if !logs.length}
-        <div class="empty-logs">Awaiting log output…</div>
+    <div class="exec-main">
+      {#if liveEvents.length}
+        <div class="live-activity"><AgentActivityView events={liveEvents} /></div>
       {/if}
+      <div class="log-area" bind:this={logEl}>
+        {#each logs as log}
+          <pre>{log}</pre>
+        {/each}
+        {#if !logs.length}
+          <div class="empty-logs">Awaiting log output…</div>
+        {/if}
+      </div>
     </div>
   </div>
 
@@ -291,6 +320,18 @@
     display: flex;
     flex: 1;
     min-height: 0;
+  }
+
+  .exec-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .live-activity {
+    flex: 2;
+    min-height: 0;
+    border-bottom: 1px solid $border;
   }
 
   .steps-list {
