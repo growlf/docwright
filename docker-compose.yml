@@ -34,6 +34,11 @@ services:
       - "${PORT:-5173}:5173"
       # Uncomment to expose MCP SSE for external tooling:
       # - "3002:3002"
+    # Local auth (AUTH_MODE + LOCAL_AUTH_*) loaded verbatim so the bcrypt hash's
+    # $ is not interpolated. Gitignored; production node build does NOT read
+    # src/webui/.env, so config must come through the container environment.
+    env_file:
+      - .env.auth
     environment:
       GIT_USER_NAME:   ${GIT_USER_NAME:-DocWright User}
       GIT_USER_EMAIL:  ${GIT_USER_EMAIL:-docwright@localhost}
@@ -45,6 +50,13 @@ services:
       # Set in repo-root .env; never commit values.
       OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
       OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-}
+      # adapter-node origin/CSRF (production build): SvelteKit rejects form POSTs
+      # (including /api/auth/login) unless it knows its own origin. Set ORIGIN to
+      # the URL users hit for direct access, OR set PROTOCOL_HEADER + HOST_HEADER
+      # when behind a reverse proxy (Caddy). Replaces vite's DOCWRIGHT_ALLOWED_HOSTS.
+      ORIGIN: ${ORIGIN:-}
+      PROTOCOL_HEADER: ${PROTOCOL_HEADER:-}
+      HOST_HEADER: ${HOST_HEADER:-}
     restart: unless-stopped
 
 # ── Scenario 2: Team server (Caddy reverse proxy) ────────────────────────────
