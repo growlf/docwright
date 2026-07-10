@@ -5,6 +5,7 @@
   import { fileChanged } from '$lib/fileChanges';
   import FunnelView from '$lib/FunnelView.svelte';
   import KnowledgeGraph from '$lib/KnowledgeGraph.svelte';
+  import { showToast } from '$lib/toast';
 
   interface DocEntry {
     path: string; title: string; created: string;
@@ -13,6 +14,7 @@
     depends_on?: string[]; phase?: string | null;
     branch?: string;
     demandCount: number; githubIssue: string; reportedDates: string[];
+    reportCategory?: string;
   }
   interface OpenPR {
     number: number; title: string; url: string;
@@ -241,6 +243,7 @@
   });
 
   let showReportBugModal = $state(false);
+  let bugCategory = $state<'bug' | 'feature'>('bug');
   let bugTitle = $state('');
   let bugDesc = $state('');
   let bugReporter = $state('NetYeti');
@@ -256,7 +259,7 @@
   function reportPayload() {
     return {
       title: bugTitle, description: bugDesc, reporter: bugReporter,
-      priority: bugPriority, system_info: bugSysInfo,
+      priority: bugPriority, system_info: bugSysInfo, category: bugCategory,
     };
   }
 
@@ -303,6 +306,7 @@
     showReportBugModal = false;
     reportStep = 'form';
     bugSuggestions = [];
+    bugCategory = 'bug';
     bugTitle = ''; bugDesc = ''; bugPriority = 'medium'; bugSysInfo = '';
   }
 
@@ -314,9 +318,9 @@
     try {
       const res = await fetch('/api/issues/report', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: bugTitle }),
+        body: JSON.stringify({ title: bugTitle, category: bugCategory }),
       });
-      if (!res.ok) { alert('Failed to check for duplicates: ' + ((await res.json()).error || 'Unknown')); return; }
+      if (!res.ok) { showToast('Failed to check for duplicates: ' + ((await res.json()).error || 'Unknown')); return; }
       const { suggestions } = await res.json();
       if (suggestions && suggestions.length > 0) {
         bugSuggestions = suggestions;
@@ -338,8 +342,8 @@
         body: JSON.stringify({ canonicalPath, ...reportPayload() }),
       });
       const r = await res.json();
-      if (res.ok) { alert(`Thanks — added your context to ${r.path} (demand now ${r.demandCount}).`); resetReport(); load(); }
-      else alert('Failed: ' + (r.error || 'Unknown error'));
+      if (res.ok) { showToast(`Thanks — added your context to ${r.path} (demand now ${r.demandCount}).`); resetReport(); load(); }
+      else showToast('Failed: ' + (r.error || 'Unknown error'));
     } finally { reportSubmitting = false; }
   }
 
@@ -352,8 +356,8 @@
         body: JSON.stringify({ ...reportPayload(), related }),
       });
       const r = await res.json();
-      if (res.ok) { alert(`Bug report filed at ${r.path}.`); resetReport(); load(); }
-      else alert('Failed to file bug: ' + (r.error || 'Unknown error'));
+      if (res.ok) { showToast(`${bugCategory === 'feature' ? 'Feature request' : 'Bug report'} filed at ${r.path}.`); resetReport(); load(); }
+      else showToast(`Failed to file ${bugCategory === 'feature' ? 'feature request' : 'bug'}: ` + (r.error || 'Unknown error'));
     } finally { reportSubmitting = false; }
   }
 
@@ -590,11 +594,11 @@
           </div>
         {/if}
 
-        <!-- Most Reported Bugs Heatmap -->
+        <!-- Most Reported Bugs & Feature Requests Heatmap -->
         {#if data.heatmap && data.heatmap.length > 0}
           <div class="heatmap-card">
             <div class="card-header">
-              <h3>🔥 Most Reported Bugs</h3>
+              <h3>🔥 Most Reported</h3>
               <div class="heatmap-controls">
                 <span class="badge">{data.heatmap.length} items</span>
                 <button class="window-toggle" onclick={toggleHeatmapWindow}>
@@ -608,6 +612,7 @@
                 <div class="heatmap-row">
                   <a href="/{bug.path.replace(/\.md$/, '')}" class="heatmap-item {heatClass}" title="{bug.title} — Demand: {bug.demandCount}">
                     <span class="heatmap-rank">#{i + 1}</span>
+                    <span class="heatmap-cat" title={bug.reportCategory === 'feature' ? 'Feature request' : 'Bug'}>{bug.reportCategory === 'feature' ? '💡' : '🐞'}</span>
                     <span class="heatmap-title">{bug.title}</span>
                     <span class="heatmap-demand">{bug.demandCount}</span>
                   </a>
@@ -1113,19 +1118,23 @@
     <div class="modal-overlay">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>🐞 Report a Bug</h3>
+          <h3>{bugCategory === 'feature' ? '💡 Request a Feature' : '🐞 Report a Bug'}</h3>
           <button class="close-btn" onclick={resetReport}>&times;</button>
         </div>
 
         {#if reportStep === 'form'}
           <form onsubmit={submitBugReport}>
+            <div class="form-group category-toggle" role="radiogroup" aria-label="Report category">
+              <button type="button" class="cat-btn" class:active={bugCategory === 'bug'} onclick={() => (bugCategory = 'bug')} aria-pressed={bugCategory === 'bug'}>🐞 Bug</button>
+              <button type="button" class="cat-btn" class:active={bugCategory === 'feature'} onclick={() => (bugCategory = 'feature')} aria-pressed={bugCategory === 'feature'}>💡 Feature</button>
+            </div>
             <div class="form-group">
-              <label for="bug-title">Bug Title</label>
-              <input id="bug-title" type="text" bind:value={bugTitle} required placeholder="e.g. Database connection pool timeout" />
+              <label for="bug-title">{bugCategory === 'feature' ? 'Feature Title' : 'Bug Title'}</label>
+              <input id="bug-title" type="text" bind:value={bugTitle} required placeholder={bugCategory === 'feature' ? 'e.g. Bulk-export issues to CSV' : 'e.g. Database connection pool timeout'} />
             </div>
             <div class="form-group">
               <label for="bug-desc">Description</label>
-              <textarea id="bug-desc" bind:value={bugDesc} required rows="4" placeholder="Detail the steps to reproduce, actual vs expected outcomes..."></textarea>
+              <textarea id="bug-desc" bind:value={bugDesc} required rows="4" placeholder={bugCategory === 'feature' ? 'What would this let you do, and why does it matter?' : 'Detail the steps to reproduce, actual vs expected outcomes...'}></textarea>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1801,6 +1810,7 @@
   .heatmap-item.hot  { background: rgba(247, 74, 74, 0.1); border-left: 3px solid #f74a4a; }
   .heatmap-item:hover { background: rgba(255,255,255,0.06); }
   .heatmap-rank { font-size: 0.75rem; font-weight: 700; color: #888; min-width: 1.5rem; }
+  .heatmap-cat { font-size: 0.8rem; line-height: 1; }
   .heatmap-title { flex: 1; font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
   .heatmap-demand { font-size: 0.75rem; font-weight: 700; background: rgba(255,255,255,0.08); padding: 0.15rem 0.5rem; border-radius: 10px; color: #aaa; }
   .heatmap-item.hot .heatmap-demand { background: rgba(247, 74, 74, 0.25); color: #f77; }
@@ -1815,5 +1825,142 @@
     .heatmap-title { color: #1a1a1a; }
     .heatmap-demand { background: rgba(0,0,0,0.06); color: #555; }
     .heatmap-item.hot .heatmap-demand { background: rgba(247, 74, 74, 0.12); color: #c33; }
+  }
+
+  // ── Report Bug/Feature modal ─────────────────────────────────────────────────
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-card {
+    background: #1c1c2e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.25rem;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    h3 { margin: 0; font-size: 1.1rem; }
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+    &:hover { color: #fff; }
+  }
+  .category-toggle {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .cat-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #26263a;
+    color: #ccc;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    &:hover { background: #30304a; }
+    &.active {
+      border-color: #4a6cf7;
+      background: rgba(74, 108, 247, 0.15);
+      color: #fff;
+    }
+  }
+  .form-group {
+    margin-bottom: 0.9rem;
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: #ccc; }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #444;
+      border-radius: 5px;
+      background: #26263a;
+      color: #eee;
+      font-size: 0.85rem;
+      font-family: inherit;
+      &:focus { outline: none; border-color: #4a6cf7; box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2); }
+    }
+    textarea { resize: vertical; }
+  }
+  .form-row {
+    display: flex;
+    gap: 0.75rem;
+    .form-group { flex: 1; }
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .modal-card .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .btn-cancel {
+    background: transparent;
+    border-color: #555;
+    color: #ccc;
+    &:hover { background: rgba(255, 255, 255, 0.06); }
+  }
+  .btn-submit {
+    background: #4a6cf7;
+    color: #fff;
+    &:hover:not(:disabled) { background: #3a5ce0; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+  .suggest-intro { font-size: 0.85rem; color: #aaa; margin-bottom: 0.75rem; }
+  .suggest-list { list-style: none; padding: 0; margin: 0 0 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .suggest-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #22222e;
+  }
+  .suggest-meta { display: flex; flex-direction: column; gap: 0.15rem; }
+  .suggest-title { font-size: 0.85rem; font-weight: 600; color: #eee; }
+  .suggest-sub { font-size: 0.75rem; color: #999; }
+  .gh-badge { background: rgba(45, 186, 78, 0.15); color: #2dba4e; border-radius: 4px; padding: 0.1rem 0.35rem; margin-right: 0.4rem; font-weight: 700; }
+
+  :global(html[data-theme="light"]) {
+    .modal-card { background: #fff; border-color: #d0d0d0; }
+    .cat-btn {
+      background: #f0f0f4; border-color: #ccc; color: #444;
+      &.active { background: rgba(74, 108, 247, 0.1); border-color: #4a6cf7; color: #1a1a1a; }
+    }
+    .form-group {
+      label { color: #333; }
+      input, select, textarea { background: #fff; border-color: #ccc; color: #1a1a1a; }
+    }
+    .suggest-item { background: #f7f7fa; border-color: #ddd; }
+    .suggest-title { color: #1a1a1a; }
+    .btn-cancel { border-color: #ccc; color: #444; &:hover { background: rgba(0, 0, 0, 0.04); } }
   }
 </style>

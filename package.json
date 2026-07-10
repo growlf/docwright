@@ -53,6 +53,7 @@
     "vault:migrate": "npx tsx scripts/vault-migrate.ts",
     "lifecycle:fix-approvals": "npx tsx scripts/fix-stale-approvals.ts",
     "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
+    "backfill:github-issues": "npx tsx scripts/backfill-github-issues.ts",
     "phase:close": "npx tsx scripts/phase-close.ts",
     "session:end": "npx tsx scripts/end-session.ts",
     "release:tag": "bash scripts/release-tag.sh",

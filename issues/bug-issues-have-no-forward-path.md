@@ -1,6 +1,7 @@
 ---
 title: Issues have no forward path
-status: proposal-linked
+status: resolved
+resolved: 2026-07-09
 consumed_by: proposals/add-issue-forward-path-actions.md
 author: NetYeti
 author-role: user
@@ -34,3 +35,7 @@ After opening an issue document, I do not see a way to move it forward, make a p
 ## System Info
 
 None provided
+
+## Resolution (2026-07-09)
+
+`IssueForwardPathActions.svelte` (Create Proposal / Link Proposal buttons) was already built per `proposals/add-issue-forward-path-actions.md`, but was actually non-functional for almost every issue: it gated visibility on `frontmatter.type === 'issue'`, a field the org-operations schema never requires — only 6 of 62 existing issue files happened to set it, and no issue-creation path (capture_bug_report, GitHub sync) sets it either. Fixed by passing the document's path into the component and detecting issue documents by their `issues/` path prefix instead. Verified live: buttons render on a real issue page and the Create Proposal modal opens correctly. Tracked under `plans/improve-bug-feature-reporting-tool.md` (Wave C, Step 6).
