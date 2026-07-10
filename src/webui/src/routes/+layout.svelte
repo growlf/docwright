@@ -258,9 +258,16 @@ import {
     } catch { /* use defaults */ }
   });
 
-  // On nav: clear stale collation data; honour active tab
+  // On nav: clear stale collation data; honour active tab.
+  // GUARD: only clear on an ACTUAL file change. $currentDoc also updates on
+  // same-file SSE watch-reloads; without this guard those reloads wiped in-progress
+  // or finished Improve/Review results (and switched the tab away) with no Apply
+  // decision — the "results vanish" bug (issues/bug-improve-flow-discards-*).
+  let lastNavPath: string | null = null;
   $effect(() => {
     const fp = $currentDoc.filePath;
+    if (fp === lastNavPath) return; // same-doc reload — keep AI panels intact
+    lastNavPath = fp;
     collationMatches.set([]);
     collationRelationships.set([]);
     collationLoading.set(false);
