@@ -59,7 +59,7 @@
     "generate-roadplan": "npx tsx scripts/generate-roadplan.ts",
     "package": "vsce package",
     "vscode:prepublish": "npm run compile",
-    "test:webui": "mocha --require tsx/cjs test/webui/auth.test.ts test/webui/opencode-auth-wiring.test.ts test/webui/opencode-events.test.ts test/webui/opencode-events-integration.test.ts test/webui/ai-sessions.test.ts test/webui/ai-stream.test.ts test/webui/agent-activity-model.test.ts test/webui/plan-review-live.test.ts test/webui/live-improve-extract.test.ts test/webui/chat-utils.test.ts test/webui/diff-annotate.test.ts test/webui/plan-generator.test.ts test/webui/git-commit.test.ts test/webui/markdown-roundtrip.test.ts",
+    "test:webui": "mocha --require tsx/cjs test/webui/auth.test.ts test/webui/opencode-auth-wiring.test.ts test/webui/opencode-events.test.ts test/webui/opencode-events-integration.test.ts test/webui/ai-sessions.test.ts test/webui/ai-stream.test.ts test/webui/agent-activity-model.test.ts test/webui/plan-review-live.test.ts test/webui/live-improve-extract.test.ts test/webui/ai-presence.test.ts test/webui/chat-utils.test.ts test/webui/diff-annotate.test.ts test/webui/plan-generator.test.ts test/webui/git-commit.test.ts test/webui/markdown-roundtrip.test.ts",
     "test:e2e": "npx tsx test/webui/e2e-check.ts --screenshot",
     "test:e2e:ci": "npx tsx test/webui/e2e-check.ts",
     "test:ai-gateway": "npx tsx test/webui/ai-gateway.test.ts",

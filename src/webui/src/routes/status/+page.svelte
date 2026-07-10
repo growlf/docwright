@@ -81,6 +81,8 @@
   }
 
   let data = $state<StatusData | null>(null);
+  // Live-AI event bus health (3.6 observability).
+  let busStatus = $state<{ connected: boolean; lastEventAt: number | null; reconnectCount: number; eventsReceived: number; eventsRelayed: number } | null>(null);
   let loading = $state(true);
   let heatmapWindow = $state<'all' | '30d'>('all');
 
@@ -124,11 +126,21 @@
     load();
   }
 
+  async function loadBus() {
+    try {
+      const r = await fetch('/api/ai/bus-status');
+      if (r.ok) busStatus = await r.json();
+    } catch { /* ignore */ }
+  }
+
   onMount(() => {
     load();
-    return fileChanged.subscribe((change) => {
+    loadBus();
+    const busTimer = setInterval(loadBus, 10000);
+    const unsub = fileChanged.subscribe((change) => {
       if (change) load();
     });
+    return () => { clearInterval(busTimer); unsub(); };
   });
 
   function navTo(entry: DocEntry) {
@@ -432,6 +444,12 @@
         href="/docs/friction-log"
         title="{data.friction.aged.length} friction entr{data.friction.aged.length === 1 ? 'y' : 'ies'} past the {data.friction.cadence_days}-day review cadence with no upstream issue"
       >⚠ {data.friction.aged.length} aged friction</a>
+    {/if}
+    {#if busStatus}
+      <span
+        style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:monospace;padding:2px 8px;border-radius:10px;border:1px solid var(--border,#ddd);color:{busStatus.connected ? '#16a34a' : '#dc2626'};"
+        title={`AI event bus: ${busStatus.connected ? 'connected' : 'disconnected'} · reconnects ${busStatus.reconnectCount} · received ${busStatus.eventsReceived} · relayed ${busStatus.eventsRelayed}${busStatus.lastEventAt ? ` · last event ${new Date(busStatus.lastEventAt).toLocaleTimeString()}` : ''}`}
+      >⧉ AI bus {busStatus.connected ? 'up' : 'down'}{busStatus.reconnectCount ? ` · ↻${busStatus.reconnectCount}` : ''}</span>
     {/if}
     <button class="report-bug-btn" onclick={() => showReportBugModal = true} title="Report a Bug">🐞 Report Bug</button>
     <button class="refresh-btn" onclick={load} title="Refresh">↻</button>

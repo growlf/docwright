@@ -126,6 +126,18 @@ import {
   let liveImproveEvents = $state<any[]>([]);
   let liveImproveES: EventSource | null = null;
 
+  // Live-AI presence chip (3.6): busy when any of the current user's owned
+  // sessions is generating (fed by /api/ai/presence, a bus-wide session.status tap).
+  let aiBusy = $state(false);
+  let aiBusyCount = $state(0);
+  $effect(() => {
+    const es = new EventSource('/api/ai/presence');
+    es.onmessage = (e) => {
+      try { const p = JSON.parse(e.data); aiBusy = !!p.busy; aiBusyCount = p.count ?? 0; } catch { /* ignore */ }
+    };
+    return () => es.close();
+  });
+
   // Right panel priority model — null = no VC claim, show standard tabs
   let rpc = $state<RightPanelClaim | null>(null);
   $effect(() => { const u = rightPanelClaim.subscribe(v => { rpc = v; if (v) showRightPanel = true; }); return u; });
@@ -1516,6 +1528,10 @@ import {
   </a>
   <span class="footer-sep">·</span>
   <span class="version-badge" title="DocWright release version">{vaultVersion ? `v${vaultVersion}` : 'version unknown'}</span>
+  <span class="footer-sep">·</span>
+  <span class="ai-presence" class:busy={aiBusy} title={aiBusy ? `AI working — ${aiBusyCount} active session${aiBusyCount === 1 ? '' : 's'}` : 'AI idle'}>
+    <span class="ai-dot"></span>{aiBusy ? `AI working…${aiBusyCount > 1 ? ` (${aiBusyCount})` : ''}` : 'AI idle'}
+  </span>
   <span class="footer-spacer"></span>
   <a href="/settings" class="footer-link footer-settings" title="Settings">⚙ Settings</a>
   <span class="footer-sep">·</span>
@@ -1608,6 +1624,11 @@ import {
   .footer-link:hover { color: #666; }
   .footer-sep { color: #222; }
   .version-badge { color: #666; font-family: monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
+  .ai-presence { display: inline-flex; align-items: center; gap: 5px; color: #666; font-size: 10px; }
+  .ai-presence .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+  .ai-presence.busy { color: #3b82f6; }
+  .ai-presence.busy .ai-dot { background: #3b82f6; animation: ai-pulse 1.2s ease-in-out infinite; }
+  @keyframes ai-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
   /* chat-fab replaced by chat-toggle (see above) */
   /* sidebar-toggle removed — Panel.svelte provides the edge toggle */
