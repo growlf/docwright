@@ -23,6 +23,7 @@ import {
   import PropertiesPane from '$lib/PropertiesPane.svelte';
   import CollationPanel from '$lib/CollationPanel.svelte';
   import PlanReviewPanel from '$lib/PlanReviewPanel.svelte';
+  import AgentActivityView from '$lib/AgentActivityView.svelte';
   import PlanExecutePanel from '$lib/PlanExecutePanel.svelte';
   import ImprovementPanel from '$lib/ImprovementPanel.svelte';
   import UserBadge from '$lib/UserBadge.svelte';
@@ -110,6 +111,12 @@ import {
   function cycleTheme() { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); }
   let showRightPanel = $state(!mobile());
   let rightTab     = $state<'properties' | 'related' | 'review' | 'improve' | 'execute'>('properties');
+
+  // Live plan-review (LIVE_AI_REVIEW): when the server returns a live session, the
+  // review renders in AgentActivityView fed by /api/ai/stream instead of PlanReviewPanel.
+  let reviewIsLive = $state(false);
+  let liveReviewEvents = $state<any[]>([]);
+  let liveReviewES: EventSource | null = null;
 
   // Right panel priority model — null = no VC claim, show standard tabs
   let rpc = $state<RightPanelClaim | null>(null);
@@ -357,6 +364,10 @@ import {
     prAnalysesThinking = {};
     prOverviewPrompt = {};
     prOverviewThinking = '';
+    // reset any prior live-review stream
+    if (liveReviewES) { liveReviewES.close(); liveReviewES = null; }
+    reviewIsLive = false;
+    liveReviewEvents = [];
     planReviewLoading.set(true);
     try {
       const res = await fetch('/api/plan-review', {
@@ -364,6 +375,14 @@ import {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: fp }),
       });
+      // Live path: server created an owned session → render AgentActivityView from /api/ai/stream.
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const info = await res.json().catch(() => ({}));
+        if (info?.live && info?.sessionID) {
+          startLiveReview(info.sessionID, fp);
+          return;
+        }
+      }
       const reader = res.body?.getReader();
       if (!reader) { planReviewStatus.set('No response stream'); return; }
       const decoder = new TextDecoder();
@@ -427,6 +446,55 @@ import {
       const body = $currentDoc?.body;
       if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
     }
+  }
+
+  // Live review: subscribe to the per-session event stream, then tell the server
+  // to drive the prompts. Progress renders in AgentActivityView; completion is
+  // detected by counting session.idle events (one per prompt turn).
+  function startLiveReview(sessionID: string, planPath: string) {
+    reviewIsLive = true;
+    liveReviewEvents = [];
+    planReviewStatus.set('');
+    let expected = Infinity;
+    let idleCount = 0;
+
+    const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
+    liveReviewES = es;
+
+    function finishLive() {
+      planReviewLoading.set(false);
+      if (liveReviewES) { liveReviewES.close(); liveReviewES = null; }
+      const body = $currentDoc?.body;
+      if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
+    }
+
+    es.onopen = async () => {
+      try {
+        const r = await fetch('/api/plan-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', sessionID, path: planPath }),
+        });
+        const info = await r.json().catch(() => ({}));
+        if (typeof info?.prompts === 'number') expected = info.prompts;
+        if (!r.ok) { planReviewStatus.set('Failed to start review'); finishLive(); }
+      } catch {
+        planReviewStatus.set('Failed to start review');
+        finishLive();
+      }
+    };
+
+    es.onmessage = (e) => {
+      let evt: any;
+      try { evt = JSON.parse(e.data); } catch { return; }
+      liveReviewEvents = [...liveReviewEvents, evt];
+      if (evt?.type === 'session.idle') {
+        idleCount++;
+        if (idleCount >= expected) finishLive();
+      }
+    };
+
+    es.onerror = () => { if (idleCount >= expected) finishLive(); };
   }
 
   // React to signal to switch to Review tab (just show tab, don't auto-run)
@@ -1169,6 +1237,14 @@ import {
         ondismiss={() => { rightTab = 'properties'; improveResult.set(null); improveIsCritiqueOnly = false; }}
         onrerun={improveIsCritiqueOnly ? handleCritique : handleImprove}
       />
+    {:else if rightTab === 'review' && reviewIsLive}
+      <div style="display:flex;flex-direction:column;height:100%;min-height:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.55rem;border-bottom:1px solid var(--border,#ddd);font-size:0.8rem;color:var(--muted,#666);">
+          <span>Live review</span>
+          <button class="right-tab" title="Close" onclick={() => { if (liveReviewES) { liveReviewES.close(); liveReviewES = null; } reviewIsLive = false; rightTab = 'properties'; }}>✕</button>
+        </div>
+        <AgentActivityView events={liveReviewEvents} />
+      </div>
     {:else if rightTab === 'review'}
       <PlanReviewPanel
         steps={prSteps}

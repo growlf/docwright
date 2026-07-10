@@ -410,6 +410,86 @@ async function checkVCLayout(page: Page, ctx: BrowserContext, baseUrl: string): 
   return results;
 }
 
+/**
+ * Live-AI progressive-render recipe (plan step 3.2; reused for 3.3–3.5).
+ *
+ * Triggers an AI surface and polls the AgentActivityView's innerText every 2s
+ * during generation, asserting the text actually streams in (≥2 mid-generation
+ * samples differ and length grows) and ends non-empty. Requires the server to be
+ * running with the surface's LIVE_AI_* flag ON and OpenCode reachable, so it is
+ * gated behind --live-review and NOT part of the default suite.
+ *
+ * Usage: npx tsx test/webui/e2e-check.ts --live-review --plan=/plans/<slug> [--url=…]
+ */
+async function checkLiveReview(page: Page, baseUrl: string, planPath: string): Promise<CheckResult[]> {
+  const results: CheckResult[] = [];
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+
+  await page.goto(`${baseUrl}${planPath}`, { waitUntil: 'load', timeout: 20000 });
+
+  // Open the Review tab, then click "Generate Review" in the (empty) panel.
+  // The doc loads asynchronously, so wait for the elements rather than race them.
+  results.push(await check('review tab present for plan', async () => {
+    const tab = page.getByRole('button', { name: /^Review/ });
+    try { await tab.first().waitFor({ state: 'visible', timeout: 15000 }); }
+    catch { return 'no Review tab (is this a plan doc?)'; }
+    await tab.first().click();
+    return true;
+  }));
+
+  results.push(await check('trigger live review (Generate Review)', async () => {
+    const run = page.locator('.run-btn');
+    try { await run.first().waitFor({ state: 'visible', timeout: 10000 }); }
+    catch { return 'no Generate Review button'; }
+    await run.first().click();
+    return true;
+  }));
+
+  // The live panel (AgentActivityView) must appear.
+  results.push(await check('AgentActivityView mounts (.agent-activity)', async () => {
+    try {
+      await page.waitForSelector('.agent-activity', { timeout: 15000 });
+      return true;
+    } catch { return 'AgentActivityView did not mount (flag off? stream failed?)'; }
+  }));
+
+  // Poll innerText every 2s; collect growth samples during generation.
+  const samples: number[] = [];
+  const texts: string[] = [];
+  let finalText = '';
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    const t = await page.locator('.agent-activity .stream').innerText().catch(() => '');
+    finalText = t;
+    samples.push(t.length);
+    texts.push(t);
+    // enough evidence of streaming? stop early
+    const distinctGrowing = new Set(samples.filter((n) => n > 0)).size;
+    const idle = await page.locator('.status-bar[data-status="idle"]').count().catch(() => 0);
+    if (distinctGrowing >= 3 && idle > 0) break;
+    await page.waitForTimeout(2000);
+  }
+  await shot(page, 'live-review');
+
+  results.push(await check('text streams progressively (≥2 differing mid-gen samples, growing)', async () => {
+    const positive = samples.filter((n) => n > 0);
+    const distinct = new Set(positive).size;
+    const grew = positive.length >= 2 && positive[positive.length - 1] > positive[0];
+    if (distinct < 2) return `only ${distinct} distinct non-empty samples: ${samples.join(',')}`;
+    if (!grew) return `text did not grow: ${samples.join(',')}`;
+    return true;
+  }));
+
+  results.push(await check('final content non-empty', async () => finalText.trim().length > 0 || `empty final (${finalText.length})`));
+
+  const real = errors.filter((e) => !e.includes('favicon') && !e.includes('EventSource'));
+  results.push({ name: 'no console/page errors during live review', passed: real.length === 0, detail: real.slice(0, 3).join('; ') || undefined });
+
+  return results;
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -423,6 +503,12 @@ async function main() {
     const page = await ctx.newPage();
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+    if (process.argv.includes('--live-review')) {
+      const planArg = process.argv.find(a => a.startsWith('--plan='))?.slice(7) ?? '/plans/phase-4-profile-acl-ai';
+      console.log('\n── Live Review (LIVE_AI_REVIEW) ──────────────────────────────');
+      allResults.push(...await checkLiveReview(page, BASE_URL, planArg));
+    } else {
 
     // ── View Container layout suite (Step 16) ──
     console.log('\n── View Container Layout ─────────────────────────────────────');
@@ -451,6 +537,7 @@ async function main() {
     } else {
       allResults.push({ name: 'no console/page errors', passed: true });
     }
+    } // end default suite (non --live-review)
   } finally {
     await browser?.close();
   }
