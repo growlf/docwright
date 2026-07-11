@@ -71,7 +71,10 @@ function openBugs(repoRoot: string, category: 'bug' | 'feature' = 'bug'): Array<
   return out;
 }
 
-interface GhIssue { number: number; title: string; }
+export interface GhIssue { number: number; title: string; }
+/** Injectable GitHub-issue query — lets tests substitute a fake so they never
+ *  shell out to the real `gh` CLI (the source of the flaky 2000ms CI timeout). */
+export type GhIssueQuery = (category: 'bug' | 'feature') => GhIssue[];
 
 /** Query GitHub for open issues tracked under the given category's label. Returns empty array if gh CLI is unavailable. */
 function queryGhIssues(category: 'bug' | 'feature' = 'bug'): GhIssue[] {
@@ -89,7 +92,12 @@ function queryGhIssues(category: 'bug' | 'feature' = 'bug'): GhIssue[] {
 }
 
 /** Phase 1 — read-only. Similar open bugs/feature requests (same category only), best match first. Never writes. */
-export function suggestDuplicates(repoRoot: string, title: string, category: 'bug' | 'feature' = 'bug'): DuplicateSuggestion[] {
+export function suggestDuplicates(
+  repoRoot: string,
+  title: string,
+  category: 'bug' | 'feature' = 'bug',
+  ghQuery: GhIssueQuery = queryGhIssues,
+): DuplicateSuggestion[] {
   const local: DuplicateSuggestion[] = openBugs(repoRoot, category)
     .map(b => ({
       path: b.relPath,
@@ -100,7 +108,7 @@ export function suggestDuplicates(repoRoot: string, title: string, category: 'bu
     }))
     .filter(s => s.score >= SUGGEST_THRESHOLD);
 
-  const gh: DuplicateSuggestion[] = queryGhIssues(category)
+  const gh: DuplicateSuggestion[] = ghQuery(category)
     .map(issue => ({
       path: `gh:${issue.number}`,
       title: issue.title,
