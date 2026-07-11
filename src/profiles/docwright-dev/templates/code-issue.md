@@ -3,7 +3,7 @@ title: "{{TITLE}}"
 author: {{AUTHOR}}
 author-role: contributor
 created: {{DATE}}
-status: open
+status: new
 category: feature
 priority: medium
 complexity: medium
