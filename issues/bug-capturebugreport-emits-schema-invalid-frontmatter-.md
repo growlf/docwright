@@ -1,6 +1,6 @@
 ---
 title: capture_bug_report emits schema-invalid frontmatter (status: open, milestone on new) — pre-commit rejects its own output
-status: new
+status: proposal-linked
 created: 2026-07-07
 author: NetYeti@phoenix
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # capture_bug_report emits schema-invalid frontmatter (status: open, milestone on new) — pre-commit rejects its own output
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-capture-bug-report-output-schema.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

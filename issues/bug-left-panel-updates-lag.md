@@ -1,6 +1,6 @@
 ---
 title: Left panel updates lag
-status: new
+status: proposal-linked
 created: 2026-07-10
 author: NetYeti
 author-role: user
@@ -16,6 +16,9 @@ tags:
 ---
 
 # Left panel updates lag
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/ui-left-panel-update-lag.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

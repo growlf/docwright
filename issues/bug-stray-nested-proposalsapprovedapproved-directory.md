@@ -1,7 +1,7 @@
 ---
 title: stray nested proposals/approved/approved directory
 github_issue: https://github.com/growlf/docwright/issues/302
-status: new
+status: resolved
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # stray nested proposals/approved/approved directory
+
+> **Resolved 2026-07-11** (backlog cleanup). Removed proposals/approved/approved/; release-v0.5.0.md moved up to proposals/approved/ (2026-07-11 cleanup).
+
 
 ## Description
 

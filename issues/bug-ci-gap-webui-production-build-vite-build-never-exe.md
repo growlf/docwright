@@ -1,6 +1,7 @@
 ---
 title: CI gap: webui production build (vite build) never exercised — unresolved imports reach main undetected
-status: new
+status: resolved
+resolved_by: #307
 created: 2026-07-09
 author: NetYeti
 author-role: user
@@ -16,6 +17,9 @@ tags:
 ---
 
 # CI gap: webui production build (vite build) never exercised — unresolved imports reach main undetected
+
+> **Resolved 2026-07-11** (backlog cleanup). The Dockerfile now runs the adapter-node production build (npm run build) baked into the image (#307); CI's 'Docker build + health check' job exercises the webui production build on every PR.
+
 
 ## Description
 

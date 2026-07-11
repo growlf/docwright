@@ -1,7 +1,7 @@
 ---
 title: release-v0.5.0 plan duplicated in plans/ and undocumented plans/approved/ directory
 github_issue: https://github.com/growlf/docwright/issues/301
-status: new
+status: resolved
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # release-v0.5.0 plan duplicated in plans/ and undocumented plans/approved/ directory
+
+> **Resolved 2026-07-11** (backlog cleanup). Single copy now in plans/release-v0.5.0.md; the proposal was moved out of the stray proposals/approved/approved/ up to proposals/approved/ (2026-07-11 cleanup).
+
 
 ## Description
 

@@ -1,6 +1,7 @@
 ---
 title: Web UI Complete button only sets status field, never archives plan or redirects
-status: new
+status: resolved
+resolved_by: src/webui/src/lib/PropertiesPane.svelte (#324)
 created: 2026-07-10
 author: agent
 author-role: user
@@ -18,6 +19,9 @@ tags:
 ---
 
 # Web UI Complete button only sets status field, never archives plan or redirects
+
+> **Resolved 2026-07-11** (backlog cleanup). Fixed by #324 — completePlan() archives (move + doc) and navigates, surfacing any gate error instead of silently doing nothing.
+
 
 ## Description
 

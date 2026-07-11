@@ -1,6 +1,6 @@
 ---
 title: Completion doc generator emits invalid YAML tags line in generated docs frontmatter
-status: scope-checked
+status: proposal-linked
 author: NetYeti
 author-role: user
 created: 2026-07-05
@@ -26,6 +26,9 @@ related:
 ---
 
 # Completion doc generator emits invalid YAML tags line in generated docs frontmatter
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/fix-completion-doc-generator-yaml-bugs.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

@@ -1,6 +1,6 @@
 ---
 title: complete_issue_branch --merge always fails: tries to merge before required checks finish
-status: scope-checked
+status: proposal-linked
 created: 2026-07-05
 category: bug
 priority: high

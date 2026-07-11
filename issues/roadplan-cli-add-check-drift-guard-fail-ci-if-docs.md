@@ -1,6 +1,6 @@
 ---
 title: roadplan CLI: add --check drift guard (fail CI if docs/roadplan.md is stale)
-status: scope-checked
+status: proposal-linked
 created: 2026-07-05
 category: feature
 priority: high

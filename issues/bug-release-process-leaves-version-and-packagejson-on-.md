@@ -1,6 +1,6 @@
 ---
 title: Release process leaves VERSION and package.json on main stale — bump only lands on release branch
-status: scope-checked
+status: proposal-linked
 author: NetYeti
 author-role: user
 created: 2026-07-06
@@ -25,6 +25,9 @@ channel: dev
 ---
 
 # Release process leaves VERSION and package.json on main stale — bump only lands on release branch
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/enforce-release-tag-script.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

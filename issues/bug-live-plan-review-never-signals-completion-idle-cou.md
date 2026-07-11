@@ -1,6 +1,6 @@
 ---
 title: Live plan review never signals completion — idle-count detection is fragile, leaving no done indicator or next-step action
-status: new
+status: proposal-linked
 created: 2026-07-11
 author: NetYeti
 author-role: user
@@ -19,6 +19,9 @@ tags:
 ---
 
 # Live plan review never signals completion — idle-count detection is fragile, leaving no done indicator or next-step action
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-plan-proposal-lifecycle-tooling.md` (plan/review completion-signalling). Not lost.
+
 
 ## Description
 

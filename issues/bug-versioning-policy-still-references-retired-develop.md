@@ -1,7 +1,7 @@
 ---
 title: versioning policy still references retired develop branch for release branches
 github_issue: https://github.com/growlf/docwright/issues/299
-status: new
+status: proposal-linked
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # versioning policy still references retired develop branch for release branches
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/reconcile-versioning-policy-and-practice.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

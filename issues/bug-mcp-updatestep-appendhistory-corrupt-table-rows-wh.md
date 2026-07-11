@@ -1,6 +1,6 @@
 ---
 title: MCP update_step / append_history corrupt table rows whose cell content contains pipe characters
-status: new
+status: proposal-linked
 created: 2026-07-09
 author: NetYeti
 author-role: user
@@ -19,6 +19,9 @@ tags:
 ---
 
 # MCP update_step / append_history corrupt table rows whose cell content contains pipe characters
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-markdown-table-row-parsing.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

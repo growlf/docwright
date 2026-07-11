@@ -1,6 +1,7 @@
 ---
 title: Web UI Run Tests button never persists tests_last_result to plan frontmatter
-status: new
+status: resolved
+resolved_by: src/webui/src/routes/api/lifecycle/run-tests/+server.ts (#324)
 created: 2026-07-10
 author: agent
 author-role: user
@@ -19,6 +20,9 @@ tags:
 ---
 
 # Web UI Run Tests button never persists tests_last_result to plan frontmatter
+
+> **Resolved 2026-07-11** (backlog cleanup). Fixed by #324 — the run-tests endpoint now persists tests_last_run/result/commit via the shared setFrontmatterField (same path as verify_plan_tests).
+
 
 ## Description
 

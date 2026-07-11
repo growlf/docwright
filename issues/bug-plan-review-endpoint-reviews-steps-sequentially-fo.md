@@ -1,6 +1,7 @@
 ---
 title: plan-review endpoint reviews steps sequentially for plans with a real steps table, unlike the already-fixed no-steps branch
-status: new
+status: resolved
+resolved_by: #292
 created: 2026-07-10
 author: agent
 author-role: user
@@ -19,6 +20,9 @@ tags:
 ---
 
 # plan-review endpoint reviews steps sequentially for plans with a real steps table, unlike the already-fixed no-steps branch
+
+> **Resolved 2026-07-11** (backlog cleanup). Fixed by #292 — plan-review runs analyses in parallel (Promise.all).
+
 
 ## Description
 

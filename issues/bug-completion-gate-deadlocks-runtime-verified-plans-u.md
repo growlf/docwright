@@ -1,6 +1,6 @@
 ---
 title: Completion gate deadlocks runtime-verified plans — UI run-tests runs repo unit suites, cannot certify infra/deployment plans
-status: new
+status: proposal-linked
 created: 2026-07-11
 author: agent
 author-role: user
@@ -20,6 +20,9 @@ tags:
 ---
 
 # Completion gate deadlocks runtime-verified plans — UI run-tests runs repo unit suites, cannot certify infra/deployment plans
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-plan-proposal-lifecycle-tooling.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

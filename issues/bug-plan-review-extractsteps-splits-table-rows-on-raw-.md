@@ -1,6 +1,6 @@
 ---
 title: plan-review extractSteps splits table rows on raw pipe — cells containing escaped pipes truncate the review prompts
-status: new
+status: proposal-linked
 created: 2026-07-11
 author: NetYeti
 author-role: user
@@ -19,6 +19,9 @@ tags:
 ---
 
 # plan-review extractSteps splits table rows on raw pipe — cells containing escaped pipes truncate the review prompts
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-markdown-table-row-parsing.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

@@ -1,6 +1,7 @@
 ---
 title: "Flaky CI: test/dispatch/bridge.test.ts intermittently exceeds 2000ms mocha timeout, failing docs-only PRs"
-status: new
+status: duplicate
+scope_notes: "Duplicate of issues/bug-flaky-dispatch-bridgetestts-times-out-2000ms-inter.md (GH #314) — same flaky bridge.test root; fixed by #326."
 created: 2026-07-11
 author: NetYeti
 author-role: user
@@ -17,6 +18,9 @@ tags:
 ---
 
 # Flaky CI: test/dispatch/bridge.test.ts intermittently exceeds 2000ms mocha timeout, failing docs-only PRs
+
+> **Duplicate — closed 2026-07-11** (backlog cleanup). Duplicate of the bridge.test flake (GH #314 / bug-flaky-dispatch-bridgetestts); fixed by #326 (injectable gh-query — bridge.test now ~20ms deterministic).
+
 
 ## Description
 
