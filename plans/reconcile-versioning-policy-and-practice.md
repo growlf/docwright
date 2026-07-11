@@ -13,11 +13,14 @@ complexity: low
 automated: guided
 assigned_to: NetYeti
 tests_defined: false
-tests_human_reviewed: false
+tests_human_reviewed: true
 scenario_synthesis: "Happy path: policy, scripts, and CI agree on ONE versioning model (recommend patch = per-release + a CI drift gate), with no references to the retired develop branch and a phase-close docstring that matches behaviour. Failure avoided: the current drift (policy says patch = completed-plan count, practice bumps per-release with count=0) confuses releases and violates code-over-memory."
 total_steps: 3
 completed_steps: 3
 gate_note: "Changed files are untestable types: plans/reconcile-versioning-policy-and-practice.md"
+tests_last_run: "2026-07-11T16:16:58.162Z"
+tests_last_result: pass
+tests_last_commit: 8eda38b
 ---
 
 # Reconcile versioning policy with practice
@@ -63,3 +66,4 @@ implement. Pick ONE coherent, code-enforced model. Full detail:
 | --- | --- | --- |
 | 2026-07-11 | Drafted from the proposal. Status draft, awaiting BDFL approval. | NetYeti |
 | 2026-07-11 | All 3 steps executed + landed on main via PR #327 (squash 71645e5). Patch=per-release documented; phase-close docstring + Automation section corrected; develop refs scrubbed (trunk-based); CI version gate extended to src/webui/package.json and real drift fixed (webui 0.4.9 → 0.4.12). Ready for completion. | NetYeti |
+| 2026-07-11 | Test run recorded via verify_plan_tests: npm run test:dispatch → PASS @ 8eda38b | NetYeti |
