@@ -20,13 +20,17 @@ part_of: plans/release-v0.5.0.md
 tests_defined: true
 tests_human_reviewed: true
 total_steps: 5
-completed_steps: 4
+completed_steps: 5
 phase: 4
 github_epic: null
 milestone: v0.5.0
 channel: beta
-scenario_synthesis: "Happy path: before a reviewer sees a gate, promote.ts surfaces an AI-drafted readiness summary in gate_note; the quorum, scheduled-trigger, retroactive-audit, and governance-log engines already shipped in gates.ts/audit.ts get wired through promote.ts. Failure paths: AI summary generation fails → the gate presents without a summary (the human path is never blocked on AI); retroactive audit --fix only proposes corrections, a human commits them; the audit log is append-only NDJSON — a failed write aborts the transition rather than losing the record."
+scenario_synthesis: "Happy path: before a reviewer signs off a gate, the AI pre-review engine surfaces a readiness summary (ready/needs-work/blocked + concerns) for the human; the quorum, scheduled-trigger, retroactive-audit, and governance-log engines shipped in gates.ts/audit.ts and wire through promote.ts. Failure paths: AI summary generation fails → the offline KeywordEngine fallback still returns a summary and the human path is never blocked on AI; retroactive audit --fix only proposes corrections, a human commits them; the audit log is append-only NDJSON — a failed write aborts the transition rather than losing the record."
 automated: full
+gate_note: "AI pre-review is display-only / non-blocking by design; orphaned checkWithAI removed in PR #331."
+tests_last_run: "2026-07-11T17:37:10.940Z"
+tests_last_result: pass
+tests_last_commit: e5f783b
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log
@@ -39,7 +43,7 @@ Five deferred gate proposals consolidated: AI-assisted preparation (surveys scop
 
 | Step | Action | Details | Status | Issue | Branch |
 |------|--------|---------|--------| --- | --- |
-| 1 | AI-assisted gate preparation | Before presenting a gate to a reviewer, AI reads all documents in scope, checks for incomplete items, flags inconsistencies, drafts readiness summary. Summary stored in gate_note. Profile's opencode-instructions.md defines AI checks per gate type. Wires into promote.ts once that ships (Phase 4 Step 12). | ⏳ Pending | — | — |
+| 1 | AI-assisted gate preparation | Before a reviewer signs off a gate, the AI reads the doc + scope (related_to/depends_on/blocks), flags incomplete items, and drafts a readiness summary (ready/needs-work/blocked). Shipped via `src/dispatch/ai.ts` `AIEngine.gatePreReview()` (offline KeywordEngine + OpenCode + Ollama engines) surfaced through the `/api/gate-pre-review` endpoint and the status-page per-gate "AI" readiness badge. Per-gate prompts live in `profile.json` `ai_pre_review_prompt`. Display-only / non-blocking: the human always decides. The originally-anticipated `promote.ts::checkWithAI()` wiring was superseded by the engine path and removed as dead code (PR #331). | ✅ Done | — | #331 |
 | 2 | Multi-reviewer quorum | GateDefinition type (quorum, gate_reviews array, per-reviewer state), evaluateGate() quorum check, applyReview() — all fully implemented in src/dispatch/gates.ts. Integration into promote.ts completes this step. | ✅ Done | — | — |
 | 3 | Time-based and scheduled triggers | parseCadence(), isOverdue(), getScheduleGatesForDocument(), schedule trigger type with status_filter — all fully implemented in src/dispatch/gates.ts. | ✅ Done | — | — |
 | 4 | Retroactive audit of past transitions | retroactiveAudit() with AuditFinding type, findings array, and --fix option fully implemented in src/dispatch/gates.ts. | ✅ Done | — | — |
@@ -52,7 +56,7 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 
 | Step | Depends On | Parallel With | Notes |
 | --- | --- | --- | --- |
-| 1 | phase-4-profile-acl-ai Step 12 (promote.ts), Step 5 (AI write ACL) | — | Only remaining work; wires OpenCode call into gate_note on pre-review |
+| 1 | ✅ Shipped | — | ai.ts gatePreReview() + /api/gate-pre-review + status-page AI badge; dead promote.ts wiring removed (PR #331) |
 | 2 | ✅ Already shipped | — | gates.ts: evaluateGate(), applyReview(), GateDefinition.quorum |
 | 3 | ✅ Already shipped | — | gates.ts: parseCadence(), isOverdue(), schedule trigger type |
 | 4 | ✅ Already shipped | — | gates.ts: retroactiveAudit() |
@@ -60,7 +64,7 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 
 ## Testing Plan
 
-- [ ] Step 1: AI-assisted gate preparation (wires into promote.ts + opencode-instructions.md)
+- [x] Step 1: AI-assisted gate preparation — `AIEngine.gatePreReview()` covered by test/dispatch/ai.test.ts (23 passing incl. KeywordEngine gatePreReview ready/needs-work/blocked + scope-doc handling); wiring intact via `/api/gate-pre-review` → status-page AI badge; orphaned `checkWithAI` removed (PR #331), typecheck clean, 63 dispatch tests green
 - [x] Step 2: Multi-reviewer quorum — implemented in gates.ts
 - [x] Step 3: Time-based and scheduled triggers — implemented in gates.ts
 - [x] Step 4: Retroactive audit — implemented in gates.ts
@@ -90,8 +94,20 @@ Fill in Depends On and Parallel With based on reviewing the step details above.
 | Audit log file grows large over time | Low | Low | JSONL is line-oriented and compressible; implement log rotation for large vaults |
 | Retroactive audit floods with false positives | Medium | Low | Audit findings are advisory — --fix is explicit opt-in; false positives are searchable and can be ignored |
 
+## Phase Gate
+
+Completion criteria — all must be checked before the plan transitions to completed:
+
+- [x] All 5 implementation steps are ✅ Done
+- [x] Testing Plan fully verified with per-step evidence (see above)
+- [x] Automated suite recorded green via verify_plan_tests (`npm run test:dispatch` → PASS @ e5f783b)
+- [x] AI pre-review confirmed display-only / non-blocking; orphaned `checkWithAI` removed and merged (PR #331)
+- [x] Rollback procedures documented per feature
+
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-08 | Plan filled in from proposal — AI prep, quorum, scheduled triggers, retroactive audit, audit log — 5 steps with testing and risk | NetYeti |
+| 2026-07-11 | Test run recorded via verify_plan_tests: npm run test:dispatch → PASS @ e5f783b | NetYeti |
+| 2026-07-11 | Step 1 closed: AI-assisted gate prep shipped via ai.ts engine + /api/gate-pre-review + status-page badge; orphaned promote.ts checkWithAI removed (PR #331). Plan 5/5, Phase Gate added, staged for completion. | NetYeti |
