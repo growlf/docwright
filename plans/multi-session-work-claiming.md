@@ -1,6 +1,6 @@
 ---
 title: Multi-session work claiming — git-native issue claims so parallel sessions stop double-building
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-10
 tags:
@@ -15,6 +15,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 _path: plans/multi-session-work-claiming.md
+scenario_synthesis: "Happy path: start_issue_branch stamps claimed_by/claimed_date on the issue file and pushes the branch immediately; parallel sessions see the claim in issue_preflight, capture_bug_report suggest, and session start, and pick other work; merge or abandon clears the claim. Failure paths: remote branch already exists → start refused, returning the existing branch info; stale claim (remote branch gone) → flagged and auto-cleared; claims live in the issue file in git, so a conflicting claim surfaces as an ordinary merge conflict instead of silent double-building."
 ---
 
 # Multi-session work claiming — git-native issue claims so parallel sessions stop double-building

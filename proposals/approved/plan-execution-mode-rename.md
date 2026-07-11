@@ -9,9 +9,10 @@ tags:
   - web-ui
   - mcp
   - governance
-approved: false
+approved: true
+consumed_by: plans/adopt-milestone-driven-roadmap-discipline.md
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: NetYeti
 research_source:
   - research/plan-execution-mode-naming.md
   - research/plan-execution-mode-tool-survey.md

@@ -9,9 +9,10 @@ tags:
   - schema
   - dispatch
   - deferred
-approved: false
+approved: true
+consumed_by: plans/adopt-milestone-driven-roadmap-discipline.md
 created_by: NetYeti@phoenix
-assigned_to: ""
+assigned_to: NetYeti
 related_to:
   - policies/core/workflow-layer-governance.md
   - docs/ai-governance-enforcement.md

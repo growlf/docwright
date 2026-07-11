@@ -1,6 +1,6 @@
 ---
 title: Hide consumed issues from backlog — fix workflow visibility
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-07
 tags:
@@ -15,6 +15,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 _path: plans/hide-consumed-issues-from-backlog.md
+scenario_synthesis: "Happy path: issues with consumed_by disappear from the default backlog view and the awaiting counts; a filter toggle reveals them on demand; proposal detail shows an Addressed-by section with backlink badges. Failure paths: malformed consumed_by → issue treated as unconsumed (stays visible — never silently hidden); the toggle is UI state only, no data mutation; dashboard counts recompute from frontmatter, not a cache, so a stale index cannot misreport."
 ---
 
 # Hide consumed issues from backlog — fix workflow visibility

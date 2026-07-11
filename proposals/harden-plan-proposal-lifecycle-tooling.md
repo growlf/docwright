@@ -7,9 +7,9 @@ tags:
   - mcp
   - webui
   - tooling
-approved: false
+approved: true
 created_by: "claude@claude-code"
-assigned_to: ""
+assigned_to: NetYeti
 sources:
   - issues/bug-proposal-to-plan-lifecycle-transition-duplicates-a.md
   - issues/bug-updatestep-row-replacement-corrupts-table-when-det.md
