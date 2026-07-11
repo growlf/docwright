@@ -11,6 +11,7 @@ estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-11]
 channel: dev
+github_issue: https://github.com/growlf/docwright/issues/315
 related:
   - plans/image-based-deployment-any-directory.md
   - issues/bug-flaky-dispatch-bridgetestts-times-out-2000ms-inter.md
