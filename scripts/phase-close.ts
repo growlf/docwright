@@ -21,10 +21,11 @@ function usage(): never {
 Closes phase N: bumps version to 0.\${N+1}.0, commits, tags, and pushes.
 
 Steps:
-  1. Validates plans/completed/phase-N-*.md exists (all ✅)
+  1. Validates ≥1 plans/completed/phase-N-*.md file exists with 'status: completed'
+     (a presence + status check — does NOT verify each plan's individual steps)
   2. Calculates next version: 0.\${N+1}.0
   3. Checks current version — idempotent if already at or beyond target
-  4. Updates VERSION and package.json
+  4. Updates VERSION, package.json, and src/webui/package.json
   5. Commits with standard message
   6. Runs npm run release:tag (tags + pushes + watches CI)
 

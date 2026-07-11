@@ -42,11 +42,16 @@ jobs:
         run: |
           V=$(cat VERSION)
           P=$(node -e "console.log(require('./package.json').version)")
+          W=$(node -e "console.log(require('./src/webui/package.json').version)")
           if [ "$V" != "$P" ]; then
             echo "::error::Version drift: VERSION=$V != package.json=$P"
             exit 1
           fi
-          echo "VERSION and package.json agree: v$V"
+          if [ "$V" != "$W" ]; then
+            echo "::error::Version drift: VERSION=$V != src/webui/package.json=$W"
+            exit 1
+          fi
+          echo "VERSION, package.json, and src/webui/package.json agree: v$V"
 
       - name: Install Node dependencies
         run: npm ci
