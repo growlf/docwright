@@ -6,9 +6,9 @@ tags:
   - lifecycle
   - docs
   - yaml
-approved: false
+approved: true
 created_by: "claude@claude-code"
-assigned_to: ""
+assigned_to: NetYeti
 sources:
   - issues/bug-completion-doc-generator-emits-invalid-yaml-tags-l.md
   - issues/plan-doc-generator-raw-js-date-in-created-field-an.md

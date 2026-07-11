@@ -1,6 +1,6 @@
 ---
 title: "Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log"
-status: draft
+status: approved
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
@@ -25,6 +25,7 @@ phase: 4
 github_epic: null
 milestone: v0.5.0
 channel: beta
+scenario_synthesis: "Happy path: before a reviewer sees a gate, promote.ts surfaces an AI-drafted readiness summary in gate_note; the quorum, scheduled-trigger, retroactive-audit, and governance-log engines already shipped in gates.ts/audit.ts get wired through promote.ts. Failure paths: AI summary generation fails → the gate presents without a summary (the human path is never blocked on AI); retroactive audit --fix only proposes corrections, a human commits them; the audit log is append-only NDJSON — a failed write aborts the transition rather than losing the record."
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log
