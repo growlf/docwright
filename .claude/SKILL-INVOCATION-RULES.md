@@ -1,105 +1,47 @@
 # Skill Invocation Rules — Decision Tree
 
-**Updated:** 2026-07-06  
-**Health Audit:** Incident — tried Skill("endsession") despite exception; reorganized for clarity
+**Updated:** 2026-07-10 — DocWright Claude skills converted to the registered
+directory layout (`.claude/skills/<name>/SKILL.md`, GH #313); the old
+"read the file manually" workaround for them is retired.
+**History:** 2026-07-06 incident — `Skill("endsession")` failed because the
+flat-file layout meant the skill was never registered. Root cause fixed
+2026-07-10; the rule below is now simple.
 
 ---
 
-## Decision Tree
+## The rule
 
-```
-Am I invoking a skill to help with a task?
-│
-├─ YES
-│  │
-│  └─ Is it in the harness-registered skills list? (Explore, Plan, code-reviewer, etc.)
-│     │
-│     ├─ YES → Use Skill(name: "...") tool. Examples:
-│     │         • Skill(skill: "Explore", description: "...", prompt: "...")
-│     │         • Skill(skill: "Plan", description: "...", prompt: "...")
-│     │
-│     └─ NO → Is it a DocWright skill? (Check if .claude/skills/<name>.md exists)
-│        │
-│        ├─ YES (docwright skill found)
-│        │  │
-│        │  └─ Read .claude/skills/<name>.md and execute directly
-│        │     Examples:
-│        │     • docwright-proposal → read skill file, follow step-by-step
-│        │     • docwright-issue-workflow → read skill file, use MCP tools
-│        │     • endsession → read skill file, run: npm run session:end -- [flags]
-│        │
-│        └─ NO (OpenCode skill? Check .opencode/skills/<name>/SKILL.md)
-│           │
-│           └─ Read the SKILL.md file and follow the process
-│              (OpenCode skills are less common; usually docwright-* or harness)
-│
-└─ NO
-   └─ Proceed without a skill
-```
+1. **If the skill appears in the harness's available-skills list** (built-ins
+   like Explore/Plan, plus the repo's `.claude/skills/<name>/SKILL.md` skills:
+   `endsession`, `docwright-session-start`, `docwright-adopt-vault`,
+   `critique-plan`, `status`) → invoke it with the `Skill` tool:
+   `Skill(skill: "endsession")`.
+2. **OpenCode workflow skills** (`.opencode/skills/<name>/SKILL.md` —
+   `docwright-proposal`, `docwright-lifecycle`, `docwright-issue-workflow`,
+   etc.) are NOT harness-registered → read the SKILL.md and follow its process
+   directly. The table in CLAUDE.md lists them.
+3. **Never guess a skill name.** If it isn't in the available list and has no
+   SKILL.md on disk, it doesn't exist.
 
----
+## When a skill doesn't appear in the available list
 
-## Skill Invocation Matrix
-
-| Skill Name | Type | Invocation | Location | When to Use |
-|-----------|------|-----------|----------|-----------|
-| Explore | Harness | `Skill(skill: "Explore", ...)` | Built-in | Fast read-only search across codebase |
-| Plan | Harness | `Skill(skill: "Plan", ...)` | Built-in | Design implementation strategy |
-| code-reviewer | Harness | `Skill(skill: "code-reviewer", ...)` | Built-in | Review code for bugs/style |
-| Agent | Harness | `Agent(description: "...", prompt: "...")` | Built-in | General-purpose multi-step tasks |
-| docwright-* | DocWright | Read `.claude/skills/<name>.md`, execute directly | `.claude/skills/` | DocWright-specific workflows |
-| endsession | DocWright | Read `.claude/skills/endsession.md`, run `npm run session:end` | `.claude/skills/` | End session with cleanup |
-| docwright-proposal | DocWright | Read `.claude/skills/docwright-proposal.md` | `.claude/skills/` | Create templated proposals |
-| docwright-lifecycle | DocWright | Read `.claude/skills/docwright-lifecycle.md` | `.claude/skills/` | Manage document lifecycle |
-| OpenCode skills | OpenCode | Read `.opencode/skills/<name>/SKILL.md` | `.opencode/skills/` | Specialized domain workflows |
-
----
+Skills are scanned at session start — a SKILL.md added mid-session won't
+register until the next session. Until then, read the file and execute it
+directly (same content, manual invocation). If a `.claude/skills` skill is
+missing across sessions, check the layout rules in
+[.claude/skills/README.md](skills/README.md) — flat files are silently
+ignored, and `npm run sync:skills` validates the layout.
 
 ## Examples
 
-### ✅ Correct: Harness Skill
-
 ```typescript
-Skill(skill: "Explore", description: "Find test files", prompt: "Where are the dispatch tests?")
+// ✅ Registered skill (harness or .claude/skills):
+Skill(skill: "endsession")
+Skill(skill: "Explore", ...)
+
+// ✅ OpenCode workflow skill — read and follow:
+//    Read .opencode/skills/docwright-proposal/SKILL.md, then execute its steps.
+
+// ❌ Wrong: inventing a skill name not in the available list
+Skill(skill: "docwright-magic")   // → Unknown skill
 ```
-
-### ✅ Correct: DocWright Skill
-
-```bash
-# Read .claude/skills/endsession.md
-# Then run:
-npm run session:end -- --focus "..." --summary "..."
-```
-
-### ❌ Wrong: DocWright via Skill Tool
-
-```typescript
-// DO NOT DO THIS:
-Skill(skill: "endsession")  // → Error: Unknown skill
-```
-
-### ❌ Wrong: Forgotten Exception
-
-```typescript
-// DO NOT DO THIS:
-Skill(skill: "docwright-proposal")  // → Error, must read .claude/skills/
-```
-
----
-
-## When Unclear
-
-1. **Search CLAUDE.md** for the skill name — it may be called out as an exception
-2. **Check if `.claude/skills/<name>.md` exists** — if yes, read it; don't use Skill()
-3. **Check if it's in the harness-registered list** (Explore, Plan, Agent, code-reviewer) — if yes, use Skill()
-4. **Ask:** "Does this skill operate on DocWright content?" If yes, likely a DocWright skill → read the file
-5. **Default:** When in doubt, search for the skill file first before trying Skill()
-
----
-
-## Health Audit Notes
-
-- **2026-07-06:** Consolidated scattered skill rules into this matrix after incident where Skill("endsession") was attempted despite documentation saying not to
-- **Why it happened:** Rule was buried in CLAUDE.md prose; no decision tree available at decision point
-- **Fix:** Created this file; linked from CLAUDE.md
-- **Weekly check:** Verify no skill invocation errors in next week's usage

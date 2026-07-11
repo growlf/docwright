@@ -1,19 +1,12 @@
 ---
 name: docwright-adopt-vault
-description: Adopt an existing repo or folder into DocWright governance — Open, Lightweight, or Full mode
-triggers:
-  - adopt this vault
-  - adopt this repo
-  - set up docwright on this repo
-  - initialize docwright here
-  - open this folder with docwright
-  - open with docwright
+description: Adopt an existing repo or folder into DocWright governance — Open, Lightweight, or Full mode. Use when the user says "adopt this vault", "adopt this repo", "set up docwright on this repo", "initialize docwright here", or "open this folder with docwright".
 ---
 
 # DocWright Vault Adoption Skill
 
-Triggered when the user wants to bring an existing directory, repo, or Obsidian
-vault under DocWright governance, or simply browse one with the DocWright Web UI.
+Bring an existing directory, repo, or Obsidian vault under DocWright governance,
+or simply browse one with the DocWright Web UI.
 
 ## Modes
 
@@ -87,9 +80,14 @@ npm run adopt -- --dest /path/to/vault --upgrade
 
 The script reports: files refreshed silently, files skipped (user-modified), new files added. Review the output and confirm.
 
+## Failure handling
+
+- **`DOCWRIGHT_PATH` unset:** stop and ask the user to set it (direnv or export)
+  before running any command — do not guess the installation path.
+- **hook:install fails:** report the exact command to run manually
+  (`npm run hook:install -- --vault <path>`); don't retry silently.
+
 ## Notes
 
-- `DOCWRIGHT_PATH` must be set (via direnv or exported) before running any command.
-- The `--upgrade` flag re-runs from the DocWright installation directory, not the vault.
 - `.gemini/settings.json` contains a machine-local absolute path — it is gitignored automatically and must never be committed.
-- Skills copied to the vault (`.claude/skills/`, `.opencode/skills/`) are gitignored — they are DocWright infrastructure, not vault content.
+- Skills copied to the vault (`.claude/skills/`, `.opencode/skills/`) are gitignored in adopted vaults — they are DocWright infrastructure, not vault content. (In the DocWright source repo itself they are canonical source and ARE committed.)
