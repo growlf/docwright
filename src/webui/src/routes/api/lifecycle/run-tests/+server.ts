@@ -2,8 +2,14 @@ import { json } from '@sveltejs/kit';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { setFrontmatterField } from '../../../../../../dispatch/frontmatter';
 
 const REPO = process.env.DOCWRIGHT_ROOT ?? path.resolve(process.cwd(), '../..');
+
+function headCommit(cwd: string): string {
+  const r = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd, encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.trim() : '';
+}
 
 /**
  * POST /api/lifecycle/run-tests
@@ -94,19 +100,23 @@ export async function POST({ request }) {
   const allPassed = results.every(r => r.passed);
   const output = results.map(r => `[${r.label}] ${r.passed ? '✅ PASS' : '❌ FAIL'}\n${r.output}`).join('\n\n');
 
-  // Update tests_defined in the plan if all passed.
-  // Auto-certify only if human has previously reviewed (tests_human_reviewed: true).
-  // First-time certification requires a human click of "Certify Tests" button.
-  if (allPassed) {
-    const planFile = path.join(REPO, 'plans', plan + '.md');
-    if (fs.existsSync(planFile)) {
-      const text = fs.readFileSync(planFile, 'utf-8');
-      const humanReviewed = /^tests_human_reviewed:\s*true/m.test(text);
-      if (humanReviewed) {
-        const updated = text.replace(/^tests_defined:\s*false/m, 'tests_defined: true');
-        if (updated !== text) fs.writeFileSync(planFile, updated);
-      }
+  // Persist the run as completion-gate evidence — the SAME tests_last_* fields
+  // the MCP verify_plan_tests tool records (src/mcp/tools/verify_tests.ts). Without
+  // this the UI "Run Tests" only sets in-memory state and never satisfies
+  // transition_to_completed's "recorded test run" requirement, so a plan could not
+  // be completed from the Web UI at all (the two run-tests paths had diverged).
+  const planFile = path.join(REPO, 'plans', plan + '.md');
+  if (fs.existsSync(planFile)) {
+    let text = fs.readFileSync(planFile, 'utf-8');
+    text = setFrontmatterField(text, 'tests_last_run', new Date().toISOString());
+    text = setFrontmatterField(text, 'tests_last_result', allPassed ? 'pass' : 'fail');
+    text = setFrontmatterField(text, 'tests_last_commit', headCommit(REPO));
+    // tests_defined flips to true only once a human has certified (unchanged
+    // policy); first-time certification still requires the "Certify Tests" click.
+    if (allPassed && /^tests_human_reviewed:\s*true/m.test(text)) {
+      text = setFrontmatterField(text, 'tests_defined', 'true');
     }
+    fs.writeFileSync(planFile, text);
   }
 
   return json({ passed: allPassed, output, results });

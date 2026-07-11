@@ -1,6 +1,7 @@
 <script lang="ts">
   import { showPropsPane, featureFlags, showReviewTab, showExecutionPanel, executingPlanName, improveResult } from './pane';
   import { showToast } from './toast';
+  import { goto } from '$app/navigation';
 
   let {
     frontmatter = $bindable<Record<string, any>>({}),
@@ -187,6 +188,42 @@
       }
     } catch (e) {
       showToast(`Error updating plan status: ${String(e)}`, 5000);
+    } finally {
+      planSaving = false;
+    }
+  }
+
+  // Complete = set status: completed AND archive (move to plans/completed/ +
+  // generate the completion doc) via the same server path the MCP tool uses.
+  // Setting the field alone (the old behaviour) left the plan sitting in plans/
+  // with no doc and no navigation ("nothing happened").
+  async function completePlan() {
+    const planPath = frontmatter._path ?? '';
+    const planName = planPath.replace(/^plans\//, '').replace(/\.md$/, '');
+    if (!planName) return;
+    planSaving = true;
+    try {
+      // 1. Persist status: completed — transition-completed requires it first.
+      setField('status', 'completed');
+      await onsave?.(frontmatter);
+      // 2. Archive: move → plans/completed/, generate docs/, commit (server-side).
+      const res = await fetch('/api/lifecycle/transition-completed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Gate refusal (unchecked Testing Plan box, no recorded test run, etc.)
+        // — surface WHY instead of silently doing nothing.
+        showToast(`Cannot complete: ${data.error ?? res.statusText}`, 8000);
+        return;
+      }
+      showToast('✓ Plan completed and archived', 3000);
+      // The plan file moved to plans/completed/; leave this stale view for /status.
+      goto('/status');
+    } catch (e) {
+      showToast(`Error completing plan: ${String(e)}`, 6000);
     } finally {
       planSaving = false;
     }
@@ -428,7 +465,7 @@
             {/if}
           {:else}
             <!-- Complete — disabled when any blocker exists or while saving -->
-            <button class="act complete" onclick={() => setPlanStatus('completed')}
+            <button class="act complete" onclick={completePlan}
               disabled={completeBlockers.length > 0 || planSaving}
               title={planSaving ? 'Completing plan...' : completeBlockers.length > 0
                 ? `Cannot complete:\n• ${completeBlockers.join('\n• ')}`
