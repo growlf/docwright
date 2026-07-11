@@ -1,6 +1,6 @@
 ---
 title: MCP paths.ts: prefix-based containment check allows path traversal; three helpers unchecked
-status: open
+status: new
 created: 2026-07-11
 author: Claude (Fable 5) via Cowork — verified from Gemini Antigravity Round 5 finding
 author-role: user
@@ -10,7 +10,6 @@ complexity: medium
 estimated_effort: S
 demand_count: 1
 reported_dates: [2026-07-11]
-milestone: future
 channel: dev
 tags:
   - reported-bug
