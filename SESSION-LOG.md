@@ -1837,3 +1837,14 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: file bug — completion gate deadlocks runtime-verified plans (run-tests runs repo unit suites)
 
 **Session note:** `docs/session-notes/session_note_202607110502.md`
+
+---
+
+## Session: 2026-07-10 — plan approval + skills registration fix
+
+**Focus:** plan approval + skills registration fix
+
+**Completed:**
+- [x] (see session note)
+
+**Session note:** `docs/session-notes/session_note_202607102339.md`
