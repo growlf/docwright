@@ -24,6 +24,7 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+*.code-workspace
 
 # Obsidian vault artifacts
 .obsidian/*
