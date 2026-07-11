@@ -1,21 +1,9 @@
 ---
 name: endsession
-description: Automated session shutdown — saves session note, updates SESSION-LOG.md, commits all remaining changes, pushes all branches, reports status
-triggers:
-  - endsession
-  - end session
-  - shutdown
-  - wrap up
-  - session end
+description: Automated session shutdown — writes the session note, updates SESSION-LOG.md, commits outstanding work, and pushes all branches. Use when the user says "endsession", "end session", "shutdown", "wrap up", or "session end".
 ---
 
 # DocWright Session Shutdown Skill
-
-Triggered by: "endsession", "end session", "shutdown"
-
-> **Invocation note:** This is a DocWright local skill, NOT a harness-registered skill.
-> Do NOT call `Skill("endsession")` — that will fail with "Unknown skill".
-> Read this file and run the command below.
 
 The shutdown procedure is **code, not a manual checklist**. It lives in
 `scripts/end-session.ts` (run via `npm run session:end`) so it is deterministic
@@ -24,11 +12,11 @@ commits and `git status`, runs the phase close-out gate, writes the session
 note, appends to `SESSION-LOG.md`, then commits and pushes outstanding work
 across every worktree — and reports what it did.
 
-## How to run it
+## Steps
 
-Your only job is to supply judgement the script can't derive — the focus, a
-short narrative summary, key decisions, and next-session action items. Compose
-those from the conversation, then run:
+1. Compose the judgement the script can't derive — the focus, a short narrative
+   summary, key decisions, and next-session action items — from the conversation.
+2. Run from the repo root (run it once; do **not** perform the steps by hand):
 
 ```bash
 npm run session:end -- \
@@ -41,8 +29,10 @@ npm run session:end -- \
 ```
 
 All flags are optional — with none, the script derives the focus and summary
-from the session's commits and still completes the full shutdown. Run it once;
-do **not** perform the steps by hand.
+from the session's commits and still completes the full shutdown.
+
+3. Report back: the session-note path, what was committed/pushed per branch,
+   and anything the script skipped or flagged.
 
 ### Flags
 
@@ -58,12 +48,17 @@ do **not** perform the steps by hand.
 | `--no-push` | Commit but don't push |
 | `--dry-run` | Print intended actions and the rendered note; change nothing |
 
-## The phase close-out gate
+## Failure handling
 
-If a `plans/completed/phase-N-*.md` plan was completed this session but `VERSION`
-has not been bumped past phase N, the script **exits with a blocking error**.
-Resolve it by running `npm run phase:close -- <N>`, then re-run `session:end`
-(or pass `--defer-phase-close` to skip intentionally).
+- **Phase close-out gate blocks:** a `plans/completed/phase-N-*.md` plan was
+  completed this session but `VERSION` hasn't been bumped past phase N. Ask the
+  user: run `npm run phase:close -- <N>` then re-run `session:end`, or pass
+  `--defer-phase-close` to skip intentionally. Do not decide alone.
+- **Validation/pre-commit failure on unrelated working-tree debt:** report the
+  failing files to the user and ask whether to fix, stash, or `--no-commit`;
+  do not silently drop the session note.
+- **Push rejected (protected branch):** commit locally, report, and let the
+  human push or open a PR — never force-push.
 
 ## Never auto-committed
 

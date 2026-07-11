@@ -4,12 +4,11 @@
 
 ## How to Invoke Skills
 
-**FIRST: Check `.claude/SKILL-INVOCATION-RULES.md`** — it has a decision tree that tells you whether to:
-- Use `Skill(name: "...")` (harness-registered skills like Explore, Plan, code-reviewer)
-- Read `.claude/skills/<name>.md` and execute directly (DocWright skills like endsession)
-- Read `.opencode/skills/<name>/SKILL.md` and follow the process (OpenCode workflow skills)
+**FIRST: Check `.claude/SKILL-INVOCATION-RULES.md`** — it has the decision rule:
+- Skills in the harness's available list (built-ins like Explore/Plan AND the repo's `.claude/skills/<name>/SKILL.md` skills: endsession, docwright-session-start, docwright-adopt-vault, critique-plan, status) → invoke via `Skill(skill: "...")`.
+- OpenCode workflow skills (`.opencode/skills/<name>/SKILL.md`) → read the SKILL.md and follow the process directly.
 
-**Key rule:** `Skill()` tool only works on harness-registered skills. DocWright skills must be read and executed manually. See `.claude/SKILL-INVOCATION-RULES.md` for the full matrix.
+**Layout rule (CI-enforced by `npm run sync:skills`):** a Claude skill is a *directory* `.claude/skills/<name>/` containing `SKILL.md` — flat `.claude/skills/<name>.md` files are silently ignored by Claude Code (GH #313). See `.claude/skills/README.md` before adding one.
 
 ---
 
@@ -23,6 +22,13 @@ When a task matches a skill's triggers, read its `SKILL.md` and follow the proce
 > Run `npm run sync:skills` after adding, removing, or renaming a skill.
 
 <!-- skills-table-start -->
+
+DocWright ships workflow skills under `.opencode/skills/`. Each directory
+contains a `SKILL.md` with detection heuristics and step-by-step instructions.
+When a task matches a skill's triggers, read its `SKILL.md` and follow the process.
+
+> **Auto-generated** by `scripts/sync-claude-skills.ts`. Do not edit manually.
+> Run `npm run sync:skills` after adding, removing, or renaming a skill.
 
 | Skill | Description | SKILL.md |
 |-------|-------------|----------|

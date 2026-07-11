@@ -13,6 +13,7 @@ import { parseFrontmatter } from '../src/dispatch/frontmatter';
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(REPO_ROOT, '.opencode', 'skills');
+const CLAUDE_SKILLS_DIR = path.join(REPO_ROOT, '.claude', 'skills');
 const CLAUDE_MD = path.join(REPO_ROOT, 'CLAUDE.md');
 
 const TABLE_START = '<!-- skills-table-start -->';
@@ -113,7 +114,47 @@ function updateClaudeMd(newTable: string): boolean {
   return true;
 }
 
+/**
+ * Claude Code only discovers skills laid out as .claude/skills/<name>/SKILL.md;
+ * flat .claude/skills/<name>.md files are silently ignored (GH #313). Enforce
+ * the layout here (runs in CI) so the defect cannot recur.
+ */
+function validateClaudeSkillsLayout(): string[] {
+  const errors: string[] = [];
+  if (!fs.existsSync(CLAUDE_SKILLS_DIR)) return errors;
+
+  for (const entry of fs.readdirSync(CLAUDE_SKILLS_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      if (entry.name === 'README.md') continue;
+      errors.push(
+        `.claude/skills/${entry.name}: flat file — Claude Code silently ignores this layout; ` +
+        `move to .claude/skills/${entry.name.replace(/\.md$/, '')}/SKILL.md`
+      );
+      continue;
+    }
+    const skillFile = path.join(CLAUDE_SKILLS_DIR, entry.name, 'SKILL.md');
+    if (!fs.existsSync(skillFile)) {
+      errors.push(`.claude/skills/${entry.name}/: missing SKILL.md (filename is case-sensitive)`);
+      continue;
+    }
+    const fm = parseFrontmatter(fs.readFileSync(skillFile, 'utf-8'));
+    if (!fm.name || !fm.description) {
+      errors.push(`.claude/skills/${entry.name}/SKILL.md: frontmatter must define name and description`);
+    } else if (fm.name !== entry.name) {
+      errors.push(`.claude/skills/${entry.name}/SKILL.md: frontmatter name "${fm.name}" must match the directory name`);
+    }
+  }
+  return errors;
+}
+
 function main() {
+  const layoutErrors = validateClaudeSkillsLayout();
+  if (layoutErrors.length > 0) {
+    console.error('[sync-claude-skills] Claude skill layout errors:');
+    layoutErrors.forEach(e => console.error(`  ✗ ${e}`));
+    process.exit(1);
+  }
+
   const skills = loadSkills();
   if (skills.length === 0) {
     console.error('[sync-claude-skills] No skills found in', SKILLS_DIR);
