@@ -1,6 +1,6 @@
 ---
-title: Sub-Plan: docwright init Scaffold
-status: draft
+title: Sub-Plan — docwright init Scaffold
+status: approved
 author: NetYeti
 created: 2026-07-10
 tags:
@@ -15,6 +15,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 _path: plans/sub-plan-docwright-init-scaffold.md
+scenario_synthesis: "Happy path: npm run init --dest creates the full vault tree (config, .env placeholders, pre-commit hook, profile stub); a second run into the same dest is idempotent — exit 0, nothing overwritten; the e2e lifecycle test passes with zero manual edits. Failure paths: non-empty dest with conflicting files → refuse rather than overwrite; scaffolded .env carries placeholder tokens only (no secrets) and is gitignored; hook install failure reports the manual install command instead of half-installing."
 ---
 
 # Sub-Plan: docwright init Scaffold

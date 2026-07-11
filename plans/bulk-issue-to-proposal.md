@@ -1,6 +1,6 @@
 ---
 title: Bulk Issue Selection → Proposal Creation Workflow
-status: draft
+status: approved
 author: Claude (on behalf of user)
 created: 2026-07-09
 tags:
@@ -16,6 +16,7 @@ assigned_to: NetYeti
 tests_defined: false
 tests_human_reviewed: false
 _path: plans/bulk-issue-to-proposal.md
+scenario_synthesis: "Happy path: user multi-selects issues in the backlog, triggers Create Proposal, the wizard pre-fills from the selected issues, and one proposal is created with sources: wikilinks while each issue gains a consumed_by: backlink. Failure paths: creation fails mid-write → no partial consumed_by stamps (single API transaction); an already-consumed issue in the selection → refused naming the issue; proposal lifecycle changes never clear issue backlinks (non-destructive association)."
 ---
 
 # Bulk Issue Selection → Proposal Creation Workflow

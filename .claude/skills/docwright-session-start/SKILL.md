@@ -1,14 +1,6 @@
 ---
 name: docwright-session-start
-description: Automated session startup — resolves identity, gathers active plans, session history, git status, and sets up todo
-triggers:
-  - what's next
-  - what is next
-  - session start
-  - resume
-  - continue
-  - start session
-  - wake up
+description: Automated session startup — resolves identity, gathers active plans, parked branches, session history, git status, and sets up the todo list. Use when the user says "session start", "start session", "resume", "continue", "wake up", "I am back", or asks "what's next".
 ---
 
 # DocWright Session Start Skill
@@ -45,7 +37,7 @@ Read the last 40 lines of `SESSION-LOG.md` to find the most recent session entry
 
 ### 1.5. Surface parked and in-flight work
 
-`vault-status.js --json` now returns a `git.parked_branches` array — remote
+`vault-status.js --json` returns a `git.parked_branches` array — remote
 branches with committed-but-unmerged work (each with `ahead`/`behind` counts and
 `last_commit`). This is where in-progress work lives under trunk-based flow, so it
 MUST be reported. **Never** build a "what's next" recommendation from proposals and
@@ -133,3 +125,10 @@ Create a TaskCreate entry for each active plan, ordered by priority
 (critical → high → medium → low), then by steps done descending (most
 progress first). Mark the top item `in_progress` only if it has a clear
 open step; otherwise leave all `pending`.
+
+## Failure handling
+
+- **`vault-status.js` fails:** fall back to `mcp` `session_context` (dw MCP server)
+  or a manual scan of `plans/` + `proposals/`; report which fallback was used.
+- **`traceroute` unavailable or flag errors:** use `ip route get 8.8.8.8` for the
+  network hint; never fail the session start over the network check.

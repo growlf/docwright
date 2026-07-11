@@ -6,7 +6,8 @@ tags: [governance, roadmap, lifecycle, tooling-gap]
 category:
   - governance
 complexity: medium
-approved: false
+approved: true
+consumed_by: plans/adopt-milestone-driven-roadmap-discipline.md
 priority: 3
 created_by: "NetYeti@phoenix"
 assigned_to: []

@@ -333,16 +333,24 @@ function appendGitignore(dest: string, docwrightPath: string) {
 // ---------------------------------------------------------------------------
 
 function copySkillsBridge(dest: string, docwrightPath: string, manifest: Manifest) {
-  // Claude Code skills
+  // Claude Code skills — directory layout: .claude/skills/<name>/SKILL.md.
+  // Flat .claude/skills/<name>.md files are silently ignored by Claude Code
+  // (GH #313), so only directories are copied; a stray flat file here is a bug.
   const claudeSkillsSrc = path.join(docwrightPath, '.claude', 'skills');
   if (fs.existsSync(claudeSkillsSrc)) {
-    fs.mkdirSync(path.join(dest, '.claude', 'skills'), { recursive: true });
-    for (const f of fs.readdirSync(claudeSkillsSrc)) {
-      if (!f.endsWith('.md')) continue;
-      const content = fs.readFileSync(path.join(claudeSkillsSrc, f), 'utf8');
-      writeManaged(dest, `.claude/skills/${f}`, content, manifest, true);
+    let copied = 0;
+    for (const skillDir of fs.readdirSync(claudeSkillsSrc)) {
+      const srcDir = path.join(claudeSkillsSrc, skillDir);
+      if (!fs.statSync(srcDir).isDirectory()) continue;
+      if (!fs.existsSync(path.join(srcDir, 'SKILL.md'))) continue;
+      fs.mkdirSync(path.join(dest, '.claude', 'skills', skillDir), { recursive: true });
+      for (const f of fs.readdirSync(srcDir)) {
+        const content = fs.readFileSync(path.join(srcDir, f), 'utf8');
+        writeManaged(dest, `.claude/skills/${skillDir}/${f}`, content, manifest, true);
+      }
+      copied++;
     }
-    pass(`.claude/skills/ (${fs.readdirSync(claudeSkillsSrc).filter(f => f.endsWith('.md')).length} skills)`);
+    pass(`.claude/skills/ (${copied} skills)`);
   }
 
   // OpenCode skills — only distributable: true
