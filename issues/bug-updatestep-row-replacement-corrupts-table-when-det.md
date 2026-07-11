@@ -1,6 +1,7 @@
 ---
 title: update_step row-replacement corrupts table when Details cell contains an unescaped pipe
-status: new
+status: resolved
+resolved_by: src/dispatch/completion-gate.ts splitTableRow (fix/mcp-updatestep-pipe)
 created: 2026-07-10
 author: agent
 author-role: user
@@ -18,6 +19,22 @@ tags:
 ---
 
 # update_step row-replacement corrupts table when Details cell contains an unescaped pipe
+
+> **Resolved 2026-07-11.** Root cause: the shared `splitTableRow`
+> (`src/dispatch/completion-gate.ts`) split on every `|` (only `\|` was
+> protected), so a raw pipe inside an inline code span — `` `category: bug|feature` ``
+> — parsed the data row with more columns than the header; `replaceStepStatus`
+> then wrote the new Status into the wrong cell and left the old one. Fixed by
+> making `splitTableRow` backtick-aware (no split inside `` `…|…` `` or on `\|`),
+> which fixes all five callers (`replaceStepStatus`, `countSteps`, `step_issues`,
+> `transitions`, `query`). Regression test `test/dispatch/table-row-pipes.test.ts`
+> — **verified it fails on the old splitter and passes on the fix**; full
+> `test:dispatch` (404) and `test:mcp` green, no regressions.
+>
+> Secondary note (the observed `tests_defined` flip) is **not** corruption — by
+> design `update_step` sets `tests_defined: false` on every step edit (a step
+> change invalidates prior certification), flipping it back only for a
+> human-reviewed testable step. Benign/intended, not a defect.
 
 ## Description
 
