@@ -12,42 +12,57 @@ export function getRepoRoot() {
   return REPO_ROOT;
 }
 
-export function readFile(relPath: string): string {
+/**
+ * Resolve a caller-supplied relative path against REPO_ROOT and assert it stays
+ * INSIDE the vault. Returns the absolute path, or throws `Access denied`.
+ *
+ * Containment is checked with `path.relative` — NOT `startsWith` — because a
+ * prefix check admits sibling directories that share the root's name
+ * (e.g. root `/x/DocWright` would admit `/x/DocWright-evil/...`). A path is
+ * contained iff its path relative to the root does not climb out (`..`) and is
+ * not absolute (the latter guards the Windows different-drive case). The empty
+ * relative path (the root itself) is contained.
+ */
+function resolveSafe(relPath: string): string {
   if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const fullPath = path.resolve(REPO_ROOT, relPath);
-  if (!fullPath.startsWith(REPO_ROOT)) throw new Error(`Access denied: ${relPath}`);
+  const root = path.resolve(REPO_ROOT);
+  const fullPath = path.resolve(root, relPath);
+  const rel = path.relative(root, fullPath);
+  if (rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel)) {
+    throw new Error(`Access denied: ${relPath}`);
+  }
+  return fullPath;
+}
+
+export function readFile(relPath: string): string {
+  const fullPath = resolveSafe(relPath);
   return fs.readFileSync(fullPath, 'utf8');
 }
 
 export function writeFile(relPath: string, content: string): void {
-  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const fullPath = path.resolve(REPO_ROOT, relPath);
-  if (!fullPath.startsWith(REPO_ROOT)) throw new Error(`Access denied: ${relPath}`);
-  
+  const fullPath = resolveSafe(relPath);
+
   // ensure dir exists
   const dir = path.dirname(fullPath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  
+
   fs.writeFileSync(fullPath, content, 'utf8');
 }
 
 export function fileExists(relPath: string): boolean {
-  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const fullPath = path.resolve(REPO_ROOT, relPath);
+  const fullPath = resolveSafe(relPath);
   return fs.existsSync(fullPath);
 }
 
 export function getMtime(relPath: string): number {
-  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const fullPath = path.resolve(REPO_ROOT, relPath);
+  const fullPath = resolveSafe(relPath);
   return fs.statSync(fullPath).mtimeMs / 1000;
 }
 
 export function globFiles(relDir: string, pattern: string = '*.md'): string[] {
-  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const fullDir = path.resolve(REPO_ROOT, relDir);
+  const fullDir = resolveSafe(relDir);
   if (!fs.existsSync(fullDir)) return [];
-  
+
   const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
   return fs.readdirSync(fullDir)
     .filter(f => regex.test(f))
@@ -55,12 +70,8 @@ export function globFiles(relDir: string, pattern: string = '*.md'): string[] {
 }
 
 export function moveFile(relSrc: string, relDest: string): void {
-  if (!REPO_ROOT) throw new Error('REPO_ROOT not set');
-  const srcFull = path.resolve(REPO_ROOT, relSrc);
-  const destFull = path.resolve(REPO_ROOT, relDest);
-  
-  if (!srcFull.startsWith(REPO_ROOT)) throw new Error(`Access denied: ${relSrc}`);
-  if (!destFull.startsWith(REPO_ROOT)) throw new Error(`Access denied: ${relDest}`);
+  const srcFull = resolveSafe(relSrc);
+  const destFull = resolveSafe(relDest);
 
   // Need to ensure dest dir exists
   const destDir = path.dirname(destFull);

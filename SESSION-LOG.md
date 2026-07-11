@@ -1857,3 +1857,11 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: record green test:webui run as completion-gate evidence
 
 **Session note:** `docs/session-notes/session_note_202607110623.md`
+## Session: 2026-07-10 — plan approval + skills registration fix
+
+**Focus:** plan approval + skills registration fix
+
+**Completed:**
+- [x] (see session note)
+
+**Session note:** `docs/session-notes/session_note_202607102339.md`
