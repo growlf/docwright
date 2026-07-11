@@ -1,6 +1,7 @@
 ---
 title: Release v0.5.0 — governance integrity, hook unification, collaboration model
 status: completed
+completed_date: 2026-07-11
 author: NetYeti
 created: 2026-07-08
 tags:
@@ -20,7 +21,7 @@ related_to:
   - plans/completed/reconcile-versioning-policy-and-practice.md
   - plans/completed/enhance-roadplan-pending-work-visibility.md
   - plans/completed/image-based-deployment-any-directory.md
-_path: plans/release-v0.5.0.md
+_path: plans/completed/release-v0.5.0
 total_steps: 6
 completed_steps: 6
 tests_last_run: "2026-07-11T16:51:29.917Z"
