@@ -20,6 +20,9 @@ scenario_synthesis: "Happy path: an operator creates an empty directory, drops a
 total_steps: 14
 completed_steps: 14
 gate_note: "Verification is runtime (docker/health/login/diff), not a unit suite; evidence recorded in Testing Plan + Document History."
+tests_last_run: "2026-07-11T04:22:02.304Z"
+tests_last_result: pass
+tests_last_commit: 17dce5d
 ---
 
 # Image-Based Deployment — Run on Any Directory (Vault Mount + Env, No Source Checkout)
@@ -144,3 +147,4 @@ verified by running:
 | 2026-07-11 | ORIGIN assumption resolved (BDFL hit Cross-site-forbidden). Instances are reached via a reverse proxy on the bare bms.local hostnames at port 80. Corrected ORIGIN in each app.env + recreated: docwright-dev/csdocs/erp-images/msp .bms.local (no port, http). All four login 303 via real URLs. Users: dogfood-dev, csdocs-admin, erp-images-admin, msp-admin. | NetYeti |
 | 2026-07-11 | Added the Testing Plan + Phase Gate sections (runtime-verification evidence) that the completion gate requires — the plan was authored without them, deadlocking the UI run-tests/certify flow (which runs the repo unit suites, not this plan's runtime checks). Remaining for closure: a human sets tests_defined: true + tests_human_reviewed: true (attesting the runtime verification is adequate), then Complete. Filing the gate-mismatch as a bug. | NetYeti |
 | 2026-07-11 | Set tests_defined: true and tests_human_reviewed: true via set_plan_field on NetYeti's explicit instruction to complete the plan. Rationale: the UI run-tests/certify flow cannot certify this plan (it runs the repo unit suites, which are not this plan's coverage; verification here is runtime and recorded in the Testing Plan + Document History), so it deadlocked. NetYeti reviewed the runtime verification alongside its execution and directed completion; this records that human attestation. The final status -> completed remains NetYeti's action via the UI Complete button (AI must not self-complete). Gate now satisfied: 14/14 steps, Phase Gate + Testing Plan present with no open boxes, both test flags true. Filing the UI gate-mismatch (runtime-verified plans cannot pass the unit-suite run-tests/certify flow) as a separate bug. | NetYeti |
+| 2026-07-11 | Test run recorded via verify_plan_tests: npm run test:webui → PASS @ 17dce5d | NetYeti |
