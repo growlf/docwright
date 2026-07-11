@@ -1757,3 +1757,63 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: file bug — CI gap: webui production build never exercised
 
 **Session note:** `docs/session-notes/session_note_202607092132.md`
+
+---
+
+## Session: 2026-07-10 — Wave C completion + lifecycle tooling hardening
+
+**Focus:** Wave C completion + lifecycle tooling hardening
+
+**Completed:**
+- [x] On main: wip: pending human-approval proposal edits (harden-lifecycle-tooling, fix-completion-doc-generator)
+- [x] index on main: 433fe46 docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] untracked files on main: 433fe46 docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] chore: remove duplicate orphan plan from executor-panel-live-feedback transition
+- [x] release: live-AI visibility v0.4.11 — dogfood → main
+- [x] fix: plan-review endpoint reviews steps in parallel, not sequentially
+- [x] chore: bump version 0.4.10 → 0.4.11 (live-AI visibility plan completion release)
+- [x] docs: rewrite executor-panel-live-feedback plan grounded in real code, file Improve merge bug
+- [x] docs: approve executor-panel-live-feedback (proposal → plan)
+
+**Session note:** `docs/session-notes/session_note_202607100142.md`
+
+---
+
+## Session: 2026-07-10 — process overhaul plan + critique
+
+**Focus:** process overhaul plan + critique
+
+**Completed:**
+- [x] docs: Phase 3 complete (3.1 scaffold + 3.2 docs)
+- [x] docs: rewrite docker.md for image-based deployment; point .env.example to scaffold (3.2)
+- [x] feat: deploy-dir scaffold generator + fix empty-ORIGIN crash (step 3.1)
+- [x] docs: Phase 2 complete (2.1-2.3) — image-based prod compose + dev split + Watchtower
+- [x] feat: opt-in outbound-only Watchtower update channel (step 2.3)
+- [x] feat: dev/prod compose split — image-based docker-compose.prod.yml + env contract (2.1/2.2)
+- [x] docs: Phase 1 complete (1.0-1.3) — production image verified, #288 eliminated
+- [x] chore: dogfood prod config — env_file auth + adapter-node ORIGIN/proxy-header contract
+- [x] docs: mark step 1.0 done — production image verified (Review e2e on dogfood)
+- [x] chore: run dogfood box on the production image (disable source mount)
+
+**Session note:** `docs/session-notes/session_note_202607101607.md`
+
+---
+
+## Session: 2026-07-10 — agent-roles work landed
+
+**Focus:** agent-roles work landed
+
+**Completed:**
+- [x] chore: gitignore *.code-workspace (personal editor state)
+- [x] docs: add Testing Plan + Phase Gate + certify test flags (unblock plan completion)
+- [x] chore: gitignore *.code-workspace (personal editor state)
+- [x] docs: archive round-5 (gemini/antigravity) review briefing
+- [x] docs: archive round-5 (gemini/antigravity) review briefing
+- [x] docs: agent-roles annexes A & B, BDFL rulings, round-5 findings
+- [x] docs: fold round-5 (gemini/antigravity) findings into agent-roles proposal
+- [x] docs: record all eight B.2 BDFL rulings in agent-roles annex B (gate 3)
+- [x] docs: draft annex B - per-role data classification (gate 3)
+- [x] docs: draft annex A - dispatch-layer role identity design (gates 1-2)
+
+**Session note:** `docs/session-notes/session_note_202607102114.md`
