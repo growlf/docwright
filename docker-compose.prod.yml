@@ -1,0 +1,42 @@
+# DocWright — PRODUCTION deployment (image-based)
+#
+# Runs the published image, all config from the environment, one mounted vault.
+# Nothing DocWright-owned lives in the deploy directory — just `.env` (+ optional
+# `app.env`) and whatever `VAULT_PATH` points at. Update with:
+#     docker compose -f docker-compose.prod.yml pull && \
+#     docker compose -f docker-compose.prod.yml up -d
+#
+# .env (compose interpolation — this dir):
+#   DOCWRIGHT_IMAGE  — image ref; pin by DIGEST in production
+#                      (e.g. ghcr.io/growlf/docwright@sha256:...). Defaults to :latest.
+#   VAULT_PATH       — host path to the vault mounted at /vault (required)
+#   PORT             — host port to publish (container always listens on 5173)
+#
+# app.env (container runtime config — loaded verbatim, so a bcrypt $ in
+#   LOCAL_AUTH_PASSWORD is NOT interpolated). Optional. See app.env.example for the
+#   full contract: AUTH_MODE, LOCAL_AUTH_*, SESSION_TTL_SECONDS, GIT_USER_NAME,
+#   GIT_USER_EMAIL, GIT_TOKEN, OPENCODE_URL, OPENCODE_SERVER_USERNAME/PASSWORD,
+#   ORIGIN (or PROTOCOL_HEADER + HOST_HEADER behind a reverse proxy), etc.
+#   NOTE: do NOT put PORT here — the container port is pinned to 5173 below.
+
+services:
+  docwright:
+    image: ${DOCWRIGHT_IMAGE:-ghcr.io/growlf/docwright:latest}
+    env_file:
+      - path: app.env
+        required: false
+    environment:
+      # Container-internal ports are fixed; the host mapping uses ${PORT} below.
+      # Pinned here so an accidental PORT in app.env cannot break the mapping.
+      PORT: "5173"
+      MCP_PORT: "3002"
+    volumes:
+      - ${VAULT_PATH:?set VAULT_PATH in .env to the host vault directory}:/vault
+    ports:
+      - "${PORT:-5173}:5173"
+      # Uncomment to expose the MCP SSE port for external tooling:
+      # - "3002:3002"
+    restart: unless-stopped
+    # Opt-in Watchtower auto-update (see deploy/watchtower.yml, step 2.3):
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
