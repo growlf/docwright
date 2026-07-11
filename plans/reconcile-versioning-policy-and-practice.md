@@ -12,11 +12,12 @@ priority: medium
 complexity: low
 automated: guided
 assigned_to: NetYeti
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: policy, scripts, and CI agree on ONE versioning model (recommend patch = per-release + a CI drift gate), with no references to the retired develop branch and a phase-close docstring that matches behaviour. Failure avoided: the current drift (policy says patch = completed-plan count, practice bumps per-release with count=0) confuses releases and violates code-over-memory."
 total_steps: 3
-completed_steps: 0
+completed_steps: 3
+gate_note: "Changed files are untestable types: plans/reconcile-versioning-policy-and-practice.md"
 ---
 
 # Reconcile versioning policy with practice
@@ -41,9 +42,9 @@ implement. Pick ONE coherent, code-enforced model. Full detail:
 
 | # | Action | Details | Status |
 | --- | --- | --- | --- |
-| 1 | Decide + document the patch model | Amend `policies/core/versioning.md` to state the ACTUAL model. Recommend: **patch = per-release** (drop the "completed plan count within the phase" definition, which is never derived and diverges — VERSION 0.4.12 vs 0 completed `phase-4-*` plans). Keep minor = phase. Verify: the policy's PATCH definition matches what the release scripts do. | ⏳ Pending |
-| 2 | Scrub retired-`develop` references + fix phase-close docstring | Remove `develop`-branch references from `policies/core/versioning.md` (trunk-based since 2026-06-30). Fix the `scripts/phase-close.ts` docstring to match its actual behaviour (it does not do the step-verification it claims). Verify: `grep -n develop policies/core/versioning.md` → none; the docstring matches the code. | ⏳ Pending |
-| 3 | CI drift gate (VERSION ↔ package.json ↔ policy) | Add/verify a CI check that fails if `VERSION` and `package.json` version disagree (this also serves the release-v0.5.0 plan's step 5). Verify: a deliberate mismatch fails the check locally; matched passes. | ⏳ Pending |
+| 1 | Decide + document the patch model | Amend `policies/core/versioning.md` to state the ACTUAL model. Recommend: **patch = per-release** (drop the "completed plan count within the phase" definition, which is never derived and diverges — VERSION 0.4.12 vs 0 completed `phase-4-*` plans). Keep minor = phase. Verify: the policy's PATCH definition matches what the release scripts do. | ✅ Done |
+| 2 | Scrub retired-`develop` references + fix phase-close docstring | Remove `develop`-branch references from `policies/core/versioning.md` (trunk-based since 2026-06-30). Fix the `scripts/phase-close.ts` docstring to match its actual behaviour (it does not do the step-verification it claims). Verify: `grep -n develop policies/core/versioning.md` → none; the docstring matches the code. | ✅ Done |
+| 3 | CI drift gate (VERSION ↔ package.json ↔ policy) | Add/verify a CI check that fails if `VERSION` and `package.json` version disagree (this also serves the release-v0.5.0 plan's step 5). Verify: a deliberate mismatch fails the check locally; matched passes. | ✅ Done |
 
 ## Testing Plan
 
@@ -61,3 +62,4 @@ implement. Pick ONE coherent, code-enforced model. Full detail:
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-07-11 | Drafted from the proposal. Status draft, awaiting BDFL approval. | NetYeti |
+| 2026-07-11 | All 3 steps executed + landed on main via PR #327 (squash 71645e5). Patch=per-release documented; phase-close docstring + Automation section corrected; develop refs scrubbed (trunk-based); CI version gate extended to src/webui/package.json and real drift fixed (webui 0.4.9 → 0.4.12). Ready for completion. | NetYeti |
