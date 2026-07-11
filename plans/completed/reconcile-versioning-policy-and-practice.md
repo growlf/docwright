@@ -1,6 +1,7 @@
 ---
 title: Reconcile versioning policy with practice
 status: completed
+completed_date: 2026-07-11
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -21,6 +22,7 @@ gate_note: "Changed files are untestable types: plans/reconcile-versioning-polic
 tests_last_run: "2026-07-11T16:16:58.162Z"
 tests_last_result: pass
 tests_last_commit: 8eda38b
+_path: plans/completed/reconcile-versioning-policy-and-practice
 ---
 
 # Reconcile versioning policy with practice
