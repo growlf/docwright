@@ -1,6 +1,6 @@
 ---
 title: Release v0.5.0 — governance integrity, hook unification, collaboration model
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-08
 tags:
