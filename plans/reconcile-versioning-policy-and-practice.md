@@ -10,7 +10,7 @@ tags:
 proposal_source: proposals/reconcile-versioning-policy-and-practice.md
 priority: medium
 complexity: low
-automated: guided
+automated: full
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: true
