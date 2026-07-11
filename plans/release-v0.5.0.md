@@ -19,7 +19,7 @@ related_to:
   - proposals/git-panel-branch-switcher.md
   - proposals/three-docwright-instance-deployment.md
   - plans/lifecycle-gates.md
-  - plans/reconcile-versioning-policy-and-practice.md
+  - plans/completed/reconcile-versioning-policy-and-practice.md
   - plans/completed/enhance-roadplan-pending-work-visibility.md
   - plans/completed/image-based-deployment-any-directory.md
 _path: plans/release-v0.5.0.md
