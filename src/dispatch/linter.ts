@@ -23,11 +23,19 @@ const VALID_COMPLEXITY        = new Set(['', 'XS', 'S', 'M', 'L', 'XL']);
 const VALID_AUTOMATED         = new Set(['off', 'guided', 'full']);
 const VALID_MODE              = new Set(['mentor', 'guided', 'autonomous']);
 const VALID_PLAN_STATUS       = new Set(['draft', 'approved', 'in-progress', 'completed', 'canceled']);
-const VALID_ISSUE_STATUS      = new Set(['open', 'in-progress', 'resolved', 'wont-fix']);
+// Canonical issue lifecycle — MUST match the pre-commit hook (scripts/pre-commit.sh
+// §12) and the profile schema.json enum. Previously this set was stale
+// ({open, in-progress, resolved, wont-fix}), which wrongly flagged every real
+// issue (new/scope-checked/proposal-linked) and accepted statuses nothing uses —
+// the linter/hook drift that harden-capture-bug-report-output-schema targets.
+const VALID_ISSUE_STATUS      = new Set(['new', 'triaged', 'scope-checked', 'awaiting-proposal', 'proposal-linked', 'resolved', 'deferred', 'duplicate']);
 // A milestone is a real milestone id or the literal 'future' (the anti-paralysis bucket).
 // Any non-empty value satisfies the "no orphans" rule; only presence is enforced.
 const MILESTONE_OPEN_PLAN_STATUSES  = new Set(['approved', 'in-progress']);
-const MILESTONE_OPEN_ISSUE_STATUSES = new Set(['open', 'in-progress']);
+// Issues carry NO milestone until they reach proposal-linked (the pre-commit hook
+// forbids it earlier). The no-orphans milestone rule therefore does not apply to
+// early-stage issues — milestone timing on issues is governed by the hook, not here.
+const MILESTONE_OPEN_ISSUE_STATUSES = new Set<string>([]);
 const VALID_RESEARCH_STATUS   = new Set(['active', 'concluded', 'archived']);
 const VALID_RESEARCH_CONCLUSION = new Set(['open', 'recommends', 'inconclusive', 'superseded']);
 
@@ -82,7 +90,7 @@ export function lintDocument(
     results.push({ field: 'status', severity: 'warn', message: `Unknown plan status '${fm.status}'` });
   }
   if (filePath.startsWith('issues/') && fm.status !== undefined && !VALID_ISSUE_STATUS.has(String(fm.status))) {
-    results.push({ field: 'status', severity: 'warn', message: `Unknown issue status '${fm.status}' — expected open | in-progress | resolved | wont-fix` });
+    results.push({ field: 'status', severity: 'warn', message: `Unknown issue status '${fm.status}' — expected new | triaged | scope-checked | awaiting-proposal | proposal-linked | resolved | deferred | duplicate` });
   }
 
   // Milestone rule (no orphans): every OPEN issue/plan carries a milestone — a real one or
