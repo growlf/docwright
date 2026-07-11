@@ -11,10 +11,10 @@ tags:
   - code-over-memory
 complexity: low
 estimated_effort: XS
-approved: false
+approved: true
 priority: high
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: NetYeti
 related_to:
   - scripts/release-tag.sh
   - policies/ci-watch-on-tag-push/atom.yaml
