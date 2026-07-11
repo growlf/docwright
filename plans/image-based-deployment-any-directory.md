@@ -1,6 +1,6 @@
 ---
 title: Image-Based Deployment — Run on Any Directory (Vault Mount + Env, No Source Checkout)
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-10
 tags:
