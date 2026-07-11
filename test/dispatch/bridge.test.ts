@@ -33,7 +33,7 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
   it('suggestDuplicates is read-only and returns similar open bugs (no write, no auto-merge)', () => {
     createReportedBug(tmpDir, report());
     const before = fs.readdirSync(path.join(tmpDir, 'issues')).length;
-    const suggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!');
+    const suggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'bug', () => []);
     const after = fs.readdirSync(path.join(tmpDir, 'issues')).length;
     assert.strictEqual(before, after, 'suggest must not write');
     assert.ok(suggestions.length >= 1);
@@ -44,7 +44,7 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
 
   it('does NOT suggest a genuinely different bug (never swallow distinct reports)', () => {
     createReportedBug(tmpDir, report());
-    const suggestions = suggestDuplicates(tmpDir, 'Database replication lag under heavy write load');
+    const suggestions = suggestDuplicates(tmpDir, 'Database replication lag under heavy write load', 'bug', () => []);
     assert.strictEqual(suggestions.length, 0);
   });
 
@@ -89,11 +89,22 @@ describe('Bug Reporting Bridge (suggest-style, two-phase)', () => {
 
   it('suggestDuplicates only matches within the same category (bug vs feature never cross-suggest)', () => {
     createReportedBug(tmpDir, report({ category: 'feature' }));
-    const bugSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel', 'bug');
+    const bugSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel', 'bug', () => []);
     assert.strictEqual(bugSuggestions.length, 0, 'a feature request must not surface as a bug duplicate');
 
-    const featureSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'feature');
+    const featureSuggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel!!!', 'feature', () => []);
     assert.ok(featureSuggestions.length >= 1, 'the same-category feature request should still be suggested');
+  });
+
+  it('merges injected GitHub suggestions deterministically (no real gh call)', () => {
+    // Regression for the flaky 2000ms timeout: suggestDuplicates used to shell out
+    // to the real `gh issue list` (execSync). It now takes an injectable query, so
+    // tests never hit the network and the gh path is covered deterministically.
+    const fakeGh = () => [{ number: 42, title: 'UI alignment issue on settings panel' }];
+    const suggestions = suggestDuplicates(tmpDir, 'UI alignment issue on settings panel', 'bug', fakeGh);
+    const gh = suggestions.find(s => s.source === 'gh');
+    assert.ok(gh, 'the injected GitHub issue should appear as a gh-source suggestion');
+    assert.strictEqual(gh!.ghIssueNumber, 42);
   });
 
   // promoteIssueToGithub shells out to the real `gh` CLI -- these cases only cover the

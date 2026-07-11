@@ -1,6 +1,7 @@
 ---
 title: Flaky dispatch bridge.test.ts times out (2000ms) intermittently, reddening tag/release CI
-status: new
+status: resolved
+resolved_by: src/dispatch/bridge.ts (fix/flaky-bridge-test)
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +18,9 @@ tags:
 ---
 
 # Flaky dispatch bridge.test.ts times out (2000ms) intermittently, reddening tag/release CI
+
+> **Resolved 2026-07-11.** Root cause: `suggestDuplicates` (`src/dispatch/bridge.ts`) called `queryGhIssues`, which shells out to the real `gh issue list` (execSync 5000ms); mocha's 2000ms per-test default fired first when `gh` was slow/auth-variant in CI, so the test flaked — a merge-blocking risk on any PR since it's a required check. Fix: made the gh query **injectable** (`suggestDuplicates(root, title, category, ghQuery=queryGhIssues)`) and the tests now pass a no-network fake, so no test shells out to `gh`. `bridge.test.ts` now runs ~20ms deterministically (was flaking at 2000ms); a new test covers the injected gh-suggestion path. Verified: full `test:dispatch` 405 passing, 3 consecutive fast runs.
+
 
 ## Description
 
