@@ -2,6 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = (() => {
   let dir = path.dirname(new URL(import.meta.url).pathname);
@@ -35,16 +36,29 @@ Options:
   process.exit(1);
 }
 
-function findPhasePlans(phase: number): string[] {
+/**
+ * Find completed plans belonging to a phase.
+ *
+ * A plan belongs to phase N if EITHER its filename starts with `phase-N-`
+ * (the legacy convention, used by phase-1/2/3 master plans) OR its frontmatter
+ * declares `phase: N` (the current convention — most Phase 4+ plans are
+ * feature-named, e.g. `ai-model-routing.md` with `phase: 4`). Only plans with
+ * `status: completed` count. Exported for unit testing; `dir` is injectable so
+ * tests can point at a fixture directory instead of the real plans/completed.
+ */
+export function findPhasePlans(phase: number, dir: string = COMPLETED_DIR): string[] {
   const prefix = `phase-${phase}-`;
-  if (!fs.existsSync(COMPLETED_DIR)) return [];
-  return fs.readdirSync(COMPLETED_DIR)
-    .filter(f => f.startsWith(prefix) && f.endsWith('.md'))
-    .map(f => path.join(COMPLETED_DIR, f))
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir)
+    .filter(f => f.endsWith('.md'))
+    .map(f => path.join(dir, f))
     .filter(fp => {
       try {
         const raw = fs.readFileSync(fp, 'utf-8');
-        return raw.includes('status: completed');
+        if (!raw.includes('status: completed')) return false;
+        if (path.basename(fp).startsWith(prefix)) return true;
+        const m = raw.match(/^phase:\s*(\d+)\s*$/m);
+        return m ? Number(m[1]) === phase : false;
       } catch {
         return false;
       }
@@ -161,7 +175,10 @@ async function main(): Promise<void> {
   console.log(`  ✅ Phase ${phase} close-out complete — ${targetTag} released.`);
 }
 
-main().catch(err => {
-  console.error('phase:close failed:', err.message);
-  process.exit(1);
-});
+// Only run the release flow when invoked directly (not when imported by a test).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(err => {
+    console.error('phase:close failed:', err.message);
+    process.exit(1);
+  });
+}
