@@ -15,7 +15,6 @@
  */
 
 import * as path from 'node:path';
-import { opencodeHeaders } from './opencode-auth';
 import * as fs from 'node:fs';
 import { parseFrontmatter, setFrontmatterField } from './frontmatter';
 import { GateDefinition, GateResult, getGatesForTransition, evaluateGate } from './gates';
@@ -37,8 +36,6 @@ export interface TransitionCheckResult {
   gates: GateDefinition[];
   gateResults: GateResult[];
   lintViolations: LintResult[];
-  /** Populated by checkWithAI() when a gate has ai_pre_review_prompt */
-  aiReadinessNote?: string;
 }
 
 export interface PromoteResult {
@@ -88,9 +85,13 @@ function validStates(profile: ProfileConfig, docType: string): string[] {
  *
  * Pure read — safe to call from UI for preview. Writes nothing.
  *
+ * Note: the Lifecycle Gates Phase 2 AI-assisted pre-review is a separate,
+ * non-blocking path — src/dispatch/ai.ts (AIEngine.gatePreReview) surfaced via
+ * the /api/gate-pre-review endpoint. It advises the human reviewer and never
+ * gates the transition, so it deliberately does not wrap this function.
+ *
  * Wired by:
  *   Chat Panel Tier 2 Step 9  — diff panel transition preview
- *   Lifecycle Gates Phase 2 Step 1 — AI readiness check wraps this
  */
 export function checkTransition(
   vaultRoot: string,
@@ -164,7 +165,6 @@ export function checkTransition(
  *
  * Wired by:
  *   Phase 4 Step 5 — AI write ACL enforcement stamps ai-last-action:
- *   Lifecycle Gates Phase 2 Step 1 — gate_note is stamped here
  */
 export function executeTransition(
   vaultRoot: string,
@@ -215,93 +215,6 @@ export function executeTransition(
   );
 
   return { success: true, newStatus: toStatus };
-}
-
-/**
- * checkTransition + optional AI pre-review pass.
- *
- * For each gate that has an ai_pre_review_prompt, calls the OpenCode engine
- * to produce a readiness summary that is returned as aiReadinessNote. If
- * OpenCode is unavailable, returns the plain checkTransition result.
- *
- * Wired by:
- *   Lifecycle Gates Phase 2 Step 1 — THE ONLY REMAINING STEP IN THAT PLAN
- */
-export async function checkWithAI(
-  vaultRoot: string,
-  docPath: string,
-  fromStatus: string,
-  toStatus: string,
-  frontmatter: Record<string, unknown>,
-  profile: ProfileConfig,
-): Promise<TransitionCheckResult> {
-  const base = checkTransition(
-    vaultRoot, docPath, fromStatus, toStatus, frontmatter, profile,
-  );
-
-  const promptGate = base.gates.find(g => g.ai_pre_review_prompt);
-  if (!promptGate) return base;
-
-  const opencodeUrl = process.env['OPENCODE_URL'];
-  if (!opencodeUrl) return base;
-
-  try {
-    const docContent = fs.readFileSync(
-      path.resolve(vaultRoot, docPath), 'utf-8',
-    );
-
-    const systemPrompt =
-      promptGate.ai_pre_review_prompt ??
-      'You are a governance reviewer. Identify blockers, incomplete items, and gaps. Be concise.';
-
-    const userPrompt = [
-      `Document: ${docPath}`,
-      `Transition: ${fromStatus} → ${toStatus}`,
-      '',
-      'Document content:',
-      docContent.slice(0, 8000),
-      '',
-      'Produce a short readiness summary for the human reviewer.',
-    ].join('\n');
-
-    const res = await fetch(`${opencodeUrl}/v2/session`, {
-      method: 'POST',
-      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ title: `gate-review:${docPath}` }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!res.ok) return base;
-
-    const session = await res.json() as { id: string };
-    const msgRes = await fetch(`${opencodeUrl}/v2/session/${session.id}/message`, {
-      method: 'POST',
-      headers: opencodeHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ role: 'user', parts: [{ type: 'text', text: userPrompt }], providerOptions: { system: systemPrompt } }),
-      signal: AbortSignal.timeout(60_000),
-    });
-    if (!msgRes.ok) return base;
-
-    const text = await msgRes.text();
-    // Extract last assistant text from SSE stream
-    const lines = text.split('\n');
-    let note = '';
-    for (const line of lines) {
-      if (!line.startsWith('data:')) continue;
-      try {
-        const d = JSON.parse(line.slice(5));
-        if (d?.role === 'assistant' && d?.parts) {
-          for (const p of d.parts) {
-            if (p.type === 'text') note += p.text;
-          }
-        }
-      } catch { /* ignore */ }
-    }
-
-    return { ...base, aiReadinessNote: note.trim() || undefined };
-  } catch {
-    // Non-blocking — any OpenCode failure returns the plain result
-    return base;
-  }
 }
 
 /**
