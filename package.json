@@ -2,7 +2,7 @@
   "name": "docwright",
   "displayName": "docwright",
   "description": "Organizational operating system for policy-driven teams",
-  "version": "0.4.12",
+  "version": "0.5.0",
   "license": "MIT",
   "publisher": "growlf",
   "repository": {
@@ -43,7 +43,8 @@
     "test:hooks": "bash test/hooks/test-hook-source-unification.sh && bash test/hooks/test-identity-cache-scope.sh && bash test/hooks/test-claude-hook-resolution.sh && bash test/hooks/test-lifecycle-hook.sh && bash test/hooks/test-research-hook.sh && bash test/hooks/test-human-approved-hook.sh && bash test/hooks/test-approve-by-move.sh && bash test/hooks/test-end-session-autoland.sh",
     "test:compat": "mocha --require tsx/cjs 'test/compat/**/*.test.ts'",
     "test:integration": "mocha --require tsx/cjs 'test/integration/**/*.test.ts'",
-    "test": "npm run test:atoms && npm run atoms:isolation && npm run test:dispatch && npm run test:executor && npm run test:mcp && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration",
+    "test:scripts": "mocha --require tsx/cjs 'test/scripts/**/*.test.ts'",
+    "test": "npm run test:atoms && npm run atoms:isolation && npm run test:dispatch && npm run test:executor && npm run test:mcp && npm run test:hooks:pending && npm run test:hooks && npm run test:compat && npm run test:integration && npm run test:scripts",
     "hook:install": "bash scripts/install-hooks.sh",
     "init": "npx tsx scripts/init.ts",
     "open": "npx tsx scripts/open-vault.ts",

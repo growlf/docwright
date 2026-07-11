@@ -23,26 +23,35 @@ gate_date: 2026-06-04
 |---------|---------|-----------------|
 | `MAJOR` | Milestone release | Defined separately — represents a significant public milestone (alpha, beta, 1.0) |
 | `MINOR` | Phase number | A new phase begins (Phase 1 = 1, Phase 2 = 2, etc.) |
-| `PATCH` | Completed plan count | A plan completes within the current phase (bumped manually in the release commit) |
+| `PATCH` | Release within a phase | A release ships within the current phase — bumped per release, in the release commit (it is **not** derived from a completed-plan count) |
 
 ## Examples
 
 | Event | Version |
 |-------|---------|
 | Phase 1 begins | `0.1.0` |
-| `phase-1-ui-polish` completes | `0.1.1` |
-| `phase-1-critique-skill` completes | `0.1.2` |
-| `phase-1-containerization` completes | `0.1.3` |
-| `phase-1-plan-step-enforcement` completes | `0.1.4` |
-| Phase 1 gate signs off → Phase 2 begins | `0.2.0` |
-| First Phase 2 plan completes | `0.2.1` |
+| First Phase 1 release ships | `0.1.1` |
+| Next Phase 1 release ships | `0.1.2` |
+| … and so on, per release | `0.1.N` |
+| Phase 1 gate signs off → Phase 2 begins (`phase:close -- 1`) | `0.2.0` |
+| First Phase 2 release ships | `0.2.1` |
 | Significant milestone (alpha launch) | `1.0.0` |
+
+> **Patch is per-release, not per-completed-plan.** Earlier drafts defined patch as
+> a "completed plan count within the phase"; that count was never actually derived
+> (e.g. `0.4.12` shipped with zero `plans/completed/phase-4-*.md`). Patch simply
+> increments each time a release ships within the current phase.
 
 ## Tracking
 
 The current version is stored in:
 - `VERSION` — single line, e.g. `0.1.1`
 - `package.json` → `"version"` field (kept in sync)
+- `src/webui/package.json` → `"version"` field (kept in sync by `phase-close.ts`)
+
+These MUST agree. The CI **"Version consistency gate"** (`.github/workflows/ci.yml`)
+fails the build if `VERSION` and `package.json` disagree — drift is caught by code,
+not memory ([[policies/core/code-over-memory]]).
 
 ## Automation
 
@@ -54,30 +63,34 @@ npm run phase:close -- <N>
 ```
 
 It performs the following:
-1. Validate that `plans/completed/phase-N-*.md` plans exist and are `status: completed`
+1. Validate that at least one `plans/completed/phase-N-*.md` file exists containing
+   `status: completed` (a presence + status check — it does **not** verify each
+   plan's individual steps)
 2. Calculate the next version: `0.<N+1>.0`
 3. Refuse to regress — idempotent if `VERSION` is already at or beyond the target
-4. Update `VERSION` and `package.json`
+4. Update `VERSION`, `package.json`, and `src/webui/package.json`
 5. Commit, then run `npm run release:tag` to tag and push
 
 `phase-close.ts` only handles the **minor** bump at a phase boundary
-(`0.<N+1>.0`). **PATCH** increments *within* a phase (e.g. `0.4.1 → 0.4.2` as
-individual plans complete) are applied **manually** in the release commit that
-ships them, keeping `VERSION` and `package.json` in sync.
+(`0.<N+1>.0`). **PATCH** increments *within* a phase (e.g. `0.4.1 → 0.4.2`) are
+per-release and applied **manually** in the release commit that ships them, keeping
+all three version files in sync.
 
 > There is **no** per-commit pre-commit hook that auto-bumps the version, and
 > there is no longer a `scripts/version.js` (retired — it miscomputed the
 > version and could regress; see `proposals/fix-or-retire-version-js.md`).
-> The version is bumped explicitly at phase close and is always derivable from
-> the `plans/completed/` state.
+> The minor bump happens explicitly at phase close; the patch bump happens
+> explicitly per release. The version is **not** derived from `plans/completed/`
+> state — it is set deliberately and guarded by the CI consistency gate.
 
 ## Release branches
 
-When a milestone is ready (phase completion, major feature set), a release
-branch is created from `develop`:
+DocWright is trunk-based (the `develop` branch was retired 2026-06-30). `main` is
+the trunk. When a milestone is ready (phase completion, major feature set), a
+release branch is cut from `main`:
 
 ```
-git checkout -b release/v0.<phase>.<patch> develop
+git fetch origin && git checkout -b release/v0.<phase>.<patch> origin/main
 ```
 
 The release branch is where:
@@ -110,3 +123,4 @@ These are policy-gated changes — do not update them outside of an approved rel
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-06-04 | Created | NetYeti |
+| 2026-07-11 | Reconciled with practice: PATCH is per-release (not a completed-plan count); documented the CI version-consistency gate + `src/webui/package.json`; corrected the `phase-close.ts` validation description; scrubbed retired-`develop` references (trunk-based). | NetYeti |
