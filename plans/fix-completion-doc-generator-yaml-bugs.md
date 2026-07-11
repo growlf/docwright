@@ -1,6 +1,6 @@
 ---
 title: Fix completion-doc generator's invalid YAML output
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -11,7 +11,7 @@ proposal_source: proposals/fix-completion-doc-generator-yaml-bugs.md
 priority: medium
 complexity: low
 automated: guided
-assigned_to: ""
+assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: completing a plan whose title contains a colon or other YAML-special characters produces a docs/<plan>.md whose frontmatter js-yaml parses cleanly. Failure avoided: generateCompletionDoc's raw string interpolation emits unquoted title: Foo: Bar -> YAMLException on load. Fix pattern (code-over-memory): serialize frontmatter with a YAML-safe serializer, not string interpolation — the same class hit in more than one generator."

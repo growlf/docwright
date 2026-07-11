@@ -1,6 +1,6 @@
 ---
 title: Harden AI-agent plan/proposal lifecycle tooling
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -12,7 +12,7 @@ proposal_source: proposals/harden-plan-proposal-lifecycle-tooling.md
 priority: high
 complexity: medium
 automated: guided
-assigned_to: ""
+assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: "Root cause across all items: the MCP tools and their Web-UI counterparts drifted apart, each implementing partial/divergent lifecycle logic, and gates report success while silently doing the wrong thing. Happy path after this plan: a plan taken through the Web UI (Run Tests -> Certify -> Complete) records real evidence and archives correctly; approving a proposal produces exactly one plan at the correct path; the PreToolUse/pre-commit gates actually enforce (block the write, check only frontmatter); end-session is not bricked by unrelated working-tree debt; runtime-verified plans can be certified; live plan-review signals completion deterministically. Failure paths: each gate refuses loudly with the reason, never a silent no-op. Fix pattern: extract shared TypeScript functions used by BOTH the MCP tool and the Web-UI route (code-over-memory), never reimplement per surface."

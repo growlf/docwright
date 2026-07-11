@@ -1,6 +1,6 @@
 ---
 title: Harden markdown table-row parsing across all surfaces
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -12,7 +12,7 @@ proposal_source: proposals/harden-markdown-table-row-parsing.md
 priority: medium
 complexity: low
 automated: guided
-assigned_to: ""
+assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: a table cell containing a literal pipe (a code span like `category: bug|feature`, or history text with a `|`) round-trips through every parser/writer without corrupting the row. The shared splitTableRow is already backtick-aware (#325, fixing update_step); this plan converges the remaining surfaces — plan-review's own raw split('|') and append_history's row composition — onto the hardened helpers. Failure avoided: silent row corruption that reports success."

@@ -1,6 +1,6 @@
 ---
 title: Reconcile versioning policy with practice
-status: draft
+status: approved
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -11,7 +11,7 @@ proposal_source: proposals/reconcile-versioning-policy-and-practice.md
 priority: medium
 complexity: low
 automated: guided
-assigned_to: ""
+assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: policy, scripts, and CI agree on ONE versioning model (recommend patch = per-release + a CI drift gate), with no references to the retired develop branch and a phase-close docstring that matches behaviour. Failure avoided: the current drift (policy says patch = completed-plan count, practice bumps per-release with count=0) confuses releases and violates code-over-memory."
