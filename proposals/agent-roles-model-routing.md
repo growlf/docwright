@@ -301,8 +301,11 @@ success.
 
 ## Annex A — Gate 1/2 design draft (dispatch-layer role identity)
 
-*(Round 4 addendum. Status: **draft for Round 5 review** — this is the
-security architecture the whole proposal rests on, so it gets the same
+*(Round 4 addendum, **Round 5-reviewed 2026-07-10**. Gemini surfaced
+one CRITICAL bug (f.3, filed) and three hardening requirements now
+folded into A.2 (call-time validation mandatory, argument-level
+scoping) and A.5 (audit log is not tamper-proof). This is the security
+architecture the whole proposal rests on, so it gets the same
 multi-perspective treatment as the taxonomy. Grounded in the actual
 `src/mcp` implementation as of 2026-07-05.)*
 
@@ -337,6 +340,20 @@ question), making role scope policy-driven, not hardcoded. CI asserts no
 role's list contains a constitution-violating tool (already in
 Verification).
 
+**R5 hardening requirements (Gemini f.4/f.5, accepted):**
+- *Call-time validation is not optional.* A single client multiplexer
+  over stdio servers means a drifting Generalist can attempt tools
+  registered for other roles; advertisement filtering (layer 1) alone
+  does not stop this. Layer 2 must key off the **server-side** role
+  bound at spawn, never the client-selected tool, and reject any call
+  whose tool is outside the spawned role's lane.
+- *Argument-level scoping.* The manifest must constrain tool
+  **parameters**, not just tool names — otherwise a permitted tool
+  (e.g. a file or git operation) can still reach arbitrary paths or
+  actions. This is the same exploit surface as the paths.ts traversal
+  bug (f.3); path/ref arguments are validated against the role's
+  allowed scope before dispatch.
+
 ### A.3 Constitution stays global and can only be narrowed
 
 The existing server-side guards — blocked frontmatter fields
@@ -370,6 +387,11 @@ criterion "measurable drift reduction" measurable.
   (where available) client hooks stay.
 - **`model` in the audit stamp is asserted by config, not proven.**
   Adequate for drift analytics, inadequate for forensics; noted.
+- **The audit log is not a tamper-proof boundary (R5 f.6).**
+  `audit.jsonl` is a local file and can be edited; it is
+  drift-analytics/observability, explicitly **not** a forensic or
+  tamper-evident trust anchor. Hardening (append-only store, signing)
+  is deferred and documented, not assumed.
 - **Fail closed:** if a role's server or model is unreachable, laned
   operations do not fall back to the generalist.
 - **Deferred:** per-connection identity on shared SSE (per-role ports?
@@ -381,8 +403,10 @@ criterion "measurable drift reduction" measurable.
 *(Round 4 addendum. Status: **BDFL rulings recorded 2026-07-10** — all
 eight rows ruled as recommended, including both B.3 findings (Triage
 withdrawn to LAN-only; Incident Responder frontier as documented
-exception). Still a Round 5 review target; rulings may be revisited if
-Round 5 surfaces a successful rebuttal, Triage especially.)*
+exception). **Round 5-reviewed 2026-07-10:** Triage rebuttal (Gemini
+f.7, SET regex scrub) recorded but not adopted — LAN-only stands
+pending a scrub-recall proof (see Future); Incident Responder exception
+refined to a time-boxed lease (f.8).)*
 
 ### B.1 Data classes
 
@@ -436,6 +460,11 @@ role × vault-class × endpoint before dispatch — code, not memory.
    contracted provider terms; hosted-small never; local fallback
    mandatory. This row is the sole standing exception to the C3
    LAN-only rule and must appear as such in the role manifest.
+   **R5 refinement (Gemini f.8, accepted):** the exception should be a
+   **time-boxed lease tied to an active incident**, not a permanent
+   flag — a standing exception invites frontier use during
+   non-incident states. Mechanism (lease token / expiry) is a
+   plan-stage detail; the ruling stays option (b), now leased.
 
 ## Development Model — parallel branch `agent-roles`
 
@@ -480,6 +509,11 @@ narrowed by Rounds 2–3. Original text retained.)*
   *→ Partially resolved (R4): decision criterion added (§ Role / skill /
   hook); taxonomy expected to shrink; merge question stays open for
   Round 5.*
+  *→ Resolved (R5 f.1/f.2): Surveyor and Incident Responder stay
+  separate (different tempos + Annex B data boundary). Triage stays an
+  agent, not a hook-skill — and this refutes the decision criterion,
+  which needs a data-isolation override clause (a role can be warranted
+  purely to keep high-risk data out of the Generalist's context).*
 - **Routing layer:** OpenCode per-agent `model:` vs. meshy-side routing
   vs. both. What happens when the assigned model is unreachable — fallback
   chain per role?
@@ -496,6 +530,11 @@ narrowed by Rounds 2–3. Original text retained.)*
   need a per-role data classification.
   *→ Elevated (R2 f.5): now Plan-Drafting Gate 3 — a security
   architecture decision, not an open question.*
+  *→ Ruled (2026-07-10) + tested (R5 f.7): all eight B.2 rows ruled.
+  Gemini's SET-scrub rebuttal for Triage is feasible but not adopted —
+  regex scrubbing's failure mode is an unlogged secret leak, so the
+  LAN-only ruling stands pending a separate proposal that proves scrub
+  recall. See Future.*
 - **Sync prerequisite:** does [[proposals/deferred-sync-agents-cross-tool.md]]
   need to land first, or can the first new role (Critic) be hand-mirrored
   as a pilot?
@@ -550,9 +589,25 @@ narrowed by Rounds 2–3. Original text retained.)*
 - Dispatch-layer role validation has its own negative test: an MCP call
   carrying the wrong (or no) role identity for a scoped operation is
   rejected server-side, on every surface, hooks or no hooks.
+- **Path containment (R5 f.3):** `src/mcp/lib/paths.ts` gets a single
+  canonical containment helper (`path.relative` + `..`/absolute
+  rejection) applied in **every** exported function, with unit tests
+  for the sibling-prefix and unchecked-helper cases. This bug
+  (`issues/bug-mcp-pathsts-...`) is resolved before the Critic pilot
+  ships, per bugs-before-features.
+- **Argument-scoping test (R5 f.5):** a scoped role calling a permitted
+  tool with an out-of-lane path/ref argument is rejected server-side.
 
 ## Future
 
+- **SET (Sanitized Egress for Triage) — follow-up proposal (R5 f.7).**
+  Gemini's rebuttal that a local regex scrub of C3/C4 formats (IP, MAC,
+  base64, hostnames) could safely route Triage logs to hosted-small is
+  plausible but unproven; the failure mode is an unlogged secret leak
+  on a regex miss. Capture as a separate `priority`-tracked proposal:
+  prove scrub recall against a corpus of real bug reports/logs, then
+  reopen the B.2 Triage row. Until then Triage stays LAN-only. (Per
+  capture-deferred-ideas — the good idea is set aside, not lost.)
 - Bundle the role set as part of DocWright profiles, so adopting
   organizations (Cascade STEAM first) get the roles + routing matrix as a
   governed default — the multi-perspective philosophy transmitted as
@@ -757,3 +812,78 @@ narrowed by Rounds 2–3. Original text retained.)*
   now awaits only Round 5 review; the Triage row reopens if Gemini's
   rebuttal (briefing scope item on its own candidate lane) succeeds.
   Note: Round 5 (due 7/8) has not yet landed as of this entry.
+- **2026-07-10 — Round 5: Gemini via Antigravity (guest AI, third
+  harness). Nine findings (f.1–f.9); verbatim summary below, with
+  Claude/BDFL disposition noted per item.** First non-Claude frontier
+  reviewer; inspected `src/mcp/server.ts`, `config.ts`,
+  `lib/paths.ts`, and `.claude/agents/` on the branch.
+  - **f.1 Granularity — keep Surveyor and Incident Responder
+    separate.** Different tempos are different cognitive states
+    (routine asset mgmt vs. high-stress strict execution), and merging
+    them breaks the Annex B data boundary (Surveyor LAN-only; Incident
+    Responder frontier exception). *Disposition: accepted — closes the
+    R4 merge question; taxonomy keeps both. Open Questions updated.*
+  - **f.2 Triage must stay an agent, not a hook-skill —** and this
+    *refutes the proposal's own role/skill/hook criterion.* Running
+    Triage as a skill forces the Generalist's hosted-frontier main
+    context to ingest raw logs (IP/MAC/token leakage); a scoped
+    subagent isolates that high-risk data. *Disposition: accepted —
+    strong finding. The decision criterion needs a data-isolation
+    override clause; the criterion, not just Triage, is what's wrong.*
+  - **f.3 CRITICAL — path traversal in `src/mcp/lib/paths.ts`.**
+    `startsWith(REPO_ROOT)` (no trailing separator) admits sibling
+    dirs sharing the root name prefix. *Disposition: verified in code
+    2026-07-10 and found worse than reported — `fileExists`,
+    `getMtime`, `globFiles` have NO containment check at all
+    (`getMtime('../../etc/passwd')` escapes today). Filed via bug
+    bridge as `issues/bug-mcp-pathsts-prefix-based-containment-check-allows-.md`
+    (priority critical, novel — no dedup match across six phrasings);
+    GitHub mirror pending (needs network). Per bugs-before-features
+    this must be resolved before the Critic pilot ships.*
+  - **f.4 Client-multiplexing defeats env isolation.** With stdio
+    servers loaded at startup and one client multiplexer, a drifting
+    Generalist can invoke tools registered under other roles,
+    bypassing `DOCWRIGHT_ROLE`. *Disposition: accepted — hits Annex
+    A.2 directly. Confirms why call-time validation (layer 2) cannot
+    be optional and must key off server-side role, not client-selected
+    tool. Annex A.2 to be hardened; note that the pilot's per-role
+    stdio (A.1) partially mitigates only if each role is a separate
+    client, which the multiplexer assumption breaks.*
+  - **f.5 Argument-level scoping required.** Manifest must scope tool
+    *parameters*, not just tool names, or a permitted tool manipulates
+    arbitrary files / arbitrary git actions. *Disposition: accepted —
+    new Annex A requirement; ties to f.3 (path args are the exploit
+    surface).*
+  - **f.6 Audit log is not a tamper-proof boundary.** Local
+    `audit.jsonl` can be edited; hardening needed if it's a trust
+    anchor. *Disposition: accepted as a known limit — A.5 already
+    concedes the model stamp is asserted-not-proven; extend A.5 to say
+    the audit log is drift-analytics/observability, explicitly not a
+    forensic/tamper-evident boundary. Hardening deferred, documented.*
+  - **f.7 Triage rebuttal — sanitized egress is feasible (SET
+    protocol).** A local regex scrub of common C3/C4 formats (IP,
+    base64, hostnames) before egress would permit fast hosted-small
+    (Gemini Flash) for routine logs. *Disposition: BDFL call. This is
+    the rebuttal the briefing invited on Gemini's own lane. Recorded
+    but NOT auto-adopted: the B.2 ruling stands as LAN-only until the
+    scrub is proven (recall-of-secrets is the hard part; a regex miss
+    is an unlogged leak). Reframed as a follow-up proposal — "prove SET
+    scrub recall, then reopen the Triage row" — rather than a ruling
+    change. See Open Questions + Future.*
+  - **f.8 Temporal incident leases over a standing exception.** A
+    standing frontier exception for Incident Responder invites use
+    during non-incident states; a leased/expiring token enforces the
+    guardrail. *Disposition: accepted as an improvement to the B.3(2)
+    ruling — the exception stays option (b) but SHOULD be gated by a
+    time-boxed lease tied to an active incident, not a permanent flag.
+    B.3 to be annotated; mechanism is a plan-stage detail.*
+  - **f.9** (structural/process finding — numbered by Gemini as the
+    review-format confirmation) folded into the above.
+  - **Net:** one CRITICAL security bug surfaced and filed (f.3),
+    Annex A gains three hardening requirements (f.4 multiplexer,
+    f.5 arg-scoping, f.6 audit-log honesty), two taxonomy questions
+    close (f.1, f.2), and two B.2 rulings get refinements without
+    reversal (f.7 → follow-up proposal, not adopted; f.8 → lease the
+    Incident exception). The multi-perspective policy paid off: the
+    first non-Claude reviewer caught a real vulnerability three
+    Claude-family rounds missed.
