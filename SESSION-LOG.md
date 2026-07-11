@@ -1817,3 +1817,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: draft annex A - dispatch-layer role identity design (gates 1-2)
 
 **Session note:** `docs/session-notes/session_note_202607102114.md`
+
+---
+
+## Session: 2026-07-11 — Image-based deployment
+
+**Focus:** Image-based deployment
+
+**Completed:**
+- [x] docs: post-v0.4.12 governance sync (completed image-based plan, 2 bugs, backlinks)
+- [x] fix: convert .claude/skills to registered dir/SKILL.md layout (#313)
+- [x] chore: reconcile dogfood with main (merge origin/main)
+- [x] fix: convert .claude/skills to registered dir/SKILL.md layout
+- [x] docs: mirror both bugs to GitHub (#314 flaky bridge.test, #315 completion gate) + backlinks
+- [x] docs: complete image-based-deployment-any-directory (plan → completed)
+- [x] docs: record green test:webui run as completion-gate evidence
+- [x] docs: edit plans/image-based-deployment-any-directory.md (web ui save)
+- [x] docs: edit plans/image-based-deployment-any-directory.md (web ui save)
+- [x] docs: file bug — completion gate deadlocks runtime-verified plans (run-tests runs repo unit suites)
+
+**Session note:** `docs/session-notes/session_note_202607110502.md`
