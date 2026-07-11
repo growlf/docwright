@@ -15,7 +15,7 @@ related_to:
 depends_on: []
 blocks: []
 part_of: plans/release-v0.5.0.md
-milestone: v0.5.0
+milestone: v0.5.1
 ---
 
 # Git panel branch switcher
