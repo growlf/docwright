@@ -17,7 +17,8 @@ part_of: plans/release-v0.5.0.md
 assigned_to: NetYeti
 priority: 2
 milestone: v0.5.0
-consumed_by: plans/plan-docwright-dev-cloud-instances-dogfood-csdocs-cs-erp-images-msp-pilot.md
+consumed_by: plans/three-docwright-instance-deployment.md
+_path: proposals/approved/three-docwright-instance-deployment
 ---
 
 ## Problem
