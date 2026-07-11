@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { updateStep, updatePlanStatus, appendHistory, setPlanField, writePlan } from '../../src/mcp/tools/mutation';
 import { setRepoRoot } from '../../src/mcp/lib/paths';
+import { splitTableRow } from '../../src/dispatch/completion-gate';
 
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures', 'mutation-vault');
 
@@ -139,6 +140,19 @@ _Testing plan TBD_
        await appendHistory('test', 'Something changed');
        const updated = fs.readFileSync(path.join(FIXTURE_DIR, 'plans', 'test.md'), 'utf8');
        assert.ok(updated.includes('Something changed'));
+    });
+
+    it('escapes a literal pipe in the change so the row is not corrupted (#272)', async () => {
+       const content = `---\ntitle: "Test"\n---\n## Document History\n| Date | Change | Author |\n| --- | --- | --- |\n`;
+       fs.writeFileSync(path.join(FIXTURE_DIR, 'plans', 'test.md'), content);
+       await appendHistory('test', 'relabel status open|new to new');
+       const updated = fs.readFileSync(path.join(FIXTURE_DIR, 'plans', 'test.md'), 'utf8');
+       // the change row must have exactly one Change cell — the pipe was escaped
+       const row = updated.split('\n').find(l => l.includes('relabel status'))!;
+       assert.ok(row, 'the history row was written');
+       assert.ok(row.includes('open\\|new'), 'the literal pipe is backslash-escaped');
+       const cells = splitTableRow(row).slice(1, -1);
+       assert.strictEqual(cells.length, 3, 'Date | Change | Author — three columns, not four');
     });
   });
 

@@ -3,6 +3,7 @@ import { extractFrontmatterField, setFrontmatterField, formatYamlList } from '..
 import { logTransition } from '../lib/audit';
 import { getHumanIdentity } from '../lib/identity';
 import { dispatchTestGen } from '../../dispatch/test-gen';
+import { escapeTableCell } from '../../dispatch/completion-gate';
 import {
   updateStepCounts,
   replaceStepStatus,
@@ -152,7 +153,10 @@ export async function appendHistory(planName: string, change: string): Promise<s
 
   const date = new Date().toISOString().split('T')[0];
   const author = getHumanIdentity();
-  const newRow = `| ${date} | ${change} | ${author} |`;
+  // Escape pipes in user-supplied cell text so a literal `|` in the change
+  // (or author) does not break the Document History table — the #272 class of
+  // corruption. splitTableRow reads the escaped `\|` back as literal content.
+  const newRow = `| ${date} | ${escapeTableCell(change)} | ${escapeTableCell(author)} |`;
   
   let newText = text;
   const lines = text.split('\n');
