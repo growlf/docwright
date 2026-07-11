@@ -1,6 +1,7 @@
 ---
 title: "Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log"
 status: completed
+completed_date: 2026-07-11
 author: "NetYeti"
 created: "2026-06-08"
 created_by: "NetYeti@phoenix"
@@ -31,6 +32,7 @@ gate_note: "AI pre-review is display-only / non-blocking by design; orphaned che
 tests_last_run: "2026-07-11T17:37:10.940Z"
 tests_last_result: pass
 tests_last_commit: e5f783b
+_path: plans/completed/lifecycle-gates
 ---
 
 # Lifecycle Gates Phase 2 — AI Assistance, Quorum, Scheduled Triggers, Retroactive Audit, and Governance Log
