@@ -1,6 +1,6 @@
 ---
 title: Reconcile versioning policy with practice
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-07-11
 tags:
