@@ -37,6 +37,45 @@ export function splitTableRow(line: string): string[] {
   return cells;
 }
 
+/**
+ * Escape pipe characters in user-supplied cell text so a literal `|` does not
+ * become a column boundary when composing a table row. Idempotent: an already
+ * escaped `\|` stays a single `\|` (not double-escaped). The write-side
+ * counterpart to splitTableRow — together they round-trip literal pipes.
+ */
+export function escapeTableCell(s: string): string {
+  return s.replace(/\\?\|/g, '\\|');
+}
+
+/**
+ * Parse the `## Implementation Steps` table into {number, action, details}
+ * rows via the shared splitTableRow, so a Details cell containing a literal
+ * pipe (e.g. an inline code span `category: bug|feature`) does not desync the
+ * columns. Shared helper — the Web UI plan-review surface uses this instead of
+ * a naive line.split('|').
+ */
+export function extractPlanSteps(
+  raw: string,
+): Array<{ number: string; action: string; details: string }> {
+  const lines = raw.split('\n');
+  const rows: Array<{ number: string; action: string; details: string }> = [];
+  let inTable = false;
+  let headerPassed = false;
+  for (const line of lines) {
+    if (line.startsWith('## Implementation Steps')) { inTable = true; continue; }
+    if (!inTable) continue;
+    if (!line.startsWith('|')) { if (line.trim()) inTable = false; continue; }
+    if (!headerPassed) { headerPassed = true; continue; }
+    if (line.includes('---')) continue;
+    const cols = splitTableRow(line).map(c => c.trim());
+    const dataCols = cols.slice(1, -1);
+    if (dataCols.length >= 3) {
+      rows.push({ number: dataCols[0], action: dataCols[1], details: dataCols[2] });
+    }
+  }
+  return rows;
+}
+
 export function countSteps(text: string): { total: number; completed: number } {
   const lines = text.split('\n');
   let inSection = false;

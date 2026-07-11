@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
+import { extractPlanSteps } from '../../../../../dispatch/completion-gate';
 import { opencodeComplete } from '$lib/server/opencode-complete.js';
 import { AI_ROLES } from '$lib/ai-roles.js';
 import { createOwnedSession, getSession as getOwnedSession } from '$lib/server/ai-sessions.js';
@@ -35,25 +36,11 @@ function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-function extractSteps(raw: string) {
-  const lines = raw.split('\n');
-  const stepRows: Array<{ number: string; action: string; details: string }> = [];
-  let inTable = false;
-  let headerPassed = false;
-  for (const line of lines) {
-    if (line.startsWith('## Implementation Steps')) { inTable = true; continue; }
-    if (!inTable) continue;
-    if (!line.startsWith('|')) { if (line.trim()) inTable = false; continue; }
-    if (!headerPassed) { headerPassed = true; continue; }
-    if (line.includes('---')) continue;
-    const cols = line.split('|').map(c => c.trim());
-    const dataCols = cols.slice(1, -1);
-    if (dataCols.length >= 3) {
-      stepRows.push({ number: dataCols[0], action: dataCols[1], details: dataCols[2] });
-    }
-  }
-  return stepRows;
-}
+// Implementation Steps parsing now lives in the shared dispatch helper
+// extractPlanSteps (hardened via splitTableRow) — see Constraint 1 of
+// plans/harden-markdown-table-row-parsing: one splitter, no per-surface
+// reimplementation. A Details cell with a literal pipe (`category: bug|feature`)
+// no longer desyncs the reviewer's column mapping.
 
 function extractSection(raw: string, sectionName: string) {
   const re = new RegExp(`## ${sectionName}\\n([\\s\\S]*?)(?:\\n## |\\n---|$)`);
@@ -129,7 +116,7 @@ export async function POST(event) {
         send('status', { message: 'Extracting plan sections...' });
 
         const fm = parseFrontmatter(planRaw);
-        const steps = extractSteps(planRaw);
+        const steps = extractPlanSteps(planRaw);
         const testingSection = extractSection(planRaw, 'Testing Plan');
         const riskSection = extractSection(planRaw, 'Risk Assessment');
         const rollbackSection = extractSection(planRaw, 'Rollback Procedures');
