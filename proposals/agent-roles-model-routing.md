@@ -281,8 +281,8 @@ No plan is drafted from this proposal until (consolidated from Rounds
    heuristics (Round 2 f.1). *Draft: Annex A.4, pending Round 5 review.*
 3. **Data classification is decided** — which roles' data may be sent to
    which endpoints (hosted vs. LAN); gates every hosted-small-model
-   routing row (Round 2 f.5). *Draft: Annex B, pending BDFL rulings per
-   role and Round 5 review.*
+   routing row (Round 2 f.5). *Draft: Annex B; **all eight BDFL rulings
+   recorded 2026-07-10** (see B.2), pending Round 5 review.*
 4. **The Critic pilot passes** its three validations (§D).
 5. **Local-model rows only:** Round-6 ollama dry-run transcripts attached
    to the Research Log (Round 2 f.4) — gates those rows' activation, not
@@ -378,9 +378,11 @@ criterion "measurable drift reduction" measurable.
 
 ## Annex B — Gate 3 draft: per-role data classification
 
-*(Round 4 addendum. Status: **draft with recommendations — each row
-needs a BDFL ruling** (AI does not decide data-egress policy). Also a
-Round 5 review target.)*
+*(Round 4 addendum. Status: **BDFL rulings recorded 2026-07-10** — all
+eight rows ruled as recommended, including both B.3 findings (Triage
+withdrawn to LAN-only; Incident Responder frontier as documented
+exception). Still a Round 5 review target; rulings may be revisited if
+Round 5 surfaces a successful rebuttal, Triage especially.)*
 
 ### B.1 Data classes
 
@@ -399,16 +401,16 @@ role × vault-class × endpoint before dispatch — code, not memory.
 
 ### B.2 Role rulings
 
-| Role | Data it handles | Class | Recommended endpoint ceiling | BDFL ruling |
+| Role | Data it handles | Class | Ruled endpoint ceiling | BDFL ruling |
 |---|---|---|---|---|
-| Registrar | Frontmatter, lifecycle state, doc bodies | C1–C2 | Hosted frontier | ☐ |
-| Critic | Full plans/proposals | C1–C2 | Hosted frontier | ☐ |
-| Release Warden | Commits, PRs, CI status | C1 (public repo) / C2 (private vaults) | Hosted-small for C1 vaults; frontier for C2 | ☐ |
-| Session | Status, orientation, session notes | C2 | Hosted frontier (runs in main context anyway) | ☐ |
-| Triage | Bug reports, logs, stack traces | C2 **with C3/C4 leakage risk** — see B.3 | LAN-only, or frontier behind a redaction pass; **not hosted-small** | ☐ |
-| Surveyor | Device YAMLs, IPs, topology | C3 | LAN-only (confirms matrix) | ☐ |
-| Security Auditor | Vulnerability and audit findings | C3 (highest sensitivity) | LAN-only (confirms matrix) | ☐ |
-| Incident Responder | Incident details incl. topology/vuln info | C3 | **Exception decision — see B.3** | ☐ |
+| Registrar | Frontmatter, lifecycle state, doc bodies | C1–C2 | Hosted frontier | ☑ 2026-07-10 |
+| Critic | Full plans/proposals | C1–C2 | Hosted frontier | ☑ 2026-07-10 |
+| Release Warden | Commits, PRs, CI status | C1 (public repo) / C2 (private vaults) | Hosted-small for C1 vaults; frontier for C2 | ☑ 2026-07-10 |
+| Session | Status, orientation, session notes | C2 | Hosted frontier (runs in main context anyway) | ☑ 2026-07-10 |
+| Triage | Bug reports, logs, stack traces | C2 **with C3/C4 leakage risk** — see B.3 | **LAN-only** — Gemini Flash assignment withdrawn; **not hosted-small** | ☑ 2026-07-10 |
+| Surveyor | Device YAMLs, IPs, topology | C3 | LAN-only (confirms matrix) | ☑ 2026-07-10 |
+| Security Auditor | Vulnerability and audit findings | C3 (highest sensitivity) | LAN-only (confirms matrix) | ☑ 2026-07-10 |
+| Incident Responder | Incident details incl. topology/vuln info | C3 | **Frontier as documented standing exception** — see B.3(2), option (b) | ☑ 2026-07-10 |
 
 ### B.3 Two findings that push back on the §B routing matrix
 
@@ -419,6 +421,9 @@ role × vault-class × endpoint before dispatch — code, not memory.
    withdrawn unless a mechanical redaction pass (patterns: IP/MAC/key
    formats) runs before egress. Recommended: LAN-local Triage, which
    also gives cluster-llm a high-volume, low-stakes proving lane.
+   **Ruled 2026-07-10: adopted.** Gemini Flash assignment withdrawn;
+   Triage runs LAN-local. Round 5 may still rebut (it is Gemini's own
+   candidate lane); a successful rebuttal reopens the row.
 2. **Incident Responder needs an explicit exception ruling.** The
    matrix says "frontier by default, local fallback" — but incident
    context is C3. Options: (a) strict — LAN-only, accept weaker
@@ -427,6 +432,10 @@ role × vault-class × endpoint before dispatch — code, not memory.
    safety-relevant, hosted-small never, local fallback mandatory for
    connectivity loss. Recommended: (b), recorded as a standing,
    documented exception rather than a silent default.
+   **Ruled 2026-07-10: option (b) adopted.** Frontier permitted under
+   contracted provider terms; hosted-small never; local fallback
+   mandatory. This row is the sole standing exception to the C3
+   LAN-only rule and must appear as such in the role manifest.
 
 ## Development Model — parallel branch `agent-roles`
 
@@ -736,3 +745,15 @@ narrowed by Rounds 2–3. Original text retained.)*
   recommend LAN-local Triage, which also gives the Round 6 rig a
   standing lane) and Incident Responder's frontier-by-default needs an
   explicit documented exception ruling rather than a silent default.
+- **2026-07-10 — BDFL (with Claude Fable 5 via Cowork): all eight B.2
+  rulings recorded.** Every row ruled as recommended: Registrar, Critic,
+  Session at hosted frontier; Release Warden tiered (hosted-small C1 /
+  frontier C2); Surveyor and Security Auditor LAN-only. Both B.3
+  findings adopted — Triage's Gemini Flash assignment withdrawn in
+  favor of LAN-local (giving cluster-llm its standing high-volume
+  lane), and Incident Responder granted frontier access as the sole
+  documented standing exception to the C3 LAN-only rule (contracted
+  provider terms; hosted-small never; local fallback mandatory). Gate 3
+  now awaits only Round 5 review; the Triage row reopens if Gemini's
+  rebuttal (briefing scope item on its own candidate lane) succeeds.
+  Note: Round 5 (due 7/8) has not yet landed as of this entry.
