@@ -4,6 +4,7 @@ title: "Kubernetes / Helm Deployment"
 author: NetYeti
 created: 2026-06-04
 approved: false
+priority: low
 tags:
   - infrastructure
   - kubernetes

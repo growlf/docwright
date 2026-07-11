@@ -12,6 +12,7 @@ tags:
 complexity: low
 estimated_effort: M
 approved: false
+priority: high
 created_by: NetYeti@phoenix
 assigned_to: ""
 milestone: backlog

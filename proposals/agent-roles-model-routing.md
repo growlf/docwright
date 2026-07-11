@@ -13,7 +13,7 @@ tags:
   - governance
 complexity: high
 estimated_effort: L
-priority: 3
+priority: medium
 approved: false
 created_by: "NetYeti@phoenix"
 assigned_to: ""

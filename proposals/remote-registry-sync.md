@@ -10,6 +10,7 @@ tags:
   - post-v1
   - improvements
 approved: false
+priority: low
 deferred: true
 deferred_reason: Post-v1. Local registry covers all pre-launch needs. Remote sync raises privacy and trust questions that need careful design.
 created_by: NetYeti@phoenix

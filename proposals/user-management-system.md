@@ -10,6 +10,7 @@ tags:
   - backend
   - webui
 approved: false
+priority: low
 created_by: "claude@claude-code"
 assigned_to: ""
 ---

@@ -7,7 +7,7 @@ category:
   - ui
 complexity: medium
 approved: false
-priority: 3
+priority: medium
 created_by: "NetYeti@cluster-llm"
 assigned_to: []
 related_to:

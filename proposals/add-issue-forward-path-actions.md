@@ -8,6 +8,7 @@ tags:
   - ux
   - issue-management
 approved: false
+priority: high
 created_by: "claude@claude-code"
 assigned_to: ""
 sources:

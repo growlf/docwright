@@ -9,6 +9,7 @@ tags:
   - offline
   - improvements
 approved: false
+priority: low
 deferred: false
 deferred_reason: Offline support requires a service worker strategy and conflict resolution with git as canonical store. Revisit after launch.
 created_by: NetYeti@phoenix
