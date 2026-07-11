@@ -17,8 +17,24 @@ import { extractFrontmatterField } from './frontmatter';
  * rejoining the parts with '|' reproduces the original line.
  */
 export function splitTableRow(line: string): string[] {
-  const ESC = '\u0000';
-  return line.split('\\|').join(ESC).split('|').map(p => p.split(ESC).join('\\|'));
+  // A pipe is NOT a cell boundary when backslash-escaped (`\\|`) OR inside an
+  // inline code span (`` `…|…` ``) — e.g. a Details cell documenting
+  // `category: bug|feature`. Splitting on those raw pipes desynced the column
+  // count and corrupted rows (update_step replacing the wrong cell / duplicating
+  // the Status cell). Contract preserved: `| a | b |` -> ['', ' a ', ' b ', ''],
+  // and `parts.join('|')` reproduces the original line.
+  const cells: string[] = [];
+  let cur = '';
+  let inCode = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '\\' && line[i + 1] === '|') { cur += '\\|'; i++; continue; }
+    if (ch === '`') { inCode = !inCode; cur += ch; continue; }
+    if (ch === '|' && !inCode) { cells.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  cells.push(cur);
+  return cells;
 }
 
 export function countSteps(text: string): { total: number; completed: number } {
