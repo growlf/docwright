@@ -9,6 +9,7 @@ tags:
   - config
   - security
 approved: false
+consumed_by: plans/completed/image-based-deployment-any-directory.md
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 related_to:
