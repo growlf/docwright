@@ -6,10 +6,10 @@ tags: [ui, git, dogfooding, ux]
 category:
   - ui
 complexity: medium
-approved: false
+approved: true
 priority: medium
 created_by: "NetYeti@cluster-llm"
-assigned_to: []
+assigned_to: NetYeti
 related_to:
   - "[[proposals/three-docwright-instance-deployment]]"
 depends_on: []
