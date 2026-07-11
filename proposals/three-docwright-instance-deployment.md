@@ -11,10 +11,10 @@ tags:
   - plugins
   - msp-pilot
   - bms
-approved: false
+approved: true
 created_by: "NetYeti@phoenix"
 part_of: plans/release-v0.5.0.md
-assigned_to: ""
+assigned_to: NetYeti
 priority: 2
 milestone: v0.5.0
 ---
