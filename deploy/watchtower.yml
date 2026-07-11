@@ -1,0 +1,42 @@
+# DocWright — OPT-IN auto-update channel (Watchtower)
+#
+# Watchtower watches the container registry and recreates DocWright containers
+# when a newer image is pushed. It is OUTBOUND-ONLY (it polls the registry) and
+# opens NO inbound endpoint — this is why it is preferred over a CI push webhook,
+# which would require exposing an inbound HTTP endpoint (an attack surface) on
+# each deploy host. See docs/deployment.md.
+#
+# Scope: only containers that opted in with the label
+#   com.centurylinklabs.watchtower.enable=true
+# (docker-compose.prod.yml sets this on the docwright service). Watchtower will
+# NOT touch any other container on the host.
+#
+# Enable:   docker compose -f deploy/watchtower.yml up -d
+# Disable:  docker compose -f deploy/watchtower.yml down
+#
+# NOTE ON DIGEST PINNING (Constraint 4): auto-update tracks a MOVING tag
+# (e.g. :latest). For reproducible/tamper-evident deploys, pin DOCWRIGHT_IMAGE to
+# a digest in .env and DO NOT run Watchtower on that instance — update it
+# deliberately with `docker compose -f docker-compose.prod.yml pull && up -d`.
+# Use Watchtower only where you intentionally want the newest published image.
+#
+# Alternative considered — CI push webhook (GitHub Actions -> deploy host on tag):
+# gives instant redeploy but needs an inbound endpoint + shared secret on a
+# homelab host. Deferred: Watchtower gets near-instant, outbound-only.
+
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Private registry auth (ghcr) — mount docker creds read-only if needed:
+      # - ${HOME}/.docker/config.json:/config.json:ro
+    command:
+      - --label-enable        # only containers with the enable label above
+      - --cleanup             # prune the old image after a successful update
+      - --interval
+      - "300"                 # registry poll every 5 minutes (outbound)
+    restart: unless-stopped
+    labels:
+      # Don't let Watchtower try to update itself via the label filter.
+      com.centurylinklabs.watchtower.enable: "false"

@@ -1,6 +1,9 @@
-# DocWright — development container (Phase 1)
+# DocWright — application image
 #
-# Note: runs Vite dev server. Production mode (adapter-node) is Phase 2.
+# Builds the SvelteKit web UI as a production server (@sveltejs/adapter-node)
+# and bakes it into the image. Default entrypoint runs the built server
+# (`node build`); the dogfood dev box overrides with DOCWRIGHT_DEV_SERVER=1 to
+# run the Vite dev server over a source mount instead. See docker-entrypoint.sh.
 # Base: node:22-bookworm-slim — NOT alpine (pydantic-core Rust extension
 # is ABI-incompatible with musl; bookworm-slim uses glibc).
 
@@ -31,6 +34,11 @@ COPY tsconfig.json ./
 
 # ── Build TypeScript components ───────────────────────────────────────────────
 RUN npm run compile:mcp
+
+# ── Build the SvelteKit production server (adapter-node) ──────────────────────
+# Bakes build/ into the image so nothing is written into the source tree at
+# runtime (this is the root fix for the .svelte-kit-in-source-mount bug, #288).
+RUN cd src/webui && npm run build
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
 COPY docker-entrypoint.sh /usr/local/bin/docwright-entrypoint

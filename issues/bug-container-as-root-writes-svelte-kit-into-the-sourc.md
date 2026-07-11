@@ -1,6 +1,6 @@
 ---
 title: Container-as-root writes .svelte-kit into the source-mounted checkout, blocking host-user vite build (EACCES)
-status: new
+status: resolved
 created: 2026-07-10
 author: NetYeti
 author-role: user
@@ -12,9 +12,20 @@ demand_count: 1
 reported_dates: [2026-07-10]
 channel: dev
 github_issue: https://github.com/growlf/docwright/issues/288
+resolved_by: plans/image-based-deployment-any-directory.md
 tags:
   - reported-bug
 ---
+
+> **Resolved 2026-07-11** by the image-based deployment model (plan
+> image-based-deployment-any-directory, step 1.0/1.3). Root cause: the container
+> ran the Vite **dev server** over a bind-mounted source tree, writing
+> root-owned `.svelte-kit` into the host checkout. Fixed by switching the web UI
+> to a production `@sveltejs/adapter-node` build baked into the image (`node build`),
+> so deployed instances mount **only** the vault — no source tree to write into.
+> **Verified:** `docker diff` shows zero writes under `/app/src` on the dogfood box,
+> all three dev-cloud instances, and a fresh scaffolded instance. Dev mode
+> (`docker-compose.yml`) still source-mounts by deliberate opt-in for HMR.
 
 # Container-as-root writes .svelte-kit into the source-mounted checkout, blocking host-user vite build (EACCES)
 

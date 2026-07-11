@@ -103,3 +103,7 @@ session-ses_*.md
 # are canonical SOURCE in this repo and must stay tracked — adopt-vault.ts
 # only ignores them in adopted downstream vaults, never here.
 .dw-session.json
+
+# Runtime container config (secrets) — keep the example tracked
+app.env
+!app.env.example
