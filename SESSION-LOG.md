@@ -1837,3 +1837,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: file bug — completion gate deadlocks runtime-verified plans (run-tests runs repo unit suites)
 
 **Session note:** `docs/session-notes/session_note_202607110502.md`
+
+---
+
+## Session: 2026-07-11 — Image-based deploy + reconcile
+
+**Focus:** Image-based deploy + reconcile
+
+**Completed:**
+- [x] chore: reconcile dogfood with main (merge origin/main)
+- [x] fix: remove stray in-progress plan copy (reconcile-merge duplicate)
+- [x] docs: approve adopt-milestone-driven-roadmap-discipline + ratify consumed proposals and pending flips
+- [x] fix: remove stray in-progress plan copy resurrected by the reconcile merge
+- [x] docs: post-v0.4.12 governance sync (completed image-based plan, 2 bugs, backlinks)
+- [x] fix: convert .claude/skills to registered dir/SKILL.md layout (#313)
+- [x] chore: reconcile dogfood with main (merge origin/main)
+- [x] docs: mirror both bugs to GitHub (#314 flaky bridge.test, #315 completion gate) + backlinks
+- [x] docs: complete image-based-deployment-any-directory (plan → completed)
+- [x] docs: record green test:webui run as completion-gate evidence
+
+**Session note:** `docs/session-notes/session_note_202607110623.md`
