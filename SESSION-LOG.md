@@ -1797,3 +1797,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] chore: run dogfood box on the production image (disable source mount)
 
 **Session note:** `docs/session-notes/session_note_202607101607.md`
+
+---
+
+## Session: 2026-07-10 — agent-roles work landed
+
+**Focus:** agent-roles work landed
+
+**Completed:**
+- [x] chore: gitignore *.code-workspace (personal editor state)
+- [x] docs: add Testing Plan + Phase Gate + certify test flags (unblock plan completion)
+- [x] chore: gitignore *.code-workspace (personal editor state)
+- [x] docs: archive round-5 (gemini/antigravity) review briefing
+- [x] docs: archive round-5 (gemini/antigravity) review briefing
+- [x] docs: agent-roles annexes A & B, BDFL rulings, round-5 findings
+- [x] docs: fold round-5 (gemini/antigravity) findings into agent-roles proposal
+- [x] docs: record all eight B.2 BDFL rulings in agent-roles annex B (gate 3)
+- [x] docs: draft annex B - per-role data classification (gate 3)
+- [x] docs: draft annex A - dispatch-layer role identity design (gates 1-2)
+
+**Session note:** `docs/session-notes/session_note_202607102114.md`
