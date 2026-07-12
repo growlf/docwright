@@ -20,8 +20,10 @@ phase: 4
 total_steps: 0
 completed_steps: 0
 github_epic: null
-milestone: backlog
-tests_defined: false
+milestone: v0.5.0
+tests_defined: true
+tests_human_reviewed: false
+verification_type: none
 ---
 # Phase 4 — Profile Engine, ACL & AI Integration
 
@@ -57,14 +59,28 @@ through the ACL controller.
 | 9 | LLM Wiki engine (`src/dispatch/llmwiki.ts`) — Ingest/Lint/Save-to-Wiki | ⏭ Deferred → Phase 5 | knowledge-base profile; Karpathy pattern |
 | 10 | `opencode-instructions.md` for all four bundled profiles | ⏭ Deferred → Phase 5 | See [[proposals/profile-opencode-system-prompt]] |
 | 11 | Frontmatter linter (`src/dispatch/linter.ts`) — full schema enforcement | ⏭ Deferred → Phase 5 | Runs on save; surfaces violations in Web UI |
-| 12 | Promote workflow (`src/dispatch/promote.ts`) — status transitions | ✅ Done | `checkTransition`, `executeTransition`, `checkWithAI`, `getBlockedDocuments`, `diffAnnotate` — 15 tests passing. Wires gates.ts + audit.ts into a single integration point. |
+| 12 | Promote workflow (`src/dispatch/promote.ts`) — status transitions | ✅ Done | `checkTransition`, `executeTransition`, `getBlockedDocuments`, `diffAnnotate` — wired gates.ts + audit.ts into a single integration point. |
 
 ## Phase Closure
 
-Phase 4 is closed by `npm run phase:close -- 4`, which bumps `VERSION`/`package.json`
-to `0.5.0` and tags the release. That is a **BDFL release action** — not run by AI
-([[feedback-release-is-bdfl-call]]). Deferred scope lives in the carryover proposal
+Phase 4 closed → `0.5.0` (tagged; the release was a BDFL action, not AI —
+[[feedback-release-is-bdfl-call]]). Deferred scope lives in the carryover proposal
 above and feeds Phase 5 planning.
+
+## Testing Plan
+
+_A phase-overview/roadmap plan — no unit suite of its own (`verification_type: none`).
+Each deferred deliverable carries its own tests when it is scheduled in Phase 5; the
+one shipped deliverable (#12 promote workflow) is covered by the dispatch tests._
+
+## Phase Gate
+
+Phase-close criteria (Phase 4 → 0.5.0):
+
+- [x] Phase 4 window closed and released as `0.5.0` (BDFL, 2026-07-11)
+- [x] Deliverable #12 (promote workflow) shipped and tested
+- [x] Deliverables 1–11 deferred to Phase 5, captured in the carryover proposal (no scope lost)
+- [x] `verification_type: none` — a phase-overview plan carries no unit suite of its own
 
 ## Phase Context
 
@@ -77,3 +93,4 @@ See [[plans/phase-3-vault-portability-pilot]] for Phase 3 deliverables.
 | 2026-06-08 | Renumbered Phase 3 → Phase 4; depends_on updated to phase-3-vault-portability-pilot | NetYeti |
 | 2026-06-03 | Created — roadmap placeholder, Phase 2 in progress | NetYeti |
 | 2026-07-11 | Phase closed → 0.5.0. Deliverables 1–11 deferred to Phase 5 (captured in deferred-phase-4-carryover proposal); #12 shipped. Status flip to completed left to BDFL. | NetYeti |
+| 2026-07-12 | Staged for the completion gate: added Phase Gate section (all criteria met), verification_type: none (phase-overview plan), status → in-progress. Awaiting the BDFL's Complete click to archive to plans/completed/. | NetYeti |
