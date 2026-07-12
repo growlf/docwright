@@ -99,6 +99,33 @@ Test the widget under load.
       assert.equal(pendingCount, 3, 'Expected exactly 3 pending steps');
     });
 
+    it('does not double-nest an already-approved proposal (#15 step 2.1)', async () => {
+      const body = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Already Approved"
+tags:
+  - test
+---
+
+## Problem
+Already sitting in the approved folder.
+
+## Proposed Solution
+1. Do the thing
+`;
+      // Seed the proposal ALREADY under proposals/approved/, and pass a path that
+      // still carries the approved/ segment — the pre-fix code built
+      // proposals/approved/approved/… and a plans/approved/ skeleton.
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'already.md'), body);
+      const res = await transitionToApproved('proposals/approved/already.md');
+      assert.ok(res.includes('approved'), res);
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'must NOT create proposals/approved/approved/');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'already.md')), 'proposal stays at proposals/approved/already.md');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'already.md')), 'plan lands at plans/already.md');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'must NOT create a plans/approved/ skeleton');
+    });
+
     it('populates steps from Proposed Solution numbered items', async () => {
       const proposalBody = `---
 approved: true

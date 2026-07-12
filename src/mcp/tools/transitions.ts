@@ -4,6 +4,7 @@ import { logTransition } from '../lib/audit';
 import { hasPendingSteps, updateParentDeliverable, replaceStepStatus, splitTableRow, checkCompletionGate } from '../lib/steps';
 import { getAIEngine } from '../../dispatch/ai';
 import { generateCompletionDoc } from '../../dispatch/completion-doc';
+import { approvePaths } from '../../dispatch/approve-paths';
 import { spawnSync } from 'node:child_process';
 
 interface ProposalSection {
@@ -138,13 +139,24 @@ ${riskBody || '_Risk assessment TBD_'}
  * Transition a proposal with approved: true to proposals/approved/ and create a plan.
  */
 export async function transitionToApproved(proposalName: string): Promise<string> {
-  const safe = proposalName.endsWith('.md') ? proposalName : `${proposalName}.md`;
+  // Shared path resolution — collapses any proposals//approved/ segments so an
+  // already-approved input never double-nests (#15 step 2.1).
+  const paths = approvePaths(proposalName);
+  const safe = `${paths.slug}.md`;
 
+  // Read from proposals/ or, if it has already been moved, proposals/approved/
+  // (re-approve is an idempotent self-heal, not a "not found").
   let text: string;
+  let alreadyApproved = false;
   try {
-    text = readFile(`proposals/${safe}`);
+    text = readFile(paths.root);
   } catch {
-    return `ERROR: Proposal '${proposalName}' not found in proposals/.`;
+    try {
+      text = readFile(paths.approved);
+      alreadyApproved = true;
+    } catch {
+      return `ERROR: Proposal '${proposalName}' not found in proposals/ or proposals/approved/.`;
+    }
   }
 
   const fm = parseFrontmatter(text);
@@ -159,7 +171,7 @@ export async function transitionToApproved(proposalName: string): Promise<string
     return `ERROR: Proposal '${proposalName}' has no assigned_to. Human must set it.`;
   }
 
-  moveFile(`proposals/${safe}`, `proposals/approved/${safe}`);
+  if (!alreadyApproved) moveFile(paths.root, paths.approved);
 
   let tags = fm['tags'] || [];
   if (typeof tags === 'string') tags = [tags];
@@ -178,7 +190,7 @@ export async function transitionToApproved(proposalName: string): Promise<string
   const today = new Date().toISOString().split('T')[0];
   fields.push(`created: ${today}`);
   fields.push(`tags:${tagsYaml}`);
-  fields.push(`proposal_source: proposals/approved/${safe}`);
+  fields.push(`proposal_source: ${paths.approved}`);
   fields.push(`priority: ${priority}`);
   if (phase) fields.push(`phase: ${phase}`);
   if (complexity) fields.push(`complexity: ${complexity}`);
@@ -188,7 +200,7 @@ export async function transitionToApproved(proposalName: string): Promise<string
   if (parentDeliverable) fields.push(`parent_deliverable: ${parentDeliverable}`);
   fields.push(`tests_defined: false`);
   fields.push(`tests_human_reviewed: false`);
-  fields.push(`_path: plans/${safe}`);
+  fields.push(`_path: ${paths.plan}`);
 
   // Extract proposal body (content after frontmatter)
   const bodyMatch = text.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
@@ -197,10 +209,10 @@ export async function transitionToApproved(proposalName: string): Promise<string
 
   const planContent = buildPlanFromSections(title, fields, sections, today);
 
-  writeFile(`plans/${safe}`, planContent);
-  logTransition('APPROVED', `proposals/${safe} → proposals/approved/${safe} + plans/${safe}`);
+  writeFile(paths.plan, planContent);
+  logTransition('APPROVED', `${paths.root} → ${paths.approved} + ${paths.plan}`);
 
-  return `✅ Proposal '${safe}' approved. Created plans/${safe}.`;
+  return `✅ Proposal '${safe}' approved. Created ${paths.plan}.`;
 }
 
 /**
