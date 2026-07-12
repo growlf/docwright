@@ -1,6 +1,6 @@
 ---
 title: Fix completion-doc generator's invalid YAML output
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-11
 tags:
