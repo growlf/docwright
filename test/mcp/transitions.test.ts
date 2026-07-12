@@ -126,6 +126,30 @@ Already sitting in the approved folder.
       assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'must NOT create a plans/approved/ skeleton');
     });
 
+    it('generates exactly ONE plan and no plans/approved skeleton (#15 step 2.2)', async () => {
+      const body = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Single Plan"
+tags:
+  - test
+---
+
+## Problem
+Needs a plan.
+
+## Proposed Solution
+1. Step one
+2. Step two
+`;
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'single.md'), body);
+      await transitionToApproved('single.md');
+      // Exactly one plan file at the top level of plans/, and no approved/ subdir.
+      const planFiles = fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md'));
+      assert.deepStrictEqual(planFiles, ['single.md'], `expected exactly one plan, got: ${planFiles.join(', ')}`);
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'no plans/approved/ skeleton orphan');
+    });
+
     it('populates steps from Proposed Solution numbered items', async () => {
       const proposalBody = `---
 approved: true
