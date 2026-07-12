@@ -3,6 +3,7 @@ import path from 'node:path';
 import { json } from '@sveltejs/kit';
 import { parseFrontmatter } from '../../../../../dispatch/frontmatter';
 import { moveDocument, setDocumentField } from '../../../../../dispatch/vault-write';
+import { normalizeProposalName, approvePaths } from '../../../../../dispatch/approve-paths';
 import { buildIndex } from '../../../../../policy-atoms-core/index-builder';
 import { route } from '../../../../../policy-atoms-core/router';
 import { resolve } from '../../../../../policy-atoms-core/resolver';
@@ -42,12 +43,16 @@ export const POST = requireAuth(async ({ request, locals }) => {
   const { path: filePath } = await request.json();
   if (!filePath) return json({ error: 'missing path' }, { status: 400 });
 
-  // Normalize — strip proposals/ prefix if present, ensure .md
-  const norm = filePath
-    .replace(/^proposals\//, '')
-    .replace(/\.md$/, '') + '.md';
+  // Shared normalization — collapses any proposals//approved/ segments to a bare
+  // <slug>.md so an already-approved input never double-nests (#15 step 2.1).
+  const norm = normalizeProposalName(filePath);
+  const paths = approvePaths(norm);
 
-  const src = path.resolve(REPO_ROOT, 'proposals', norm);
+  // Read from proposals/ or, if already moved, proposals/approved/ (idempotent re-approve).
+  let src = path.resolve(REPO_ROOT, paths.root);
+  if (!fs.existsSync(src)) {
+    src = path.resolve(REPO_ROOT, paths.approved);
+  }
   if (!src.startsWith(REPO_ROOT)) return json({ error: 'invalid path' }, { status: 403 });
   if (!fs.existsSync(src)) return json({ error: 'proposal not found' }, { status: 404 });
 
@@ -139,9 +144,16 @@ export const POST = requireAuth(async ({ request, locals }) => {
   const tagList = Array.isArray(fm.tags) ? fm.tags : (fm.tags ? [String(fm.tags)] : []);
   const priority = fm.priority || 'medium';
   const now = new Date().toISOString().slice(0, 10);
-  const planSlug = norm;
-  const planRel = `plans/${planSlug}`;
-  const approvedRel = `proposals/approved/${norm}`;
+  const planRel = paths.plan;
+  const approvedRel = paths.approved;
+
+  // Idempotency (#15 step 2.3): if the target plan already exists, this proposal
+  // is already approved — no-op. Never regenerate/clobber a plan that may hold
+  // in-progress work; self-heal a stray root copy into approved/.
+  if (fs.existsSync(path.resolve(REPO_ROOT, planRel))) {
+    if (fs.existsSync(path.resolve(REPO_ROOT, paths.root))) moveDocument(REPO_ROOT, paths.root, approvedRel);
+    return json({ ok: true, alreadyExists: true, planPath: planRel });
+  }
 
   // Build plan content from proposal body sections
   function parseSections(body: string): { name: string; content: string }[] {
@@ -249,7 +261,7 @@ export const POST = requireAuth(async ({ request, locals }) => {
 
   // Move proposal to proposals/approved/ using canonical vault-write API.
   // This updates _path:, cascades wikilinks, and updates cross-refs atomically.
-  moveDocument(REPO_ROOT, `proposals/${norm}`, approvedRel);
+  if (fs.existsSync(path.resolve(REPO_ROOT, paths.root))) moveDocument(REPO_ROOT, paths.root, approvedRel);
 
   // Set consumed_by to link back to the newly created plan
   setDocumentField(REPO_ROOT, approvedRel, 'consumed_by', planRel);
@@ -263,7 +275,7 @@ export const POST = requireAuth(async ({ request, locals }) => {
   const slug = norm.replace(/\.md$/, '');
   const commit = commitPaths(REPO_ROOT, {
     message: `docs: approve ${slug} (proposal → plan)\n\nHUMAN-APPROVED:${slug}`,
-    stagePaths: [`proposals/${norm}`, approvedRel, planRel],
+    stagePaths: [paths.root, approvedRel, planRel],
     user: locals.user,
   });
 
