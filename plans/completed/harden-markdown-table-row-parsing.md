@@ -1,6 +1,7 @@
 ---
 title: Harden markdown table-row parsing across all surfaces
 status: completed
+completed_date: 2026-07-12
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -22,6 +23,7 @@ gate_note: "Shared helpers extractPlanSteps + escapeTableCell landed (PR #332); 
 tests_last_run: "2026-07-11T18:57:22.901Z"
 tests_last_result: pass
 tests_last_commit: a6a6e99
+_path: plans/completed/harden-markdown-table-row-parsing
 ---
 
 # Harden markdown table-row parsing across all surfaces
