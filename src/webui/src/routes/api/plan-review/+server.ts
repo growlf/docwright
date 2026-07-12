@@ -36,6 +36,21 @@ function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+// Deterministic live-review completion (#15 step 4.3 / bug-live-plan-review-never-
+// signals-completion). The server drives a known list of prompts and therefore
+// KNOWS when the review is done (its loop ends) — the browser must not have to
+// guess from a fragile session.idle count. Per-session progress the client polls
+// via action:'status'. Bounded so it can't grow unbounded across a long uptime.
+interface ReviewProgress { total: number; sent: number; done: boolean; error?: string }
+const reviewProgress = new Map<string, ReviewProgress>();
+function setReviewProgress(sessionID: string, p: ReviewProgress) {
+  if (reviewProgress.size > 200) {
+    // Drop the oldest completed entry to bound memory on long-lived servers.
+    for (const [k, v] of reviewProgress) { if (v.done) { reviewProgress.delete(k); break; } }
+  }
+  reviewProgress.set(sessionID, p);
+}
+
 // Implementation Steps parsing now lives in the shared dispatch helper
 // extractPlanSteps (hardened via splitTableRow) — see Constraint 1 of
 // plans/harden-markdown-table-row-parsing: one splitter, no per-surface
@@ -68,12 +83,29 @@ export async function POST(event) {
       const resolvedStart = resolvePlan(planPath);
       if (!resolvedStart) return new Response('not found', { status: 404 });
       const prompts = buildReviewPrompts(fs.readFileSync(resolvedStart, 'utf-8'));
-      // Fire-and-forget: the browser watches progress live on the event stream;
-      // completion is detected client-side by counting session.idle events.
-      void runLiveReview(sessionID, prompts, { systemPrompt: reviewerPrompt }).catch((e) =>
-        console.error('[plan-review] live run failed:', e?.message ?? e),
-      );
+      // Fire-and-forget for streaming, but track progress server-side so the
+      // client has a DEFINITIVE completion signal (action:'status') instead of
+      // guessing from session.idle counts. done flips exactly when the loop ends.
+      const progress: ReviewProgress = { total: prompts.length, sent: 0, done: false };
+      setReviewProgress(sessionID, progress);
+      void runLiveReview(sessionID, prompts, {
+        systemPrompt: reviewerPrompt,
+        onTurn: (i) => { progress.sent = i + 1; },
+      })
+        .then(() => { progress.done = true; })
+        .catch((e) => {
+          progress.done = true;
+          progress.error = e?.message ?? String(e);
+          console.error('[plan-review] live run failed:', e?.message ?? e);
+        });
       return jsonResponse({ ok: true, prompts: prompts.length });
+    }
+
+    if (action === 'status') {
+      // Definitive completion signal: the server's loop is the source of truth.
+      if (!sessionID) return new Response('missing sessionID', { status: 400 });
+      const p = reviewProgress.get(sessionID) ?? { total: 0, sent: 0, done: false };
+      return jsonResponse(p);
     }
 
     // Phase 1: create the owned session and hand its id back to the client.

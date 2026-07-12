@@ -485,17 +485,39 @@ import {
     reviewIsLive = true;
     liveReviewEvents = [];
     planReviewStatus.set('');
-    let expected = Infinity;
-    let idleCount = 0;
 
     const es = new EventSource(`/api/ai/stream?session=${encodeURIComponent(sessionID)}`);
     liveReviewES = es;
 
+    let finished = false;
     function finishLive() {
+      if (finished) return;
+      finished = true;
       planReviewLoading.set(false);
       if (liveReviewES) { liveReviewES.close(); liveReviewES = null; }
       const body = $currentDoc?.body;
       if (body) planReviewBodyFingerprint.set(body.length + ':' + body.slice(0, 100));
+    }
+
+    // Deterministic completion: ask the server (which drives the known prompt
+    // list) whether the review loop has finished — instead of guessing from a
+    // fragile session.idle count (#15 step 4.3 / bug-live-plan-review-never-signals).
+    let polling = false;
+    async function pollStatus() {
+      if (polling || finished) return;
+      polling = true;
+      try {
+        const r = await fetch('/api/plan-review', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', sessionID }),
+        });
+        const s = await r.json().catch(() => ({}));
+        if (s?.done) {
+          planReviewStatus.set(s.error ? `Review ended with an error: ${s.error}` : 'Review complete');
+          finishLive();
+        }
+      } catch { /* transient — a later idle/error re-polls */ }
+      finally { polling = false; }
     }
 
     es.onopen = async () => {
@@ -505,8 +527,7 @@ import {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'start', sessionID, path: planPath }),
         });
-        const info = await r.json().catch(() => ({}));
-        if (typeof info?.prompts === 'number') expected = info.prompts;
+        await r.json().catch(() => ({}));
         if (!r.ok) { planReviewStatus.set('Failed to start review'); finishLive(); }
       } catch {
         planReviewStatus.set('Failed to start review');
@@ -518,13 +539,12 @@ import {
       let evt: any;
       try { evt = JSON.parse(e.data); } catch { return; }
       liveReviewEvents = [...liveReviewEvents, evt];
-      if (evt?.type === 'session.idle') {
-        idleCount++;
-        if (idleCount >= expected) finishLive();
-      }
+      // Each turn's idle is a cue to CHECK the server's definitive done state —
+      // not itself the completion decision (idle counts are unreliable per turn).
+      if (evt?.type === 'session.idle') void pollStatus();
     };
 
-    es.onerror = () => { if (idleCount >= expected) finishLive(); };
+    es.onerror = () => { void pollStatus(); };
   }
 
   // Live Improve/Critique: subscribe to the session stream, tell the server to run
