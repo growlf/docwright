@@ -97,6 +97,9 @@ Test the widget under load.
       // Verify the table has 3 steps with Pending status
       const pendingCount = (planContent.match(/⏳ Pending/g) || []).length;
       assert.equal(pendingCount, 3, 'Expected exactly 3 pending steps');
+      // #15 step 4.2(b): generated plans scaffold a Phase Gate so they can never
+      // reach all-steps-done yet be uncompletable (missing gate section).
+      assert.ok(planContent.includes('## Phase Gate'), 'generated plan must scaffold a Phase Gate section');
     });
 
     it('does not double-nest an already-approved proposal (#15 step 2.1)', async () => {

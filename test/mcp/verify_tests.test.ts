@@ -187,5 +187,25 @@ describe('verify_plan_tests + completion test gate', () => {
     it('gate passes a fully-green plan document', () => {
       assert.strictEqual(checkCompletionGate(planDoc({ lastResult: 'pass' }), 'p'), null);
     });
+
+    // #315 — verification_type relaxes the unit-run requirement for plans that
+    // have no relevant unit suite (infra/deployment/docs).
+    const inject = (extra: string) => planDoc({}).replace('title: "Gate Test Plan"', `title: "Gate Test Plan"\n${extra}`);
+
+    it('unit (default) still requires a recorded green run', () => {
+      const err = checkCompletionGate(planDoc({}), 'p'); // no tests_last_result
+      assert.ok(err && err.includes('no recorded test run'), `expected the unit-run requirement, got: ${err}`);
+    });
+
+    it('verification_type: none completes with no recorded run (#315)', () => {
+      assert.strictEqual(checkCompletionGate(inject('verification_type: none'), 'p'), null);
+    });
+
+    it('verification_type: runtime requires runtime_verified: true (#315)', () => {
+      const missing = checkCompletionGate(inject('verification_type: runtime'), 'p');
+      assert.ok(missing && missing.includes('runtime_verified'), `expected the runtime attestation requirement, got: ${missing}`);
+      const attested = checkCompletionGate(inject('verification_type: runtime\nruntime_verified: true'), 'p');
+      assert.strictEqual(attested, null, 'runtime_verified: true satisfies the gate');
+    });
   });
 });
