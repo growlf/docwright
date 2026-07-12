@@ -1,6 +1,6 @@
 ---
 title: Harden markdown table-row parsing across all surfaces
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-11
 tags:
