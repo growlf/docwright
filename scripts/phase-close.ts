@@ -3,6 +3,12 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  findPhasePlans as coreFindPhasePlans,
+  bumpVersionFiles,
+  isAtOrBeyond,
+  nextPhaseVersion,
+} from '../src/dispatch/phase-close-core';
 
 const ROOT = (() => {
   let dir = path.dirname(new URL(import.meta.url).pathname);
@@ -46,32 +52,12 @@ Options:
  * `status: completed` count. Exported for unit testing; `dir` is injectable so
  * tests can point at a fixture directory instead of the real plans/completed.
  */
+// Delegate to the shared core (single source of truth for the phase→plan +
+// version logic; the Web-UI /api/phase/close endpoint uses the same functions).
+// Kept here with the CLI's historical signature (full paths, default dir) so the
+// existing unit test and main() flow are unchanged.
 export function findPhasePlans(phase: number, dir: string = COMPLETED_DIR): string[] {
-  const prefix = `phase-${phase}-`;
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter(f => f.endsWith('.md'))
-    .map(f => path.join(dir, f))
-    .filter(fp => {
-      try {
-        const raw = fs.readFileSync(fp, 'utf-8');
-        if (!raw.includes('status: completed')) return false;
-        if (path.basename(fp).startsWith(prefix)) return true;
-        const m = raw.match(/^phase:\s*(\d+)\s*$/m);
-        return m ? Number(m[1]) === phase : false;
-      } catch {
-        return false;
-      }
-    });
-}
-
-function parseVersion(v: string): [number, number, number] {
-  const parts = v.replace(/^v/, '').split('.').map(Number);
-  return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
-}
-
-function formatVersion(major: number, minor: number, patch: number): string {
-  return `${major}.${minor}.${patch}`;
+  return coreFindPhasePlans(phase, dir).map(f => path.join(dir, f));
 }
 
 function readVersion(): string {
@@ -79,25 +65,7 @@ function readVersion(): string {
 }
 
 function writeVersion(version: string): void {
-  fs.writeFileSync(VERSION_FILE, version + '\n', 'utf-8');
-
-  const pkgPaths = [
-    path.join(ROOT, 'package.json'),
-    path.join(ROOT, 'src', 'webui', 'package.json'),
-  ];
-  for (const p of pkgPaths) {
-    if (!fs.existsSync(p)) continue;
-    try {
-      const pkg = JSON.parse(fs.readFileSync(p, 'utf-8'));
-      if ('version' in pkg) {
-        pkg.version = version;
-        fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
-      }
-    } catch {
-      // skip malformed
-    }
-  }
-
+  bumpVersionFiles(ROOT, version);
   console.log(`  Updated VERSION → ${version}`);
 }
 
@@ -117,11 +85,8 @@ async function main(): Promise<void> {
     usage();
   }
 
-  const targetVersion = `0.${phase + 1}.0`;
+  const targetVersion = nextPhaseVersion(phase);
   const targetTag = `v${targetVersion}`;
-  const major = 0;
-  const minor = phase + 1;
-  const patch = 0;
 
   console.log(`\n  ── Phase ${phase} Close-out ──`);
   console.log(`  Target version: ${targetVersion}`);
@@ -138,11 +103,7 @@ async function main(): Promise<void> {
 
   // Step 2: Check current version (idempotent)
   const currentVersion = readVersion();
-  const [curMajor, curMinor, curPatch] = parseVersion(currentVersion);
-  const [tgtMajor, tgtMinor, tgtPatch] = [major, minor, patch];
-
-  if (curMajor > tgtMajor || (curMajor === tgtMajor && curMinor > tgtMinor) ||
-      (curMajor === tgtMajor && curMinor === tgtMinor && curPatch >= tgtPatch)) {
+  if (isAtOrBeyond(currentVersion, targetVersion)) {
     console.log(`  Current version ${currentVersion} is already >= ${targetVersion} — nothing to do.`);
     console.log(`  ✅ Phase ${phase} close-out already applied.`);
     process.exit(0);
