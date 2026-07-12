@@ -24,6 +24,7 @@ scenario_synthesis: "Happy path: W0 clears the six governance-debt bugs, W1 land
 _path: plans/adopt-milestone-driven-roadmap-discipline.md
 related_to:
   - proposals/approved/plan-lifecycle-enforcement-gaps.md
+channel: stable
 ---
 
 # Adopt milestone-driven roadmap discipline (lilyetibot model)

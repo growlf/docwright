@@ -21,6 +21,7 @@ completed_steps: 4
 phase: 4
 milestone: v0.5.0
 scenario_synthesis: "Sub-plan for implementing the Derived Roadplan View feature, updating SvelteKit API endpoints, adding a new Svelte dashboard view, creating a Markdown synchronizing script, and verifying with Mocha unit tests."
+channel: stable
 ---
 
 # Step 4: Derived roadplan view

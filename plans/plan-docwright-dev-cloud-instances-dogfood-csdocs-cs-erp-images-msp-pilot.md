@@ -5,7 +5,7 @@ author: "NetYeti"
 created: "2026-07-11"
 created_by: "NetYeti@phoenix"
 tags: [planning]
-proposal_source: "proposals/three-docwright-instance-deployment"
+proposal_source: "proposals/approved/three-docwright-instance-deployment.md"
 priority: medium
 phase: 
 automated: guided
