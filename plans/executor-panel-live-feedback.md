@@ -11,7 +11,7 @@ tags:
   - critical
 proposal_source: proposals/approved/executor-panel-live-feedback.md
 priority: high
-automated: guided
+automated: full
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
