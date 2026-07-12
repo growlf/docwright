@@ -1,6 +1,6 @@
 ---
 title: Harden capture_bug_report output — emit schema-valid issue frontmatter
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-11
 tags:
