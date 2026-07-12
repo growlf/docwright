@@ -1,6 +1,6 @@
 ---
 title: "Bug/UX: Plan Executor Panel Has No Feedback During BigPickle Session — Humans Panic and Interrupt"
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-07-10
 tags:
