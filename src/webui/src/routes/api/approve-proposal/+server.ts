@@ -50,10 +50,8 @@ export const POST = requireAuth(async ({ request, locals }) => {
 
   // Read from proposals/ or, if already moved, proposals/approved/ (idempotent re-approve).
   let src = path.resolve(REPO_ROOT, paths.root);
-  let alreadyApproved = false;
   if (!fs.existsSync(src)) {
     src = path.resolve(REPO_ROOT, paths.approved);
-    alreadyApproved = true;
   }
   if (!src.startsWith(REPO_ROOT)) return json({ error: 'invalid path' }, { status: 403 });
   if (!fs.existsSync(src)) return json({ error: 'proposal not found' }, { status: 404 });
@@ -148,6 +146,14 @@ export const POST = requireAuth(async ({ request, locals }) => {
   const now = new Date().toISOString().slice(0, 10);
   const planRel = paths.plan;
   const approvedRel = paths.approved;
+
+  // Idempotency (#15 step 2.3): if the target plan already exists, this proposal
+  // is already approved — no-op. Never regenerate/clobber a plan that may hold
+  // in-progress work; self-heal a stray root copy into approved/.
+  if (fs.existsSync(path.resolve(REPO_ROOT, planRel))) {
+    if (fs.existsSync(path.resolve(REPO_ROOT, paths.root))) moveDocument(REPO_ROOT, paths.root, approvedRel);
+    return json({ ok: true, alreadyExists: true, planPath: planRel });
+  }
 
   // Build plan content from proposal body sections
   function parseSections(body: string): { name: string; content: string }[] {
@@ -255,7 +261,7 @@ export const POST = requireAuth(async ({ request, locals }) => {
 
   // Move proposal to proposals/approved/ using canonical vault-write API.
   // This updates _path:, cascades wikilinks, and updates cross-refs atomically.
-  if (!alreadyApproved) moveDocument(REPO_ROOT, paths.root, approvedRel);
+  if (fs.existsSync(path.resolve(REPO_ROOT, paths.root))) moveDocument(REPO_ROOT, paths.root, approvedRel);
 
   // Set consumed_by to link back to the newly created plan
   setDocumentField(REPO_ROOT, approvedRel, 'consumed_by', planRel);

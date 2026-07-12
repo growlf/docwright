@@ -150,6 +150,54 @@ Needs a plan.
       assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'no plans/approved/ skeleton orphan');
     });
 
+    const idempotentBody = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Idempotent"
+tags:
+  - test
+---
+
+## Problem
+Approve me twice.
+
+## Proposed Solution
+1. Only step
+`;
+
+    it('sequential re-approve is an idempotent no-op that does NOT clobber the plan (#15 step 2.3)', async () => {
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'idem.md'), idempotentBody);
+      await transitionToApproved('idem.md');
+      // Simulate in-progress work on the generated plan.
+      const planFile = path.join(FIXTURE_DIR, 'plans', 'idem.md');
+      const edited = fs.readFileSync(planFile, 'utf-8') + '\n<!-- in-progress edit -->\n';
+      fs.writeFileSync(planFile, edited);
+
+      // Re-approve (from proposals/approved/ now) — must be a no-op.
+      const res = await transitionToApproved('idem.md');
+      assert.ok(res.includes('already approved') && res.includes('no-op'), `expected idempotent no-op, got: ${res}`);
+      assert.strictEqual(fs.readFileSync(planFile, 'utf-8'), edited, 'the in-progress plan must NOT be regenerated/clobbered');
+      assert.deepStrictEqual(
+        fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md')), ['idem.md'],
+        'still exactly one plan');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'idem.md')), 'proposal stays in approved/');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'no double-nest');
+    });
+
+    it('simulated-concurrent double approve leaves exactly one proposal + one plan (#15 step 2.3)', async () => {
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'race.md'), idempotentBody);
+      // Fire two approvals of the same proposal concurrently — neither may throw,
+      // and the result must be one proposal in approved/ + one plan, no double-nest.
+      const results = await Promise.all([transitionToApproved('race.md'), transitionToApproved('race.md')]);
+      assert.ok(results.every(r => r.includes('approved')), `both calls resolve cleanly: ${JSON.stringify(results)}`);
+      assert.deepStrictEqual(
+        fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md')), ['race.md'],
+        'exactly one plan after concurrent approve');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'race.md')));
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'no double-nest under race');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'no plans/approved skeleton under race');
+    });
+
     it('populates steps from Proposed Solution numbered items', async () => {
       const proposalBody = `---
 approved: true

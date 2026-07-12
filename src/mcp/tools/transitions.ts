@@ -147,13 +147,11 @@ export async function transitionToApproved(proposalName: string): Promise<string
   // Read from proposals/ or, if it has already been moved, proposals/approved/
   // (re-approve is an idempotent self-heal, not a "not found").
   let text: string;
-  let alreadyApproved = false;
   try {
     text = readFile(paths.root);
   } catch {
     try {
       text = readFile(paths.approved);
-      alreadyApproved = true;
     } catch {
       return `ERROR: Proposal '${proposalName}' not found in proposals/ or proposals/approved/.`;
     }
@@ -171,7 +169,18 @@ export async function transitionToApproved(proposalName: string): Promise<string
     return `ERROR: Proposal '${proposalName}' has no assigned_to. Human must set it.`;
   }
 
-  if (!alreadyApproved) moveFile(paths.root, paths.approved);
+  // Idempotency (#15 step 2.3): if the plan already exists, this proposal has
+  // already been approved — no-op. Never regenerate/clobber a plan that may hold
+  // in-progress work. Self-heal: park a stray root copy in approved/ (e.g. from a
+  // concurrent or interrupted earlier attempt).
+  if (fileExists(paths.plan)) {
+    if (fileExists(paths.root)) moveFile(paths.root, paths.approved);
+    return `✅ Proposal '${safe}' already approved — plan ${paths.plan} exists (idempotent no-op).`;
+  }
+
+  // Move to approved/ — guard on source existence so a concurrent double-approve
+  // can't throw "source missing" (the other call already moved it).
+  if (fileExists(paths.root)) moveFile(paths.root, paths.approved);
 
   let tags = fm['tags'] || [];
   if (typeof tags === 'string') tags = [tags];
