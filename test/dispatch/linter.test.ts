@@ -446,12 +446,14 @@ describe('Milestone rule + issues/ handling', () => {
     assert.ok(!results.find(mfn), 'completed plans are not open items');
   });
 
-  it('warns when an open issue has no milestone', () => {
+  it('does NOT warn when a new issue has no milestone', () => {
+    // Canonical lifecycle: issues carry no milestone until proposal-linked (the
+    // pre-commit hook forbids it earlier), so a new issue without one is correct.
     const fm = {
-      title: 'Bug', status: 'open', author: 'A', created: '2026-01-01', 'author-role': 'contributor',
+      title: 'Bug', status: 'new', author: 'A', created: '2026-01-01', 'author-role': 'contributor',
     };
     const results = lintDocument('issues/bug-x.md', fm, profile);
-    assert.ok(results.find(mfn), 'open issue without milestone should warn');
+    assert.ok(!results.find(mfn), 'a new issue is not expected to carry a milestone');
   });
 
   it('does not warn on a resolved issue without milestone', () => {
