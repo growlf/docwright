@@ -1,7 +1,7 @@
 ---
 title: VERSION patch number diverged from completed-plan count policy
 github_issue: https://github.com/growlf/docwright/issues/300
-status: proposal-linked
+status: resolved
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,11 @@ tags:
 ---
 
 # VERSION patch number diverged from completed-plan count policy
+
+**RESOLVED 2026-07-11** by `plans/completed/reconcile-versioning-policy-and-practice.md`.
+`policies/core/versioning.md` now defines PATCH as per-release (bumped in the release
+commit), explicitly **not** derived from a completed-plan count — reconciling policy
+with actual practice.
 
 > **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/reconcile-versioning-policy-and-practice.md`. Not lost; will be delivered as part of that proposal/plan.
 
