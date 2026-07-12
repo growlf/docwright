@@ -97,6 +97,108 @@ Test the widget under load.
       // Verify the table has 3 steps with Pending status
       const pendingCount = (planContent.match(/⏳ Pending/g) || []).length;
       assert.equal(pendingCount, 3, 'Expected exactly 3 pending steps');
+      // #15 step 4.2(b): generated plans scaffold a Phase Gate so they can never
+      // reach all-steps-done yet be uncompletable (missing gate section).
+      assert.ok(planContent.includes('## Phase Gate'), 'generated plan must scaffold a Phase Gate section');
+    });
+
+    it('does not double-nest an already-approved proposal (#15 step 2.1)', async () => {
+      const body = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Already Approved"
+tags:
+  - test
+---
+
+## Problem
+Already sitting in the approved folder.
+
+## Proposed Solution
+1. Do the thing
+`;
+      // Seed the proposal ALREADY under proposals/approved/, and pass a path that
+      // still carries the approved/ segment — the pre-fix code built
+      // proposals/approved/approved/… and a plans/approved/ skeleton.
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'already.md'), body);
+      const res = await transitionToApproved('proposals/approved/already.md');
+      assert.ok(res.includes('approved'), res);
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'must NOT create proposals/approved/approved/');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'already.md')), 'proposal stays at proposals/approved/already.md');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'already.md')), 'plan lands at plans/already.md');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'must NOT create a plans/approved/ skeleton');
+    });
+
+    it('generates exactly ONE plan and no plans/approved skeleton (#15 step 2.2)', async () => {
+      const body = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Single Plan"
+tags:
+  - test
+---
+
+## Problem
+Needs a plan.
+
+## Proposed Solution
+1. Step one
+2. Step two
+`;
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'single.md'), body);
+      await transitionToApproved('single.md');
+      // Exactly one plan file at the top level of plans/, and no approved/ subdir.
+      const planFiles = fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md'));
+      assert.deepStrictEqual(planFiles, ['single.md'], `expected exactly one plan, got: ${planFiles.join(', ')}`);
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'no plans/approved/ skeleton orphan');
+    });
+
+    const idempotentBody = `---
+approved: true
+assigned_to: "NetYeti"
+title: "Idempotent"
+tags:
+  - test
+---
+
+## Problem
+Approve me twice.
+
+## Proposed Solution
+1. Only step
+`;
+
+    it('sequential re-approve is an idempotent no-op that does NOT clobber the plan (#15 step 2.3)', async () => {
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'idem.md'), idempotentBody);
+      await transitionToApproved('idem.md');
+      // Simulate in-progress work on the generated plan.
+      const planFile = path.join(FIXTURE_DIR, 'plans', 'idem.md');
+      const edited = fs.readFileSync(planFile, 'utf-8') + '\n<!-- in-progress edit -->\n';
+      fs.writeFileSync(planFile, edited);
+
+      // Re-approve (from proposals/approved/ now) — must be a no-op.
+      const res = await transitionToApproved('idem.md');
+      assert.ok(res.includes('already approved') && res.includes('no-op'), `expected idempotent no-op, got: ${res}`);
+      assert.strictEqual(fs.readFileSync(planFile, 'utf-8'), edited, 'the in-progress plan must NOT be regenerated/clobbered');
+      assert.deepStrictEqual(
+        fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md')), ['idem.md'],
+        'still exactly one plan');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'idem.md')), 'proposal stays in approved/');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'no double-nest');
+    });
+
+    it('simulated-concurrent double approve leaves exactly one proposal + one plan (#15 step 2.3)', async () => {
+      fs.writeFileSync(path.join(FIXTURE_DIR, 'proposals', 'race.md'), idempotentBody);
+      // Fire two approvals of the same proposal concurrently — neither may throw,
+      // and the result must be one proposal in approved/ + one plan, no double-nest.
+      const results = await Promise.all([transitionToApproved('race.md'), transitionToApproved('race.md')]);
+      assert.ok(results.every(r => r.includes('approved')), `both calls resolve cleanly: ${JSON.stringify(results)}`);
+      assert.deepStrictEqual(
+        fs.readdirSync(path.join(FIXTURE_DIR, 'plans')).filter(f => f.endsWith('.md')), ['race.md'],
+        'exactly one plan after concurrent approve');
+      assert.ok(fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'race.md')));
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'proposals', 'approved', 'approved')), 'no double-nest under race');
+      assert.ok(!fs.existsSync(path.join(FIXTURE_DIR, 'plans', 'approved')), 'no plans/approved skeleton under race');
     });
 
     it('populates steps from Proposed Solution numbered items', async () => {
