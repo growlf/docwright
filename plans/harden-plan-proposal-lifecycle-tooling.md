@@ -1,6 +1,6 @@
 ---
 title: Harden AI-agent plan/proposal lifecycle tooling
-status: approved
+status: in-progress
 author: NetYeti
 created: 2026-07-11
 tags:
