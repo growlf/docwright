@@ -126,6 +126,14 @@ ${rollbackBody}
 
 ${riskBody || '_Risk assessment TBD_'}
 
+## Phase Gate
+
+Completion criteria — all must be checked before this plan can be completed:
+
+- [ ] All implementation steps are ✅ Done
+- [ ] Testing Plan verified (per verification_type: unit run / runtime attestation / none)
+- [ ] Rollback procedure documented
+
 ## Document History
 
 | Date | Change | Author |

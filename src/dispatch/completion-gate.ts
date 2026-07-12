@@ -183,12 +183,28 @@ export function checkCompletionGate(text: string, planName: string): string | nu
     return `ERROR: Plan '${planName}' has ${openBoxes.length} unchecked Testing Plan item${openBoxes.length === 1 ? '' : 's'}:\n${openBoxes.map((b) => `  ${b}`).join('\n')}\nVerify each (check it [x] with evidence) or record why it does not apply before completing.`;
   }
 
-  // Tests must have actually RUN, not merely exist. verify_plan_tests records
-  // the evidence; a plan with no recorded green run cannot complete.
-  const lastResult = extractFrontmatterField(text, 'tests_last_result');
-  if (String(lastResult) !== 'pass') {
-    const state = lastResult == null ? 'no recorded test run' : `tests_last_result=${lastResult}`;
-    return `ERROR: Plan '${planName}' has ${state}. Run the verify_plan_tests MCP tool (records tests_last_run/result/commit on the plan) and get a green run before completing.`;
+  // Test-evidence requirement depends on the plan's verification_type (#315):
+  //   unit (default) — a green recorded automated run (verify_plan_tests writes
+  //                    tests_last_result); the historical behaviour.
+  //   runtime        — a human runtime attestation (runtime_verified: true), for
+  //                    infra/deployment plans that have no relevant unit suite and
+  //                    used to deadlock because the UI run-tests ran the repo suite.
+  //   none           — no automated evidence required (e.g. docs/governance-only).
+  const vtype = (String(extractFrontmatterField(text, 'verification_type') ?? '').trim() || 'unit');
+  if (vtype === 'runtime') {
+    const rv = extractFrontmatterField(text, 'runtime_verified');
+    if (String(rv) !== 'true') {
+      return `ERROR: Plan '${planName}' is verification_type: runtime but runtime_verified is not true. A human records the runtime verification (set runtime_verified: true) before completing.`;
+    }
+  } else if (vtype === 'none') {
+    // No automated test evidence required for this plan type.
+  } else {
+    // unit (default): tests must have actually RUN, not merely exist.
+    const lastResult = extractFrontmatterField(text, 'tests_last_result');
+    if (String(lastResult) !== 'pass') {
+      const state = lastResult == null ? 'no recorded test run' : `tests_last_result=${lastResult}`;
+      return `ERROR: Plan '${planName}' has ${state}. Run the verify_plan_tests MCP tool (records tests_last_run/result/commit on the plan) and get a green run before completing — or set verification_type: runtime|none if a unit run does not apply.`;
+    }
   }
 
   return null;
