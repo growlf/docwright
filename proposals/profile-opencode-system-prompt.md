@@ -10,6 +10,7 @@ tags:
   - governance
   - improvements
 approved: false
+priority: medium
 deferred: true
 deferred_reason: "Requires full profile engine (Phase 3). MVP uses a hardcoded context injection. Per-profile customisation comes with the profile engine."
 created_by: "NetYeti@phoenix"

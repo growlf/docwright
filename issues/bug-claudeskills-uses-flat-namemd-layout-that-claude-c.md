@@ -1,6 +1,7 @@
 ---
 title: .claude/skills uses flat <name>.md layout that Claude Code silently ignores — skills never register, adopt-vault propagates the defect
-status: new
+status: resolved
+resolved_by: #316
 created: 2026-07-11
 author: NetYeti
 author-role: user
@@ -17,6 +18,9 @@ tags:
 ---
 
 # .claude/skills uses flat <name>.md layout that Claude Code silently ignores — skills never register, adopt-vault propagates the defect
+
+> **Resolved 2026-07-11** (backlog cleanup). Fixed by #316 — skills converted to the registered dir/SKILL.md layout.
+
 
 ## Description
 

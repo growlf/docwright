@@ -1,6 +1,6 @@
 ---
 title: pre-commit validate_location_invariant greps whole file for approved:, not just frontmatter
-status: new
+status: proposal-linked
 created: 2026-07-09
 author: agent
 author-role: user
@@ -18,6 +18,9 @@ tags:
 ---
 
 # pre-commit validate_location_invariant greps whole file for approved:, not just frontmatter
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-plan-proposal-lifecycle-tooling.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

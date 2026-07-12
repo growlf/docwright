@@ -1,6 +1,6 @@
 ---
 title: Plan doc generator: raw JS date in created: field and unquoted colon-containing title:
-status: scope-checked
+status: proposal-linked
 created: 2026-07-05
 category: bug
 priority: medium

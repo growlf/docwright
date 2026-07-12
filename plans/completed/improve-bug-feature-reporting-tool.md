@@ -16,7 +16,7 @@ assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: true
 related_to:
-  - plans/release-v0.5.0.md
+  - plans/completed/release-v0.5.0.md
   - issues/bug-report-bug-button-should-pop-up-a-form.md
   - issues/bug-report-button-should-offer-feature-as-well.md
   - issues/bug-issues-created-from-report-bug-dont-create-the-gh-.md

@@ -1,7 +1,7 @@
 ---
 title: end-session shutdown bricked by unrelated validation debt in working tree
 github_issue: https://github.com/growlf/docwright/issues/306
-status: new
+status: proposal-linked
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # end-session shutdown bricked by unrelated validation debt in working tree
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-plan-proposal-lifecycle-tooling.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

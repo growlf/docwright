@@ -1,6 +1,6 @@
 ---
 title: PreToolUse plan-edit lifecycle gate reports block but the direct edit still persists to disk
-status: new
+status: proposal-linked
 created: 2026-07-09
 author: NetYeti
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # PreToolUse plan-edit lifecycle gate reports block but the direct edit still persists to disk
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-plan-proposal-lifecycle-tooling.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

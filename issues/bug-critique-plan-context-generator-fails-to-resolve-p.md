@@ -1,7 +1,7 @@
 ---
 title: critique-plan context generator fails to resolve proposal_source under proposals/approved
 github_issue: https://github.com/growlf/docwright/issues/304
-status: new
+status: proposal-linked
 created: 2026-07-10
 author: agent
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # critique-plan context generator fails to resolve proposal_source under proposals/approved
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/skill-plan-critique-ci.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

@@ -9,6 +9,7 @@ tags:
   - editor
   - improvements
 approved: false
+priority: low
 deferred: true
 deferred_reason: "contenteditable is unreliable on iOS. Requires research into a mobile-safe rich-text approach. Revisit after launch."
 created_by: "NetYeti@phoenix"

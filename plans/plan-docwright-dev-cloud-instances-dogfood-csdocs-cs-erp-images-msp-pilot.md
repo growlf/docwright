@@ -1,25 +1,52 @@
 ---
-title: "DocWright dev-cloud instances — dogfood, csdocs, cs-erp-images, msp-pilot"
-author: NetYeti
-created: 2026-07-04
-tags:
-  - deployment
-  - docker
-  - release-channel
-  - dogfooding
-  - cascade-steam
-  - plugins
-  - msp-pilot
-  - bms
-approved: false
+title: "Plan: DocWright dev-cloud instances — dogfood, csdocs, cs-erp-images, msp-pilot"
+status: draft
+author: "NetYeti"
+created: "2026-07-11"
 created_by: "NetYeti@phoenix"
-part_of: plans/release-v0.5.0.md
-assigned_to: ""
-priority: 2
-milestone: v0.5.0
+tags: [planning]
+proposal_source: "proposals/three-docwright-instance-deployment"
+priority: medium
+phase: 
+automated: guided
+waiting_reason:  # Populated when status = waiting-for-user
+assigned_to: ["NetYeti"]
+# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
+# parent_deliverable: "1"            # row number in parent's Deliverables table
+related_to: []
+depends_on: []
+blocks: []
+reviewed_by:
+reviewed_date:
+canceled_date:  # Populated when plan is canceled
+cancellation_reason:  # Populated when plan is canceled
+template_version: "1.0"
+tests_defined: true
+tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
+# Gate fields — populated when a lifecycle gate applies to this document
+gate_reviewer:  # Who must review (set automatically by gate rules)
+gate_status:    # pending | approved | waived
+gate_date:      # Stamped when gate_status is set
+gate_note:      # Optional reviewer note
+gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
+gate_quorum: 1    # Phase 1a — minimum approvals needed
 ---
 
-## Problem
+# Plan: DocWright dev-cloud instances — dogfood, csdocs, cs-erp-images, msp-pilot
+
+## Mode
+
+Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
+
+**MENTORSHIP MODE — Human leads, LLM advises**
+
+- Human carries out tasks their own way
+- LLM provides SOP compliance checks and safety warnings
+- LLM offers suggestions when human asks for help
+
+## Overview
+
+### Problem
 
 DocWright development and Cascade STEAM adoption both depend on running DocWright
 instances, but the deployment landscape is ad hoc. The csdocs vault (Cascade STEAM)
@@ -61,86 +88,7 @@ collaboration model warn about. This proposal is the reconciled **single source 
 truth**; it supersedes the earlier `dogfood`-branch design draft
 (`docs/deployment-bms-devcloud.md`), now retired.
 
-## Proposed Solution
-
-Stand up **four managed DocWright instances**, each with a distinct role, version
-policy, and vault:
-
-| # | Instance | Vault | DocWright version | Extras | Purpose |
-|---|----------|-------|-------------------|--------|---------|
-| 1 | **dogfood-dev** | the DocWright repo itself (serves itself) | dev-mode from clone on the long-lived `dogfood` branch, leap-frogged from `main` | — | DocWright develops DocWright *through* DocWright; surfaces bugs before users hit them |
-| 2 | **csdocs** | `csdocs` (Cascade STEAM) | **latest tagged release** | — | Real org use; leadership early access (consumes [[proposals/approved/sub-plan-cascade-steam-early-access]]); stability over freshness |
-| 3 | **cs-erp-images** | `cs-erp-images` | **same release as csdocs** | `cs-erp-images` plugin | Frappe/ERPNext image pipeline driven through the DocWright plugin surface |
-| 4 | **msp-pilot** | `bms-ai-cluster` (Bellingham Makerspace infra) | **latest tagged release** | profile override (infra/MSP policies) | Real-world MSP pilot — full governance-lifecycle validation (consumes [[proposals/approved/sub-plan-msp-pilot-vault]]) |
-
-Key properties:
-
-- **Version discipline.** Instances 2, 3, and 4 are pinned to a tagged release,
-  consistent with the branching policy that `main` HEAD is not guaranteed deployable.
-  Instances 2 and 3 share the *same* release (the plugin must match csdocs). The dogfood
-  instance is the only one allowed ahead of a release.
-- **Plugin delivery.** Instance 3 must load the cs-erp-images plugin through a
-  declared, reproducible mechanism (image layer, mounted plugin dir, or manifest) —
-  not a developer-machine symlink.
-- **One deployment definition per instance**, kept in git (compose file or equivalent),
-  so the setup is code, not memory ([[policies/core/code-over-memory]]).
-- **Instance 1 runs from source, not a container** (live `npm run dev`), so the code it
-  serves is the code under development. Its long-lived `dogfood` branch is periodically
-  **leap-frogged** from `main` (pulling merged fixes in) while general improvements proven
-  in dogfood are PR'd back upstream. Deployment-specific settings are **gitignored config /
-  env vars** (e.g. `DOCWRIGHT_ALLOWED_HOSTS`), never uncommitted edits to tracked code.
-- **Hostnames, not bare ports.** Each instance gets a purpose-obvious NPMPlus entrypoint
-  (`docwright-dev.bms.local`, `csdocs.bms.local`, `erp-images.bms.local`, `msp.bms.local`)
-  → `10.10.0.201:{5173,5274,5275,5276}`.
-
-### Instances 2 & 4 — consumed Phase-3 sub-plans
-
-Two already-approved Phase-3 sub-plans describe deployments this proposal now realizes, so
-their substance is **merged here**. The UI has no way yet to consume/supersede or process
-one governance doc into another (tracked by
-[[issues/feature-ui-consume-and-process-governance-docs]]), so this merge is manual and the
-sub-plans' **formal supersession is deferred** until that functionality exists — the docs
-are `approved: true` and are deliberately **not transitioned here**.
-
-- **Instance 2 (csdocs)** realizes [[proposals/approved/sub-plan-cascade-steam-early-access]]
-  (Phase 3, deliverable #8): an early-access CS vault (no Forgejo/AI stack yet), seeded from
-  the Drive vault content, so leadership can open the Web UI, read the seed, and submit their
-  first proposal — de-risking Phase 5 before production infrastructure exists.
-  *Acceptance bar:* leadership navigates the vault seed and submits a proposal with no
-  manual file editing.
-- **Instance 4 (msp-pilot)** realizes [[proposals/approved/sub-plan-msp-pilot-vault]]
-  (Phase 3, deliverable #7): a real-world MSP pilot running a **complete** governance
-  lifecycle (proposal → approve → plan → execute → complete → archive) entirely through the
-  Web UI + MCP tools, with `bms-ai-cluster` as the vault. Exercises vault portability,
-  `docwright init` scaffolding, profile override (MSP policies: service-catalog,
-  change-management, incident-response, security-baseline, onboarding), and the contribution
-  pipeline — the primary validation gate for the vault-portability architecture.
-  *Acceptance bar:* full lifecycle with zero manual file edits; friction logged via
-  `log_friction`.
-
-Both migrate to their production homes when Phase 5 opens.
-
-### Instance 3 — tool vs. customer-data separation (three tiers)
-
-Instance 3 manages the **cs-erp-images tool repo** while the same plugin also drives
-**real Cascade STEAM ERPNext deployments**. These must never mix:
-
-- **Tier A — tool repo (`cs-erp-images`).** Image definitions named by **generic use-case
-  intent** (`erp-msp-project_community`, never `cascadesteam`), `apps.json` → GHCR.
-  Public/shareable, git-versioned. **This is the only tier instance 3 commits.** The
-  generic-naming rule is what keeps customer identity out of the public repo.
-- **Tier B — deployment mapping/config.** Which real customer runs which generic image,
-  per-site settings. CS-specific; never in Tier A; lives on CS infra.
-- **Tier C — customer backups / private data.** Real ERPNext data — **private customer
-  data, not merely "sensitive."** Never in git, never casually on the dev host. A dedicated
-  **access-limited store (NAS/Ceph)** with best-practice handling (encryption at rest,
-  restricted access, retention).
-
-**Trust boundary.** Instance 3 sits on the BMS dev-cloud **only while the tool foundation
-is carved out.** The real deployment + customer data end up on the **CS environment**,
-backing up to **BMS**.
-
-## Security Considerations
+### Security considerations
 
 - Instances 2, 3, and 4 face non-developer users: auth must be enabled (no `AUTH_MODE=none`),
   and governance write paths (approve, complete, channel promotion) must carry the
@@ -163,7 +111,7 @@ backing up to **BMS**.
   enforcement on infra commits). DocWright governs the vault's documents; the repo's
   existing hooks continue to govern its infra/Ansible commits — the two layers coexist.
 
-## Verification
+### Verification
 
 - Each instance boots from its committed deployment definition on a clean host.
 - `csdocs` and `cs-erp-images` report the same DocWright release version; `msp-pilot`
@@ -174,7 +122,7 @@ backing up to **BMS**.
   `bms-ai-cluster` vault entirely through the Web UI + MCP tools, with zero manual edits.
 - Auth verified on instances 2–4; UI-driven commits attribute the real actor.
 
-## Alternatives Considered
+### Alternatives considered
 
 - **Single shared instance with vault switching** — rejected: version policy differs
   per audience (dev-fresh vs release-stable), and a plugin needed by one vault would
@@ -182,7 +130,7 @@ backing up to **BMS**.
 - **Keep dev-server launches per vault** — rejected: not reproducible, no auth story,
   developer-machine dependency.
 
-## Deferred proposals (to capture)
+### Deferred proposals (to capture)
 
 Per [[policies/core/capture-deferred-ideas]], these are set aside from this proposal and
 must each be captured as their own proposal:
@@ -197,10 +145,66 @@ must each be captured as their own proposal:
 4. **Multi-instance deployment tooling** — generalize the retired dogfood `update.sh` +
    compose into a parameterized, repeatable per-instance deploy mechanism.
 
-## Future
+### Future
 
 - Reconsider instance 1's tracking (long-lived `dogfood` branch vs a `beta` release
   channel) once a release cadence is established (noted in the 2026-07-02 session).
 - Fold instance definitions into the Phase 5 Cascade STEAM production infrastructure
   plan (Forgejo, ACL, AI stack) when that phase opens; the MSP-pilot vault (instance 4)
   becomes a reference deployment for new adopters (per the MSP sub-plan's Future).
+
+
+## Implementation Steps
+
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
+| Step | Action | Details | Status |
+|------|--------|---------|--------|
+| 1 | | | ⏳ Pending |
+
+## Testing Plan
+
+
+
+## Rollback Procedures
+
+
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
+
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed (`tests_human_reviewed: true`)
+- [ ] Deferred ideas captured as proposals before closing (see [[policies/core/capture-deferred-ideas.md]])
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
+## Testing Plan
+
+### Step Verification
+
+- [ ] All implementation steps complete and outcomes verified
+
+### Integration & Regression
+
+- [ ] Existing tests pass without modification (`npm test`)
+- [ ] TypeScript compiles cleanly (`npm run typecheck`)
+- [ ] Plan: DocWright dev-cloud instances — dogfood, csdocs, cs-erp-images, msp-pilot functionality works end-to-end
+
+### Gate Criteria
+
+- [ ] `tests_defined` set to `true` in frontmatter
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No regressions introduced to adjacent workflows
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-07-11 | Created | NetYeti |

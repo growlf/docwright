@@ -1,6 +1,6 @@
 ---
 title: Release dogfood-window uses a fixed 7-day clock (contradicts plan §5)
-status: scope-checked
+status: proposal-linked
 created: 2026-07-05
 category: bug
 priority: high

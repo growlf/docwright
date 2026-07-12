@@ -9,6 +9,7 @@ tags:
   - security
   - phase-2
 approved: false
+priority: medium
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 milestone: backlog

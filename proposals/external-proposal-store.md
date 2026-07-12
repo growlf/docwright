@@ -9,6 +9,7 @@ tags:
   - database
   - mcp
 approved: false
+priority: low
 created_by: "NetYeti@phoenix"
 assigned_to: ""
 status: deferred

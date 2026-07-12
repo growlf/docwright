@@ -6,16 +6,16 @@ tags: [ui, git, dogfooding, ux]
 category:
   - ui
 complexity: medium
-approved: false
-priority: 3
+approved: true
+priority: medium
 created_by: "NetYeti@cluster-llm"
-assigned_to: []
+assigned_to: NetYeti
 related_to:
   - "[[proposals/three-docwright-instance-deployment]]"
 depends_on: []
 blocks: []
 part_of: plans/release-v0.5.0.md
-milestone: v0.5.0
+milestone: v0.5.1
 ---
 
 # Git panel branch switcher

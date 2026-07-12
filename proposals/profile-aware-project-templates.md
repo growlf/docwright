@@ -9,6 +9,7 @@ tags:
   - init
   - improvements
 approved: false
+priority: medium
 deferred: true
 deferred_reason: "Depends on full profile engine (Phase 3). Revisit after profile loading and validation are stable."
 created_by: "NetYeti@phoenix"

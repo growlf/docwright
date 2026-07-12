@@ -1,6 +1,6 @@
 ---
 title: .bms.local deployment hostnames unresolvable from standard clients — .local is mDNS-reserved
-status: new
+status: proposal-linked
 created: 2026-07-07
 author: NetYeti@phoenix
 author-role: user
@@ -17,6 +17,9 @@ tags:
 ---
 
 # .bms.local deployment hostnames unresolvable from standard clients — .local is mDNS-reserved
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/three-docwright-instance-deployment.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

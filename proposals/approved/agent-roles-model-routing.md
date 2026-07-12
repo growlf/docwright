@@ -13,10 +13,10 @@ tags:
   - governance
 complexity: high
 estimated_effort: L
-priority: 3
-approved: false
+priority: medium
+approved: true
 created_by: "NetYeti@phoenix"
-assigned_to: ""
+assigned_to: NetYeti
 development_branch: agent-roles
 related_to:
   - proposals/deferred-sync-agents-cross-tool.md
@@ -27,6 +27,8 @@ related_to:
   - .claude/agents/docwright-lifecycle.md
   - .claude/agents/docwright-incident.md
 milestone: backlog
+_path: proposals/approved/agent-roles-model-routing
+consumed_by: plans/agent-roles-model-routing.md
 ---
 
 > **⚠ Development happens on the `agent-roles` branch — not `main`.**

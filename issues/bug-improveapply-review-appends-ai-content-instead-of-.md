@@ -1,6 +1,6 @@
 ---
 title: Improve/apply-review appends AI content instead of replacing, producing duplicate section headers
-status: new
+status: proposal-linked
 created: 2026-07-10
 author: agent
 author-role: user
@@ -18,6 +18,9 @@ tags:
 ---
 
 # Improve/apply-review appends AI content instead of replacing, producing duplicate section headers
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `plans/executor-panel-live-feedback.md (Improve merge bug, #297)`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

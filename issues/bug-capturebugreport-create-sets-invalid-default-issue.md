@@ -1,6 +1,6 @@
 ---
 title: dw-vault MCP server runs a stale dist/ build — capture_bug_report emits invalid status/milestone
-status: new
+status: proposal-linked
 created: 2026-07-09
 author: agent
 author-role: user
@@ -18,6 +18,9 @@ tags:
 ---
 
 # dw-vault MCP server runs a stale dist/ build — capture_bug_report emits invalid status/milestone
+
+> **Proposal-linked 2026-07-11** (backlog cleanup) → captured by `proposals/harden-capture-bug-report-output-schema.md`. Not lost; will be delivered as part of that proposal/plan.
+
 
 ## Description
 

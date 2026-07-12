@@ -1840,6 +1840,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 
 ---
 
+## Session: 2026-07-11 — Image-based deploy + reconcile
+
+**Focus:** Image-based deploy + reconcile
+
+**Completed:**
+- [x] chore: reconcile dogfood with main (merge origin/main)
+- [x] fix: remove stray in-progress plan copy (reconcile-merge duplicate)
+- [x] docs: approve adopt-milestone-driven-roadmap-discipline + ratify consumed proposals and pending flips
+- [x] fix: remove stray in-progress plan copy resurrected by the reconcile merge
+- [x] docs: post-v0.4.12 governance sync (completed image-based plan, 2 bugs, backlinks)
+- [x] fix: convert .claude/skills to registered dir/SKILL.md layout (#313)
+- [x] chore: reconcile dogfood with main (merge origin/main)
+- [x] docs: mirror both bugs to GitHub (#314 flaky bridge.test, #315 completion gate) + backlinks
+- [x] docs: complete image-based-deployment-any-directory (plan → completed)
+- [x] docs: record green test:webui run as completion-gate evidence
+
+**Session note:** `docs/session-notes/session_note_202607110623.md`
 ## Session: 2026-07-10 — plan approval + skills registration fix
 
 **Focus:** plan approval + skills registration fix
@@ -1848,3 +1865,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] (see session note)
 
 **Session note:** `docs/session-notes/session_note_202607102339.md`
+
+---
+
+## Session: 2026-07-11 — v0.5.0 release & Phase 4 close
+
+**Focus:** v0.5.0 release & Phase 4 close
+
+**Completed:**
+- [x] docs: complete release-v0.5.0 (plan → completed)
+- [x] docs: edit plans/release-v0.5.0.md (web ui save)
+- [x] chore: reconcile dogfood with main — v0.5.0 release, phase:close fix, versioning policy
+- [x] docs: release-v0.5.0 shipped — resolve all steps, cut 0c, hold git-panel v0.5.1
+- [x] chore: bump version to 0.5.0 — Phase 4 complete, Phase 5 begins
+- [x] chore: bump version to 0.5.0 — Phase 4 complete, Phase 5 begins
+- [x] docs: approve agent-roles-model-routing (proposal → plan)
+- [x] docs: edit proposals/agent-roles-model-routing.md (web ui save)
+- [x] docs: update release-v0.5.0 backlink to completed reconcile-versioning plan
+- [x] docs: file phase:close/protected-main gap (GH #329)
+
+**Session note:** `docs/session-notes/session_note_202607111701.md`
