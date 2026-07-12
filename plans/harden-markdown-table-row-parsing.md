@@ -14,7 +14,7 @@ complexity: low
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 scenario_synthesis: "Happy path: a table cell containing a literal pipe (a code span like a category value bug-or-feature, or history text with a pipe) round-trips through every parser/writer without corrupting the row. The shared splitTableRow is already backtick-aware (#325, fixing update_step); this plan converges the remaining surfaces — plan-review's own raw split and append_history's row composition — onto the hardened helpers. Failure avoided: silent row corruption that reports success."
 total_steps: 3
 completed_steps: 3
