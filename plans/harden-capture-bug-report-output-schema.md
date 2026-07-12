@@ -13,7 +13,7 @@ complexity: low
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 scenario_synthesis: "Happy path: capture_bug_report --action create writes an issue whose frontmatter passes the same validation the pre-commit hook runs — status: new, no milestone — so the AI can commit it with zero hand-edits. Failure path avoided: the current tool emits status: open + milestone: future, which the linter rejects, breaking the zero-friction capture loop (hit ~4x in one session). Code-over-memory: the tool emits valid output, not a human remembering to fix it."
 total_steps: 3
 completed_steps: 3
