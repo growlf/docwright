@@ -11,7 +11,7 @@ tags:
 proposal_source: proposals/harden-plan-proposal-lifecycle-tooling.md
 priority: high
 complexity: medium
-automated: guided
+automated: full
 assigned_to: NetYeti
 tests_defined: true
 tests_human_reviewed: false
