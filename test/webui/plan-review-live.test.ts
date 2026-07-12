@@ -118,4 +118,24 @@ describe('plan-review-live — runLiveReview', () => {
     );
     assert.deepStrictEqual(turns, [0, 1]);
   });
+
+  it('completion tracking is deterministic: sent→total, done flips only at loop end (#15 step 4.3)', async () => {
+    // Mirrors the server-side progress tracking in api/plan-review that gives the
+    // client a definitive done signal instead of a fragile session.idle count.
+    const prompts: ReviewPrompt[] = [
+      { key: 'a', label: 'A', prompt: 'x' },
+      { key: 'b', label: 'B', prompt: 'y' },
+      { key: 'c', label: 'C', prompt: 'z' },
+    ];
+    const progress = { total: prompts.length, sent: 0, done: false };
+    const run = runLiveReview('ses_done', prompts, {
+      send: async () => {},
+      awaitIdle: async () => {},
+      onTurn: (i) => { progress.sent = i + 1; },
+    }).then(() => { progress.done = true; });
+    assert.strictEqual(progress.done, false, 'not done before the loop resolves');
+    await run;
+    assert.strictEqual(progress.sent, prompts.length, 'sent reached total');
+    assert.strictEqual(progress.done, true, 'done flips exactly when the loop ends');
+  });
 });
