@@ -121,6 +121,47 @@
     const res = await fetch(`/api/status?window=${heatmapWindow}`);
     if (res.ok) data = await res.json();
     loading = false;
+    void loadPhaseReadiness();
+  }
+
+  // Phase close-out from the browser (phase-close-web-ui). Readiness banner +
+  // a human-gated Close Phase button; the version bump happens server-side via
+  // the shared phase-close core, and tagging/pushing stays the BDFL's own step.
+  let phaseReady = $state<{ ready: boolean; phase: number; completed: string[]; pending: string[] } | null>(null);
+  let phaseClosing = $state(false);
+  let phaseCloseMsg = $state('');
+
+  async function loadPhaseReadiness() {
+    if (!data?.currentPhase) { phaseReady = null; return; }
+    try {
+      const r = await fetch(`/api/phase/close?phase=${data.currentPhase}`);
+      phaseReady = r.ok ? await r.json() : null;
+    } catch { phaseReady = null; }
+  }
+
+  async function closePhase() {
+    const phase = data?.currentPhase;
+    if (!phase) return;
+    if (!confirm(`Close Phase ${phase}? This bumps the version to 0.${phase + 1}.0. Tagging/pushing the release stays a separate, explicit step.`)) return;
+    phaseClosing = true;
+    phaseCloseMsg = '';
+    try {
+      const r = await fetch('/api/phase/close', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) {
+        phaseCloseMsg = `✅ Version bumped to ${j.version}. Next (run when ready): ${j.tagCommand}`;
+        await load();
+      } else {
+        phaseCloseMsg = `⚠ ${j.error ?? 'Close failed'}`;
+      }
+    } catch (e) {
+      phaseCloseMsg = `⚠ ${e}`;
+    } finally {
+      phaseClosing = false;
+    }
   }
 
   function toggleHeatmapWindow() {
@@ -462,6 +503,21 @@
   {#if loading && !data}
     <div class="loading">Scanning vault…</div>
   {:else if data}
+
+    {#if phaseReady?.ready}
+      <div style="display:flex;align-items:center;gap:12px;margin:10px 0;padding:10px 14px;border:1px solid #16a34a;border-radius:8px;background:rgba(22,163,74,0.08);">
+        <span style="flex:1;">
+          <strong>Phase {phaseReady.phase} ready to close</strong> — {phaseReady.completed.length} completed plan{phaseReady.completed.length === 1 ? '' : 's'}, none pending.
+        </span>
+        <button onclick={closePhase} disabled={phaseClosing} title="Bump the version; tagging/pushing stays a separate step"
+          style="padding:6px 12px;border-radius:6px;border:1px solid #16a34a;background:#16a34a;color:#fff;cursor:pointer;font-size:13px;">
+          {phaseClosing ? 'Closing…' : `Close Phase ${phaseReady.phase} → 0.${phaseReady.phase + 1}.0`}
+        </button>
+      </div>
+    {/if}
+    {#if phaseCloseMsg}
+      <div style="margin:8px 0;padding:8px 12px;border-radius:6px;background:rgba(0,0,0,0.04);font-family:monospace;font-size:12px;white-space:pre-wrap;">{phaseCloseMsg}</div>
+    {/if}
 
     {#if viewMode === 'graph'}
       <div class="graph-view">
