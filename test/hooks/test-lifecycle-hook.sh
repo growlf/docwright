@@ -19,10 +19,11 @@ assert_blocked() {
     local output exit_code
     output=$(echo "$payload" | bash "$HOOK" 2>/dev/null)
     exit_code=$?
-    if [[ $exit_code -eq 1 ]] && echo "$output" | python3 -c "
+    # Claude Code PreToolUse deny contract: exit 2 + permissionDecision: deny.
+    if [[ $exit_code -eq 2 ]] && echo "$output" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
-assert d.get('continue') == False
+assert d['hookSpecificOutput']['permissionDecision'] == 'deny'
 " 2>/dev/null; then
         echo "  ✅ $label"
         ((passed++))
@@ -53,7 +54,7 @@ assert_reason_contains() {
     if echo "$output" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
-assert '$needle' in d.get('stopReason', '')
+assert '$needle' in d['hookSpecificOutput']['permissionDecisionReason']
 " 2>/dev/null; then
         echo "  ✅ $label"
         ((passed++))

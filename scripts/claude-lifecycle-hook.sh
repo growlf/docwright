@@ -14,7 +14,8 @@
 #
 # Stdin: JSON { tool_name, tool_input: { file_path, content|old_string|new_string } }
 # Exit 0  → allow the write
-# Exit 1  → block (with JSON stop reason)
+# Exit 2  → DENY the write (Claude Code PreToolUse contract: exit 2 blocks and
+#           feeds stderr to the model; exit 1 would NOT block — the write proceeds)
 
 set -uo pipefail
 
@@ -100,8 +101,14 @@ elif [[ "$TOOL_NAME" == "Edit" ]]; then
 fi
 
 if [[ "$BLOCK" -eq 1 ]]; then
-    node -e "console.log(JSON.stringify({ continue: false, stopReason: process.argv[1] }))" "$REASON"
-    exit 1
+    # Claude Code PreToolUse contract: exit 2 DENIES the tool call and feeds
+    # stderr back to the model; exit 1 is a NON-blocking error (the write would
+    # proceed — the #15 step 3.2 bug). Emit the reason on stderr and exit 2. The
+    # JSON permissionDecision is also emitted for hosts that read structured
+    # output, but exit 2 is the load-bearing signal.
+    printf '%s\n' "$REASON" >&2
+    node -e "console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: process.argv[1] } }))" "$REASON"
+    exit 2
 fi
 
 exit 0
