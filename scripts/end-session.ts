@@ -268,9 +268,40 @@ ${nextBlock}
     }
     const staged = gitTry(['diff', '--cached', '--name-only'], wt);
     if (!staged) { warn(`${path.basename(wt)}: nothing to commit after denylist`); continue; }
-    git(['commit', '-F', msgFile], wt);
-    committed.push(path.basename(wt));
-    ok(`${path.basename(wt)}: committed ${staged.split('\n').length} file(s)`);
+
+    // Resilient commit: a single staged file with validation debt UNRELATED to
+    // this session (the pre-commit hook validates every staged file) must not
+    // abort the whole shutdown and lose the session note. On rejection, unstage
+    // everything and retry with ONLY the session's own artifacts (the note +
+    // SESSION-LOG, which this script just generated and are valid), then report
+    // the leftover debt for manual review instead of dying.
+    let didCommit = false;
+    try {
+      git(['commit', '-F', msgFile], wt);
+      committed.push(path.basename(wt));
+      ok(`${path.basename(wt)}: committed ${staged.split('\n').length} file(s)`);
+      didCommit = true;
+    } catch {
+      warn(`${path.basename(wt)}: full commit rejected (likely unrelated validation debt) — isolating session artifacts`);
+      gitTry(['reset', '-q'], wt);
+      // The note + SESSION-LOG live at ROOT; other worktrees have no session-owned artifacts.
+      const sessionOwn = (wt === ROOT ? [path.relative(ROOT, notePath), 'SESSION-LOG.md'] : [])
+        .filter(f => gitTry(['status', '--porcelain', '--', f], wt));
+      if (sessionOwn.length) {
+        git(['add', '--', ...sessionOwn], wt);
+        try {
+          git(['commit', '-F', msgFile], wt);
+          committed.push(path.basename(wt));
+          ok(`${path.basename(wt)}: committed ${sessionOwn.length} isolated session artifact(s)`);
+          didCommit = true;
+        } catch {
+          warn(`${path.basename(wt)}: could not commit even the isolated session note — left in the working tree`);
+        }
+      }
+      const leftover = gitTry(['status', '--short'], wt);
+      if (leftover) warn(`${path.basename(wt)}: unrelated debt left for manual review:\n${leftover}`);
+    }
+    if (!didCommit) continue;
 
     if (!opts.push) continue;
     const wtBranch = gitTry(['rev-parse', '--abbrev-ref', 'HEAD'], wt);

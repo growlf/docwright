@@ -269,14 +269,19 @@ validate_no_self_approval() {
 validate_location_invariant() {
     local FILE=$1
     [[ ! "$FILE" =~ \.md$ ]] && return 0
+    # Scope the checks to the YAML frontmatter block only. An `approved:` or
+    # `status:` line in the document BODY (prose, a fenced code block, a table
+    # cell) must NOT trigger the location invariant — that whole-file grep was
+    # the false-positive in harden-plan-proposal-lifecycle-tooling step 3.1.
+    local FM=$(get_frontmatter "$FILE")
     # File in proposals/approved/ must have approved: true
     if [[ "$FILE" =~ ^proposals/approved/ ]]; then
-        local APP=$(grep "^approved:" "$FILE" 2>/dev/null | sed 's/^approved: *//')
+        local APP=$(echo "$FM" | grep "^approved:" | sed 's/^approved: *//' | xargs)
         [ "$APP" != "true" ] && print_error "$FILE: in proposals/approved/ but approved != true" && return 1
     fi
     # File in plans/completed/ must have status: completed or canceled
     if [[ "$FILE" =~ ^plans/completed/ ]]; then
-        local STS=$(grep "^status:" "$FILE" 2>/dev/null | sed 's/^status: *//')
+        local STS=$(echo "$FM" | grep "^status:" | sed 's/^status: *//' | xargs)
         [ "$STS" != "completed" ] && [ "$STS" != "canceled" ] && \
             print_error "$FILE: in plans/completed/ but status != completed|canceled" && return 1
     fi
