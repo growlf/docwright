@@ -13,7 +13,7 @@ complexity: low
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 scenario_synthesis: "Happy path: completing a plan whose title contains a colon or other YAML-special characters produces a docs/<plan>.md whose frontmatter js-yaml parses cleanly. Failure avoided: generateCompletionDoc's raw string interpolation emits unquoted title: Foo: Bar -> YAMLException on load. Fix pattern (code-over-memory): serialize frontmatter with a YAML-safe serializer, not string interpolation — the same class hit in more than one generator."
 total_steps: 4
 completed_steps: 4
