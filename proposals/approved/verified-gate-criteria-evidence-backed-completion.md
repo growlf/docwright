@@ -23,7 +23,8 @@ related_to:
   - "[[policies/core/code-over-memory]]"
   - "[[policies/core/multi-perspective-review]]"
   - "[[policies/core/mutual-augmentation-cycle]]"
-consumed_by: plans/plan-verified-gate-criteria-evidence-backed-plan-completion-not-checkbox-theater.md
+consumed_by: plans/verified-gate-criteria-evidence-backed-completion.md
+_path: proposals/approved/verified-gate-criteria-evidence-backed-completion
 ---
 
 # Verified gate criteria — evidence-backed plan completion, not checkbox theater
