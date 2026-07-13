@@ -13,7 +13,7 @@ complexity: medium
 automated: guided
 assigned_to: NetYeti
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 scenario_synthesis: "Happy path: the /status page detects when all current-phase plans are completed and shows a 'Phase N ready to close' banner; a human-gated Close Phase button (confirmation dialog) calls POST /api/phase/close, which validates completeness, bumps VERSION + package.json, and reports back — so a non-developer BDFL can close a phase from a browser. Failure avoided: phase close is CLI-only (npm run phase:close), invisible and unavailable to Web-UI-only contributors. Governance: releasing/tagging stays the BDFL's explicit, confirmed action — the endpoint never auto-tags/pushes without confirmation."
 total_steps: 3
 completed_steps: 3
