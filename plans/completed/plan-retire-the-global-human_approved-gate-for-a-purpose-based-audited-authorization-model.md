@@ -1,6 +1,6 @@
 ---
 title: "Plan: Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model"
-status: draft
+status: canceled
 author: "NetYeti"
 created: "2026-07-13"
 created_by: "NetYeti@phoenix"

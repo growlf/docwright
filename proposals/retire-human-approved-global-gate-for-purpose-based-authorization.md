@@ -19,7 +19,7 @@ related_to:
   - plans/plan-retire-human-approved-global-gate-for-purpose-based-authorization.md
 depends_on: []
 blocks: []
-consumed_by: plans/plan-retire-the-global-human_approved-gate-for-a-purpose-based-audited-authorization-model.md
+consumed_by: plans/plan-retire-human-approved-global-gate-for-purpose-based-authorization.md
 ---
 
 # Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model
