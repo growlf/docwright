@@ -18,6 +18,17 @@ describe('capture_bug_report output — parity with the issue linter (#261)', ()
   beforeEach(() => { root = fs.mkdtempSync(path.join(os.tmpdir(), 'dw-cbr-')); });
   afterEach(() => { fs.rmSync(root, { recursive: true, force: true }); });
 
+  // lintDocument() reads process.env.ISSUES_SOURCE; when it's 'github' the local issue-status
+  // rule is retired (GH-pivot Step 8), so the "'open' is rejected" assertion below would
+  // silently pass the wrong branch and fail only inside the dev instance (which runs
+  // ISSUES_SOURCE=github). Pin the governed branch and restore the ambient value after.
+  let _ambientIssuesSource: string | undefined;
+  before(() => { _ambientIssuesSource = process.env.ISSUES_SOURCE; delete process.env.ISSUES_SOURCE; });
+  after(() => {
+    if (_ambientIssuesSource === undefined) delete process.env.ISSUES_SOURCE;
+    else process.env.ISSUES_SOURCE = _ambientIssuesSource;
+  });
+
   it('createReportedBug writes status: new and no milestone', () => {
     const { path: relPath } = createReportedBug(root, {
       title: 'Something is broken',

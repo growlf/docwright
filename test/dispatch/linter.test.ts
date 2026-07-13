@@ -421,6 +421,19 @@ describe('diffAnnotate', () => {
 describe('Milestone rule + issues/ handling', () => {
   const mfn = (r: any) => r.field === 'milestone';
 
+  // lintDocument() reads process.env.ISSUES_SOURCE: when it's 'github' the local issues/
+  // status + milestone rules are retired (GH-pivot Step 8). This block asserts the GOVERNED
+  // behavior, so neutralize any ambient ISSUES_SOURCE (the dev container runs with
+  // ISSUES_SOURCE=github) and restore it after — otherwise these tests silently exercise the
+  // wrong branch and fail only inside the dev instance. See the GH-pivot gating suite below
+  // for the ungoverned case.
+  let _ambientIssuesSource: string | undefined;
+  before(() => { _ambientIssuesSource = process.env.ISSUES_SOURCE; delete process.env.ISSUES_SOURCE; });
+  after(() => {
+    if (_ambientIssuesSource === undefined) delete process.env.ISSUES_SOURCE;
+    else process.env.ISSUES_SOURCE = _ambientIssuesSource;
+  });
+
   it('warns when an active plan has no milestone', () => {
     const fm = {
       title: 'P', status: 'in-progress', author: 'A', created: '2026-01-01',
