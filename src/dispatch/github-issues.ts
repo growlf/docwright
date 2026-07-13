@@ -38,6 +38,28 @@ export interface CreateIssueInput {
   labels?: string[];
 }
 
+/** A Project v2 field resolved by name (Step 2 schema — see docs/github-project-schema.md). */
+export interface ProjectField {
+  id: string;
+  name: string;
+  dataType: string; // TEXT | NUMBER | SINGLE_SELECT | DATE | ...
+  options?: Array<{ id: string; name: string }>;
+}
+
+/** A Project item with its linked issue + field values keyed by field name. */
+export interface ProjectItemDetail {
+  itemId: string;
+  issue: {
+    number: number;
+    title: string;
+    body: string;
+    state: 'open' | 'closed';
+    url: string;
+    labels: string[];
+  } | null;
+  fields: Record<string, string | number>;
+}
+
 /** Minimal shape of the global fetch — injectable so tests need no network. */
 export type FetchLike = (
   url: string,
@@ -229,5 +251,108 @@ export class GitHubClient {
       const nodes = data?.node?.items?.nodes ?? [];
       return nodes.map((n: any) => ({ itemId: n.id, issueNumber: n.content?.number ?? null }));
     }, []);
+  }
+
+  /** Resolve the Project's fields by name (cached, degrades to empty map). */
+  async getProjectFields(): Promise<Map<string, ProjectField>> {
+    if (!this.cfg.projectId) return new Map();
+    return this.cachedRead(`project:${this.cfg.projectId}:fields`, async () => {
+      const data = await this.graphql(
+        `query($p:ID!){ node(id:$p){ ... on ProjectV2 { fields(first:50){ nodes {
+           __typename
+           ... on ProjectV2FieldCommon { id name dataType }
+           ... on ProjectV2SingleSelectField { id name dataType options { id name } }
+         } } } } }`,
+        { p: this.cfg.projectId },
+      );
+      const nodes = data?.node?.fields?.nodes ?? [];
+      const map = new Map<string, ProjectField>();
+      for (const n of nodes) {
+        if (!n?.name) continue;
+        map.set(n.name, { id: n.id, name: n.name, dataType: n.dataType, options: n.options });
+      }
+      return map;
+    }, new Map<string, ProjectField>());
+  }
+
+  /** Full board read: items with linked-issue content + field values by name (cached, degrades to []). */
+  async listProjectItemsDetailed(): Promise<ProjectItemDetail[]> {
+    if (!this.cfg.projectId) return [];
+    return this.cachedRead(`project:${this.cfg.projectId}:detailed`, async () => {
+      const data = await this.graphql(
+        `query($p:ID!){ node(id:$p){ ... on ProjectV2 { items(first:100){ nodes {
+          id
+          content { __typename ... on Issue { number title body state url labels(first:20){ nodes { name } } } }
+          fieldValues(first:50){ nodes {
+            __typename
+            ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
+            ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } }
+            ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } }
+            ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } }
+          } }
+        } } } } }`,
+        { p: this.cfg.projectId },
+      );
+      const nodes = data?.node?.items?.nodes ?? [];
+      return nodes.map((n: any): ProjectItemDetail => {
+        const c = n.content ?? {};
+        const fields: Record<string, string | number> = {};
+        for (const fv of (n.fieldValues?.nodes ?? [])) {
+          const fname = fv?.field?.name;
+          if (!fname) continue;
+          if (fv.text != null) fields[fname] = fv.text;
+          else if (fv.number != null) fields[fname] = fv.number;
+          else if (fv.name != null) fields[fname] = fv.name; // single-select option name
+          else if (fv.date != null) fields[fname] = fv.date;
+        }
+        return {
+          itemId: n.id,
+          issue: c.__typename === 'Issue' ? {
+            number: c.number,
+            title: String(c.title ?? ''),
+            body: String(c.body ?? ''),
+            state: c.state === 'CLOSED' || c.state === 'closed' ? 'closed' : 'open',
+            url: String(c.url ?? ''),
+            labels: (c.labels?.nodes ?? []).map((l: any) => l?.name).filter(Boolean),
+          } : null,
+          fields,
+        };
+      });
+    }, []);
+  }
+
+  /** Set a NUMBER Project field on a project item. */
+  async setProjectNumberField(itemId: string, fieldId: string, value: number): Promise<void> {
+    if (!this.cfg.projectId) throw new GitHubError('no projectId configured');
+    await this.graphql(
+      `mutation($p:ID!,$i:ID!,$f:ID!,$n:Float!){ updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{number:$n}}){ projectV2Item{ id } } }`,
+      { p: this.cfg.projectId, i: itemId, f: fieldId, n: value },
+    );
+  }
+
+  /**
+   * Set a Project field by its schema name, resolving id/type (and option id for
+   * single-selects). Lets capture/migration say `setProjectFieldByName(item,'Lifecycle','new')`
+   * without hard-coding field ids (portable if the board is recreated).
+   */
+  async setProjectFieldByName(itemId: string, fieldName: string, value: string | number): Promise<void> {
+    const fields = await this.getProjectFields();
+    const f = fields.get(fieldName);
+    if (!f) throw new GitHubError(`Project has no field named '${fieldName}'`);
+    if (f.dataType === 'SINGLE_SELECT') {
+      const opt = (f.options ?? []).find(o => o.name === String(value));
+      if (!opt) throw new GitHubError(`Project field '${fieldName}' has no option '${value}'`);
+      await this.setProjectSingleSelectField(itemId, f.id, opt.id);
+    } else if (f.dataType === 'NUMBER') {
+      await this.setProjectNumberField(itemId, f.id, Number(value));
+    } else {
+      await this.setProjectTextField(itemId, f.id, String(value));
+    }
+  }
+
+  /** Add a comment to an issue (write — errors surface). */
+  async addComment(number: number, body: string): Promise<void> {
+    const { owner, repo } = this.cfg;
+    await this.rest('POST', `/repos/${owner}/${repo}/issues/${number}/comments`, { body });
   }
 }

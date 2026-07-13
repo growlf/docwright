@@ -127,3 +127,65 @@ describe('github-issues — Project v2 (GraphQL)', () => {
     await assert.rejects(() => gh.addIssueToProject('I_1'), /bad field/);
   });
 });
+
+describe('github-issues — Project schema + detailed read (Step 2/3)', () => {
+  const FIELDS = { data: { node: { fields: { nodes: [
+    { __typename: 'ProjectV2SingleSelectField', id: 'F_life', name: 'Lifecycle', dataType: 'SINGLE_SELECT', options: [{ id: 'O_new', name: 'new' }, { id: 'O_tri', name: 'triaged' }] },
+    { __typename: 'ProjectV2FieldCommon', id: 'F_dem', name: 'Demand', dataType: 'NUMBER' },
+    { __typename: 'ProjectV2FieldCommon', id: 'F_dates', name: 'Reported Dates', dataType: 'TEXT' },
+  ] } } } };
+
+  it('getProjectFields resolves fields by name with options', async () => {
+    const { fetch } = mockFetch(() => ({ body: FIELDS }));
+    const gh = new GitHubClient(CFG, fetch);
+    const fields = await gh.getProjectFields();
+    assert.strictEqual(fields.get('Lifecycle')!.dataType, 'SINGLE_SELECT');
+    assert.strictEqual(fields.get('Lifecycle')!.options![1].name, 'triaged');
+    assert.strictEqual(fields.get('Demand')!.id, 'F_dem');
+  });
+
+  it('listProjectItemsDetailed maps issue content + field values by name', async () => {
+    const { fetch } = mockFetch(() => ({ body: { data: { node: { items: { nodes: [{
+      id: 'PVTI_1',
+      content: { __typename: 'Issue', number: 5, title: 't', body: 'b', state: 'OPEN', url: 'u', labels: { nodes: [{ name: 'bug' }] } },
+      fieldValues: { nodes: [
+        { __typename: 'ProjectV2ItemFieldSingleSelectValue', name: 'triaged', field: { name: 'Lifecycle' } },
+        { __typename: 'ProjectV2ItemFieldNumberValue', number: 3, field: { name: 'Demand' } },
+        { __typename: 'ProjectV2ItemFieldTextValue', text: '["2026-07-01"]', field: { name: 'Reported Dates' } },
+      ] },
+    }] } } } } }));
+    const gh = new GitHubClient(CFG, fetch);
+    const items = await gh.listProjectItemsDetailed();
+    assert.strictEqual(items[0].issue!.number, 5);
+    assert.strictEqual(items[0].issue!.state, 'open'); // OPEN → open
+    assert.deepStrictEqual(items[0].issue!.labels, ['bug']);
+    assert.deepStrictEqual(items[0].fields, { Lifecycle: 'triaged', Demand: 3, 'Reported Dates': '["2026-07-01"]' });
+  });
+
+  it('setProjectFieldByName resolves a single-select option id', async () => {
+    const { fetch, calls } = mockFetch((_u, init) => {
+      const q = JSON.parse(init.body).query;
+      if (q.includes('fields(first:50)')) return { body: FIELDS };
+      return { body: { data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'x' } } } } };
+    });
+    const gh = new GitHubClient(CFG, fetch);
+    await gh.setProjectFieldByName('PVTI_1', 'Lifecycle', 'triaged');
+    const mutation = calls.find(c => JSON.parse(c.init.body).query.includes('updateProjectV2ItemFieldValue'))!;
+    assert.strictEqual(JSON.parse(mutation.init.body).variables.o, 'O_tri', 'resolved option id, not the name');
+  });
+
+  it('setProjectFieldByName throws for an unknown field or option', async () => {
+    const { fetch } = mockFetch(() => ({ body: FIELDS }));
+    const gh = new GitHubClient(CFG, fetch);
+    await assert.rejects(() => gh.setProjectFieldByName('i', 'Nope', 'x'), /no field named 'Nope'/);
+    await assert.rejects(() => gh.setProjectFieldByName('i', 'Lifecycle', 'bogus'), /no option 'bogus'/);
+  });
+
+  it('addComment POSTs to the issue comments endpoint', async () => {
+    const { fetch, calls } = mockFetch(() => ({ body: {} }));
+    const gh = new GitHubClient(CFG, fetch);
+    await gh.addComment(42, 'hello');
+    assert.ok(calls[0].url.endsWith('/repos/growlf/docwright/issues/42/comments'));
+    assert.strictEqual(calls[0].init.method, 'POST');
+  });
+});

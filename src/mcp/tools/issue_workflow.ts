@@ -3,7 +3,7 @@ import { logTransition } from '../lib/audit';
 import { spawnSync, execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { suggestDuplicates, confirmDuplicate, createReportedBug } from '../../dispatch/bridge';
+import { captureSuggest, captureConfirm, captureCreate } from '../../dispatch/capture';
 
 function run(cmd: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
   try {
@@ -92,13 +92,15 @@ export async function captureBugReport(action: string, args: Record<string, any>
     case 'suggest': {
       const title = String(args.title || '');
       if (!title) return 'ERROR: title is required';
-      const suggestions = suggestDuplicates(repoRoot, title);
+      const category = args.category === 'feature' ? 'feature' : 'bug';
+      const suggestions = await captureSuggest(repoRoot, title, category);
       return JSON.stringify({ ok: true, suggestions });
     }
 
     case 'confirm': {
-      const canonicalPath = String(args.canonical_path || args.path || '');
-      if (!canonicalPath) return 'ERROR: canonical_path is required';
+      // Local canonical path (issues/foo.md) or a GitHub ref (gh:123) — the facade routes.
+      const ref = String(args.canonical_path || args.path || args.ref || '');
+      if (!ref) return 'ERROR: canonical_path is required';
       const report = {
         title: String(args.title || ''),
         description: String(args.description || ''),
@@ -107,7 +109,7 @@ export async function captureBugReport(action: string, args: Record<string, any>
         system_info: String(args.system_info || ''),
       };
       if (!report.title || !report.description) return 'ERROR: title and description are required';
-      const result = confirmDuplicate(repoRoot, canonicalPath, report);
+      const result = await captureConfirm(repoRoot, ref, report);
       return JSON.stringify({ ok: true, ...result });
     }
 
@@ -118,10 +120,12 @@ export async function captureBugReport(action: string, args: Record<string, any>
         reporter: String(args.reporter || process.env.OPCODE_USER_NAME || 'agent'),
         priority: args.priority || 'medium',
         system_info: String(args.system_info || ''),
+        category: args.category === 'feature' ? 'feature' as const : 'bug' as const,
+        channel: String(args.channel || 'dev'),
       };
       if (!report.title || !report.description) return 'ERROR: title and description are required';
       const related = Array.isArray(args.related) ? args.related : [];
-      const result = createReportedBug(repoRoot, report, related);
+      const result = await captureCreate(repoRoot, report, related);
       return JSON.stringify({ ok: true, ...result });
     }
 

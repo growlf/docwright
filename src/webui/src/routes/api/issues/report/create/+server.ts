@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
-import { createReportedBug } from '../../../../../../../dispatch/bridge';
+import { captureCreate } from '../../../../../../../dispatch/capture';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -14,7 +14,7 @@ export async function POST({ request }) {
     if (!title || !description || !reporter) {
       return json({ error: 'title, description and reporter are required' }, { status: 400 });
     }
-    const result = createReportedBug(
+    const result = await captureCreate(
       REPO_ROOT,
       { title, description, reporter, priority, system_info, milestone, category },
       Array.isArray(related) ? related : [],
