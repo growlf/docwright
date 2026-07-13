@@ -6,15 +6,16 @@ tags: [process, skills, automation, code-over-memory]
 category:
   - process-change
 complexity: medium
-approved: false
+approved: true
 priority: medium
 created_by: "NetYeti@cluster-llm"
 assigned_to: NetYeti
 related_to:
-  - "[[proposals/progressive-skill-script-formalization]]"
-  - "[[docs/formalization-proposal-review]]"
-  - "[[policies/core/code-over-memory]]"
-  - "[[.opencode/rules/one-off-formalization]]"
+  - [[proposals/progressive-skill-script-formalization]]
+  - [[docs/formalization-proposal-review]]
+  - [[policies/core/code-over-memory]]
+  - [[.opencode/rules/one-off-formalization]]
+  - proposals/progressive-skill-script-formalization.md
 depends_on: []
 blocks: []
 ---
