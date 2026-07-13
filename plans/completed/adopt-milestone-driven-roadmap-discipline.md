@@ -1,6 +1,6 @@
 ---
 title: Adopt milestone-driven roadmap discipline (lilyetibot model)
-status: approved
+status: canceled
 author: NetYeti
 created: 2026-07-10
 tags:
@@ -21,10 +21,12 @@ completed_steps: 0
 tests_defined: true
 tests_human_reviewed: false
 scenario_synthesis: "Happy path: W0 clears the six governance-debt bugs, W1 lands structured steps end-to-end (schema → writers → readers with legacy fallback), W2 pins version semantics and automates the patch bump, W3–W6 gate phase closes, testing tiers, roadmap, and agent onboarding on existing engines. Failure paths: new step validation rejects an active plan → strict mode stays feature-flagged off until step 10's migration verifies; staged bump double-fires → completed_version stamp detects and refuses; phase-close gating blocks a legitimate close → existing gate_status: waived (human-only) escape hatch; BDFL gate stalls >5 days → dependent step pauses, freeze does NOT extend (exit = step 14 merged); wave PR destabilizes main → revert that wave's merge (step 10 ships as its own PR so migrations revert independently)."
-_path: plans/adopt-milestone-driven-roadmap-discipline.md
+_path: plans/completed/adopt-milestone-driven-roadmap-discipline.md
 related_to:
   - proposals/approved/plan-lifecycle-enforcement-gaps.md
 channel: stable
+canceled_date: 2026-07-13
+cancellation_reason: "Overtaken by events (created 2026-07-10, before this session's v0.5.0→v0.5.3, the GitHub-issues pivot, and the authz redesign). Verified currency review: W0 bug-fixes shipped (harden-markdown-table-row-parsing, phase-close-web-ui, approve-paths, reconcile-versioning); W2 versioning wave is REVERSED by shipped policy (patch = per-release, NOT per-completed-plan — running it would revert the policy); W3 step 16 done (lifecycle-gates completed); steps 14/19 collide with the in-flight HUMAN_APPROVED retirement (authz redesign); W1/W5 assume the pre-GH-pivot local-issue/milestone model; the W0–W2 freeze is void (extensive main work happened since). Still-valid, un-done slices (testing tiers, AGENTS.md onboarding, living-roadmap renderer) re-captured in proposals/roadmap-discipline-carryover.md; the structured-steps / mode-rename / roadmap-sequencing ideas retain standalone approved proposals (now un-consumed — re-plan fresh when prioritized)."
 ---
 
 # Adopt milestone-driven roadmap discipline (lilyetibot model)
