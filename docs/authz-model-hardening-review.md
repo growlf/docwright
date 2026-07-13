@@ -6,6 +6,11 @@ guarantee-regression audit) plus synthesis, run 2026-07-13. Purpose: find REAL f
 proposed model and resolve them so DocWright still gets what it needs. For BDFL + BigPickle
 review alongside the proposal.
 
+> **Load-bearing security claims verified directly against the code (2026-07-13), not just
+> relayed from the reviewers:** `git-commit.ts:27` (`HUMAN_APPROVED: '1'` hardcoded),
+> `hooks.server.ts:17,21` (`AUTH_MODE ?? 'none'` → `DEV_USER` with `teams:['admin']`),
+> `audit.ts:15,30` (`'NetYeti'` actor fallback + `catch {}` swallow). All three confirmed.
+
 ## Verdict
 
 **Approve the direction; do not ship the model as written.** Retiring the blunt global
