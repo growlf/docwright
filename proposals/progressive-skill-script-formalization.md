@@ -52,12 +52,21 @@ a script would have made them cheap and deterministic.
    - ~2nd–3rd use of that skill: **codify the deterministic core as a script** (npm
      script / dispatch fn / MCP tool) the skill calls, so results are consistent and
      token-cheap.
-2. **Track the count.** A lightweight tally the agent maintains (candidate: extend the
-   friction log, or a `docs/repeat-tasks.md` ledger) so "have I done this ~3 times?" is
-   answered from data, not memory (code-over-memory).
-3. **Enforce vs guide.** Start as a session-start reminder + a soft gate that surfaces
-   "repeated task with no skill" candidates; harden later if useful.
-4. **Applies to all code projects**, DocWright first; bundle the discipline into the
+2. **Detect repetition at session-startup — no heavy infra.** When
+   `docwright-session-start` reads the last session log, it scans for repeated
+   task-shapes and surfaces "you've done X ~3×; write a skill" candidates. Detection is a
+   read of history already loaded, not a new tracking system.
+3. **Build the skill-writer FIRST (the prerequisite).** A meta-capability that *authors*
+   skills, itself climbing the ladder skill → tools → MCP tool. Nothing else in this
+   discipline can operate until skills can be created consistently, so the skill-writer is
+   deliverable #1.
+4. **Generated skills self-instrument by default.** The skill-writer's template embeds, in
+   every skill it produces: usage-count tracking + logic that, once the skill crosses the
+   ~2–3-use threshold, **offers its own upgrade** to a codified script / MCP tool. The
+   skill carries its own "should I be promoted?" check.
+5. **Enforce vs guide.** Start as the session-start reminder + the self-offer; harden to a
+   gate later if useful.
+6. **Applies to all code projects**, DocWright first; bundle the discipline into the
    dev-oriented profiles' instructions so adopting orgs inherit it.
 
 ## Expected Outcomes
@@ -74,9 +83,13 @@ a script would have made them cheap and deterministic.
 
 ## Verification
 
-- A repeated task, on its 3rd occurrence, produces a skill; on the skill's ~3rd use, a
-  script. Demonstrated on the reconcile/close-out flow as the pilot.
-- Token/step count for the pilot flow drops measurably once scripted.
+- The **skill-writer exists first** and can author a new skill; skills it produces ship
+  with usage-tracking + a self-upgrade offer by default.
+- `docwright-session-start` surfaces a repeated-task candidate from the last session log
+  (e.g. the reconcile/close-out flow, run ~10× this session).
+- A repeated task, on its ~3rd occurrence, produces a skill; on the skill's ~3rd use it
+  offers, and then a script/MCP tool is codified. Token/step count for the pilot flow
+  drops measurably once scripted.
 
 ## Related
 

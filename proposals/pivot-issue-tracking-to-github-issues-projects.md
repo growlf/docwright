@@ -23,11 +23,14 @@ blocks: []
 
 ## Summary
 
-Make **GitHub Issues + GitHub Projects the canonical source of truth for issues**
-(bugs, code-tasks, dev friction) on code projects — DocWright itself first. DocWright
-stops storing issues as local `issues/*.md` files; it **reads and links** them so
-proposals reference stable GitHub issue URLs. This is a BDFL architecture decision
-(2026-07-13), recorded here with its rationale.
+**Separation of concerns, not an invariant-breaking pivot.** Governance/direction
+(proposals, plans, policies, decisions) stays git-native in the vault; the **actual
+development work** moves to **GitHub Issues + a GitHub Project board** — where the code
+and PRs already live. DocWright **reads and links** GH issues so proposals reference
+stable GitHub issue URLs, and it keeps the **Project board current** (every issue on the
+board with the right status column). This breaks the self-hosting cyclic reference by
+moving the high-churn *execution* layer out of the code repo, while the *governance* it
+serves stays put. BDFL decision, 2026-07-13.
 
 ## Problem Statement — the cyclic reference
 
@@ -70,10 +73,15 @@ that must be able to move independently.
    its linter/hook rules. No destructive step runs before parity is proven.
 5. **Full GitHub Projects awareness (code projects).** Board columns mapped to the issue
    lifecycle; issue↔PR linkage; the `/status` "needs your attention" queue reads GH.
-6. **Amend the core invariant.** CLAUDE.md §"Git is the canonical store. No auxiliary
-   database" is scoped to **governance docs** (proposals, plans, policies, decisions),
-   which remain git-native in the vault. **Issue tracking is explicitly delegated to
-   GitHub Issues/Projects** for code projects. (Proposals/plans still link to GH issues.)
+6. **Clarify (not break) the core invariant.** CLAUDE.md §"Git is the canonical store.
+   No auxiliary database" always meant the **governance layer** — proposals, plans,
+   policies, decisions — which stays git-native in the vault. **Development-issue tracking
+   is GitHub's job** (Issues + Projects), where the code already lives. This is a wording
+   clarification that separates governance-of-record (git) from work-tracking (GitHub).
+7. **Two-way reconcile + keep the Project current.** Migration and capture reconcile
+   against issues ALREADY on GitHub (reuse `github_issue:` ids — never duplicate), and
+   every issue (migrated + newly captured) is placed on the DocWright GitHub Project with
+   the correct status column; status changes update the board.
 
 ## What stays git-native (deliberately)
 
@@ -137,7 +145,10 @@ Safeguards:
 - A proposal links a GH issue URL and the link resolves in the UI.
 - The `issues/` folder is gone and CI/hooks no longer reference it; nothing in the repo
   churns when an issue changes.
-- Migration: every prior local issue has a GH counterpart (mapping recorded).
+- Migration: every prior local issue has **exactly one** GH counterpart (reconciled
+  against issues already on GitHub — no duplicates; mapping recorded).
+- **Every issue (migrated + new) is on the DocWright GitHub Project** with the correct
+  status column; moving an issue's status updates the board.
 
 ## Risks / tradeoffs
 
