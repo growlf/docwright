@@ -1,29 +1,52 @@
 ---
-title: "Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)"
+title: "Plan: Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)"
+status: draft
 author: "NetYeti"
 created: "2026-07-13"
-tags: [architecture, issues, github, github-projects, dogfooding, decision]
-category:
-  - process-change
-  - integration
-complexity: high
-approved: true
-priority: high
-created_by: "NetYeti@cluster-llm"
-assigned_to: NetYeti
-related_to:
-  - [[proposals/approved/issue-heatmap-and-dedup-pipeline]]
-  - [[proposals/approved/collaboration-issue-model-and-roadmap-sync]]
-  - [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]]
-  - plans/pivot-issue-tracking-to-github.md
+created_by: "NetYeti@phoenix"
+tags: [planning]
+proposal_source: "proposals/pivot-issue-tracking-to-github-issues-projects"
+priority: medium
+phase: 
+automated: guided
+waiting_reason:  # Populated when status = waiting-for-user
+assigned_to: ["NetYeti"]
+# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
+# parent_deliverable: "1"            # row number in parent's Deliverables table
+related_to: []
 depends_on: []
 blocks: []
-consumed_by: plans/plan-pivot-issue-tracking-to-github-issues-projects-break-the-self-hosting-cyclic-reference.md
+reviewed_by:
+reviewed_date:
+canceled_date:  # Populated when plan is canceled
+cancellation_reason:  # Populated when plan is canceled
+template_version: "1.0"
+tests_defined: true
+tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
+# Gate fields — populated when a lifecycle gate applies to this document
+gate_reviewer:  # Who must review (set automatically by gate rules)
+gate_status:    # pending | approved | waived
+gate_date:      # Stamped when gate_status is set
+gate_note:      # Optional reviewer note
+gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
+gate_quorum: 1    # Phase 1a — minimum approvals needed
 ---
 
-# Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)
+# Plan: Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)
 
-## Summary
+## Mode
+
+Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
+
+**MENTORSHIP MODE — Human leads, LLM advises**
+
+- Human carries out tasks their own way
+- LLM provides SOP compliance checks and safety warnings
+- LLM offers suggestions when human asks for help
+
+## Overview
+
+### Summary
 
 **Separation of concerns, not an invariant-breaking pivot.** Governance/direction
 (proposals, plans, policies, decisions) stays git-native in the vault; the **actual
@@ -34,7 +57,7 @@ board with the right status column). This breaks the self-hosting cyclic referen
 moving the high-churn *execution* layer out of the code repo, while the *governance* it
 serves stays put. BDFL decision, 2026-07-13.
 
-## Problem Statement — the cyclic reference
+### Problem statement — the cyclic reference
 
 DocWright is a governance layer that stores its documents as Markdown in a git repo.
 When DocWright is used to develop **DocWright itself**, its development-governance
@@ -57,35 +80,7 @@ development failure mode. Its symptoms dominated the 2026-07-11..13 sessions:
 Storing the tool's issue tracker inside the tool's own source tree couples two things
 that must be able to move independently.
 
-## Proposed Solution
-
-1. **GitHub Issues + Projects are canonical for issues.** Bugs/code-tasks/friction are
-   created and maintained in GitHub (Issues + a Project board), *outside* the file tree,
-   breaking that arm of the cycle. GH Projects gives real boards, status columns, and
-   automation the markdown folder never could.
-2. **DocWright becomes a read/relate layer for issues.** The Web UI reads GH Issues/Projects
-   (via the API) and renders them; proposals/plans link to stable GH issue URLs. No issue
-   is stored as a governed file.
-3. **Rework the capture pipeline onto the GH API.** `capture_bug_report`
-   (suggest/confirm/create), the demand heatmap, and cross-source dedup are reimplemented
-   against GitHub Issues (labels for demand, search for dedup) instead of `issues/*.md`.
-4. **Migrate losslessly, then retire `issues/`.** Migrate the existing ~60 local issues to
-   GitHub with **full fidelity** (see the migration-fidelity section — this is a hard
-   gate), keep an **archived copy** of the originals, and only then remove the folder and
-   its linter/hook rules. No destructive step runs before parity is proven.
-5. **Full GitHub Projects awareness (code projects).** Board columns mapped to the issue
-   lifecycle; issue↔PR linkage; the `/status` "needs your attention" queue reads GH.
-6. **Clarify (not break) the core invariant.** CLAUDE.md §"Git is the canonical store.
-   No auxiliary database" always meant the **governance layer** — proposals, plans,
-   policies, decisions — which stays git-native in the vault. **Development-issue tracking
-   is GitHub's job** (Issues + Projects), where the code already lives. This is a wording
-   clarification that separates governance-of-record (git) from work-tracking (GitHub).
-7. **Two-way reconcile + keep the Project current.** Migration and capture reconcile
-   against issues ALREADY on GitHub (reuse `github_issue:` ids — never duplicate), and
-   every issue (migrated + newly captured) is placed on the DocWright GitHub Project with
-   the correct status column; status changes update the board.
-
-## What stays git-native (deliberately)
+### What stays git-native (deliberately)
 
 Proposals, plans, policies, decisions — the *governance/direction* layer — remain in the
 vault as Markdown. Only *issues* (the high-churn, code-adjacent tracking layer) move out.
@@ -93,7 +88,7 @@ This keeps DocWright's governance model intact while severing the specific cycli
 dependency that issues create. (Whether plans/proposals should later decouple from the
 code repo too is a separate, larger question — out of scope here.)
 
-## Scope of change
+### Scope of change
 
 - New: `src/dispatch/github-issues.ts` (or extend `bridge.ts`) — GH Issues/Projects API
   client (list/search/create/label), auth via existing GH token.
@@ -104,7 +99,7 @@ code repo too is a separate, larger question — out of scope here.)
   issue-status rules, the local `github_issue:` backlink convention (inverted).
 - Docs: amend CLAUDE.md invariant + PROJECT.md issue-model section.
 
-## Migration fidelity — preserve the content base (no lost "juice") [HARD GATE]
+### Migration fidelity — preserve the content base (no lost "juice") [hard gate]
 
 The accumulated signal in the current issues is valuable and must survive the pivot
 intact — a naive port would flatten it. Every field maps to a durable GitHub equivalent,
@@ -130,7 +125,7 @@ Safeguards:
   this passes.
 - Dedup history is preserved so the demand pipeline doesn't "reset to zero" on cutover.
 
-## Security implications
+### Security implications
 
 - GitHub becomes a hard dependency for issue tracking on code projects — acceptable for
   code projects (they already live on GitHub) but NOT for air-gapped/offline org vaults;
@@ -139,7 +134,7 @@ Safeguards:
 - The GH token's scope must be least-privilege (issues + projects on the one repo).
 - No secrets leave the repo; issue content is already public/team-visible on GitHub.
 
-## Verification
+### Verification
 
 - Round-trip: file a bug via `capture_bug_report` → it appears as a GitHub issue with the
   right labels; dedup finds it on the next suggest; the `/status` queue + heatmap render it
@@ -152,7 +147,7 @@ Safeguards:
 - **Every issue (migrated + new) is on the DocWright GitHub Project** with the correct
   status column; moving an issue's status updates the board.
 
-## Risks / tradeoffs
+### Risks / tradeoffs
 
 | Risk | Mitigation |
 |------|------------|
@@ -161,9 +156,65 @@ Safeguards:
 | Large rework of the capture/heatmap pipeline | Stage it: read-layer first, then capture, then retire local folder + migrate |
 | GH API rate limits / availability | Cache reads; degrade gracefully; the UI reads, doesn't block on GH |
 
-## Related
+### Related
 
 - [[proposals/approved/issue-heatmap-and-dedup-pipeline]] — the pipeline being reworked.
 - [[proposals/approved/collaboration-issue-model-and-roadmap-sync]] — the issue model.
 - [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]] — visibility.
 - Motivating friction: the 2026-07-11..13 dogfood↔main reconcile churn (session notes).
+
+
+## Implementation Steps
+
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
+| Step | Action | Details | Status |
+|------|--------|---------|--------|
+| 1 | | | ⏳ Pending |
+
+## Testing Plan
+
+
+
+## Rollback Procedures
+
+
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
+
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed (`tests_human_reviewed: true`)
+- [ ] Deferred ideas captured as proposals before closing (see [[policies/core/capture-deferred-ideas.md]])
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
+## Testing Plan
+
+### Step Verification
+
+- [ ] All implementation steps complete and outcomes verified
+
+### Integration & Regression
+
+- [ ] Existing tests pass without modification (`npm test`)
+- [ ] TypeScript compiles cleanly (`npm run typecheck`)
+- [ ] Plan: Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference) functionality works end-to-end
+
+### Gate Criteria
+
+- [ ] `tests_defined` set to `true` in frontmatter
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No regressions introduced to adjacent workflows
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-07-13 | Created | NetYeti |
