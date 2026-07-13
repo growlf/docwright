@@ -13,7 +13,8 @@ waiting_reason:  # Populated when status = waiting-for-user
 assigned_to: ["NetYeti"]
 # parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
 # parent_deliverable: "1"            # row number in parent's Deliverables table
-related_to: []
+related_to:
+  - plans/plan-docwright-dev-cloud-instances-dogfood-csdocs-cs-erp-images-msp-pilot.md
 depends_on: []
 blocks: []
 reviewed_by:
@@ -21,7 +22,7 @@ reviewed_date:
 canceled_date:  # Populated when plan is canceled
 cancellation_reason:  # Populated when plan is canceled
 template_version: "1.0"
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
 # Gate fields — populated when a lifecycle gate applies to this document
 gate_reviewer:  # Who must review (set automatically by gate rules)
