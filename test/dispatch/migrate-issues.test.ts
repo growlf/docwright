@@ -75,6 +75,20 @@ describe('migrate-issues — planMigration (two-way, no duplicates)', () => {
     assert.strictEqual(plan.actions[0].kind, 'skip');
   });
 
+  it('an empty-title issue reconciles by slug (created title == match key — no duplicate)', () => {
+    // Regression: empty title → created titled with the slug; the lookup must use the
+    // same slug fallback, else a second run re-creates it.
+    const noTitle = parseLocalIssue('issues/bug-empty.md', `---\nstatus: new\ndemand_count: 1\n---\n# body`);
+    // First run against an empty GH → create, titled with the slug.
+    const first = planMigration([noTitle], [], new Map());
+    assert.strictEqual(first.actions[0].kind, 'create');
+    assert.strictEqual(first.actions[0].title, 'bug-empty');
+    // Second run: GH now has an issue titled with the slug → must reconcile, not duplicate.
+    const second = planMigration([noTitle], [{ number: 5, nodeId: 'I_5', title: 'bug-empty', labels: [] }], new Map());
+    assert.strictEqual(second.actions[0].kind, 'update');
+    assert.strictEqual(second.actions[0].ghIssueNumber, 5);
+  });
+
   it('same dates in a different order still count as matching (set compare)', () => {
     const i = local('bug-d', { title: 'D', status: 'new', demand_count: 2, reported_dates: ['2026-07-01', '2026-07-05'], github_issue: 90 });
     const ex: ExistingGhIssue[] = [{ number: 90, nodeId: 'I_90', title: 'D', labels: [] }];

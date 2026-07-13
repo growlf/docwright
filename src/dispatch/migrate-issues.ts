@@ -168,10 +168,14 @@ export function planMigration(
     const fields = buildFields(issue);
     const labels = buildLabels(issue);
     const body = buildBody(issue);
-    const base = { slug: issue.slug, localPath: issue.path, title: String(issue.fm.title ?? issue.slug), labels, body, fields };
+    // Effective title MUST be identical for the created issue and the reconcile key —
+    // else an empty-title issue is created titled with its slug but looked up by '' and
+    // re-created as a duplicate on the next run. `||` (not `??`) so '' falls back to slug.
+    const title = String(issue.fm.title || issue.slug);
+    const base = { slug: issue.slug, localPath: issue.path, title, labels, body, fields };
 
     const linked = issue.fm.github_issue ? byNumber.get(Number(issue.fm.github_issue)) : undefined;
-    const matched = linked ?? byTitle.get(String(issue.fm.title ?? '').trim().toLowerCase());
+    const matched = linked ?? byTitle.get(title.trim().toLowerCase());
 
     if (matched) {
       const onBoard = boardFieldsByNumber.has(matched.number);
