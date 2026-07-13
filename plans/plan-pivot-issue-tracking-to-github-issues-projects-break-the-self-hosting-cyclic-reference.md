@@ -14,7 +14,7 @@ related_to:
   - proposals/pivot-issue-tracking-to-github-issues-projects.md
 depends_on: []
 blocks: []
-tests_defined: false
+tests_defined: true
 tests_human_reviewed: false
 template_version: "1.0"
 scenario_synthesis: "Governance (proposals/plans/policies/decisions) stays git-native; development work moves to GitHub Issues + a GitHub Project board. An additive, flagged read/relate layer renders GH issues and lets proposals link stable GH URLs; capture is reworked to create GH issues AND place them on the Project; existing local issues migrate with full fidelity AND two-way reconcile against issues already on GitHub (no duplicates), each on the board with the correct status column, demand_count + every reported_date preserved in Project custom fields (Bar B). A parity gate (no data lost + ranking preserved + board placement + links resolve) blocks a single clean cutover; the local issues/ folder then retires (archived, never deleted)."
