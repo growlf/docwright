@@ -1,6 +1,6 @@
 ---
 title: Phase close-out from the Web UI
-status: in-progress
+status: completed
 author: NetYeti
 created: 2026-07-11
 tags:
