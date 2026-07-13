@@ -1,6 +1,6 @@
 ---
 title: "Separate dev-tracking (GitHub Issues + Projects) from governance (vault)"
-status: draft
+status: canceled
 author: NetYeti
 created: 2026-07-13
 tags: [architecture, issues, github, github-projects, migration, separation-of-concerns]
