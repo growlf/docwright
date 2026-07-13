@@ -6,6 +6,7 @@ import { verifyPlanTests, TestRunner } from '../../src/mcp/tools/verify_tests';
 import { updatePlanStatus } from '../../src/mcp/tools/mutation';
 import { transitionToCompleted } from '../../src/mcp/tools/transitions';
 import { uncheckedTestingPlanBoxes, checkCompletionGate } from '../../src/mcp/lib/steps';
+import { isReadyForHumanCompletion } from '../../src/dispatch/completion-gate';
 import { setRepoRoot } from '../../src/mcp/lib/paths';
 
 const passRunner: TestRunner = () => ({ ok: true, outputTail: '12 passing' });
@@ -206,6 +207,29 @@ describe('verify_plan_tests + completion test gate', () => {
       assert.ok(missing && missing.includes('runtime_verified'), `expected the runtime attestation requirement, got: ${missing}`);
       const attested = checkCompletionGate(inject('verification_type: runtime\nruntime_verified: true'), 'p');
       assert.strictEqual(attested, null, 'runtime_verified: true satisfies the gate');
+    });
+  });
+
+  // #345 — the /status "needs your attention" predicate: work done, awaiting
+  // only the human's certify + Complete (excludes tests_defined/human_reviewed).
+  describe('isReadyForHumanCompletion', () => {
+    it('true when work is done + gate checked + tests green (regardless of human attestations)', () => {
+      // planDoc with lastResult pass but NOT yet human-reviewed → still "ready for the human"
+      assert.strictEqual(isReadyForHumanCompletion(planDoc({ lastResult: 'pass', testsReviewed: false, testsDefined: false })), true);
+    });
+    it('false with a pending step', () => {
+      const doc = planDoc({ lastResult: 'pass' }).replace('| 1 | Do the thing | ✅ Done |', '| 1 | Do the thing | ⏳ Pending |');
+      assert.strictEqual(isReadyForHumanCompletion(doc), false);
+    });
+    it('false with an open Testing Plan box', () => {
+      assert.strictEqual(isReadyForHumanCompletion(planDoc({ lastResult: 'pass', openBox: true })), false);
+    });
+    it('false when unit tests have not been recorded', () => {
+      assert.strictEqual(isReadyForHumanCompletion(planDoc({})), false); // no tests_last_result
+    });
+    it('true for verification_type: none with no recorded run', () => {
+      const doc = planDoc({}).replace('title: "Gate Test Plan"', 'title: "Gate Test Plan"\nverification_type: none');
+      assert.strictEqual(isReadyForHumanCompletion(doc), true);
     });
   });
 });
