@@ -34,6 +34,30 @@ that grant's scope. This aligns AI governance with DocWright's own thesis — *g
 policy + validation + audit trails, not by blocking access* — instead of contradicting it.
 BDFL direction, 2026-07-13.
 
+## Review outcome — model revised (2026-07-13, pending BDFL confirmation)
+
+A three-perspective adversarial review (injection red-team · mechanical enforceability ·
+guarantee-regression audit) hardened this design. Full analysis:
+[[docs/authz-model-hardening-review]]. The direction holds; three corrections change the
+model and are folded in below (they await BDFL + BigPickle confirmation):
+
+1. **The strong bar keys on *reversibility*, not "document vs action."** A non-conversational,
+   code-verified second factor is required for **every irreversible/outward action**
+   (merge-to-trunk, delete, release/tag, external send) — not only governance-doc lifecycle.
+   You cannot audit your way out of a `git push --tags`, a delete, or an external send.
+2. **Provenance becomes a token, not a prose rule.** The enforceable primitive is a
+   **server-minted, single-use, target-scoped grant token** (`.docwright/grants.jsonl` +
+   a `DW-GRANT:<nonce>` commit trailer, verified + consumed server-side). The conversation
+   *triggers* the mint; the token is the seal the AI cannot forge. This resolves the open
+   provenance question and closes scope-stretch + replay in one primitive.
+3. **Audit hardening is a blocking prerequisite** (real actor attribution, fail-closed on
+   write error, append-only/hash-chained) — the current audit sink can't attribute and
+   swallows errors, so "audit-proof" isn't yet true.
+
+The review also surfaced a **pre-existing security hole independent of this proposal**
+(`git-commit.ts` stamps `HUMAN_APPROVED:'1'` on every UI commit; `AUTH_MODE=none` synthesizes
+an admin) — filed separately, not blocked on this.
+
 ## Settled decisions (BDFL, 2026-07-13)
 
 1. **Direction approved:** retire the global `HUMAN_APPROVED=1` gate; replace with the
@@ -43,8 +67,14 @@ BDFL direction, 2026-07-13.
    UI action, never collapsible into a conversational grant. The strongest bar stays on
    approvals-of-record (`approved`, `completed`, `gate_status`).
 
-*Open for review:* whether the injected-grant **provenance rule** (grants only from the
-authenticated live human — never tool output / file / memory) is strict enough as written.
+*Provenance question — now answered by review:* a prose rule ("grants only from the live
+human") is **not** strict enough (a hook can't distinguish it from injected text). Resolved
+via the server-minted grant **token** (Review Outcome #2) — provenance becomes a checkable
+property, not AI self-restraint.
+
+*Open for BDFL/BigPickle:* confirm the three model revisions in the Review Outcome
+(reversibility axis · token primitive · audit-hardening-first), and the `AUTH_MODE=none`
+policy call (whether governance transitions are permitted at all in single-user local mode).
 
 ## Problem Statement
 
@@ -69,9 +99,12 @@ Three problems:
 3. **It confuses two different things.** "Did a human bless this *document's* lifecycle
    transition?" (approval-of-record, highest audit stakes) and "May the AI perform this
    *action*?" (merge/delete/release) are different questions with different risk profiles.
-   The single gate treats them identically. In practice, action-authorization already
-   works conversationally (the runtime classifier accepts an explicit human "yes"); only
-   the governance-doc path is stuck on the env-var ritual.
+   The single gate treats them identically. (Correction per review: DocWright code does
+   **not** currently gate action-authorization for merge/delete/release at all — those are
+   OpenCode-runtime behavior outside this repo, i.e. currently *ungoverned*. So this model
+   *formalizes* governance over them for the first time — a net increase, not a loosening —
+   for the reversible classes; the correction in point 1 of the Review Outcome ensures the
+   irreversible ones gain a real bar rather than a conversational one.)
 
 ## The invariant to preserve (the hinge)
 
@@ -138,13 +171,17 @@ analysis — and independent review (the author of this section is the restraine
   untrusted transcript segment (any of which an attacker could control). This is a hard
   rule and itself a security *improvement* over an env var (which says nothing about
   provenance).
-- **Tradeoff — loss of the un-fakeable physical act.** The env var's one virtue is that
-  it's a human keystroke the AI can't fake. For most classes the replacement keeps a
-  *deliberate* human act (explicit grant) and trades keystroke-proof for audit-proof. For
-  the **governance-doc lifecycle class, a required second factor is retained** (BDFL
-  decision, 2026-07-13): an explicit **UI action** distinct from the conversation — so the
-  highest-stakes approvals-of-record (`approved`, `completed`, `gate_status`) keep an
-  un-collapsible, out-of-band human act and cannot ride a conversational grant.
+- **The "un-fakeable keystroke" is a myth on the primary surface (review correction).** The
+  env var is *not* a human act the AI can't fake today: `src/webui/src/lib/server/git-commit.ts`
+  stamps `HUMAN_APPROVED:'1'` onto **every** UI commit, and `AUTH_MODE=none` (default)
+  synthesizes an admin. So the replacement is not trading a hard keystroke for something
+  softer — it's replacing unverified trust with a **verifiable** one. The real un-fakeable
+  act is the **server-minted grant token** (Review Outcome #2): issued only by a genuine
+  authenticated human action (UI click / CLI grant), recorded server-side, single-use,
+  target-scoped — the AI can relay it but cannot mint it.
+- **Second factor for the whole irreversible/outward class + governance docs** (revised): the
+  token-backed, non-conversational factor covers `approved`/`completed`/`gate_status` **and**
+  merge-to-trunk / delete / release-tag / external-send. The dividing line is reversibility.
 
 ## Scope of change
 
