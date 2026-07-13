@@ -1,34 +1,52 @@
 ---
-title: "Verified gate criteria — evidence-backed plan completion, not checkbox theater"
-author: NetYeti
-created: 2026-07-13
-tags:
-  - governance
-  - gates
-  - verification
-  - completion
-  - lifecycle
-  - ui
-  - bug
-category:
-  - process-change
-complexity: high
-approved: true
-priority: high
-created_by: "NetYeti@cluster-llm"
-assigned_to: NetYeti
+title: "Plan: Verified gate criteria — evidence-backed plan completion, not checkbox theater"
+status: draft
+author: "NetYeti"
+created: "2026-07-13"
+created_by: "NetYeti@phoenix"
+tags: [planning]
+proposal_source: "proposals/verified-gate-criteria-evidence-backed-completion"
+priority: medium
+phase: 
+automated: guided
+waiting_reason:  # Populated when status = waiting-for-user
+assigned_to: ["NetYeti"]
+# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
+# parent_deliverable: "1"            # row number in parent's Deliverables table
+related_to: []
 depends_on: []
 blocks: []
-related_to:
-  - "[[policies/core/code-over-memory]]"
-  - "[[policies/core/multi-perspective-review]]"
-  - "[[policies/core/mutual-augmentation-cycle]]"
-consumed_by: plans/plan-verified-gate-criteria-evidence-backed-plan-completion-not-checkbox-theater.md
+reviewed_by:
+reviewed_date:
+canceled_date:  # Populated when plan is canceled
+cancellation_reason:  # Populated when plan is canceled
+template_version: "1.0"
+tests_defined: true
+tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
+# Gate fields — populated when a lifecycle gate applies to this document
+gate_reviewer:  # Who must review (set automatically by gate rules)
+gate_status:    # pending | approved | waived
+gate_date:      # Stamped when gate_status is set
+gate_note:      # Optional reviewer note
+gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
+gate_quorum: 1    # Phase 1a — minimum approvals needed
 ---
 
-# Verified gate criteria — evidence-backed plan completion, not checkbox theater
+# Plan: Verified gate criteria — evidence-backed plan completion, not checkbox theater
 
-## Problem (this is a defect, not an enhancement)
+## Mode
+
+Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
+
+**MENTORSHIP MODE — Human leads, LLM advises**
+
+- Human carries out tasks their own way
+- LLM provides SOP compliance checks and safety warnings
+- LLM offers suggestions when human asks for help
+
+## Overview
+
+### Problem (this is a defect, not an enhancement)
 
 Plan completion is gated on a Phase Gate / Gate Criteria checklist
 (`src/dispatch/completion-gate.ts` → `checkCompletionGate`). Today that gate does exactly
@@ -56,7 +74,7 @@ The real need, in the BDFL's words: *"verifying that the human correctly checked
 be happening — the verification is the part we really need."* The value was never the tick; it
 is whether the **claim behind the tick is true**.
 
-## Proposed Solution — a gate criterion is a verifiable claim, not a checkbox
+### Proposed solution — a gate criterion is a verifiable claim, not a checkbox
 
 Model each gate criterion as a *claim with a declared way to verify it*, resolved into three
 tiers. Per [[policies/core/code-over-memory]] the default is **machine-derive everything that
@@ -92,14 +110,14 @@ ACL-gated UI control routed through the sanctioned plan-write for tiers 2–3). 
 Complete via unverified ticks, and no plan can *dead-end* because a satisfied criterion had no
 way to be recorded.
 
-## Design decision to settle in the plan
+### Design decision to settle in the plan
 
 How much is expressed as structured, machine-checkable criteria vs. free-text? Leaning: give
 gate criteria an optional `verify:` binding (a named check the validator can run) in a
 structured plan-steps-style schema; criteria without a binding fall to tier 3 (human + audit).
 This dovetails with the deferred structured-plan-steps work ([[proposals/roadmap-discipline-carryover]]).
 
-## Security implications
+### Security implications
 
 Strengthens the security posture: removes a false-assurance surface (the unverifiable gate),
 makes every completion attestation evidence-backed and auditable (who/when/commit), and keeps
@@ -107,7 +125,7 @@ enforcement in code rather than convention. Tier-3 attestations must be ACL-gate
 authorized roles can sign off; the audit record is append-only. No new bypass is introduced —
 the machine-derived tiers *remove* a bypass.
 
-## How this will be verified
+### How this will be verified
 
 - Unit: `checkCompletionGate` (and its tier resolver) pass/fail against fixtures for each tier —
   derived-true, derived-false, attested-consistent, attested-contradicted, judgment-with/without-ACL.
@@ -117,7 +135,7 @@ the machine-derived tiers *remove* a bypass.
   to Complete **with no manual markdown edit and no raw MCP call**, and a plan with a contradicted
   attestation is refused with the contradiction named.
 
-## Relationship to existing issues
+### Relationship to existing issues
 
 - **Subsumes** growlf/docwright#407 (Phase Gate boxes have no write path) — that is the tier-1/UI
   slice of this.
@@ -125,7 +143,63 @@ the machine-derived tiers *remove* a bypass.
 - Touches `src/dispatch/completion-gate.ts`, `PropertiesPane.svelte`, the plan schema, and the
   plan-review API.
 
-## Future
+### Future
 
 Once criteria carry `verify:` bindings, the same evidence can render a live "why can't this
 complete?" panel and feed the roadmap/burndown — a plan's real readiness, computed, not asserted.
+
+
+## Implementation Steps
+
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
+| Step | Action | Details | Status |
+|------|--------|---------|--------|
+| 1 | | | ⏳ Pending |
+
+## Testing Plan
+
+
+
+## Rollback Procedures
+
+
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
+
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed (`tests_human_reviewed: true`)
+- [ ] Deferred ideas captured as proposals before closing (see [[policies/core/capture-deferred-ideas.md]])
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
+## Testing Plan
+
+### Step Verification
+
+- [ ] All implementation steps complete and outcomes verified
+
+### Integration & Regression
+
+- [ ] Existing tests pass without modification (`npm test`)
+- [ ] TypeScript compiles cleanly (`npm run typecheck`)
+- [ ] Plan: Verified gate criteria — evidence-backed plan completion, not checkbox theater functionality works end-to-end
+
+### Gate Criteria
+
+- [ ] `tests_defined` set to `true` in frontmatter
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No regressions introduced to adjacent workflows
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-07-13 | Created | NetYeti |
