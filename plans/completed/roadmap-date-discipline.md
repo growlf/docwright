@@ -4,6 +4,7 @@ author: "NetYeti"
 created: "2026-07-13"
 created_by: "NetYeti@cluster-llm"
 status: completed
+completed_date: 2026-07-13
 proposal_source: "proposals/roadmap-date-discipline.md"
 priority: high
 automated: guided
@@ -23,6 +24,7 @@ completed_steps: 7
 tests_last_run: "2026-07-13T22:43:08.130Z"
 tests_last_result: pass
 tests_last_commit: f9abad9
+_path: plans/completed/roadmap-date-discipline
 ---
 
 # Roadmap date discipline — enforce version/milestone dates + issue-in-range
