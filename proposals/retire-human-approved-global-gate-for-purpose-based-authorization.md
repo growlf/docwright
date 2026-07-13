@@ -7,15 +7,16 @@ category:
   - process-change
   - security
 complexity: high
-approved: false
+approved: true
 priority: high
 created_by: "NetYeti@cluster-llm"
 assigned_to: NetYeti
 related_to:
-  - "[[policies/core/ai-governance-boundaries]]"
-  - "[[policies/core/workflow-layer-governance]]"
-  - "[[policies/core/mutual-augmentation-cycle]]"
-  - "[[policies/core/code-over-memory]]"
+  - [[policies/core/ai-governance-boundaries]]
+  - [[policies/core/workflow-layer-governance]]
+  - [[policies/core/mutual-augmentation-cycle]]
+  - [[policies/core/code-over-memory]]
+  - plans/plan-retire-human-approved-global-gate-for-purpose-based-authorization.md
 depends_on: []
 blocks: []
 ---
