@@ -56,7 +56,15 @@ Reported Dates   PVTF_lAHOABJHO84BdPEuzhXyBwE     (text)
 Channel          PVTF_lAHOABJHO84BdPEuzhXyBwI     (text)
 DocWright ID     PVTF_lAHOABJHO84BdPEuzhXyBwM     (text)
 Scope Decision   PVTF_lAHOABJHO84BdPEuzhXyBwQ     (text)
+Start date       PVTF_lAHOABJHO84BdPEuzhX2ZAA     (date)  ← roadmap discipline 2026-07-13
+Target date      PVTF_lAHOABJHO84BdPEuzhX2ZAE     (date)  ← roadmap discipline 2026-07-13
 ```
+
+**Roadmap date fields (2026-07-13, [[proposals/roadmap-date-discipline]]):** `Start date`
+(backfilled from earliest `reported_date`) + `Target date` (from `closed_at` for done issues).
+Versions are GitHub Milestones (v0.6.0 due 2026-07-31, v0.7.0). The **Roadmap view** plots by
+these — point it at Start/Target in the view's UI settings (the Projects API can't set a view's
+field-mapping).
 
 ## Env wiring (dev instance)
 
