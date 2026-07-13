@@ -10,8 +10,10 @@ verifiable, constraints inline (Haiku-executable).
 > ([[docs/authz-model-hardening-review]] §"Second-pass") proved a token-in-a-file is
 > self-issuable/self-forgeable in DocWright's single-process, single-uid, AI-drives-everything
 > deployment. Corrections folded in below: **(1)** a grant must be a **secret-keyed signature the
-> AI process does not hold** (ideally **Forgejo-issued** via OAuth re-auth), verified by
-> *signature*, never file-presence — a signer/key-custody step (A0) precedes everything;
+> AI process does not hold**, minted by an **out-of-process signer** (separate uid/service,
+> **IdP-agnostic**) and verified by *signature*, never file-presence — a signer/key-custody step
+> (A0) precedes everything. Identity is a **pluggable IdP** (built-in simple auth / GitHub OAuth /
+> Google / external OIDC like Authentik), decoupled from the signer;
 > **(2)** `AUTH_MODE=none` handling + store integrity are **blocking prerequisites**, not open
 > questions (gated classes forbidden or real-auth-only in that mode); **(3)** the Bash-matcher is
 > **defense-in-depth**, not the boundary — **Forgejo branch/tag protection + a capability-scoped
@@ -26,9 +28,11 @@ double-gate through a burn-in, and remove legacy LAST.
 
 A **grant** = a **signed**, single-use, scope-bound authorization the AI process cannot forge
 (because it lacks the signing key), issued by an **out-of-process** custodian.
-- **Signed by a key the AI process does not hold** — Forgejo (OAuth re-auth), a WebAuthn/passkey
-  assertion, or a separate-uid signer daemon. NOT a local `docwright grant` command that mints on
-  its own (the AI could run it) and NOT mere presence in a file (the AI can write the file).
+- **Signed by a key held out of the AI's process** — a signer running as a **separate uid** or a
+  small local service (the key custodian; **IdP-agnostic**). The human is authenticated by a
+  **pluggable IdP** (built-in simple auth / GitHub OAuth / Google / external OIDC like Authentik)
+  that fronts the signer. NOT a local `docwright grant` command that mints on its own (the AI
+  could run it) and NOT mere presence in a file (the AI can write the file).
 - Payload (signed): `{ nonce, action_class, target, content_hash, operator_id, issued_at, expiry }`.
   `operator_id` comes from the signed payload — never an AI-supplied argument.
 - `.docwright/grants.jsonl` is at most a **cache**; verification checks the **signature**, so a
@@ -55,8 +59,8 @@ A **grant** = a **signed**, single-use, scope-bound authorization the AI process
 
 | # | Step | Done-when (verifiable) |
 |---|---|---|
-| **A0** | **Signer / key custody (blocking — build nothing token-shaped before this).** Decide + stand up the out-of-process grant signer. Prefer **Forgejo**: an OAuth re-auth issues a grant signed by Forgejo's secret (reuses invariant #5 identity). Fallbacks: WebAuthn/passkey verified out-of-process, or a separate-uid signer daemon. Define the signed payload + `verifyGrant` = **signature check** (not file presence). Decide `AUTH_MODE=none`: gated classes **forbidden** (or real-auth-only) — no synthetic-admin minting. | A signed grant verifies; a hand-forged `grants.jsonl` line **fails** signature check; there is **no AI-runnable command/endpoint that mints for gated classes**; `AUTH_MODE=none` gated transitions are refused. |
-| **A0b** | **Forgejo/GitHub branch+tag protection + capability-scoped bot token (blocking, the real boundary for push/merge/tag).** The AI's token cannot push to `main`, push tags, or delete protected refs; those fail **at the server** regardless of the command string. | Server rejects a bot-token push to `main`/tag/protected-ref delete; verified against the live git server. |
+| **A0** | **Signer / key custody + pluggable identity (blocking — build nothing token-shaped before this).** Stand up the **out-of-process signer**: a key custodian running as a **separate uid** (or a small local service) that holds the signing key the AI process cannot read and mints signed grants. Define the signed payload + `verifyGrant` = **signature check** (not file presence). Front it with a **pluggable IdP** — ship **built-in simple auth** (default, no external dep) + **GitHub OAuth** first; **Google** + **external OIDC (Authentik)** are later adapters. **Retire `AUTH_MODE=none` synthetic-admin for gated classes:** the built-in simple auth (a real operator credential/per-action confirmation the AI can't replay) IS the human check for solo/local — if no IdP is configured, gated classes are **refused**. | A signed grant verifies; a hand-forged `grants.jsonl` line **fails** signature check; there is **no AI-runnable command/endpoint that mints for gated classes**; with no IdP configured, gated transitions are refused (no synthetic admin). |
+| **A0b** | **The git server's branch+tag protection + capability-scoped bot token (blocking, the real boundary for push/merge/tag).** On the deployed server (**GitHub today**; Forgejo if self-hosted), the AI's token cannot push to `main`, push tags, or delete protected refs; those fail **at the server** regardless of the command string. | Server rejects a bot-token push to `main`/tag/protected-ref delete; verified against the live git server. |
 | A1 | **Audit hardening (blocking prerequisite).** In `src/mcp/lib/audit.ts` + the UI audit path: **fail-closed** (a write error throws, not `catch {}`); append-only + hash-chained (`prev_hash`). Take `operator_id` from the **verified signed grant payload** (A0), never an AI-supplied argument or the `'NetYeti'`/`$USER` fallback. Note honestly: in a single-uid image the chain is **tamper-*detection*, not prevention** (the writer can recompute it) unless HMAC-keyed by A0's key or written to an out-of-process sink. | Unit tests: write error fails the action; a tampered chain is detected; actor is copied from the grant, not a param. |
 | A2 | **Grant store + token model.** New `src/dispatch/grants.ts`: `mintGrant(store, {action_class, target, content_hash?, operator_id, ttlMs})→nonce`; `verifyGrant(store, nonce, action_class, target, now)→{ok, reason}`; `consumeGrant(store, nonce)`. Pure over an injectable store (file-backed `.docwright/grants.jsonl` in prod). No VS Code deps. | Unit tests: mint→verify ok; expired denied; consumed denied (single-use); action/target mismatch denied; unknown nonce denied. |
 | A3 | **UI minting + real per-action confirmation.** `approve-proposal` / `transition-completed` / gate endpoints: on the authenticated human action, require a fresh interactive confirmation **bound to `{filePath, sha256(content)}`** (modal + re-auth or passkey), verify the principal is a human-operator (Forgejo team, not the AI identity), then `mintGrant(...)` and stamp `DW-GRANT:<nonce>` into the commit trailer. **Decide `AUTH_MODE=none`:** either forbid governance transitions in that mode or require real auth for them (no more synthesized-admin auto-seal). *Warn-only:* keep stamping legacy `HUMAN_APPROVED` too for now. | Endpoint test: an approval with no fresh confirmation is refused; a valid one mints a grant + stamps the trailer; `AUTH_MODE=none` governance transition follows the chosen policy. |
@@ -122,18 +126,20 @@ frontmatter flag today — so until the MCP path consumes a signed grant, the "d
 (→ signature check, not fs perms), `AUTH_MODE=none` minting (→ forbidden/real-auth-only),
 external-send enumeration (→ moot as a boundary; gated server-side in the MCP tool, A0b/B3).
 
+*Decided (BDFL, 2026-07-13):* auth = **pluggable identity + separate out-of-process signer**
+(not coupled to any forge). Ship **built-in simple auth + GitHub OAuth** first; **Google** +
+**external OIDC (Authentik)** are later adapters.
+
+*Solo-local — now resolved by the built-in auth:* the built-in simple auth is a real operator
+credential / per-action confirmation the AI can't replay, and it fronts the out-of-process signer.
+So the solo operator self-approves via built-in auth (no Forgejo required, no synthetic-admin) —
+the earlier "hard conflict" dissolves once identity is decoupled from the signer.
+
 Genuinely still open:
 
-1. **Which signer (A0)?** Forgejo OAuth re-auth (recommended — reuses invariant #5, already
-   deployed for the reference impl) vs WebAuthn/passkey vs a separate-uid daemon. Trade-off:
-   Forgejo requires the vault be Forgejo-backed; passkey requires enrolled hardware.
-2. **The solo-local case (the hard one).** A single-operator local vault with `AUTH_MODE=none`
-   has no Forgejo and no separate principal — the operator legitimately *is* the only human, but
-   also shares the uid with the AI, so there's no out-of-process key. Options: an interactive
-   passphrase-derived signing key entered per gated action (a real human keystroke the AI can't
-   replay if never persisted); or accept that solo-local is an explicitly lower-assurance,
-   single-trusted-operator mode with the gated classes **disabled** (governance done only on a
-   Forgejo-backed deployment). **Needs a BDFL call** — it's the one place "no AI-mintable path"
-   genuinely conflicts with "solo user must self-approve."
+1. **Signer implementation form:** separate-uid daemon (unix socket + challenge) vs a small
+   co-process service — which is simplest to ship + harden in the single-image deployment?
+2. **Built-in-auth per-action confirmation strength:** password re-entry vs a passphrase-derived
+   in-memory signing key vs an enrolled passkey — how heavy for the default/solo case?
 3. **Canonical `target` normalization** shared by minter + every verifier (so `pr:240` /
    `.../pulls/240/merge` / branch / SHA don't create scope-match gaps that pressure widening).

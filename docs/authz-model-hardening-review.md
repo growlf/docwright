@@ -212,12 +212,21 @@ Consequences:
 ### The one change that rescues the model
 
 **Provenance must be a secret-keyed signature the AI process does not hold; every verifier checks
-the signature, never file-presence.** Concretely, minting requires a key held **out of the AI's
-process** — the natural custodians in this stack:
-- **Forgejo OAuth re-auth** issues a signed grant server-side (keyed by Forgejo's secret) — the
-  intended production identity source (CLAUDE.md invariant #5), and it *already* exists.
-- **WebAuthn/passkey** — a hardware assertion the AI cannot synthesize, verified out-of-process.
-- A **separate-uid signer daemon** (unix socket + interactive human challenge) if neither above.
+the signature, never file-presence.** The design **decouples two concerns** (BDFL decision,
+2026-07-13):
+- **Signer = the security boundary.** An **out-of-process key custodian** — a signer running as a
+  **separate uid** (unix socket + a human challenge) or a small local service — holds the signing
+  key the AI process cannot read and mints the signed grant. **IdP/forge-agnostic.** This is the
+  hard requirement; the key living outside the AI process is the whole game.
+- **Identity = a pluggable IdP layer.** Authenticates the human + confirms operator role:
+  **built-in simple auth** (default, no external dependency — also the solo-local answer),
+  **GitHub OAuth** (matches the actual deployments), maybe **Google**, and a pluggable
+  **external OIDC** provider (e.g. **Authentik**, defined later). Any of these fronts the signer.
+
+*Correction:* an earlier draft over-recommended **Forgejo** as the signer. Forgejo — like GitHub —
+is an *authenticator*, not a grant-signer; it isn't the git server actually in use (the repos are
+on GitHub); and coupling authz to one forge contradicts DocWright's deliberately git-server-agnostic
+design. The signer is a *separate concern* from whichever IdP authenticates the human.
 
 With a signed grant, `verifyGrant` checks the signature; a hand-forged `grants.jsonl` line fails;
 the file becomes a harmless cache; and Findings 1, 2, and 6 collapse into "verify the signature."
@@ -230,9 +239,11 @@ self-issued, which is more dangerous than the honestly-crude `HUMAN_APPROVED`.
   questions.** Under `AUTH_MODE=none` the gated classes must be **forbidden** (or require real
   out-of-process auth) — no synthetic-admin minting.
 - Add a **signer / key-custody design step before A2** (build nothing token-shaped until the key
-  lives outside the AI process). Prefer reusing **Forgejo** as the signer.
-- Make **Forgejo branch/tag protection + a capability-scoped bot token** a shipped, tested
-  prerequisite — that is the actual boundary for push/merge/tag.
+  lives outside the AI process). The signer is an **out-of-process key custodian** (separate
+  uid/service), **IdP-agnostic**; identity is a **pluggable IdP** (built-in simple auth / GitHub
+  OAuth / Google / external OIDC like Authentik). NOT coupled to a specific forge.
+- Make **the git server's branch/tag protection (GitHub today) + a capability-scoped bot token**
+  a shipped, tested prerequisite — that is the actual boundary for push/merge/tag.
 - Move the **delete / external-send** grant check **server-side into the MCP tool**.
 - Reorder **B3 first**; correct the phase-gate to say the `git-commit.ts` hole closes at **C1**.
 

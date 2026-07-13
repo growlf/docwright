@@ -50,12 +50,17 @@ model and are folded in below (they await BDFL + BigPickle confirmation):
    consumed). The conversation *triggers* it; the token is the seal. **Second-pass refinement
    (critical):** in DocWright's single-process, single-uid deployment a *file-based* token is
    AI-mintable/forgeable — so the token must be a **secret-keyed signature from an
-   out-of-process signer** (ideally **Forgejo OAuth**, or WebAuthn), verified by *signature*,
-   **never file-presence**. This closes provenance + scope-stretch + replay together. The
-   `AUTH_MODE=none` and grant-store-integrity questions become blocking prerequisites, and the
-   real boundary for push/merge/tag is **Forgejo branch protection + a capability-scoped bot
-   token** (the Bash-matcher is only defense-in-depth). Full analysis + staged plan:
-   [[docs/authz-model-hardening-review]] §Second-pass, [[docs/authz-model-implementation-plan-draft]].
+   out-of-process signer**, verified by *signature*, **never file-presence**. The design
+   **decouples two concerns** (BDFL decision, 2026-07-13): a **pluggable identity layer** that
+   authenticates the human + confirms operator role (built-in simple auth as the default/no-dep
+   baseline; **GitHub OAuth**; maybe Google; external OIDC like **Authentik**, later-defined),
+   and a **separate out-of-process signer** (a key custodian the AI process cannot read —
+   forge/IdP-agnostic) that mints the signed grant. This closes provenance + scope-stretch +
+   replay together. The `AUTH_MODE=none`/store-integrity questions become blocking prerequisites,
+   and the real boundary for push/merge/tag is **the git server's branch/tag protection (GitHub
+   today) + a capability-scoped bot token** (the Bash-matcher is only defense-in-depth). Full
+   analysis + staged plan: [[docs/authz-model-hardening-review]] §Second-pass,
+   [[docs/authz-model-implementation-plan-draft]].
 3. **Audit hardening is a blocking prerequisite** (real actor attribution, fail-closed on
    write error, append-only/hash-chained) — the current audit sink can't attribute and
    swallows errors, so "audit-proof" isn't yet true.
@@ -72,6 +77,14 @@ an admin) — filed separately, not blocked on this.
 2. **Governance-doc lifecycle keeps a required second factor** — an explicit out-of-band
    UI action, never collapsible into a conversational grant. The strongest bar stays on
    approvals-of-record (`approved`, `completed`, `gate_status`).
+3. **Auth architecture = pluggable identity + separate out-of-process signer** (BDFL,
+   2026-07-13). Identity is a **pluggable IdP layer**: a **built-in simple auth** (default,
+   no external dependency — also the answer to the solo-local case), **GitHub OAuth**, maybe
+   **Google**, and a pluggable **external OIDC** provider (e.g. **Authentik**, defined later).
+   The grant **signer is a separate, out-of-process key custodian** (the AI process cannot read
+   the key), IdP-agnostic — that is the real security boundary. NOT coupled to any one forge
+   (correcting an earlier over-recommendation of Forgejo; the deployments actually run on GitHub,
+   and the engine is deliberately git-server-agnostic).
 
 *Provenance question — now answered by review:* a prose rule ("grants only from the live
 human") is **not** strict enough (a hook can't distinguish it from injected text). Resolved
