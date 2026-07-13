@@ -165,6 +165,82 @@ live coordination dependency.** Session notes = historical, leave as-is.
 
 ---
 
+## Second-pass review — holes in the FIX (2026-07-13)
+
+A fourth adversarial pass attacked the *hardened model itself* (not the original proposal),
+grounded in DocWright's real deployment. It found the token model's two headline claims are
+**false in this architecture** — and the finding is decisive, so it's recorded here as a
+model-shaping correction, not a footnote.
+
+**Architectural ground truth (verified):** DocWright runs as a **single Node process, single
+uid (root — no `USER` in the Dockerfile), with the tree bind-mounted (`.:/app`), the `dw-vault`
+MCP server a stdio child of the AI's own process, and the AI holding a Bash tool.** There is no
+"server vs. AI" boundary to hang trust on.
+
+Consequences:
+
+1. **CRITICAL — the AI can mint its own grant.** `docwright grant <verb> <target>` is a command
+   the AI runs via Bash; the mint endpoint is in the same SvelteKit process the AI drives (and
+   under `AUTH_MODE=none` it sees the synthetic admin); MCP tools run in the AI's process. So
+   "the AI can relay but not mint" is false — the token is self-issuable. This is
+   `HUMAN_APPROVED=1` with extra steps.
+2. **CRITICAL — `.docwright/grants.jsonl` is AI-writable.** Same uid, in-tree, bind-mounted →
+   `Bash("echo <forged> >> .docwright/grants.jsonl")` works. Hash-chaining does **not** save it:
+   the AI can recompute a valid chain over forged lines because the chain isn't keyed by a
+   secret it lacks. Presence-in-file is not a check.
+3. **HIGH — the PreToolUse Bash-matcher is defense-in-depth, never a boundary.** Bypassable by
+   `gh api` (vs `gh pr merge`), `python -c subprocess`, wrapper scripts, aliases, `git -c`,
+   or simply going via MCP/web instead of Bash. The **real** boundary for push/merge is
+   **Forgejo/GitHub branch+tag protection + a capability-scoped bot token that cannot push to
+   `main`/push tags/delete**. For **delete and external-send there is NO server backstop** — the
+   grant check must move **server-side into the MCP tool**, not sit behind a client-side grep.
+4. **HIGH — migration ordering:** `transition_to_*` (L4) trusts the frontmatter flag today, and
+   the AI drives the MCP server, so **B3 (MCP consumes a token) must be the FIRST enforcing flip**,
+   before B1/B2 — else the double-gate is single on the surface the AI most easily drives, for the
+   whole burn-in. Also: the `git-commit.ts` unconditional stamp persists through A/B, so the
+   pre-existing hole is closed by **C1, not A3** — fix that phase-gate claim.
+5. **MED — `content_hash` must be mandatory for governance + re-verified against the *staged*
+   bytes at consume** (TOCTOU: mint on content H, AI edits to H′, commit stages H′); **atomic
+   compare-and-consume** (race between parallel tool calls); canonical `target` normalization
+   shared by minter + every verifier; **bind the nonce to the vault/store id** (the 4 instances
+   share the image).
+6. **MED — attribution:** `operator_id` must be copied from the **verified signed grant payload**,
+   never accepted as an AI-supplied tool argument (else the `'NetYeti'` fallback forgery just
+   returns as an AI-filled parameter). Fail-closed + hash-chain are *detection*, not *prevention*,
+   until the writer is out-of-process or the chain is HMAC-keyed.
+
+### The one change that rescues the model
+
+**Provenance must be a secret-keyed signature the AI process does not hold; every verifier checks
+the signature, never file-presence.** Concretely, minting requires a key held **out of the AI's
+process** — the natural custodians in this stack:
+- **Forgejo OAuth re-auth** issues a signed grant server-side (keyed by Forgejo's secret) — the
+  intended production identity source (CLAUDE.md invariant #5), and it *already* exists.
+- **WebAuthn/passkey** — a hardware assertion the AI cannot synthesize, verified out-of-process.
+- A **separate-uid signer daemon** (unix socket + interactive human challenge) if neither above.
+
+With a signed grant, `verifyGrant` checks the signature; a hand-forged `grants.jsonl` line fails;
+the file becomes a harmless cache; and Findings 1, 2, and 6 collapse into "verify the signature."
+**Without it, the token model is ceremony** — and, worse, it *looks* enforced while being
+self-issued, which is more dangerous than the honestly-crude `HUMAN_APPROVED`.
+
+### Blocking reclassifications for the plan
+
+- `AUTH_MODE=none` handling and grant-store integrity are **blocking prerequisites, not open
+  questions.** Under `AUTH_MODE=none` the gated classes must be **forbidden** (or require real
+  out-of-process auth) — no synthetic-admin minting.
+- Add a **signer / key-custody design step before A2** (build nothing token-shaped until the key
+  lives outside the AI process). Prefer reusing **Forgejo** as the signer.
+- Make **Forgejo branch/tag protection + a capability-scoped bot token** a shipped, tested
+  prerequisite — that is the actual boundary for push/merge/tag.
+- Move the **delete / external-send** grant check **server-side into the MCP tool**.
+- Reorder **B3 first**; correct the phase-gate to say the `git-commit.ts` hole closes at **C1**.
+
+Net: the recursive hard look changed the design twice — first pass moved the strong bar to
+*reversibility* and introduced the token; second pass proved the token must be a *signed,
+out-of-process* artifact (ideally Forgejo-issued), not a file the AI can write. That is the
+version worth building.
+
 ## Appendix — ready-to-file GitHub issue (awaiting BDFL authorization to create)
 
 The classifier correctly blocked auto-creating this (an outward write with no explicit

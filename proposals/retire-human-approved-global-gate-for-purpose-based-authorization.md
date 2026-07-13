@@ -46,10 +46,16 @@ model and are folded in below (they await BDFL + BigPickle confirmation):
    (merge-to-trunk, delete, release/tag, external send) — not only governance-doc lifecycle.
    You cannot audit your way out of a `git push --tags`, a delete, or an external send.
 2. **Provenance becomes a token, not a prose rule.** The enforceable primitive is a
-   **server-minted, single-use, target-scoped grant token** (`.docwright/grants.jsonl` +
-   a `DW-GRANT:<nonce>` commit trailer, verified + consumed server-side). The conversation
-   *triggers* the mint; the token is the seal the AI cannot forge. This resolves the open
-   provenance question and closes scope-stretch + replay in one primitive.
+   **single-use, target-scoped grant token** (a `DW-GRANT` trailer / tool arg, verified +
+   consumed). The conversation *triggers* it; the token is the seal. **Second-pass refinement
+   (critical):** in DocWright's single-process, single-uid deployment a *file-based* token is
+   AI-mintable/forgeable — so the token must be a **secret-keyed signature from an
+   out-of-process signer** (ideally **Forgejo OAuth**, or WebAuthn), verified by *signature*,
+   **never file-presence**. This closes provenance + scope-stretch + replay together. The
+   `AUTH_MODE=none` and grant-store-integrity questions become blocking prerequisites, and the
+   real boundary for push/merge/tag is **Forgejo branch protection + a capability-scoped bot
+   token** (the Bash-matcher is only defense-in-depth). Full analysis + staged plan:
+   [[docs/authz-model-hardening-review]] §Second-pass, [[docs/authz-model-implementation-plan-draft]].
 3. **Audit hardening is a blocking prerequisite** (real actor attribution, fail-closed on
    write error, append-only/hash-chained) — the current audit sink can't attribute and
    swallows errors, so "audit-proof" isn't yet true.

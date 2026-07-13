@@ -6,19 +6,39 @@ and the hardened model ([[docs/authz-model-hardening-review]]) is confirmed by B
 No enforcement code is written until then — this is the buildable spec, decomposed small +
 verifiable, constraints inline (Haiku-executable).
 
+> **SECOND-PASS REVISION (2026-07-13).** A fresh adversarial pass on THIS plan
+> ([[docs/authz-model-hardening-review]] §"Second-pass") proved a token-in-a-file is
+> self-issuable/self-forgeable in DocWright's single-process, single-uid, AI-drives-everything
+> deployment. Corrections folded in below: **(1)** a grant must be a **secret-keyed signature the
+> AI process does not hold** (ideally **Forgejo-issued** via OAuth re-auth), verified by
+> *signature*, never file-presence — a signer/key-custody step (A0) precedes everything;
+> **(2)** `AUTH_MODE=none` handling + store integrity are **blocking prerequisites**, not open
+> questions (gated classes forbidden or real-auth-only in that mode); **(3)** the Bash-matcher is
+> **defense-in-depth**, not the boundary — **Forgejo branch/tag protection + a capability-scoped
+> bot token** is the real gate for push/merge/tag, and **delete/external-send are gated
+> server-side inside the MCP tool**; **(4) B3 reorders FIRST** among the enforcing flips.
+
 **Guiding rule (from the review): the gate is never *absent*, only ever *doubled*.** Build the
 new primitive additive + warn-only, run it in parallel with the legacy `HUMAN_APPROVED` as a
 double-gate through a burn-in, and remove legacy LAST.
 
 ## The primitive being built
 
-A **grant** = a server-minted, single-use, scope-bound authorization record the AI cannot mint.
-- Minted only by a genuine authenticated human action (UI click / `docwright grant` CLI).
-- Recorded server-side in `.docwright/grants.jsonl` (a path the AI process cannot write).
-- Fields: `{ nonce, action_class, target, content_hash?, operator_id, issued_at, expiry, consumed_at|null }`.
-- Verified by the gated layer (must exist, unexpired, unconsumed, action_class+target match),
-  then marked consumed. Relayed as a commit trailer `DW-GRANT:<nonce>` or a tool arg.
-- Conversational authorization is the *trigger* that causes a mint; the token is the *seal*.
+A **grant** = a **signed**, single-use, scope-bound authorization the AI process cannot forge
+(because it lacks the signing key), issued by an **out-of-process** custodian.
+- **Signed by a key the AI process does not hold** — Forgejo (OAuth re-auth), a WebAuthn/passkey
+  assertion, or a separate-uid signer daemon. NOT a local `docwright grant` command that mints on
+  its own (the AI could run it) and NOT mere presence in a file (the AI can write the file).
+- Payload (signed): `{ nonce, action_class, target, content_hash, operator_id, issued_at, expiry }`.
+  `operator_id` comes from the signed payload — never an AI-supplied argument.
+- `.docwright/grants.jsonl` is at most a **cache**; verification checks the **signature**, so a
+  hand-forged line fails. (In a single-uid image the file is AI-writable — do not treat it as a
+  boundary.)
+- Verified by the gated layer: signature valid, unexpired, unconsumed, `action_class`+`target`
+  match, and (governance) `content_hash` re-verified against the **staged** bytes at consume;
+  then **atomically** consumed. Relayed as a `DW-GRANT:<signed-blob>` trailer or a tool arg.
+- Conversational authorization is the *trigger* that causes a human to sign; the signature is the
+  *seal*. There is **no AI-reachable mint path** for gated classes.
 
 ## Action classes (the taxonomy — axis = reversibility × verifiability)
 
@@ -35,7 +55,9 @@ A **grant** = a server-minted, single-use, scope-bound authorization record the 
 
 | # | Step | Done-when (verifiable) |
 |---|---|---|
-| A1 | **Audit hardening first (blocking prerequisite).** In `src/mcp/lib/audit.ts` + the UI audit path: require an explicit `operator_id` (remove the `'NetYeti'`/`$USER` fallback → if absent, the caller must pass it); **fail-closed** (a write error throws, not `catch {}`); make the log append-only + hash-chained (`prev_hash = sha256(prev_line)`); write via a path the AI process can't append to (server-owned). | Unit tests: a missing actor fails; a write error fails the action; a tampered line breaks the chain. |
+| **A0** | **Signer / key custody (blocking — build nothing token-shaped before this).** Decide + stand up the out-of-process grant signer. Prefer **Forgejo**: an OAuth re-auth issues a grant signed by Forgejo's secret (reuses invariant #5 identity). Fallbacks: WebAuthn/passkey verified out-of-process, or a separate-uid signer daemon. Define the signed payload + `verifyGrant` = **signature check** (not file presence). Decide `AUTH_MODE=none`: gated classes **forbidden** (or real-auth-only) — no synthetic-admin minting. | A signed grant verifies; a hand-forged `grants.jsonl` line **fails** signature check; there is **no AI-runnable command/endpoint that mints for gated classes**; `AUTH_MODE=none` gated transitions are refused. |
+| **A0b** | **Forgejo/GitHub branch+tag protection + capability-scoped bot token (blocking, the real boundary for push/merge/tag).** The AI's token cannot push to `main`, push tags, or delete protected refs; those fail **at the server** regardless of the command string. | Server rejects a bot-token push to `main`/tag/protected-ref delete; verified against the live git server. |
+| A1 | **Audit hardening (blocking prerequisite).** In `src/mcp/lib/audit.ts` + the UI audit path: **fail-closed** (a write error throws, not `catch {}`); append-only + hash-chained (`prev_hash`). Take `operator_id` from the **verified signed grant payload** (A0), never an AI-supplied argument or the `'NetYeti'`/`$USER` fallback. Note honestly: in a single-uid image the chain is **tamper-*detection*, not prevention** (the writer can recompute it) unless HMAC-keyed by A0's key or written to an out-of-process sink. | Unit tests: write error fails the action; a tampered chain is detected; actor is copied from the grant, not a param. |
 | A2 | **Grant store + token model.** New `src/dispatch/grants.ts`: `mintGrant(store, {action_class, target, content_hash?, operator_id, ttlMs})→nonce`; `verifyGrant(store, nonce, action_class, target, now)→{ok, reason}`; `consumeGrant(store, nonce)`. Pure over an injectable store (file-backed `.docwright/grants.jsonl` in prod). No VS Code deps. | Unit tests: mint→verify ok; expired denied; consumed denied (single-use); action/target mismatch denied; unknown nonce denied. |
 | A3 | **UI minting + real per-action confirmation.** `approve-proposal` / `transition-completed` / gate endpoints: on the authenticated human action, require a fresh interactive confirmation **bound to `{filePath, sha256(content)}`** (modal + re-auth or passkey), verify the principal is a human-operator (Forgejo team, not the AI identity), then `mintGrant(...)` and stamp `DW-GRANT:<nonce>` into the commit trailer. **Decide `AUTH_MODE=none`:** either forbid governance transitions in that mode or require real auth for them (no more synthesized-admin auto-seal). *Warn-only:* keep stamping legacy `HUMAN_APPROVED` too for now. | Endpoint test: an approval with no fresh confirmation is refused; a valid one mints a grant + stamps the trailer; `AUTH_MODE=none` governance transition follows the chosen policy. |
 | A4 | **CLI grant command** (the CLI-human path — the surface with no UI button). `docwright grant <verb> <target>` → mints a grant record + prints the `DW-GRANT:<nonce>` trailer for the human to include. This is what replaces a shell human typing `HUMAN_APPROVED=1`. | `npm run` / CLI test: issues a valid, verifiable, single-use grant. |
@@ -46,11 +68,15 @@ A **grant** = a server-minted, single-use, scope-bound authorization record the 
 
 ### Phase B — parallel enforce (token enforcing + legacy still required = doubled)
 
+**Order: B3 lands FIRST.** The AI drives the MCP server directly, and `transition_to_*` trusts the
+frontmatter flag today — so until the MCP path consumes a signed grant, the "doubled" gate is
+*single* on the surface the AI most easily drives. Gate MCP before the commit/Bash surfaces.
+
 | # | Step | Done-when |
 |---|---|---|
-| B1 | Flip A6 to **deny**: governance commits need BOTH a valid `DW-GRANT` nonce AND the legacy marker. | Negative test: governance commit with marker but no valid nonce is denied. |
-| B2 | Flip A5 to **deny**: irreversible/outward Bash actions require a matching unconsumed target-scoped grant. | Negative tests: merge/delete/release/send without a grant → denied; conversational-only → denied; injected/file-borne grant → denied + logged as probable injection; replay → denied; `pr:240` token can't merge `pr:241`. |
-| B3 | **L4 MCP tools consume the token** (or stay strictly downstream of a token-checked write) so the MCP path isn't a bypass. Keep the existing field-level default-deny guards verbatim. | Test: `transition_to_*` without a consumed token is refused. |
+| B3 (first) | **L4 MCP tools require a verified signed grant** (or stay strictly downstream of a grant-checked write) so the MCP path isn't a bypass during the whole window. Keep the existing field-level default-deny guards verbatim. **Delete + external-send are gated HERE, server-side in the MCP tool** — they have no downstream backstop, so a client-side Bash grep is not an acceptable sole control. | `transition_to_*` / delete / `contribute_upstream` without a verified grant are refused. |
+| B1 | Flip A6 to **deny**: governance commits need BOTH a valid signed `DW-GRANT` AND the legacy marker. | Negative test: governance commit with marker but no valid signed grant is denied. |
+| B2 | Flip A5 to **deny** — but this is **defense-in-depth, not the boundary** (the real boundary is A0b: Forgejo protection + scoped token). Bash-matcher default-denies irreversible/outward without a matching grant. | Negative tests: merge/delete/release/send without a grant → denied; conversational-only → denied; injected/file-borne grant → denied + logged as probable injection; replay → denied; `pr:240` grant can't merge `pr:241`. **Also documented: the matcher is bypassable (`gh api`, subprocess, wrappers) — A0b is what actually stops those.** |
 | B4 | **Burn-in** across BOTH surfaces (Web UI + CLI/Claude Code) and BOTH `AUTH_MODE` settings; watch `grants.jsonl` + the hardened audit for correct mint/consume. | A documented burn-in window with green negatives on every surface. |
 
 ### Phase C — retire legacy (only after B4 is clean)
@@ -87,11 +113,27 @@ A **grant** = a server-minted, single-use, scope-bound authorization record the 
 - [ ] `AUTH_MODE=none` governance policy decided + enforced
 - [ ] adopt-milestone step 19 coordinated; both legacy artifacts retired together
 - [ ] Docs + policies rewritten; CI grep-gate on (last)
-- [ ] The pre-existing `git-commit.ts` security hole is closed by A3 (verify)
+- [ ] The pre-existing `git-commit.ts` unconditional-stamp hole is closed at **C1** (it persists
+      through A/B while legacy stays load-bearing — do not mark it closed earlier)
 
 ## Open design questions for review
 
-1. **Per-action confirmation strength** (A3): re-auth vs passkey/WebAuthn vs a bound modal — how heavy?
-2. **Grant store location + perms**: `.docwright/grants.jsonl` must be AI-unwritable — enforced by fs perms, a separate uid, or an MCP-owned path? (Depends on deployment; the image runs as one process.)
-3. **`AUTH_MODE=none`**: forbid governance transitions outright, or allow with a printed CLI grant? (Single-user local vaults still need to self-approve.)
-4. **External-send enumeration** (B2): the definitive list of "outward" commands to match — needs to be exhaustive or it's a hole.
+*Resolved by the second pass (now blocking prerequisites, not questions):* grant-store integrity
+(→ signature check, not fs perms), `AUTH_MODE=none` minting (→ forbidden/real-auth-only),
+external-send enumeration (→ moot as a boundary; gated server-side in the MCP tool, A0b/B3).
+
+Genuinely still open:
+
+1. **Which signer (A0)?** Forgejo OAuth re-auth (recommended — reuses invariant #5, already
+   deployed for the reference impl) vs WebAuthn/passkey vs a separate-uid daemon. Trade-off:
+   Forgejo requires the vault be Forgejo-backed; passkey requires enrolled hardware.
+2. **The solo-local case (the hard one).** A single-operator local vault with `AUTH_MODE=none`
+   has no Forgejo and no separate principal — the operator legitimately *is* the only human, but
+   also shares the uid with the AI, so there's no out-of-process key. Options: an interactive
+   passphrase-derived signing key entered per gated action (a real human keystroke the AI can't
+   replay if never persisted); or accept that solo-local is an explicitly lower-assurance,
+   single-trusted-operator mode with the gated classes **disabled** (governance done only on a
+   Forgejo-backed deployment). **Needs a BDFL call** — it's the one place "no AI-mintable path"
+   genuinely conflicts with "solo user must self-approve."
+3. **Canonical `target` normalization** shared by minter + every verifier (so `pr:240` /
+   `.../pulls/240/merge` / branch / SHA don't create scope-match gaps that pressure widening).
