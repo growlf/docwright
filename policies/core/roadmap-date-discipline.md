@@ -33,9 +33,21 @@ Project fields, the Roadmap view), and **DocWright is the enforcer**.
 
 Per [[policies/core/code-over-memory]]: the rules are a validator, not a reminder.
 - `src/dispatch/roadmap-dates.ts` — the pure validator (`auditRoadmapDates`).
-- `npm run roadmap:check` — reports violations; **warn during rollout, `--strict` (hard-fail)
-  once every active milestone is dated**. Wired into CI.
+- `npm run roadmap:check -- --strict` — **CI-blocking** (as of 2026-07-13, the board being
+  fully dated): a dateless active milestone or an out-of-range issue fails the build.
+  `npm run roadmap:check` (no flag) is the warn-mode/local report.
 - `/status` "needs attention" surfaces dateless milestones / out-of-range issues.
+
+**Fail-safe:** a fetch failure or missing GH config is *not* a violation — the check degrades
+to a clean pass even under `--strict`, so a transient GitHub outage never false-fails an
+unrelated PR. Only real data violations block.
+
+**Escape hatches** (when the check blocks and that's not what you want):
+1. **Fix the data** — the intended path: give the milestone a due date, or bring the issue's
+   explicit Start/Target inside the milestone window (or clear them to inherit the range).
+2. **Move genuinely unscheduled work to `backlog`/`future`** — the exempt, undated buckets.
+3. **Emergency bypass** — a git-visible one-line revert of `--strict` in `.github/workflows/ci.yml`.
+   Deliberately not a silent env-var flag: a bypass must show up in history and review.
 
 ## Related
 

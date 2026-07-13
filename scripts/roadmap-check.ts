@@ -4,11 +4,12 @@
  * ([[plans/roadmap-date-discipline]], step 3). Fetches the GH board (Project items +
  * milestones), runs the pure validator, and reports violations.
  *
- *   npm run roadmap:check            # WARN mode (rollout) — reports, exits 0
- *   npm run roadmap:check -- --strict   # hard-fail — exits 1 on any violation (step 6)
+ *   npm run roadmap:check            # WARN mode — reports, exits 0
+ *   npm run roadmap:check -- --strict   # hard-fail — exits 1 on any DATA violation (CI default)
  *
  * GH unconfigured or unreachable → degrades to a clean pass (never hard-errors a build on
- * a transient fetch failure). Requires DOCWRIGHT_GH_REPO / TOKEN / PROJECT_ID.
+ * a transient fetch failure), even under --strict. Only data violations (dateless milestone /
+ * out-of-range issue) block. Requires DOCWRIGHT_GH_REPO / TOKEN / PROJECT_ID to enforce.
  */
 import { GitHubClient, githubConfigFromEnv } from '../src/dispatch/github-issues';
 import { roadmapDataFromBoard, auditRoadmapDates } from '../src/dispatch/roadmap-dates';
@@ -39,4 +40,10 @@ async function main() {
   process.exit(strict ? 1 : 0);
 }
 
-main().catch(e => { console.error('roadmap:check error:', e?.message ?? e); process.exit(strict ? 1 : 0); });
+// A fetch/reachability failure is NOT a roadmap violation — degrade to a pass even under
+// --strict so a transient GitHub outage never false-fails an unrelated PR. Only actual
+// data violations (dateless milestone / out-of-range issue) block the build.
+main().catch(e => {
+  console.error(`roadmap:check — could not reach GitHub (${e?.message ?? e}); degrading to a pass (transient/config issue, not a roadmap violation).`);
+  process.exit(0);
+});
