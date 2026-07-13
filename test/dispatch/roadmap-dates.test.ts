@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 import {
   checkMilestoneDates, checkIssuesInRange, auditRoadmapDates, isExemptMilestone,
+  roadmapDataFromBoard,
   type MilestoneDates, type IssueDates,
 } from '../../src/dispatch/roadmap-dates';
 
@@ -52,6 +53,22 @@ describe('roadmap-dates — issue-in-range rule (inherit by default)', () => {
   });
   it('issues with no milestone are skipped', () => {
     assert.deepStrictEqual(checkIssuesInRange([{ id: 7 }], ms), []);
+  });
+});
+
+describe('roadmap-dates — roadmapDataFromBoard mapper', () => {
+  it('maps board items + milestones into the validator shapes', () => {
+    const items: any[] = [
+      { itemId: 'i1', issue: { number: 1, milestone: 'v0.6.0', labels: [] }, fields: { 'Start date': '2026-07-05', 'Target date': '2026-07-20' } },
+      { itemId: 'i2', issue: { number: 2, milestone: null, labels: [] }, fields: {} },
+      { itemId: 'i3', issue: null, fields: {} }, // non-issue item → skipped
+    ];
+    const ms: any[] = [{ number: 1, title: 'v0.6.0', dueOn: '2026-07-31', state: 'open' }];
+    const d = roadmapDataFromBoard(items, ms);
+    assert.deepStrictEqual(d.milestones, [{ title: 'v0.6.0', start: null, target: '2026-07-31' }]);
+    assert.strictEqual(d.issues.length, 2);
+    assert.deepStrictEqual(d.issues[0], { id: 1, milestone: 'v0.6.0', start: '2026-07-05', target: '2026-07-20' });
+    assert.deepStrictEqual(d.issues[1], { id: 2, milestone: null, start: null, target: null });
   });
 });
 

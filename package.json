@@ -59,6 +59,7 @@
     "phase:close": "npx tsx scripts/phase-close.ts",
     "migrate:issues": "npx tsx scripts/migrate-issues-to-github.ts",
     "parity:issues": "npx tsx scripts/parity-check-issues.ts",
+    "roadmap:check": "npx tsx scripts/roadmap-check.ts",
     "session:end": "npx tsx scripts/end-session.ts",
     "release:tag": "bash scripts/release-tag.sh",
     "generate-roadplan": "npx tsx scripts/generate-roadplan.ts",

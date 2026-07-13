@@ -13,6 +13,8 @@
  * Dates are ISO `YYYY-MM-DD` strings (lexicographic comparison is date-correct).
  */
 
+import type { ProjectItemDetail, GitHubMilestone } from './github-issues';
+
 export interface MilestoneDates {
   title: string;
   start?: string | null;
@@ -91,4 +93,26 @@ export function auditRoadmapDates(input: { milestones: MilestoneDates[]; issues:
     ...checkIssuesInRange(input.issues, input.milestones),
   ];
   return { ok: violations.length === 0, violations };
+}
+
+/**
+ * Map the GH board (Project items + repo milestones) into the validator's shapes. Pure —
+ * the CLI / status layer fetches `items` (listProjectItemsDetailed) + `milestones`
+ * (listMilestones) and feeds them here, then to auditRoadmapDates. Milestone target = its
+ * due date; issue Start/Target come from the Project date fields (blank → inherits).
+ */
+export function roadmapDataFromBoard(
+  items: ProjectItemDetail[],
+  milestones: GitHubMilestone[],
+): { milestones: MilestoneDates[]; issues: IssueDates[] } {
+  const ms: MilestoneDates[] = milestones.map(m => ({ title: m.title, start: null, target: m.dueOn }));
+  const issues: IssueDates[] = items
+    .filter(i => i.issue)
+    .map(i => ({
+      id: i.issue!.number,
+      milestone: i.issue!.milestone,
+      start: typeof i.fields['Start date'] === 'string' ? (i.fields['Start date'] as string) : null,
+      target: typeof i.fields['Target date'] === 'string' ? (i.fields['Target date'] as string) : null,
+    }));
+  return { milestones: ms, issues };
 }

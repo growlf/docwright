@@ -181,6 +181,18 @@ describe('github-issues — Project schema + detailed read (Step 2/3)', () => {
     await assert.rejects(() => gh.setProjectFieldByName('i', 'Lifecycle', 'bogus'), /no option 'bogus'/);
   });
 
+  it('listMilestones maps title + due date (target) + state', async () => {
+    const { fetch } = mockFetch(() => ({ body: [
+      { number: 1, title: 'v0.6.0', due_on: '2026-07-31T00:00:00Z', state: 'open' },
+      { number: 2, title: 'backlog', due_on: null, state: 'open' },
+    ] }));
+    const gh = new GitHubClient(CFG, fetch);
+    const ms = await gh.listMilestones('all');
+    assert.strictEqual(ms[0].dueOn, '2026-07-31');
+    assert.strictEqual(ms[1].dueOn, null);
+    assert.ok(gh);
+  });
+
   it('addComment POSTs to the issue comments endpoint', async () => {
     const { fetch, calls } = mockFetch(() => ({ body: {} }));
     const gh = new GitHubClient(CFG, fetch);

@@ -56,8 +56,18 @@ export interface ProjectItemDetail {
     state: 'open' | 'closed';
     url: string;
     labels: string[];
+    /** Native GitHub milestone title, if assigned (roadmap date discipline). */
+    milestone: string | null;
   } | null;
   fields: Record<string, string | number>;
+}
+
+/** A GitHub Milestone (a version/goal). `dueOn` is the target date (YYYY-MM-DD) or null. */
+export interface GitHubMilestone {
+  number: number;
+  title: string;
+  dueOn: string | null;
+  state: 'open' | 'closed';
 }
 
 /** Minimal shape of the global fetch — injectable so tests need no network. */
@@ -193,6 +203,20 @@ export class GitHubClient {
     }, []);
   }
 
+  /** Repo milestones (versions/goals) with target dates (cached, degrades to []). */
+  async listMilestones(state: 'open' | 'closed' | 'all' = 'all'): Promise<GitHubMilestone[]> {
+    const { owner, repo } = this.cfg;
+    return this.cachedRead(`milestones:${owner}/${repo}:${state}`, async () => {
+      const raw = await this.rest('GET', `/repos/${owner}/${repo}/milestones?state=${state}&per_page=100`);
+      return (Array.isArray(raw) ? raw : []).map((m: any) => ({
+        number: m.number,
+        title: String(m.title ?? ''),
+        dueOn: m.due_on ? String(m.due_on).slice(0, 10) : null,
+        state: m.state === 'closed' ? 'closed' : 'open',
+      }));
+    }, []);
+  }
+
   /** Full-text/issue search for dedup (cached per-query, degrades to []). */
   async searchIssues(query: string): Promise<GitHubIssue[]> {
     const { owner, repo } = this.cfg;
@@ -304,7 +328,7 @@ export class GitHubClient {
             pageInfo { hasNextPage endCursor }
             nodes {
               id
-              content { __typename ... on Issue { number title body state url labels(first:20){ nodes { name } } } }
+              content { __typename ... on Issue { number title body state url milestone { title } labels(first:20){ nodes { name } } } }
               fieldValues(first:50){ nodes {
                 __typename
                 ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
@@ -340,6 +364,7 @@ export class GitHubClient {
             state: c.state === 'CLOSED' || c.state === 'closed' ? 'closed' : 'open',
             url: String(c.url ?? ''),
             labels: (c.labels?.nodes ?? []).map((l: any) => l?.name).filter(Boolean),
+            milestone: c.milestone?.title ?? null,
           } : null,
           fields,
         };
