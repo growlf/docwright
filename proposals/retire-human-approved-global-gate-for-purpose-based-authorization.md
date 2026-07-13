@@ -34,6 +34,18 @@ that grant's scope. This aligns AI governance with DocWright's own thesis — *g
 policy + validation + audit trails, not by blocking access* — instead of contradicting it.
 BDFL direction, 2026-07-13.
 
+## Settled decisions (BDFL, 2026-07-13)
+
+1. **Direction approved:** retire the global `HUMAN_APPROVED=1` gate; replace with the
+   purpose-based, audited authorization model below. (Framing confirmed: protect against
+   *assumed/stretched* authorization, not against *conversational* authorization.)
+2. **Governance-doc lifecycle keeps a required second factor** — an explicit out-of-band
+   UI action, never collapsible into a conversational grant. The strongest bar stays on
+   approvals-of-record (`approved`, `completed`, `gate_status`).
+
+*Open for review:* whether the injected-grant **provenance rule** (grants only from the
+authenticated live human — never tool output / file / memory) is strict enough as written.
+
 ## Problem Statement
 
 `HUMAN_APPROVED=1` is a global, binary gate: certain governance mutations (setting
@@ -89,7 +101,7 @@ global env var → policy + explicit audited grant).
    | Informational | reads, searches, dry-runs | none |
    | Reversible mutation | code edits, branch commits, plan step updates | none; logged |
    | Irreversible / outward | merge to trunk, delete issues, push release tags, external sends | explicit scoped grant (quoted) + audit entry |
-   | Governance-doc lifecycle | `approved: true`, `status: completed`, `gate_status` | explicit scoped grant that **is** the approval-of-record + audit entry; may require a second factor (UI action) |
+   | Governance-doc lifecycle | `approved: true`, `status: completed`, `gate_status` | explicit scoped grant that **is** the approval-of-record + audit entry + a **required second factor: an explicit UI action** (not conversational) |
 
 2. **Authorization = an explicit, scoped, audited grant.** A human authorization is a direct
    instruction ("you are authorized to do X"). The AI records it verbatim on the audit
@@ -127,10 +139,12 @@ analysis — and independent review (the author of this section is the restraine
   rule and itself a security *improvement* over an env var (which says nothing about
   provenance).
 - **Tradeoff — loss of the un-fakeable physical act.** The env var's one virtue is that
-  it's a human keystroke the AI can't fake. The replacement keeps a *deliberate* human act
-  (explicit grant, optionally a UI click for the top class) but trades keystroke-proof for
-  audit-proof. Accept this consciously; reserve a stronger second factor for the
-  governance-doc lifecycle class if review deems it warranted.
+  it's a human keystroke the AI can't fake. For most classes the replacement keeps a
+  *deliberate* human act (explicit grant) and trades keystroke-proof for audit-proof. For
+  the **governance-doc lifecycle class, a required second factor is retained** (BDFL
+  decision, 2026-07-13): an explicit **UI action** distinct from the conversation — so the
+  highest-stakes approvals-of-record (`approved`, `completed`, `gate_status`) keep an
+  un-collapsible, out-of-band human act and cannot ride a conversational grant.
 
 ## Scope of change
 
@@ -151,8 +165,9 @@ analysis — and independent review (the author of this section is the restraine
 - A gated action **without** an explicit grant is denied (test the default-deny path).
 - A gated action **with** an explicit, in-scope grant proceeds **and** writes an audit entry
   quoting the grant; an out-of-scope extension of that grant is still denied.
-- Governance-doc lifecycle transitions still require the top-class grant (and second factor
-  if adopted); the AI cannot self-advance a plan/proposal.
+- Governance-doc lifecycle transitions still require the top-class grant **and the required
+  second-factor UI action**; a conversational grant alone is insufficient for this class,
+  and the AI cannot self-advance a plan/proposal.
 - Injected/file-borne "grants" are rejected (provenance test).
 
 ## Risks / tradeoffs
