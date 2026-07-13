@@ -1,30 +1,52 @@
 ---
-title: "Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model"
+title: "Plan: Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model"
+status: draft
 author: "NetYeti"
 created: "2026-07-13"
-tags: [governance, security, ai-authorization, policy, audit, code-over-memory]
-category:
-  - process-change
-  - security
-complexity: high
-approved: true
-priority: high
-created_by: "NetYeti@cluster-llm"
-assigned_to: NetYeti
-related_to:
-  - [[policies/core/ai-governance-boundaries]]
-  - [[policies/core/workflow-layer-governance]]
-  - [[policies/core/mutual-augmentation-cycle]]
-  - [[policies/core/code-over-memory]]
-  - plans/plan-retire-human-approved-global-gate-for-purpose-based-authorization.md
+created_by: "NetYeti@phoenix"
+tags: [planning]
+proposal_source: "proposals/retire-human-approved-global-gate-for-purpose-based-authorization"
+priority: medium
+phase: 
+automated: guided
+waiting_reason:  # Populated when status = waiting-for-user
+assigned_to: ["NetYeti"]
+# parent_plan: phase-N-overview.md   # filename of parent plan (omit if top-level)
+# parent_deliverable: "1"            # row number in parent's Deliverables table
+related_to: []
 depends_on: []
 blocks: []
-consumed_by: plans/plan-retire-the-global-human_approved-gate-for-a-purpose-based-audited-authorization-model.md
+reviewed_by:
+reviewed_date:
+canceled_date:  # Populated when plan is canceled
+cancellation_reason:  # Populated when plan is canceled
+template_version: "1.0"
+tests_defined: true
+tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
+# Gate fields — populated when a lifecycle gate applies to this document
+gate_reviewer:  # Who must review (set automatically by gate rules)
+gate_status:    # pending | approved | waived
+gate_date:      # Stamped when gate_status is set
+gate_note:      # Optional reviewer note
+gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
+gate_quorum: 1    # Phase 1a — minimum approvals needed
 ---
 
-# Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model
+# Plan: Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model
 
-## Summary
+## Mode
+
+Plan modes: `off` (mentorship), `guided` (agent drafts, human approves), `full` (autonomous).
+
+**MENTORSHIP MODE — Human leads, LLM advises**
+
+- Human carries out tasks their own way
+- LLM provides SOP compliance checks and safety warnings
+- LLM offers suggestions when human asks for help
+
+## Overview
+
+### Summary
 
 Replace the blunt, global `HUMAN_APPROVED=1` blocker with a **purpose-based authorization
 model**: policy defines *classes* of action and the authorization each requires; a human's
@@ -36,7 +58,7 @@ that grant's scope. This aligns AI governance with DocWright's own thesis — *g
 policy + validation + audit trails, not by blocking access* — instead of contradicting it.
 BDFL direction, 2026-07-13.
 
-## Review outcome — model revised (2026-07-13, pending BDFL confirmation)
+### Review outcome — model revised (2026-07-13, pending bdfl confirmation)
 
 A three-perspective adversarial review (injection red-team · mechanical enforceability ·
 guarantee-regression audit) hardened this design. Full analysis:
@@ -71,7 +93,7 @@ The review also surfaced a **pre-existing security hole independent of this prop
 (`git-commit.ts` stamps `HUMAN_APPROVED:'1'` on every UI commit; `AUTH_MODE=none` synthesizes
 an admin) — filed separately, not blocked on this.
 
-## Settled decisions (BDFL, 2026-07-13)
+### Settled decisions (bdfl, 2026-07-13)
 
 1. **Direction approved:** retire the global `HUMAN_APPROVED=1` gate; replace with the
    purpose-based, audited authorization model below. (Framing confirmed: protect against
@@ -97,7 +119,7 @@ property, not AI self-restraint.
 (reversibility axis · token primitive · audit-hardening-first), and the `AUTH_MODE=none`
 policy call (whether governance transitions are permitted at all in single-user local mode).
 
-## Problem Statement
+### Problem statement
 
 `HUMAN_APPROVED=1` is a global, binary gate: certain governance mutations (setting
 `approved: true`, `status: completed`, `gate_status: approved/waived`) require the literal
@@ -127,7 +149,7 @@ Three problems:
    for the reversible classes; the correction in point 1 of the Review Outcome ensures the
    irreversible ones gain a real bar rather than a conversational one.)
 
-## The invariant to preserve (the hinge)
+### The invariant to preserve (the hinge)
 
 The risk this mechanism exists to prevent is **not** "a human authorizes something in
 conversation." It is **the AI assuming authorization, inferring it from ambiguity, or
@@ -145,36 +167,7 @@ This is the BDFL's own phrasing — "you may not *assume* my authorization." Hum
 agree on the safety property; the change is purely the *enforcement mechanism* (crude
 global env var → policy + explicit audited grant).
 
-## Proposed Solution
-
-1. **Action-class policy.** Define classes of AI action and the authorization each needs
-   (illustrative — to be finalized in the plan):
-
-   | Class | Examples | Authorization |
-   |---|---|---|
-   | Informational | reads, searches, dry-runs | none |
-   | Reversible mutation | code edits, branch commits, plan step updates | none; logged |
-   | Irreversible / outward | merge to trunk, delete issues, push release tags, external sends | explicit scoped grant (quoted) + audit entry |
-   | Governance-doc lifecycle | `approved: true`, `status: completed`, `gate_status` | explicit scoped grant that **is** the approval-of-record + audit entry + a **required second factor: an explicit UI action** (not conversational) |
-
-2. **Authorization = an explicit, scoped, audited grant.** A human authorization is a direct
-   instruction ("you are authorized to do X"). The AI records it verbatim on the audit
-   trail against the action, acts only within its stated scope, and quotes it. No magic
-   string, no env var.
-
-3. **Retire `HUMAN_APPROVED=1` entirely** — the env var, its hook references, the commit-
-   string ritual, and doc mentions — replaced by the action-class policy + the grant/audit
-   primitive.
-
-4. **Un-assumable by construction.** Enforcement (hook / dispatch / classifier) defaults to
-   *deny* for the gated classes unless an explicit, in-scope, current grant is present. The
-   AI is instructed and, where enforceable, code-checked to never infer authorization.
-
-5. **Keep the audit trail as the safety backbone.** Every gated action logs: the action,
-   its target/scope, the quoting of the human grant, and the actor. Humans can review and
-   revoke. Safety is *audit + scoped gates*, not blocking.
-
-## Security implications
+### Security implications
 
 This proposal **loosens an AI restriction**, so it demands a rigorous, honest security
 analysis — and independent review (the author of this section is the restrained party).
@@ -204,7 +197,7 @@ analysis — and independent review (the author of this section is the restraine
   token-backed, non-conversational factor covers `approved`/`completed`/`gate_status` **and**
   merge-to-trunk / delete / release-tag / external-send. The dividing line is reversibility.
 
-## Scope of change
+### Scope of change
 
 - Policy: rewrite `ai-governance-boundaries` around the action-class model; update
   `workflow-layer-governance`; cross-link `mutual-augmentation-cycle` as the rationale.
@@ -217,7 +210,7 @@ analysis — and independent review (the author of this section is the restraine
 - Runtime classifier: align its action-authorization with the same action-class policy so
   the two mechanisms stop diverging.
 
-## Verification
+### Verification
 
 - No `HUMAN_APPROVED` reference remains in hooks, policy, or docs (grep gate in CI).
 - A gated action **without** an explicit grant is denied (test the default-deny path).
@@ -228,7 +221,7 @@ analysis — and independent review (the author of this section is the restraine
   and the AI cannot self-advance a plan/proposal.
 - Injected/file-borne "grants" are rejected (provenance test).
 
-## Risks / tradeoffs
+### Risks / tradeoffs
 
 | Risk | Mitigation |
 |------|------------|
@@ -237,16 +230,72 @@ analysis — and independent review (the author of this section is the restraine
 | Prompt-injection forged grants | Grants only from the authenticated human channel; never from tool/file/memory |
 | Bigger blast radius than an env var during migration | Stage it: policy + audit primitive first, enforcement swap second, remove env var last, behind tests |
 
-## Multi-perspective review
+### Multi-perspective review
 
 Per `multi-perspective-review`, and because this changes a **core security policy** authored
 in part by the restrained party (the AI), this proposal must get **BigPickle's and the
 BDFL's** independent review before any enforcement code changes. The AI's endorsement of
 loosening its own restraints is explicitly discounted.
 
-## Related
+### Related
 
 - [[policies/core/ai-governance-boundaries]] — the policy being rewritten.
 - [[policies/core/workflow-layer-governance]] — where mutations are gated today.
 - [[policies/core/mutual-augmentation-cycle]] — the thesis this realigns to.
 - [[policies/core/code-over-memory]] — enforce the new model in code, not memory.
+
+
+## Implementation Steps
+
+> When marking a task ✅ Complete, update every step row in this table
+> to reflect what was actually built. Stale ⏳ rows mislead reviewers.
+
+| Step | Action | Details | Status |
+|------|--------|---------|--------|
+| 1 | | | ⏳ Pending |
+
+## Testing Plan
+
+
+
+## Rollback Procedures
+
+
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | | | |
+
+## Phase Gate
+
+- [ ] All implementation steps resolved (delivered or formally deferred with captured proposals)
+- [ ] Test coverage defined and human-reviewed (`tests_human_reviewed: true`)
+- [ ] Deferred ideas captured as proposals before closing (see [[policies/core/capture-deferred-ideas.md]])
+- [ ] Rollback procedures documented
+- [ ] Risk assessment completed
+
+## Testing Plan
+
+### Step Verification
+
+- [ ] All implementation steps complete and outcomes verified
+
+### Integration & Regression
+
+- [ ] Existing tests pass without modification (`npm test`)
+- [ ] TypeScript compiles cleanly (`npm run typecheck`)
+- [ ] Plan: Retire the global HUMAN_APPROVED gate for a purpose-based, audited authorization model functionality works end-to-end
+
+### Gate Criteria
+
+- [ ] `tests_defined` set to `true` in frontmatter
+- [ ] Human reviewer has verified step outcomes above
+- [ ] No regressions introduced to adjacent workflows
+
+## Document History
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-07-13 | Created | NetYeti |
