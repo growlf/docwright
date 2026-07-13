@@ -12,7 +12,7 @@ tags:
   - dog-fooding
 proposal_source: proposals/approved/adopt-milestone-driven-roadmap-discipline.md
 priority: high
-automated: guided
+automated: full
 assigned_to: NetYeti
 phase: 4
 milestone: v0.5.0
