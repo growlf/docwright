@@ -1,6 +1,7 @@
 ---
 title: Harden AI-agent plan/proposal lifecycle tooling
 status: completed
+completed_date: 2026-07-13
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -21,6 +22,7 @@ completed_steps: 11
 tests_last_run: "2026-07-12T21:45:55.549Z"
 tests_last_result: pass
 tests_last_commit: cafd59d
+_path: plans/completed/harden-plan-proposal-lifecycle-tooling
 ---
 
 # Harden AI-agent plan/proposal lifecycle tooling
