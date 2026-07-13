@@ -1,110 +1,90 @@
 ---
-title: Roadmap date discipline — enforce version/milestone dates + issue-in-range scheduling (DocWright + GitHub)
-status: draft
-author: NetYeti
-created: 2026-07-13
-tags:
-  - governance
-  - roadmap
-  - milestones
-  - dates
-  - github-projects
-  - planning
-proposal_source: proposals/approved/roadmap-date-discipline.md
+title: "Roadmap date discipline — enforce version/milestone dates + issue-in-range (DocWright + GitHub)"
+author: "NetYeti"
+created: "2026-07-13"
+created_by: "NetYeti@cluster-llm"
+status: in-progress
+proposal_source: "proposals/roadmap-date-discipline.md"
 priority: high
 automated: guided
-assigned_to: NetYeti
+assigned_to: ["NetYeti"]
+verification_type: unit
+related_to:
+  - proposals/roadmap-date-discipline.md
+  - docs/github-project-schema.md
+depends_on: []
+blocks: []
 tests_defined: false
 tests_human_reviewed: false
-_path: plans/roadmap-date-discipline.md
+template_version: "1.0"
+scenario_synthesis: "GitHub stores + displays roadmap dates (milestone due dates, Project Start/Target fields, the Roadmap view); DocWright ENFORCES via a pure validator (every non-exempt milestone has a target; issues fall within their milestone range, inheriting by default; backlog/future exempt). Built warn-first: validator → data reader (client) → CLI check (npm run roadmap:check) → /status surfacing → pre-commit/CI wiring → hard-fail flip once the board is fully dated. Never fabricates dates."
+total_steps: 7
+completed_steps: 3
 ---
 
-# Roadmap date discipline — enforce version/milestone dates + issue-in-range scheduling (DocWright + GitHub)
+# Roadmap date discipline — enforce version/milestone dates + issue-in-range
 
 ## Overview
 
-Delivers the approved proposal [[proposals/approved/roadmap-date-discipline.md]] — see it for the full *what & why*.
-Held at `status: draft`; fill in the implementation steps below before moving to `in-progress`.
+Delivers [[proposals/roadmap-date-discipline]] (approved 2026-07-13). GitHub = store/display,
+DocWright = enforcer. Settled decisions: warn→hard-fail; issues inherit the milestone range by
+default; version==milestone; backlog/future exempt; date-committed roadmapping confirmed. The GH
+store/display side was backfilled ahead of the plan (Start/Target fields, real dates, v0.6.0 due
+2026-07-31, v0.7.0) — see the proposal's "Already backfilled" note. This plan builds the
+DocWright enforcement.
 
-The GH-pivot moved dev issues onto GitHub Issues + the DocWright Project board, but left the
-**planning layer unbuilt**: milestones/versions have no target dates, issues aren't scheduled
-within any range, and the "Roadmap" (GANTT) view is therefore blank. This proposal adds
-**roadmap date discipline**: (1) a new version/milestone **must** carry an initial target date;
-(2) issues assigned to a milestone are **enforced to fall within that milestone's date range**;
-(3) it's implemented as a **split across both surfaces** — GitHub is the *store + display*
-(milestone due dates, Project Start/Target date fields, the Roadmap view), and **DocWright is the
-*enforcer*** (validation in dispatch + pre-commit/CI, surfaced in `/status`). This makes
-progress-toward-goals trackable (a real burndown) and closes the pivot's planning gap. Extends the
-GH-pivot and subsumes the "living-roadmap renderer" slice of
-[[proposals/roadmap-discipline-carryover]].
+## Constraints & Invariants
+
+1. **Never fabricate dates** — DocWright reads GH + validates; humans set dates in GH.
+2. **Warn during rollout → hard-fail once the board is fully dated** (all active milestones have targets).
+3. **Inherit-by-default** — only explicit per-issue dates are range-checked.
+4. **Pure core, no VS Code deps** — the validator (`roadmap-dates.ts`) is fs/GH-free; the reader/CLI wire it.
 
 ## Implementation Steps
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Add milestone date schema | Add `start_date` and `target_date` fields to the DocWright milestone schema definition | ⏳ Pending |
-| 2 | Enforce milestone date presence | Block milestone activation if either start or target date is missing, treating dateless milestones as validation failures | ⏳ Pending |
-| 3 | Add issue date fields | Extend the issue schema with `start_date` and `target_date` fields for range tracking | ⏳ Pending |
-| 4 | Implement date-range validator | Create a rule that verifies `milestone.start ≤ issue.start ≤ issue.target ≤ milestone.target` for every issue | ⏳ Pending |
-| 5 | Build GitHub milestone reader | Fetch milestone due dates directly from the GitHub API as the source of display truth | ⏳ Pending |
-| 6 | Build GitHub Project date reader | Read Project-level date fields from GitHub to mirror the Roadmap surface | ⏳ Pending |
-| 7 | Integrate validator in dispatch | Wire the date-range validator into DocWright's dispatch pipeline so violations are caught before execution | ⏳ Pending |
-| 8 | Add pre-commit hook validation | Create a local hook that runs DocWright's validator against staged milestone and issue changes | ⏳ Pending |
-| 9 | Add CI validation step | Add a DocWright validation job to CI that fails on any date-range or missing-date violation | ⏳ Pending |
-| 10 | Surface results in /status | Expose validator outcomes and date-rule health in the DocWright `/status` command output | ⏳ Pending |
-| 11 | Reject invented dates | Ensure DocWright never synthesizes dates and only enforces rules against data read from GitHub | ⏳ Pending |
-| 12 | Document date truth flow | Add architecture notes clarifying GitHub as the human-facing store and DocWright as the enforcer | ⏳ Pending |
+| 1 | Validator core | `src/dispatch/roadmap-dates.ts` — dateless-milestone + issue-in-range rules (inherit-by-default; backlog/future exempt); `auditRoadmapDates()`. Pure, 11 unit tests. | ✅ Done |
+| 2 | GH data reader | Extend `github-issues.ts`: `listMilestones()` (title + due→target) + include each item's `milestone` in `listProjectItemsDetailed`; a pure `roadmapDataFromBoard(items, milestones)` producing `{milestones, issues}` for the validator. Unit-tested. | ✅ Done |
+| 3 | CLI check (warn) | `scripts/roadmap-check.ts` (`npm run roadmap:check`): fetch then `auditRoadmapDates` then print violations. WARN mode (exit 0 + report); `--strict` exits non-zero (for step 6). | ✅ Done |
+| 4 | /status surfacing | `/api/status` "needs attention" flags a dateless active milestone / an out-of-range issue (reads via the GH client, degrades if unconfigured, like the issue read layer). | ⏳ Pending |
+| 5 | pre-commit + CI wiring (warn) | Run `roadmap:check` in CI (and optionally pre-commit) in WARN mode; a non-blocking signal during rollout. | ⏳ Pending |
+| 6 | Hard-fail flip | Once every active milestone carries a target (board fully dated), flip `roadmap:check --strict` on in CI (blocking) + document the waiver escape hatch. Gated on the board being dated. | ⏳ Pending |
+| 7 | Policy atom + docs | `policies/core/roadmap-date-discipline.md` atom; update the GH-pivot docs + mark the carryover's living-roadmap slice subsumed. | ⏳ Pending |
 
 ## Testing Plan
 
-### Step Verification
-
-- [ ] Creating a milestone without a start and target date fails validation with a clear error indicating missing date fields
-- [ ] Opening an issue with a start date before its milestone's start date is rejected; opening with a target date after its milestone's target date is rejected; opening with both dates within range is accepted
-- [ ] DocWright reads milestone and issue dates from GitHub Projects (not from local config or invented values) and the Roadmap GANTT view renders correct bar positions and lengths for milestones and issues with valid date ranges
-- [ ] `/status` output surfaces milestone and issue date compliance status; a pre-commit or CI check blocks commits that introduce date violations; no code path in DocWright silently assigns or adjusts dates when they are missing or invalid
-
-### Integration & Regression
-
-- [ ] `npm test` passes with zero failures after each step is implemented
-- [ ] Typecheck (`npm run typecheck` or equivalent) completes with no new errors
-- [ ] Existing DocWright validation rules (e.g., title format, label requirements, body structure) continue to pass without regression
-- [ ] GitHub milestone and issue creation/editing flows that do not involve date fields remain unaffected
-- [ ] `/status` command continues to report all previously tracked dimensions alongside the new date-compliance dimension
-
-### Gate Criteria
-
-- [ ] All four step-verification checkboxes are checked and their test evidence is recorded
-- [ ] `npm test` and typecheck are green on the main branch with the feature merged
-- [ ] At least one milestone with start/target dates and at least three issues with start/target dates (one valid, one early, one late) exist in a test project and produce the expected pass/fail outcomes end to end
-- [ ] DocWright enforcer rejects dateless active milestones and out-of-range issue dates in CI without human intervention
-- [ ] No date value is generated, mutated, or silently defaulted by DocWright; all dates originate in GitHub and are read-only to the enforcer
+- Step 1: validator unit tests (dateless milestone; out-of-range/inverted/in-range/inherit; exempt). Done.
+- Step 2: reader maps board items + milestones to the validator shapes (mocked client).
+- Step 3: CLI prints violations; `--strict` exits non-zero on a seeded violation; warn mode exits 0.
+- Step 4: `/status` attention includes a seeded dateless milestone.
+- Step 6: strict CI blocks a seeded out-of-range issue; waiver documented.
 
 ## Rollback Procedures
 
-## Rollback Procedures
-
-| Scenario | Rollback |
-|----------|----------|
-| Milestone validation rejects valid planning | Disable DocWright milestone validator in dispatch; remove pre-commit hook; clear `/status` milestone check |
-| Date enforcement blocks legitimate issue scheduling | Revert milestone range rule in validator; remove `issue.target ≤ milestone.target` constraint; redeploy CI pipeline |
-| GitHub ↔ DocWright date sync breaks | Revert DocWright to read-only mode (stop writing dates); remove Roadmap date fields; manually restore dates via GitHub UI |
-| Date truth source conflicts arise | Revert to GitHub-only dates; remove DocWright date validation; clear any cached date enforcement state |
-| Full enforcement rollback needed | Revert DocWright to pre-enforcement version; remove all date validators; disable `/status` date checks; restore original commit hooks |
+- Steps 1–5 are additive/warn-only — nothing blocks; disable by not wiring / removing the CI step.
+- Step 6 (hard-fail) reverts by flipping `--strict` off; the validator + reader stay.
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Milestone dates set retroactively (after work begins) undermine burndown accuracy | Medium | High | DocWright validation rejects issues with start dates before the milestone start; /status surfaces stale ranges |
-| GitHub Project date fields are edited directly, bypassing enforcement | High | Medium | DocWright CI gate re-validates on every issue transition; docs establish "dates are planned in Projects, enforced by DocWright" as the workflow contract |
-| Team adopts milestone dates as aspirational rather than committed, causing chronic range violations | Medium | High | Validation errors block merges/dispatches rather than just warning; /status dashboard makes enforcement visible so stale ranges cannot silently accumulate |
-| DocWright validator availability (service downtime, CI lag) creates a window where invalid dates ship uncaught | Low | High | Local pre-commit hook as fallback enforcement; date-range check is a pure function with no external dependencies, so it can run offline |
-| Historical milestones without dates are migrated inconsistently, generating false validation failures | Medium | Low | One-time migration script sets provisional ranges for closed milestones; validator skips milestones with status `closed` or `completed` |
-| Roadmap GANTT view displays stale or conflicting dates when GitHub cache hasn't refreshed | Low | Medium | DocWright reads directly from GitHub API (no intermediate cache); /status explicitly flags date freshness with last-synced timestamps |
+| Risk | Mitigation |
+|------|------------|
+| Enforcement fabricates/guesses dates | Validator only reads; never writes/invents; humans set dates in GH |
+| Hard-fail blocks legitimate work | Warn-first; flip only when the board is fully dated; documented waiver |
+| GH API unavailable in CI | Reader degrades (like the issue read layer); warn, don't hard-error on fetch failure |
+| Per-issue date busywork | Inherit-by-default — only explicit deviations are checked |
+
+## Phase Gate
+
+- [ ] Validator + reader + CLI unit-tested; `roadmap:check` runs green (warn) against the live board
+- [ ] `/status` surfaces dateless-milestone / out-of-range violations
+- [ ] Warn-mode CI wired; hard-fail flip deferred until the board is fully dated
+- [ ] Policy atom + docs; carryover living-roadmap slice marked subsumed
+- [ ] Test coverage human-reviewed
 
 ## Document History
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2026-07-13 | Created from approved proposal | NetYeti |
+| 2026-07-13 | Created via Approve (auto-stub), then fleshed into 7 staged steps; step 1 (validator core, roadmap-dates.ts, 11 tests) marked done — built additive/warn-only ahead of the wiring. GH store/display side backfilled separately (see proposal). | NetYeti |
+| 2026-07-13 | Steps 2+3 done (dogfood 48d968a). Step 2 (GH data reader): github-issues.ts gained listMilestones() (title + due→target) + each board item's native milestone in listProjectItemsDetailed; roadmap-dates.ts gained roadmapDataFromBoard() (pure board→validator mapper). Step 3 (CLI check): scripts/roadmap-check.ts + npm run roadmap:check — fetch → auditRoadmapDates → report; WARN mode (exit 0), --strict for the step-6 hard-fail; degrades cleanly if GH unconfigured/unreachable. Verified live against the board: 2 milestones / 97 issues, correctly flagged v0.7.0 as dateless (warn), 0 out-of-range. tsc clean; 498 dispatch tests (2 new). Remaining: step 4 (/status surfacing), step 5 (CI wiring, warn), step 6 (hard-fail flip once board fully dated), step 7 (policy atom + docs). | NetYeti |
