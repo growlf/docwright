@@ -1,6 +1,7 @@
 ---
 title: Phase close-out from the Web UI
 status: completed
+completed_date: 2026-07-13
 author: NetYeti
 created: 2026-07-11
 tags:
@@ -20,6 +21,7 @@ completed_steps: 3
 tests_last_run: "2026-07-12T22:19:26.460Z"
 tests_last_result: pass
 tests_last_commit: 1436677
+_path: plans/completed/phase-close-web-ui
 ---
 
 # Phase close-out from the Web UI
