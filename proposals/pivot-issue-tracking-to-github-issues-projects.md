@@ -7,14 +7,15 @@ category:
   - process-change
   - integration
 complexity: high
-approved: false
+approved: true
 priority: high
 created_by: "NetYeti@cluster-llm"
 assigned_to: NetYeti
 related_to:
-  - "[[proposals/approved/issue-heatmap-and-dedup-pipeline]]"
-  - "[[proposals/approved/collaboration-issue-model-and-roadmap-sync]]"
-  - "[[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]]"
+  - [[proposals/approved/issue-heatmap-and-dedup-pipeline]]
+  - [[proposals/approved/collaboration-issue-model-and-roadmap-sync]]
+  - [[proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user]]
+  - plans/pivot-issue-tracking-to-github.md
 depends_on: []
 blocks: []
 ---
