@@ -211,6 +211,42 @@ export function checkCompletionGate(text: string, planName: string): string | nu
 }
 
 /**
+ * Is this plan's WORK complete and awaiting only the human's certify + Complete?
+ *
+ * True when every NON-human completion criterion is met — no pending steps, a
+ * gate section with all its criteria checked, no open Testing Plan boxes, and
+ * the test evidence for its verification_type — but deliberately EXCLUDING the
+ * human attestations (tests_defined / tests_human_reviewed) and the status flip,
+ * because those ARE the human's remaining actions. Powers the /status
+ * "needs your attention" queue: surface a plan here and the human's next click
+ * (Certify → Complete) closes it.
+ */
+export function isReadyForHumanCompletion(text: string): boolean {
+  if (hasPendingSteps(text)) return false;
+
+  // Gate section present + all its criteria checked (mirrors checkCompletionGate's scan).
+  const lines = text.split('\n');
+  let inGate = false, gateFound = false, uncheckedGate = 0;
+  for (const line of lines) {
+    if (line.startsWith('#')) {
+      if (inGate) break;
+      inGate = line.includes('Phase Gate') || line.includes('Gate Criteria');
+      if (inGate) gateFound = true;
+    } else if (inGate && line.includes('- [ ]')) {
+      uncheckedGate++;
+    }
+  }
+  if (!gateFound || uncheckedGate > 0) return false;
+
+  if (uncheckedTestingPlanBoxes(text).length > 0) return false;
+
+  const vtype = (String(extractFrontmatterField(text, 'verification_type') ?? '').trim() || 'unit');
+  if (vtype === 'none') return true;
+  if (vtype === 'runtime') return String(extractFrontmatterField(text, 'runtime_verified')) === 'true';
+  return String(extractFrontmatterField(text, 'tests_last_result')) === 'pass';
+}
+
+/**
  * Unchecked `- [ ]` items anywhere in the `## Testing Plan` section.
  * Returns the trimmed line text of each open box (first 100 chars).
  */

@@ -7,6 +7,8 @@ import { buildRoadplan, byPriority } from '../../../../../dispatch/roadplan';
 import { getReleaseReadiness } from '../../../../../dispatch/release';
 import { parseFrictionLog, agedFrictionEntries, FRICTION_LOG_PATH, FRICTION_REVIEW_CADENCE_DAYS } from '../../../../../dispatch/friction';
 import { parseFrontmatter as parseFm } from '../../../../../dispatch/frontmatter';
+import { isReadyForHumanCompletion } from '../../../../../dispatch/completion-gate';
+import { phaseReadiness } from '../../../../../dispatch/phase-close-core';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -588,10 +590,28 @@ export function GET({ url }: { url: URL }) {
       }
     : null;
 
+  // "Needs your attention" — the items gated on the human's decision right now,
+  // distilled from the same data below (bug #345). v1: plans whose work is done
+  // and await only Certify → Complete, plus a phase ready to close.
+  const plansReadyToComplete = readDir(path.join(REPO_ROOT, 'plans'))
+    .filter(({ fm }) => String(fm.status ?? '') === 'in-progress')
+    .filter(({ path: p }) => {
+      try { return isReadyForHumanCompletion(fs.readFileSync(path.join(REPO_ROOT, p), 'utf-8')); }
+      catch { return false; }
+    })
+    .map(({ path: p, fm }) => ({ path: p, title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')) }));
+  const pc = phaseReadiness(REPO_ROOT, currentPhase);
+  const attention = {
+    plansReadyToComplete,
+    phaseReadyToClose: pc.ready ? { phase: pc.phase, completed: pc.completed.length } : null,
+    count: plansReadyToComplete.length + (pc.ready ? 1 : 0),
+  };
+
   const data = {
     vaultName,
     version,
     currentPhase,
+    attention,
     phasePlans,
     proposals: { open, approved_pending: approvedPending, deferred },
     plans: { draft, active, completed_count: completedCount, completed },
