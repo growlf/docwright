@@ -67,6 +67,17 @@ describe('phase-close-core — readiness & findPhasePlans', () => {
     assert.strictEqual(phaseReadiness(root, 5).ready, true);
     fs.rmSync(root, { recursive: true, force: true });
   });
+
+  it('phaseReadiness: NOT ready when the version already moved past the phase (dogfood bug 2026-07-13)', () => {
+    // v0.5.3 vault, checking phase 3 (→ 0.4.0): close-out already applied, so the
+    // "needs attention" panel must not nag — matching closePhase()'s isAtOrBeyond guard.
+    const root = makeVault({ version: '0.5.3', completed: { 'done.md': completedPlan(3) } });
+    const r = phaseReadiness(root, 3);
+    assert.strictEqual(r.ready, false, 'not ready — version already past this phase');
+    assert.strictEqual(r.alreadyClosed, true);
+    assert.ok(r.completed.length > 0, 'completed plans are still reported');
+    fs.rmSync(root, { recursive: true, force: true });
+  });
 });
 
 describe('phase-close-core — closePhase', () => {

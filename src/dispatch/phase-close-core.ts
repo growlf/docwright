@@ -75,13 +75,32 @@ export interface PhaseReadiness {
   ready: boolean;
   completed: string[];
   pending: string[];
+  /** True if VERSION is already at/beyond 0.{N+1}.0 — the close was already applied. */
+  alreadyClosed: boolean;
 }
 
-/** Is phase N ready to close? Ready = ≥1 completed plan AND no pending ones. */
+/**
+ * Is phase N ready to close? Ready = ≥1 completed plan AND no pending ones AND the
+ * version has not already moved past this phase. The last clause keeps the readiness
+ * signal (the "needs attention" panel) in agreement with closePhase()'s own
+ * isAtOrBeyond guard — otherwise the panel nags to close a phase the version already
+ * passed while the Close action refuses it as "already applied" (dogfood bug 2026-07-13).
+ */
 export function phaseReadiness(root: string, phase: number): PhaseReadiness {
   const completed = findPhasePlans(phase, path.join(root, 'plans', 'completed'));
   const pending = findPendingPhasePlans(phase, path.join(root, 'plans'));
-  return { phase, ready: completed.length > 0 && pending.length === 0, completed, pending };
+  let alreadyClosed = false;
+  try {
+    const current = fs.readFileSync(path.join(root, 'VERSION'), 'utf-8').trim();
+    alreadyClosed = isAtOrBeyond(current, nextPhaseVersion(phase));
+  } catch { /* no VERSION → treat as not-closed */ }
+  return {
+    phase,
+    ready: completed.length > 0 && pending.length === 0 && !alreadyClosed,
+    completed,
+    pending,
+    alreadyClosed,
+  };
 }
 
 /** Write `version` to VERSION + package.json + src/webui/package.json. Returns changed paths (relative). */
@@ -122,17 +141,19 @@ export interface ClosePhaseResult {
  */
 export function closePhase(root: string, phase: number): ClosePhaseResult {
   if (!phase || phase < 1) return { ok: false, reason: 'Provide a phase number ≥ 1.' };
-  const { ready, completed, pending } = phaseReadiness(root, phase);
+  const { completed, pending } = phaseReadiness(root, phase);
   if (completed.length === 0) {
     return { ok: false, reason: `No completed Phase ${phase} plans found in plans/completed/.` };
   }
-  if (!ready) {
-    return { ok: false, reason: `Phase ${phase} has ${pending.length} plan(s) still open: ${pending.join(', ')}. Complete or cancel them first.` };
-  }
+  // Version-already-past check comes BEFORE the pending check so an already-closed
+  // phase reports "already applied", not a confusing "0 plans still open".
   const target = nextPhaseVersion(phase);
   const current = fs.readFileSync(path.join(root, 'VERSION'), 'utf-8').trim();
   if (isAtOrBeyond(current, target)) {
     return { ok: false, reason: `Version ${current} is already at or beyond ${target} — Phase ${phase} close-out already applied.` };
+  }
+  if (pending.length > 0) {
+    return { ok: false, reason: `Phase ${phase} has ${pending.length} plan(s) still open: ${pending.join(', ')}. Complete or cancel them first.` };
   }
   const changed = bumpVersionFiles(root, target);
   return {
