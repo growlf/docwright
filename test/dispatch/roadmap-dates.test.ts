@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import {
   checkMilestoneDates, checkIssuesInRange, auditRoadmapDates, isExemptMilestone,
-  roadmapDataFromBoard,
+  roadmapDataFromBoard, auditRoadmapFromClient,
   type MilestoneDates, type IssueDates,
 } from '../../src/dispatch/roadmap-dates';
 
@@ -69,6 +69,18 @@ describe('roadmap-dates — roadmapDataFromBoard mapper', () => {
     assert.strictEqual(d.issues.length, 2);
     assert.deepStrictEqual(d.issues[0], { id: 1, milestone: 'v0.6.0', start: '2026-07-05', target: '2026-07-20' });
     assert.deepStrictEqual(d.issues[1], { id: 2, milestone: null, start: null, target: null });
+  });
+});
+
+describe('roadmap-dates — auditRoadmapFromClient (injected client)', () => {
+  it('fetches board + milestones via the client and audits', async () => {
+    const client = {
+      listMilestones: async () => [{ number: 1, title: 'v0.7.0', dueOn: null, state: 'open' as const }],
+      listProjectItemsDetailed: async () => [{ itemId: 'i1', issue: { number: 1, title: 't', body: '', state: 'open' as const, url: '', labels: [], milestone: 'v0.7.0' }, fields: {} }],
+    };
+    const r = await auditRoadmapFromClient(client);
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.violations.some(v => v.kind === 'dateless-milestone' && v.subject === 'v0.7.0'));
   });
 });
 

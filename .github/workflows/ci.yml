@@ -86,6 +86,17 @@ jobs:
       - name: Test webui units (auth, editors, round-trip, git commit)
         run: npm run test:webui
 
+      # Roadmap date discipline (roadmap-date-discipline plan, step 5) — WARN mode: reports
+      # dateless milestones / out-of-range issues, never blocks. Degrades to a clean skip if
+      # the GH secrets aren't set. The hard-fail flip (--strict) is step 6, once the board is
+      # fully dated.
+      - name: Roadmap date discipline (warn — non-blocking during rollout)
+        run: npm run roadmap:check
+        env:
+          DOCWRIGHT_GH_REPO: growlf/docwright
+          DOCWRIGHT_GH_TOKEN: ${{ secrets.DOCWRIGHT_GH_TOKEN }}
+          DOCWRIGHT_GH_PROJECT_ID: ${{ secrets.DOCWRIGHT_GH_PROJECT_ID }}
+
   branch-policy:
     name: Branch policy check
     runs-on: ubuntu-latest

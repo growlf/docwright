@@ -9,7 +9,7 @@ import { parseFrictionLog, agedFrictionEntries, FRICTION_LOG_PATH, FRICTION_REVI
 import { parseFrontmatter as parseFm } from '../../../../../dispatch/frontmatter';
 import { isReadyForHumanCompletion } from '../../../../../dispatch/completion-gate';
 import { phaseReadiness } from '../../../../../dispatch/phase-close-core';
-import { readIssueDocs } from '../../../../../dispatch/issue-source';
+import { readIssueDocs, readRoadmapAudit } from '../../../../../dispatch/issue-source';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -606,10 +606,14 @@ export async function GET({ url }: { url: URL }) {
     })
     .map(({ path: p, fm }) => ({ path: p, title: String(fm.title ?? p.replace(/^.*\//, '').replace(/\.md$/, '')) }));
   const pc = phaseReadiness(REPO_ROOT, currentPhase);
+  // Roadmap date-discipline (warn): dateless milestones / out-of-range issues from the GH
+  // board. Only active when ISSUES_SOURCE=github + configured; degrades to [] otherwise.
+  const roadmap = await readRoadmapAudit();
   const attention = {
     plansReadyToComplete,
     phaseReadyToClose: pc.ready ? { phase: pc.phase, completed: pc.completed.length } : null,
-    count: plansReadyToComplete.length + (pc.ready ? 1 : 0),
+    roadmapViolations: roadmap.violations,
+    count: plansReadyToComplete.length + (pc.ready ? 1 : 0) + roadmap.violations.length,
   };
 
   const data = {

@@ -59,6 +59,7 @@
     attention?: {
       plansReadyToComplete: { path: string; title: string }[];
       phaseReadyToClose: { phase: number; completed: number } | null;
+      roadmapViolations?: { kind: string; subject: string; detail: string }[];
       count: number;
     };
     phasePlans: PhasePlan[];
@@ -519,6 +520,13 @@
               {phaseClosing ? 'Closing…' : `Close Phase ${data.attention.phaseReadyToClose.phase} → 0.${data.attention.phaseReadyToClose.phase + 1}.0`}
             </button>
           </div>
+        {/if}
+        {#if data.attention.roadmapViolations}
+          {#each data.attention.roadmapViolations as v}
+            <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+              <span style="flex:1;">📅 <strong>Roadmap:</strong> {v.detail} <span style="color:#666;font-size:12px;">(set the date in the GitHub milestone / Project)</span></span>
+            </div>
+          {/each}
         {/if}
       </div>
     {/if}

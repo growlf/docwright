@@ -101,6 +101,21 @@ export function auditRoadmapDates(input: { milestones: MilestoneDates[]; issues:
  * (listMilestones) and feeds them here, then to auditRoadmapDates. Milestone target = its
  * due date; issue Start/Target come from the Project date fields (blank → inherits).
  */
+/** Minimal client shape the roadmap audit needs — injectable for tests. */
+export interface RoadmapClient {
+  listMilestones(state?: 'open' | 'closed' | 'all'): Promise<GitHubMilestone[]>;
+  listProjectItemsDetailed(): Promise<ProjectItemDetail[]>;
+}
+
+/** Fetch board + milestones via the client and run the audit. Reads only. */
+export async function auditRoadmapFromClient(client: RoadmapClient): Promise<RoadmapAudit> {
+  const [items, milestones] = await Promise.all([
+    client.listProjectItemsDetailed(),
+    client.listMilestones('all'),
+  ]);
+  return auditRoadmapDates(roadmapDataFromBoard(items, milestones));
+}
+
 export function roadmapDataFromBoard(
   items: ProjectItemDetail[],
   milestones: GitHubMilestone[],

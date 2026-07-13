@@ -15,6 +15,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseFrontmatter } from './frontmatter';
 import { GitHubClient, githubConfigFromEnv, type ProjectItemDetail } from './github-issues';
+import { auditRoadmapFromClient, type RoadmapAudit } from './roadmap-dates';
 
 export interface IssueDoc {
   path: string;
@@ -112,4 +113,23 @@ export async function readIssueDocs(
     // GH selected but not configured — degrade to local rather than break the UI.
   }
   return readLocalIssueDocs(repoRoot);
+}
+
+/**
+ * Roadmap date-discipline audit for `/status` (roadmap-date-discipline plan, step 4).
+ * Only runs when issues are GitHub-canonical + configured; degrades to a clean pass on
+ * unconfigured/unreachable so the status endpoint never breaks.
+ */
+export async function readRoadmapAudit(
+  opts: { env?: NodeJS.ProcessEnv; client?: GitHubClient | null } = {},
+): Promise<RoadmapAudit> {
+  const env = opts.env ?? process.env;
+  if (getIssueSource(env) !== 'github') return { ok: true, violations: [] };
+  const client = opts.client !== undefined ? opts.client : makeClient(env);
+  if (!client) return { ok: true, violations: [] };
+  try {
+    return await auditRoadmapFromClient(client);
+  } catch {
+    return { ok: true, violations: [] };
+  }
 }
