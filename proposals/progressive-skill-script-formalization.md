@@ -28,6 +28,48 @@ the skill invokes for consistent, low-token results. Extends
 [[policies/core/code-over-memory]] and [[.opencode/rules/one-off-formalization]] with an
 explicit frequency ladder.
 
+## Review outcome — SPLIT (2026-07-13, pending BDFL confirmation)
+
+A three-perspective adversarial review ([[docs/formalization-proposal-review]]) found the intent
+sound but the proposal bundles a safe rule with a risky engine, and specifies mechanisms that
+can't be built as written. It splits into two:
+
+### Part A — cadence rule (safe; approvable now, with these fixes)
+A lightweight amendment to [[.opencode/rules/one-off-formalization]]:
+- **Trigger = stability, not raw count.** Formalize when a flow ran ≥3× **and** its shape was
+  unchanged between the last runs **and** the substrate isn't an in-progress plan. Add an explicit
+  **"when NOT to formalize"** clause (volatile substrate, high run-to-run variance, cheap to redo).
+- **Detection from a structured event log, not prose.** Reuse the existing gitignored append-only
+  substrate: a `.docwright/skill-usage.jsonl` (sibling to `audit.jsonl`). Each skill's
+  instrumentation is one deterministic "append a `skill_invoked` record" call — **not**
+  self-tracking markdown (a static `.md` can't execute or self-count; that mechanism is
+  impossible). A tiny aggregator surfaces candidates at session-start as **advisory,
+  human-confirmed suggestions** (mirror `capture_bug_report` suggest→confirm), over a rolling
+  window.
+- **Retirement path (a chute, not just a ratchet).** Record `last_used`; session-start surfaces
+  "skill X unused in N sessions — retire?" so the library doesn't sprawl.
+- **Form is a judgment call, decoupled from count.** Count *suggests considering*; the *form*
+  (skill / npm script / dispatch fn / MCP tool) comes from `one-off-formalization`'s menu by the
+  nature of the work. MCP tools (mutations) need explicit human sign-off regardless of count.
+- **Measured pilot first.** Baseline ONE settled flow (branch-per-fix); require the formalized
+  version to beat it net of amortized authoring+maintenance before generalizing.
+
+### Part B — skill-writer / self-authored tooling (DEFERRED, gated)
+The AI authoring skills/scripts/MCP tools it then runs is a **trust/supply-chain surface** — an
+AI-authored MCP tool is arbitrary new authorized capability the AI can invoke in its own process,
+never human-reviewed. It **must not advance** until it binds to the **same generated-tooling review
+gate the authz redesign is building** ([[docs/authz-model-hardening-review]]). Non-negotiables when
+it does: a human **reads** the generated artifact; generated code goes through the identical
+pipeline (pre-commit/test/lint/CI/human-merged PR); **no auto-activation** of any state-mutating
+generated tool; state-mutating generated tools bind to the authz irreversible/outward tier (signed
+grant); the self-upgrade "offer" may only *draft a PR*, never register/run a tool; forbidden under
+`AUTH_MODE=none`. Part B spins out as its own proposal once that gate exists. **Note: the
+"skill-writer FIRST" ordering in the original §Proposed Solution 3 is reversed** — hand-write one
+skill + measure before building any factory.
+
+*(The original Proposed Solution below is the pre-review draft, retained for provenance; Part A/B
+above supersede it.)*
+
 ## Problem Statement
 
 The existing one-off-formalization rule says "a one-off you've done before → file a
