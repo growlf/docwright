@@ -19,7 +19,7 @@ tests_human_reviewed: false
 template_version: "1.0"
 scenario_synthesis: "GitHub stores + displays roadmap dates (milestone due dates, Project Start/Target fields, the Roadmap view); DocWright ENFORCES via a pure validator (every non-exempt milestone has a target; issues fall within their milestone range, inheriting by default; backlog/future exempt). Built warn-first: validator → data reader (client) → CLI check (npm run roadmap:check) → /status surfacing → pre-commit/CI wiring → hard-fail flip once the board is fully dated. Never fabricates dates."
 total_steps: 7
-completed_steps: 5
+completed_steps: 6
 ---
 
 # Roadmap date discipline — enforce version/milestone dates + issue-in-range
@@ -50,7 +50,7 @@ DocWright enforcement.
 | 4 | /status surfacing | `/api/status` "needs attention" flags a dateless active milestone / an out-of-range issue (reads via the GH client, degrades if unconfigured, like the issue read layer). | ✅ Done |
 | 5 | pre-commit + CI wiring (warn) | Run `roadmap:check` in CI (and optionally pre-commit) in WARN mode; a non-blocking signal during rollout. | ✅ Done |
 | 6 | Hard-fail flip | Once every active milestone carries a target (board fully dated), flip `roadmap:check --strict` on in CI (blocking) + document the waiver escape hatch. Gated on the board being dated. | ⏳ Pending |
-| 7 | Policy atom + docs | `policies/core/roadmap-date-discipline.md` atom; update the GH-pivot docs + mark the carryover's living-roadmap slice subsumed. | ⏳ Pending |
+| 7 | Policy atom + docs | `policies/core/roadmap-date-discipline.md` atom; update the GH-pivot docs + mark the carryover's living-roadmap slice subsumed. | ✅ Done |
 
 ## Testing Plan
 
@@ -89,3 +89,4 @@ DocWright enforcement.
 | 2026-07-13 | Created via Approve (auto-stub), then fleshed into 7 staged steps; step 1 (validator core, roadmap-dates.ts, 11 tests) marked done — built additive/warn-only ahead of the wiring. GH store/display side backfilled separately (see proposal). | NetYeti |
 | 2026-07-13 | Steps 2+3 done (dogfood 48d968a). Step 2 (GH data reader): github-issues.ts gained listMilestones() (title + due→target) + each board item's native milestone in listProjectItemsDetailed; roadmap-dates.ts gained roadmapDataFromBoard() (pure board→validator mapper). Step 3 (CLI check): scripts/roadmap-check.ts + npm run roadmap:check — fetch → auditRoadmapDates → report; WARN mode (exit 0), --strict for the step-6 hard-fail; degrades cleanly if GH unconfigured/unreachable. Verified live against the board: 2 milestones / 97 issues, correctly flagged v0.7.0 as dateless (warn), 0 out-of-range. tsc clean; 498 dispatch tests (2 new). Remaining: step 4 (/status surfacing), step 5 (CI wiring, warn), step 6 (hard-fail flip once board fully dated), step 7 (policy atom + docs). | NetYeti |
 | 2026-07-13 | Steps 4+5 done (dogfood cb253db). Step 4 (/status surfacing): roadmap-dates.auditRoadmapFromClient (injected client) + issue-source.readRoadmapAudit (runs only when GH-canonical + configured, degrades to clean pass); /api/status attention now carries roadmapViolations + count; the 'needs attention' panel renders them. Verified live on the dev instance — surfaces v0.7.0 as dateless. Step 5 (CI wiring): .github/workflows/ci.yml runs npm run roadmap:check in WARN mode (non-blocking; degrades to skip if the DOCWRIGHT_GH_* Actions secrets aren't set — the BDFL adds those for CI to actually reach the board). Verified: tsc clean; 499 dispatch tests; webui build clean. Now 5 of 7. Remaining: step 6 (hard-fail --strict flip, GATED on the board being fully dated — v0.7.0 still needs a target date) + step 7 (policy atom + docs). Step 6 should not flip until every active milestone carries a target. | NetYeti |
+| 2026-07-13 | Step 7 done (dogfood fd80894): policies/core/roadmap-date-discipline.md core policy written; carryover proposal's living-roadmap slice marked partly-covered (docs/roadmap.md renderer remains). Also set v0.7.0 due 2026-09-15 → the board is now FULLY DATED (v0.6.0 2026-07-31, v0.7.0 2026-09-15) → roadmap:check is GREEN (0 violations) → step 6 (hard-fail --strict flip) is now UNGATED. Plan is 6 of 7. Only step 6 remains: flip CI's roadmap:check to --strict (blocking) + document the waiver escape hatch — deferred to the BDFL's go (it's a real CI-behavior change, and needs the DOCWRIGHT_GH_* Actions secrets in place so CI can reach the board, else strict would fail on the degraded/empty read). Once step 6 lands, the plan is complete pending human Certify→Complete. | NetYeti |
