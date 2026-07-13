@@ -20,6 +20,7 @@ tags:
   - workflow
   - visibility
 channel: dev
+github_issue: 395
 ---
 
 # Roadplan view lacks visibility for pending approvals and PRs

@@ -11,7 +11,7 @@ priority: 3
 created_by: "NetYeti@cluster-llm"
 assigned_to: []
 related_to:
-  - "[[issues/bug-api-plugins-500-on-dangling-symlink]]"
+  - "https://github.com/growlf/docwright/issues/352"
 depends_on: []
 blocks: []
 milestone: backlog
@@ -31,7 +31,7 @@ Two separate breakages this cycle were the same root cause — a machine-specifi
 path committed into the repo, which is wrong (or churns) on every other clone:
 
 1. **`plugins/erp-images`** was committed as a **symlink into `/home/netyeti/…`**. It dangled
-   on every other clone and 500'd `/api/plugins` (fix: #163 / [[issues/bug-api-plugins-500-on-dangling-symlink]]).
+   on every other clone and 500'd `/api/plugins` (fix: #163 / https://github.com/growlf/docwright/issues/352).
 2. **`opencode.jsonc`** was committed with **`/home/netyeti/…` absolute MCP paths**. Every clone
    rewrote it to its own paths → perpetual dirtiness (fix: untrack + gitignore, #194).
 
@@ -56,7 +56,7 @@ says to enforce with code rather than rely on reviewer memory.
 - One scanner script + `.githooks/pre-commit` wiring + one CI step. Small; no new deps.
 
 ## Related Documents
-- [[issues/bug-api-plugins-500-on-dangling-symlink]] — the symlink incident.
+- https://github.com/growlf/docwright/issues/352 — the symlink incident.
 - `docs/deployment-bms-devcloud.md` — where these paths kept surfacing.
 
 ## Discussion Notes

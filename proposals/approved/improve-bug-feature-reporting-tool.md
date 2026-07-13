@@ -20,12 +20,12 @@ assigned_to: NetYeti
 depends_on:
   - "[[proposals/issue-cluster-remediation-waves.md]]"
 related_to:
-  - "[[issues/bug-report-bug-button-should-pop-up-a-form.md]]"
-  - "[[issues/bug-report-button-should-offer-feature-as-well.md]]"
+  - "[[https://github.com/growlf/docwright/issues/177]]"
+  - "[[https://github.com/growlf/docwright/issues/178]]"
   - "[[issues/bug-issues-created-from-report-bug-dont-create-the-gh-.md]]"
-  - "[[issues/governance-panel-pending-approval-stat-is-mislabel.md]]"
-  - "[[issues/governance-panel-status-stat-tiles-aren-t-clickabl.md]]"
-  - "[[issues/bug-issues-have-no-forward-path.md]]"
+  - "[[https://github.com/growlf/docwright/issues/112]]"
+  - "[[https://github.com/growlf/docwright/issues/113]]"
+  - "[[https://github.com/growlf/docwright/issues/176]]"
 _path: proposals/approved/improve-bug-feature-reporting-tool
 consumed_by: plans/improve-bug-feature-reporting-tool.md
 ---

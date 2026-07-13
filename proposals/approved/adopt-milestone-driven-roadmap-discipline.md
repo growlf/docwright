@@ -25,11 +25,11 @@ related_to:
   - proposals/plan-execution-mode-rename.md
   - proposals/formalize-roadmap-sequencing-enforcement.md
   - proposals/phases-and-the-master-plan-are-mostly-invisible-to-the-user.md
-  - issues/bug-versioning-policy-still-references-retired-develop.md
-  - issues/bug-version-patch-number-diverged-from-completed-plan-.md
-  - issues/bug-release-v050-plan-duplicated-in-plans-and-undocume.md
-  - issues/bug-stray-nested-proposalsapprovedapproved-directory.md
-  - issues/bug-phase-closets-docstring-claims-step-verification-b.md
+  - https://github.com/growlf/docwright/issues/299
+  - https://github.com/growlf/docwright/issues/300
+  - https://github.com/growlf/docwright/issues/301
+  - https://github.com/growlf/docwright/issues/302
+  - https://github.com/growlf/docwright/issues/303
   - proposals/approved/plan-lifecycle-enforcement-gaps.md
 _path: proposals/approved/adopt-milestone-driven-roadmap-discipline
 consumed_by: plans/adopt-milestone-driven-roadmap-discipline.md

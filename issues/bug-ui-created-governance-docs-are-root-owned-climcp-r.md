@@ -13,6 +13,7 @@ reported_dates: [2026-07-13]
 channel: dev
 tags:
   - reported-bug
+github_issue: 383
 ---
 
 # UI-created governance docs are root-owned — CLI/MCP (running as gemini) can't edit them (EACCES)

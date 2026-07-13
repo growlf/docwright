@@ -13,6 +13,7 @@ milestone: v0.6.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
 closed_by_pr: #131
+github_issue: 374
 ---
 
 > Found by dogfooding on 2026-07-05 standing up the cs-erp-images deployment (#3), whose

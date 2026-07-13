@@ -21,15 +21,15 @@ tests_human_reviewed: true
 total_steps: 7
 completed_steps: 7
 tracked_by:
-  - issues/collaboration-schema-linkage-fields.md
-  - issues/collaboration-lock-deliverables-format.md
-  - issues/collaboration-issue-generation-at-plan-start.md
-  - issues/collaboration-derived-plan-progress.md
-  - issues/collaboration-enforcement-linting.md
-  - issues/collaboration-scope-freeze-enforcement.md
-  - issues/collaboration-sync-strategy.md
+  - https://github.com/growlf/docwright/issues/391
+  - https://github.com/growlf/docwright/issues/390
+  - https://github.com/growlf/docwright/issues/389
+  - https://github.com/growlf/docwright/issues/387
+  - https://github.com/growlf/docwright/issues/388
+  - https://github.com/growlf/docwright/issues/392
+  - https://github.com/growlf/docwright/issues/393
 scenario_synthesis: Developer collaboration - single store of record, bidirectional plan-issue linkage, auto-generation at plan-start, derived progress, enforcement linting, scope-freeze, sync to GitHub/Forgejo
-gate_note: "Changed files are untestable types: issues/collaboration-sync-strategy.md, plans/collaboration-issue-model-and-roadmap-sync.md"
+gate_note: "Changed files are untestable types: https://github.com/growlf/docwright/issues/393, plans/collaboration-issue-model-and-roadmap-sync.md"
 ---
 # Developer collaboration model: issue store of record, GitHub/Forgejo sync, and the ticket hierarchy
 

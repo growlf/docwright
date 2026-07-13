@@ -16,6 +16,7 @@ related:
   - plans/improve-bug-feature-reporting-tool.md
 tags:
   - reported-bug
+github_issue: 377
 ---
 
 # Proposal-to-plan lifecycle transition duplicates approved/ path segment

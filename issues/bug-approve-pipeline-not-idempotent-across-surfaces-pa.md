@@ -13,6 +13,7 @@ reported_dates: [2026-07-09]
 channel: dev
 tags:
   - reported-bug
+github_issue: 353
 ---
 
 # Approve pipeline not idempotent across surfaces — parallel UI + MCP processing double-nests proposal and generates duplicate draft plan

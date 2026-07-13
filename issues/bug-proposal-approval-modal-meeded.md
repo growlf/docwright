@@ -13,6 +13,7 @@ reported_dates: [2026-07-10]
 channel: dev
 tags:
   - reported-bug
+github_issue: 376
 ---
 
 # Proposal approval modal meeded

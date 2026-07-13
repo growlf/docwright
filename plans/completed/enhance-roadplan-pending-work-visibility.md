@@ -16,9 +16,9 @@ tests_defined: true
 tests_human_reviewed: true
 part_of: plans/release-v0.5.0.md
 related_to:
-  - issues/ui-roadplan-pending-work-visibility.md
-  - issues/bug-roadplan-view-lacks-release-target-box-with-burn-d.md
-  - issues/UX-release-criteria-visibility.md
+  - https://github.com/growlf/docwright/issues/395
+  - https://github.com/growlf/docwright/issues/379
+  - https://github.com/growlf/docwright/issues/398
 total_steps: 5
 completed_steps: 5
 tests_last_run: "2026-07-09T09:26:44.680Z"

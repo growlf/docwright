@@ -16,6 +16,7 @@ milestone: future
 channel: dev
 tags:
   - reported-bug
+github_issue: 379
 ---
 
 # Roadplan view lacks release-target box with burn-down and sub-component visibility

@@ -13,6 +13,7 @@ reported_dates: [2026-07-09]
 channel: dev
 tags:
   - reported-bug
+github_issue: 381
 ---
 
 # syncIssueFile creates GitHub-imported issues with invalid status/milestone defaults

@@ -12,7 +12,7 @@ priority: high
 created_by: "claude@claude-code"
 assigned_to: ""
 sources:
-  - issues/bug-issues-have-no-forward-path.md
+  - https://github.com/growlf/docwright/issues/176
 github_issues:
   - 176
 ---

@@ -15,6 +15,7 @@ related:
   - issues/bug-proposal-to-plan-lifecycle-transition-duplicates-a.md
 tags:
   - reported-bug
+github_issue: 356
 ---
 
 # dw-vault MCP server runs a stale dist/ build — capture_bug_report emits invalid status/milestone

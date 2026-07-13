@@ -15,8 +15,8 @@ assigned_to: ""
 priority: medium
 milestone: backlog
 related_to:
-  - issues/bug-plan-review-extractsteps-splits-table-rows-on-raw-.md
-  - issues/bug-mcp-updatestep-appendhistory-corrupt-table-rows-wh.md
+  - https://github.com/growlf/docwright/issues/373
+  - https://github.com/growlf/docwright/issues/367
 ---
 
 ## Problem

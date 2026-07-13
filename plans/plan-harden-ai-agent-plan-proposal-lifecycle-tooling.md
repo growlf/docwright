@@ -11,10 +11,10 @@ approved: true
 created_by: "claude@claude-code"
 assigned_to: NetYeti
 sources:
-  - issues/bug-proposal-to-plan-lifecycle-transition-duplicates-a.md
-  - issues/bug-updatestep-row-replacement-corrupts-table-when-det.md
-  - issues/bug-web-ui-complete-button-only-sets-status-field-neve.md
-  - issues/bug-web-ui-run-tests-button-never-persists-testslastre.md
+  - https://github.com/growlf/docwright/issues/377
+  - https://github.com/growlf/docwright/issues/384
+  - https://github.com/growlf/docwright/issues/385
+  - https://github.com/growlf/docwright/issues/386
 consumed_by: plans/plan-harden-ai-agent-plan-proposal-lifecycle-tooling.md
 automated: full
 ---

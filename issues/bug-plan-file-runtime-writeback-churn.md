@@ -12,6 +12,7 @@ tags: []
 milestone: v0.6.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
+github_issue: 370
 ---
 
 > Found by dogfooding on 2026-07-06, right after approving

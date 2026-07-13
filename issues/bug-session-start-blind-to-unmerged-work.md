@@ -14,6 +14,7 @@ milestone: v0.5.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
 closed_by_pr: #77
+github_issue: 380
 ---
 
 > Root cause of the 2026-07-01 near-loss of the urgent #68 base process-flow

@@ -17,6 +17,7 @@ related:
   - src/dispatch/bridge.ts
 tags:
   - reported-bug
+github_issue: 354
 ---
 
 # bridge.test.ts suggestDuplicates flaky in CI — shells out to real gh CLI with a tight timeout

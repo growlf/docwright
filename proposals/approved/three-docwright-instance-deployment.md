@@ -100,7 +100,7 @@ Key properties:
 Two already-approved Phase-3 sub-plans describe deployments this proposal now realizes, so
 their substance is **merged here**. The UI has no way yet to consume/supersede or process
 one governance doc into another (tracked by
-[[issues/feature-ui-consume-and-process-governance-docs]]), so this merge is manual and the
+https://github.com/growlf/docwright/issues/150), so this merge is manual and the
 sub-plans' **formal supersession is deferred** until that functionality exists — the docs
 are `approved: true` and are deliberately **not transitioned here**.
 

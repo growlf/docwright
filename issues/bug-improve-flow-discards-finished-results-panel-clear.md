@@ -14,6 +14,7 @@ channel: dev
 resolved_by: plans/live-ai-visibility-event-relay.md
 tags:
   - reported-bug
+github_issue: 362
 ---
 
 > **Resolved 2026-07-10** (live-ai step 3.4, PR #279). Root cause: the nav-clear

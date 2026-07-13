@@ -15,6 +15,7 @@ related:
   - plans/executor-panel-live-feedback.md
 tags:
   - reported-bug
+github_issue: 363
 ---
 
 # Improve/apply-review appends AI content instead of replacing, producing duplicate section headers

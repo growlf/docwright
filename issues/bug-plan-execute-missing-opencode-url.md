@@ -22,6 +22,7 @@ assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev
 resolution: OPENCODE_URL set to http://localhost:4096 in vite dev environment
+github_issue: 369
 ---
 
 # Bug: Plan execute endpoint returns 503 — OPENCODE_URL not configured

@@ -17,6 +17,7 @@ related:
   - plans/completed/improve-bug-feature-reporting-tool.md
 tags:
   - reported-bug
+github_issue: 386
 ---
 
 # Web UI Run Tests button never persists tests_last_result to plan frontmatter

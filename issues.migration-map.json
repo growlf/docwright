@@ -1,0 +1,382 @@
+{
+  "BUG-false-write-conflict-single-user": {
+    "number": 349,
+    "url": "https://github.com/growlf/docwright/issues/349"
+  },
+  "BUG-plan-complete-no-feedback": {
+    "number": 350,
+    "url": "https://github.com/growlf/docwright/issues/350"
+  },
+  "UX-release-criteria-visibility": {
+    "number": 351,
+    "url": "https://github.com/growlf/docwright/issues/351"
+  },
+  "bug-api-plugins-500-on-dangling-symlink": {
+    "number": 352,
+    "url": "https://github.com/growlf/docwright/issues/352"
+  },
+  "bug-approve-by-move-bypasses-self-approval-gate": {
+    "number": 140,
+    "url": "https://github.com/growlf/docwright/issues/140"
+  },
+  "bug-approve-not-idempotent-stale-consumed-by": {
+    "number": 141,
+    "url": "https://github.com/growlf/docwright/issues/141"
+  },
+  "bug-approve-pipeline-not-idempotent-across-surfaces-pa": {
+    "number": 353,
+    "url": "https://github.com/growlf/docwright/issues/353"
+  },
+  "bug-bmslocal-deployment-hostnames-unresolvable-from-st": {
+    "number": 259,
+    "url": "https://github.com/growlf/docwright/issues/259"
+  },
+  "bug-bridgetestts-suggestduplicates-flaky-in-ci-shells-": {
+    "number": 354,
+    "url": "https://github.com/growlf/docwright/issues/354"
+  },
+  "bug-bug-report-should-be-modal": {
+    "number": 355,
+    "url": "https://github.com/growlf/docwright/issues/355"
+  },
+  "bug-capturebugreport-create-sets-invalid-default-issue": {
+    "number": 356,
+    "url": "https://github.com/growlf/docwright/issues/356"
+  },
+  "bug-capturebugreport-emits-schema-invalid-frontmatter-": {
+    "number": 357,
+    "url": "https://github.com/growlf/docwright/issues/357"
+  },
+  "bug-certify-tests-button-unreachable-when-tests-were-v": {
+    "number": 220,
+    "url": "https://github.com/growlf/docwright/issues/220"
+  },
+  "bug-ci-gap-webui-production-build-vite-build-never-exe": {
+    "number": 358,
+    "url": "https://github.com/growlf/docwright/issues/358"
+  },
+  "bug-claudeskills-uses-flat-namemd-layout-that-claude-c": {
+    "number": 313,
+    "url": "https://github.com/growlf/docwright/issues/313"
+  },
+  "bug-complete-plan-stray-copy-and-no-refresh": {
+    "number": 142,
+    "url": "https://github.com/growlf/docwright/issues/142"
+  },
+  "bug-completion-doc-generator-emits-invalid-yaml-tags-l": {
+    "number": 185,
+    "url": "https://github.com/growlf/docwright/issues/185"
+  },
+  "bug-completion-gate-deadlocks-runtime-verified-plans-u": {
+    "number": 315,
+    "url": "https://github.com/growlf/docwright/issues/315"
+  },
+  "bug-container-as-root-writes-svelte-kit-into-the-sourc": {
+    "number": 288,
+    "url": "https://github.com/growlf/docwright/issues/288"
+  },
+  "bug-critique-plan-context-generator-fails-to-resolve-p": {
+    "number": 304,
+    "url": "https://github.com/growlf/docwright/issues/304"
+  },
+  "bug-docker-image-missing-openssh-client": {
+    "number": 359,
+    "url": "https://github.com/growlf/docwright/issues/359"
+  },
+  "bug-dogfood-container-config-relied-on-ephemeral-shell": {
+    "number": 360,
+    "url": "https://github.com/growlf/docwright/issues/360"
+  },
+  "bug-duplicate-plan-creation-paths": {
+    "number": 115,
+    "url": "https://github.com/growlf/docwright/issues/115"
+  },
+  "bug-end-session-script-commits-to-protected-main-then-": {
+    "number": 191,
+    "url": "https://github.com/growlf/docwright/issues/191"
+  },
+  "bug-end-session-shutdown-bricked-by-unrelated-validati": {
+    "number": 306,
+    "url": "https://github.com/growlf/docwright/issues/306"
+  },
+  "bug-flaky-ci-testdispatchbridgetestts-intermittently-e": {
+    "number": 321,
+    "url": "https://github.com/growlf/docwright/issues/321"
+  },
+  "bug-flaky-dispatch-bridgetestts-times-out-2000ms-inter": {
+    "number": 314,
+    "url": "https://github.com/growlf/docwright/issues/314"
+  },
+  "bug-governance-hooks-silently-disabled-docwright-path": {
+    "number": 143,
+    "url": "https://github.com/growlf/docwright/issues/143"
+  },
+  "bug-hook-source-divergence-and-commit-msg-not-installed": {
+    "number": 144,
+    "url": "https://github.com/growlf/docwright/issues/144"
+  },
+  "bug-human-approved-precommit-check-broken": {
+    "number": 361,
+    "url": "https://github.com/growlf/docwright/issues/361"
+  },
+  "bug-improve-flow-discards-finished-results-panel-clear": {
+    "number": 362,
+    "url": "https://github.com/growlf/docwright/issues/362"
+  },
+  "bug-improveapply-review-appends-ai-content-instead-of-": {
+    "number": 363,
+    "url": "https://github.com/growlf/docwright/issues/363"
+  },
+  "bug-issues-have-no-forward-path": {
+    "number": 176,
+    "url": "https://github.com/growlf/docwright/issues/176"
+  },
+  "bug-left-panel-updates-lag": {
+    "number": 364,
+    "url": "https://github.com/growlf/docwright/issues/364"
+  },
+  "bug-live-plan-review-never-signals-completion-idle-cou": {
+    "number": 365,
+    "url": "https://github.com/growlf/docwright/issues/365"
+  },
+  "bug-mcp-pathsts-prefix-based-containment-check-allows-": {
+    "number": 366,
+    "url": "https://github.com/growlf/docwright/issues/366"
+  },
+  "bug-mcp-updatestep-appendhistory-corrupt-table-rows-wh": {
+    "number": 367,
+    "url": "https://github.com/growlf/docwright/issues/367"
+  },
+  "bug-opencode-serve-exposed-unauthenticated-on-00004096": {
+    "number": 368,
+    "url": "https://github.com/growlf/docwright/issues/368"
+  },
+  "bug-phase-closets-direct-pushes-to-main-but-main-requi": {
+    "number": 329,
+    "url": "https://github.com/growlf/docwright/issues/329"
+  },
+  "bug-phase-closets-docstring-claims-step-verification-b": {
+    "number": 303,
+    "url": "https://github.com/growlf/docwright/issues/303"
+  },
+  "bug-plan-execute-missing-opencode-url": {
+    "number": 369,
+    "url": "https://github.com/growlf/docwright/issues/369"
+  },
+  "bug-plan-file-runtime-writeback-churn": {
+    "number": 370,
+    "url": "https://github.com/growlf/docwright/issues/370"
+  },
+  "bug-plan-generator-from-approved-proposal": {
+    "number": 108,
+    "url": "https://github.com/growlf/docwright/issues/108"
+  },
+  "bug-plan-review-endpoint-incomplete-chunked-encoding": {
+    "number": 371,
+    "url": "https://github.com/growlf/docwright/issues/371"
+  },
+  "bug-plan-review-endpoint-reviews-steps-sequentially-fo": {
+    "number": 372,
+    "url": "https://github.com/growlf/docwright/issues/372"
+  },
+  "bug-plan-review-extractsteps-splits-table-rows-on-raw-": {
+    "number": 373,
+    "url": "https://github.com/growlf/docwright/issues/373"
+  },
+  "bug-plan-testcertify-button-state-machine-is-opaque-se": {
+    "number": 224,
+    "url": "https://github.com/growlf/docwright/issues/224"
+  },
+  "bug-plugin-loader-ignores-docwright-root": {
+    "number": 374,
+    "url": "https://github.com/growlf/docwright/issues/374"
+  },
+  "bug-pre-commit-validatelocationinvariant-greps-whole-f": {
+    "number": 375,
+    "url": "https://github.com/growlf/docwright/issues/375"
+  },
+  "bug-pretooluse-plan-edit-lifecycle-gate-reports-block-": {
+    "number": 275,
+    "url": "https://github.com/growlf/docwright/issues/275"
+  },
+  "bug-properties-pane-save-demotes-testsdefined-on-an-un": {
+    "number": 218,
+    "url": "https://github.com/growlf/docwright/issues/218"
+  },
+  "bug-proposal-approval-modal-meeded": {
+    "number": 376,
+    "url": "https://github.com/growlf/docwright/issues/376"
+  },
+  "bug-proposal-to-plan-lifecycle-transition-duplicates-a": {
+    "number": 377,
+    "url": "https://github.com/growlf/docwright/issues/377"
+  },
+  "bug-release-process-leaves-version-and-packagejson-on-": {
+    "number": 205,
+    "url": "https://github.com/growlf/docwright/issues/205"
+  },
+  "bug-release-tag-repo-slug-keeps-git-suffix": {
+    "number": 378,
+    "url": "https://github.com/growlf/docwright/issues/378"
+  },
+  "bug-release-v050-plan-duplicated-in-plans-and-undocume": {
+    "number": 301,
+    "url": "https://github.com/growlf/docwright/issues/301"
+  },
+  "bug-report-bug-button-should-pop-up-a-form": {
+    "number": 177,
+    "url": "https://github.com/growlf/docwright/issues/177"
+  },
+  "bug-report-button-should-offer-feature-as-well": {
+    "number": 178,
+    "url": "https://github.com/growlf/docwright/issues/178"
+  },
+  "bug-research-smoke-profile-coverage-fails": {
+    "number": 145,
+    "url": "https://github.com/growlf/docwright/issues/145"
+  },
+  "bug-roadplan-view-lacks-release-target-box-with-burn-d": {
+    "number": 379,
+    "url": "https://github.com/growlf/docwright/issues/379"
+  },
+  "bug-session-end-push-rejected-on-protected-main": {
+    "number": 146,
+    "url": "https://github.com/growlf/docwright/issues/146"
+  },
+  "bug-session-start-blind-to-unmerged-work": {
+    "number": 380,
+    "url": "https://github.com/growlf/docwright/issues/380"
+  },
+  "bug-status-has-no-needs-your-attention-action-queue-hu": {
+    "number": 345,
+    "url": "https://github.com/growlf/docwright/issues/345"
+  },
+  "bug-stray-nested-proposalsapprovedapproved-directory": {
+    "number": 302,
+    "url": "https://github.com/growlf/docwright/issues/302"
+  },
+  "bug-syncissuefile-creates-github-imported-issues-with-": {
+    "number": 381,
+    "url": "https://github.com/growlf/docwright/issues/381"
+  },
+  "bug-tests-pollute-real-audit-log": {
+    "number": 382,
+    "url": "https://github.com/growlf/docwright/issues/382"
+  },
+  "bug-ui-created-governance-docs-are-root-owned-climcp-r": {
+    "number": 383,
+    "url": "https://github.com/growlf/docwright/issues/383"
+  },
+  "bug-updatestep-row-replacement-corrupts-table-when-det": {
+    "number": 384,
+    "url": "https://github.com/growlf/docwright/issues/384"
+  },
+  "bug-version-patch-number-diverged-from-completed-plan-": {
+    "number": 300,
+    "url": "https://github.com/growlf/docwright/issues/300"
+  },
+  "bug-versioning-policy-still-references-retired-develop": {
+    "number": 299,
+    "url": "https://github.com/growlf/docwright/issues/299"
+  },
+  "bug-web-ui-complete-button-only-sets-status-field-neve": {
+    "number": 385,
+    "url": "https://github.com/growlf/docwright/issues/385"
+  },
+  "bug-web-ui-lifecycle-transitions-bypass-the-mcp-comple": {
+    "number": 172,
+    "url": "https://github.com/growlf/docwright/issues/172"
+  },
+  "bug-web-ui-run-tests-button-never-persists-testslastre": {
+    "number": 386,
+    "url": "https://github.com/growlf/docwright/issues/386"
+  },
+  "bug-webui-lifecycle-actions-not-committed-to-git": {
+    "number": 147,
+    "url": "https://github.com/growlf/docwright/issues/147"
+  },
+  "bug-webui-save-silently-flips-tests-defined": {
+    "number": 148,
+    "url": "https://github.com/growlf/docwright/issues/148"
+  },
+  "bug-wysiwyg-editor-corrupts-documents": {
+    "number": 149,
+    "url": "https://github.com/growlf/docwright/issues/149"
+  },
+  "centralize-the-duplicated-frontmatter-parser-parse": {
+    "number": 94,
+    "url": "https://github.com/growlf/docwright/issues/94"
+  },
+  "collaboration-derived-plan-progress": {
+    "number": 387,
+    "url": "https://github.com/growlf/docwright/issues/387"
+  },
+  "collaboration-enforcement-linting": {
+    "number": 388,
+    "url": "https://github.com/growlf/docwright/issues/388"
+  },
+  "collaboration-issue-generation-at-plan-start": {
+    "number": 389,
+    "url": "https://github.com/growlf/docwright/issues/389"
+  },
+  "collaboration-lock-deliverables-format": {
+    "number": 390,
+    "url": "https://github.com/growlf/docwright/issues/390"
+  },
+  "collaboration-schema-linkage-fields": {
+    "number": 391,
+    "url": "https://github.com/growlf/docwright/issues/391"
+  },
+  "collaboration-scope-freeze-enforcement": {
+    "number": 392,
+    "url": "https://github.com/growlf/docwright/issues/392"
+  },
+  "collaboration-sync-strategy": {
+    "number": 393,
+    "url": "https://github.com/growlf/docwright/issues/393"
+  },
+  "complete-issue-branch-merge-always-fails-tries-to-": {
+    "number": 166,
+    "url": "https://github.com/growlf/docwright/issues/166"
+  },
+  "design-consumed-issues-should-not-show-as-awaiting-processing": {
+    "number": 394,
+    "url": "https://github.com/growlf/docwright/issues/394"
+  },
+  "feature-ui-consume-and-process-governance-docs": {
+    "number": 150,
+    "url": "https://github.com/growlf/docwright/issues/150"
+  },
+  "governance-panel-pending-approval-stat-is-mislabel": {
+    "number": 112,
+    "url": "https://github.com/growlf/docwright/issues/112"
+  },
+  "governance-panel-status-stat-tiles-aren-t-clickabl": {
+    "number": 113,
+    "url": "https://github.com/growlf/docwright/issues/113"
+  },
+  "hook-identity-cache-is-global-tmp-opencode-identit": {
+    "number": 160,
+    "url": "https://github.com/growlf/docwright/issues/160"
+  },
+  "plan-doc-generator-raw-js-date-in-created-field-an": {
+    "number": 136,
+    "url": "https://github.com/growlf/docwright/issues/136"
+  },
+  "release-dogfood-window-uses-a-fixed-7-day-clock-co": {
+    "number": 93,
+    "url": "https://github.com/growlf/docwright/issues/93"
+  },
+  "roadplan-cli-add-check-drift-guard-fail-ci-if-docs": {
+    "number": 97,
+    "url": "https://github.com/growlf/docwright/issues/97"
+  },
+  "transition-to-completed-must-gate-on-a-recorded-gr": {
+    "number": 159,
+    "url": "https://github.com/growlf/docwright/issues/159"
+  },
+  "ui-roadplan-pending-work-visibility": {
+    "number": 395,
+    "url": "https://github.com/growlf/docwright/issues/395"
+  }
+}

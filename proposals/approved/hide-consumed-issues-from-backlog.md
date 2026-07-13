@@ -11,7 +11,7 @@ approved: true
 created_by: "claude@claude-code"
 assigned_to: NetYeti
 sources:
-  - issues/design-consumed-issues-should-not-show-as-awaiting-processing.md
+  - https://github.com/growlf/docwright/issues/394
 related_to:
   - plans/implement-consumed-issues-visibility.md
 consumed_by: plans/hide-consumed-issues-from-backlog.md
