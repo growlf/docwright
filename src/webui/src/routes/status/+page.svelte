@@ -56,6 +56,11 @@
     vaultName: string;
     version: string;
     currentPhase: number;
+    attention?: {
+      plansReadyToComplete: { path: string; title: string }[];
+      phaseReadyToClose: { phase: number; completed: number } | null;
+      count: number;
+    };
     phasePlans: PhasePlan[];
     proposals: { open: DocEntry[]; approved_pending: DocEntry[]; deferred: DocEntry[] };
     plans: { draft: DocEntry[]; active: DocEntry[]; completed_count: number; completed?: DocEntry[] };
@@ -121,23 +126,14 @@
     const res = await fetch(`/api/status?window=${heatmapWindow}`);
     if (res.ok) data = await res.json();
     loading = false;
-    void loadPhaseReadiness();
   }
 
-  // Phase close-out from the browser (phase-close-web-ui). Readiness banner +
-  // a human-gated Close Phase button; the version bump happens server-side via
-  // the shared phase-close core, and tagging/pushing stays the BDFL's own step.
-  let phaseReady = $state<{ ready: boolean; phase: number; completed: string[]; pending: string[] } | null>(null);
+  // Phase close-out from the browser (phase-close-web-ui). The readiness is now
+  // part of the server-computed "needs your attention" queue (data.attention);
+  // this drives the human-gated Close Phase button. Version bump happens
+  // server-side via the shared phase-close core; tagging/pushing stays the BDFL's.
   let phaseClosing = $state(false);
   let phaseCloseMsg = $state('');
-
-  async function loadPhaseReadiness() {
-    if (!data?.currentPhase) { phaseReady = null; return; }
-    try {
-      const r = await fetch(`/api/phase/close?phase=${data.currentPhase}`);
-      phaseReady = r.ok ? await r.json() : null;
-    } catch { phaseReady = null; }
-  }
 
   async function closePhase() {
     const phase = data?.currentPhase;
@@ -504,15 +500,26 @@
     <div class="loading">Scanning vault…</div>
   {:else if data}
 
-    {#if phaseReady?.ready}
-      <div style="display:flex;align-items:center;gap:12px;margin:10px 0;padding:10px 14px;border:1px solid #16a34a;border-radius:8px;background:rgba(22,163,74,0.08);">
-        <span style="flex:1;">
-          <strong>Phase {phaseReady.phase} ready to close</strong> — {phaseReady.completed.length} completed plan{phaseReady.completed.length === 1 ? '' : 's'}, none pending.
-        </span>
-        <button onclick={closePhase} disabled={phaseClosing} title="Bump the version; tagging/pushing stays a separate step"
-          style="padding:6px 12px;border-radius:6px;border:1px solid #16a34a;background:#16a34a;color:#fff;cursor:pointer;font-size:13px;">
-          {phaseClosing ? 'Closing…' : `Close Phase ${phaseReady.phase} → 0.${phaseReady.phase + 1}.0`}
-        </button>
+    {#if data.attention && data.attention.count > 0}
+      <div style="margin:10px 0;padding:12px 14px;border:1px solid #2563eb;border-radius:8px;background:rgba(37,99,235,0.06);">
+        <div style="font-weight:600;margin-bottom:8px;">🔔 Needs your attention ({data.attention.count})</div>
+        {#each data.attention.plansReadyToComplete as p}
+          <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <span style="flex:1;">
+              ✅ <a href="/plans/{p.path.replace(/\.md$/, '').replace('plans/', '')}"><strong>{p.title}</strong></a>
+              <span style="color:#666;font-size:12px;"> — work done; open to Certify &amp; Complete</span>
+            </span>
+          </div>
+        {/each}
+        {#if data.attention.phaseReadyToClose}
+          <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <span style="flex:1;">🏁 <strong>Phase {data.attention.phaseReadyToClose.phase} ready to close</strong> — {data.attention.phaseReadyToClose.completed} completed plan{data.attention.phaseReadyToClose.completed === 1 ? '' : 's'}, none pending.</span>
+            <button onclick={closePhase} disabled={phaseClosing} title="Bump the version; tagging/pushing stays a separate step"
+              style="padding:6px 12px;border-radius:6px;border:1px solid #16a34a;background:#16a34a;color:#fff;cursor:pointer;font-size:13px;">
+              {phaseClosing ? 'Closing…' : `Close Phase ${data.attention.phaseReadyToClose.phase} → 0.${data.attention.phaseReadyToClose.phase + 1}.0`}
+            </button>
+          </div>
+        {/if}
       </div>
     {/if}
     {#if phaseCloseMsg}
