@@ -1,6 +1,6 @@
 ---
 title: "Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)"
-status: draft
+status: in-progress
 author: "NetYeti"
 created: "2026-07-13"
 created_by: "NetYeti@phoenix"
@@ -14,12 +14,12 @@ related_to:
   - proposals/pivot-issue-tracking-to-github-issues-projects.md
 depends_on: []
 blocks: []
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false
 template_version: "1.0"
 scenario_synthesis: "Governance (proposals/plans/policies/decisions) stays git-native; development work moves to GitHub Issues + a GitHub Project board. An additive, flagged read/relate layer renders GH issues and lets proposals link stable GH URLs; capture is reworked to create GH issues AND place them on the Project; existing local issues migrate with full fidelity AND two-way reconcile against issues already on GitHub (no duplicates), each on the board with the correct status column, demand_count + every reported_date preserved in Project custom fields (Bar B). A parity gate (no data lost + ranking preserved + board placement + links resolve) blocks a single clean cutover; the local issues/ folder then retires (archived, never deleted)."
 total_steps: 8
-completed_steps: 0
+completed_steps: 1
 ---
 
 # Pivot issue tracking to GitHub Issues + Projects (break the self-hosting cyclic reference)
@@ -66,7 +66,7 @@ GH parity is proven; originals archived. Every migrated/new issue is on the Proj
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | GH Issues + Projects API foundation | `src/dispatch/github-issues.ts`: least-privilege client (issues CRUD; Project v2 board read/write via GraphQL — status field + demand/dates custom fields). Auth via a scoped GH token (env, per instance). Cache reads; degrade read-only if GH unreachable. Unit-tested vs a mocked API. Additive — nothing wired. | ⏳ Pending |
+| 1 | GH Issues + Projects API foundation | `src/dispatch/github-issues.ts`: least-privilege client (issues CRUD; Project v2 board read/write via GraphQL — status field + demand/dates custom fields). Auth via a scoped GH token (env, per instance). Cache reads; degrade read-only if GH unreachable. Unit-tested vs a mocked API. Additive — nothing wired. | ✅ Done |
 | 2 | Define the GH Project + field schema | Create the DocWright Project; map the issue lifecycle (new→triaged→scope-checked→awaiting-proposal→proposal-linked→resolved/deferred/duplicate) to a board status field; store demand_count + EVERY reported_date + channel + scope_* in Project custom fields (raw dates retained → exact heatmap recompute, Bar B). Document the mapping. | ⏳ Pending |
 | 3 | Read/relate layer (flagged, additive) | Behind `ISSUES_SOURCE=github` (default off), the Web UI + `/api/status` (heatmap, "needs attention") read issues from GH; proposals resolve `related`/links to GH issue URLs. Local issues stay canonical. | ⏳ Pending |
 | 4 | Rework capture onto GH + board (flagged) | `capture_bug_report` suggest/confirm/create → creates a GH issue, adds it to the Project with the right status, sets demand fields (count + date); dedup via GH search + two-way reconcile with existing GH issues. | ⏳ Pending |
@@ -130,3 +130,4 @@ GH parity is proven; originals archived. Every migrated/new issue is on the Proj
 |------|--------|--------|
 | 2026-07-13 | Created from the approved proposal (approve flow) — prose only, empty steps. | NetYeti |
 | 2026-07-13 | Consolidated the hand-crafted staged content (8 steps, settled decisions, Bar B gate, parallelism, testing/rollback/risk) into this canonical plan (chown fix on the root-owned UI file); duplicate draft pivot-issue-tracking-to-github.md retired. | NetYeti |
+| 2026-07-13 | Step 1 done (PR #348 merged): src/dispatch/github-issues.ts — GH Issues (REST) + Projects v2 (GraphQL) client, cached/degrading reads, env config, 12 mocked tests. Additive, nothing wired. Plan → in-progress. Next: Step 2 (create the GH Project + field schema) once the BDFL provides the project-scoped token + Project node id. | NetYeti |
