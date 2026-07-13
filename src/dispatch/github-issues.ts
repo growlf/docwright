@@ -177,6 +177,22 @@ export class GitHubClient {
     }, []);
   }
 
+  /** All issues in the given state (paginated, cached, degrades to []). Reconcile source
+   *  for migration — must include closed issues so mirrored/resolved ones aren't re-created. */
+  async listIssues(state: 'open' | 'closed' | 'all' = 'open'): Promise<GitHubIssue[]> {
+    const { owner, repo } = this.cfg;
+    return this.cachedRead(`issues:${owner}/${repo}:${state}:all`, async () => {
+      const all: GitHubIssue[] = [];
+      for (let page = 1; page <= 20; page++) {
+        const raw = await this.rest('GET', `/repos/${owner}/${repo}/issues?state=${state}&per_page=100&page=${page}`);
+        const arr = Array.isArray(raw) ? raw : [];
+        all.push(...arr.filter((r: any) => !r.pull_request).map(mapIssue));
+        if (arr.length < 100) break; // last page
+      }
+      return all;
+    }, []);
+  }
+
   /** Full-text/issue search for dedup (cached per-query, degrades to []). */
   async searchIssues(query: string): Promise<GitHubIssue[]> {
     const { owner, repo } = this.cfg;
@@ -275,25 +291,35 @@ export class GitHubClient {
     }, new Map<string, ProjectField>());
   }
 
-  /** Full board read: items with linked-issue content + field values by name (cached, degrades to []). */
+  /** Full board read: items with linked-issue content + field values by name.
+   *  Cursor-paginated (no silent cap — the parity gate needs every item), cached, degrades to []. */
   async listProjectItemsDetailed(): Promise<ProjectItemDetail[]> {
     if (!this.cfg.projectId) return [];
     return this.cachedRead(`project:${this.cfg.projectId}:detailed`, async () => {
-      const data = await this.graphql(
-        `query($p:ID!){ node(id:$p){ ... on ProjectV2 { items(first:100){ nodes {
-          id
-          content { __typename ... on Issue { number title body state url labels(first:20){ nodes { name } } } }
-          fieldValues(first:50){ nodes {
-            __typename
-            ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
-            ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } }
-            ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } }
-            ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } }
-          } }
-        } } } } }`,
-        { p: this.cfg.projectId },
-      );
-      const nodes = data?.node?.items?.nodes ?? [];
+      const nodes: any[] = [];
+      let cursor: string | null = null;
+      for (let page = 0; page < 50; page++) {
+        const data: any = await this.graphql(
+          `query($p:ID!,$after:String){ node(id:$p){ ... on ProjectV2 { items(first:100,after:$after){
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              id
+              content { __typename ... on Issue { number title body state url labels(first:20){ nodes { name } } } }
+              fieldValues(first:50){ nodes {
+                __typename
+                ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
+                ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } }
+                ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } }
+                ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } }
+              } }
+            } } } } }`,
+          { p: this.cfg.projectId, after: cursor },
+        );
+        const items = data?.node?.items;
+        nodes.push(...(items?.nodes ?? []));
+        if (!items?.pageInfo?.hasNextPage) break;
+        cursor = items.pageInfo.endCursor;
+      }
       return nodes.map((n: any): ProjectItemDetail => {
         const c = n.content ?? {};
         const fields: Record<string, string | number> = {};
