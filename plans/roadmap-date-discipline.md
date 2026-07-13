@@ -15,7 +15,7 @@ related_to:
 depends_on: []
 blocks: []
 tests_defined: true
-tests_human_reviewed: false
+tests_human_reviewed: true
 template_version: "1.0"
 scenario_synthesis: "GitHub stores + displays roadmap dates (milestone due dates, Project Start/Target fields, the Roadmap view); DocWright ENFORCES via a pure validator (every non-exempt milestone has a target; issues fall within their milestone range, inheriting by default; backlog/future exempt). Built warn-first: validator → data reader (client) → CLI check (npm run roadmap:check) → /status surfacing → pre-commit/CI wiring → hard-fail flip once the board is fully dated. Never fabricates dates."
 total_steps: 7
