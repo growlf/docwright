@@ -89,7 +89,11 @@ export function lintDocument(
   if (filePath.startsWith('plans/') && fm.status !== undefined && !VALID_PLAN_STATUS.has(String(fm.status))) {
     results.push({ field: 'status', severity: 'warn', message: `Unknown plan status '${fm.status}'` });
   }
-  if (filePath.startsWith('issues/') && fm.status !== undefined && !VALID_ISSUE_STATUS.has(String(fm.status))) {
+  // GH-pivot (Step 8): when issues are GitHub-canonical (ISSUES_SOURCE=github), the local
+  // issue-status + issue-milestone rules are retired — issues live on the GH board. Git-native
+  // vaults (default/local) keep them. Gated here rather than deleted so both models coexist.
+  const localIssuesGoverned = process.env.ISSUES_SOURCE !== 'github';
+  if (localIssuesGoverned && filePath.startsWith('issues/') && fm.status !== undefined && !VALID_ISSUE_STATUS.has(String(fm.status))) {
     results.push({ field: 'status', severity: 'warn', message: `Unknown issue status '${fm.status}' — expected new | triaged | scope-checked | awaiting-proposal | proposal-linked | resolved | deferred | duplicate` });
   }
 
@@ -104,7 +108,7 @@ export function lintDocument(
       !/^phase-/.test(basename) &&
       MILESTONE_OPEN_PLAN_STATUSES.has(status);
     const isOpenIssue =
-      filePath.startsWith('issues/') && MILESTONE_OPEN_ISSUE_STATUSES.has(status);
+      localIssuesGoverned && filePath.startsWith('issues/') && MILESTONE_OPEN_ISSUE_STATUSES.has(status);
     const missingMilestone =
       fm.milestone === undefined || fm.milestone === null || String(fm.milestone).trim() === '';
     if ((isOpenPlan || isOpenIssue) && missingMilestone) {

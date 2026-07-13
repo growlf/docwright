@@ -183,7 +183,13 @@ For guidelines on multi-agent/multi-session collaboration and sync, see [[AGENTS
 
 1. The dispatch module has ZERO VS Code API dependencies. Test it outside the extension host.
 2. Frontmatter is source of truth for document state. index.json is a derived cache only.
-3. Git is the canonical store. No auxiliary database.
+3. Git is the canonical store for the **governance layer** (proposals, plans, policies,
+   decisions) — no auxiliary database. **Dev-issue tracking is separate:** on **code
+   projects** it lives in **GitHub Issues + a GitHub Project board** (see the GH-pivot,
+   `plans/plan-pivot-issue-tracking-to-github-*`) to break the self-hosting cyclic
+   reference; DocWright reads/links them. Non-code vaults (org-operations, knowledge-base)
+   keep the git-native `issues/` model (profile-gated). This clarifies — does not break —
+   "git is canonical": governance-of-record stays git; work-tracking on code projects is GitHub.
 4. No telemetry. Ever.
 5. `author-role:` frontmatter is an audit record, not an enforcement mechanism.
    Enforcement is Forgejo team membership + branch protection + Web UI OAuth.

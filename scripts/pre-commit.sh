@@ -368,6 +368,12 @@ validate_no_duplicate_locations() {
 #     - Duplicate requires canonical issue reference in scope_notes
 # =============================================================================
 validate_issue_workflow() {
+    # GH-pivot (Step 8): once this repo's issues are GitHub-canonical — signalled by the
+    # committed migration map — local issue-workflow validation is RETIRED. issues/*.md are
+    # frozen; dev issues live on GitHub Issues + the Project board. Git-native vaults (no map)
+    # keep the full validation below. See plans/plan-pivot-issue-tracking-to-github-*.
+    [ -f "$(git rev-parse --show-toplevel 2>/dev/null)/issues.migration-map.json" ] && return 0
+
     local FILE=$1 FM=$(get_frontmatter "$FILE")
     [ -z "$FM" ] && return 0
 
