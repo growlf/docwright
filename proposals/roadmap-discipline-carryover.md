@@ -58,6 +58,11 @@ fresh-agent verification run against a pre-recorded answer snapshot. (The two en
 protected-main bugs that gated this were addressed this session — verify before relying on them.)
 
 ### 3. Living roadmap renderer (was W5)
+
+> **Partly covered (2026-07-13):** the milestone/date + enforcement half is now in
+> [[proposals/roadmap-date-discipline]] (shipped the Project date fields + the validator).
+> What remains *here* is the `docs/roadmap.md` **renderer** + CI drift-guard.
+
 Generate `docs/roadmap.md` from plan state (extend `src/dispatch/roadplan.ts` /
 `generate-roadplan.ts`), with a required CI drift-guard (`roadplan --check`). **Rebase on the
 GH-pivot:** the milestone↔GitHub-milestone mirror and the two-axis model (milestone = release
