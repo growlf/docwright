@@ -9,6 +9,7 @@ import { parseFrictionLog, agedFrictionEntries, FRICTION_LOG_PATH, FRICTION_REVI
 import { parseFrontmatter as parseFm } from '../../../../../dispatch/frontmatter';
 import { isReadyForHumanCompletion } from '../../../../../dispatch/completion-gate';
 import { phaseReadiness } from '../../../../../dispatch/phase-close-core';
+import { readIssueDocs } from '../../../../../dispatch/issue-source';
 
 const REPO_ROOT = (() => {
   if (process.env.DOCWRIGHT_ROOT) return process.env.DOCWRIGHT_ROOT;
@@ -103,7 +104,7 @@ function daysSince(dateStr: string): number {
   return (Date.now() - d.getTime()) / 86400000;
 }
 
-export function GET({ url }: { url: URL }) {
+export async function GET({ url }: { url: URL }) {
   const window = parseWindow(url);
   // 2-second cache (keyed by window to avoid stale data across toggles)
   if (cache && Date.now() - cache.at < 2000) {
@@ -421,7 +422,11 @@ export function GET({ url }: { url: URL }) {
       }
     : null;
 
-  const openIssues = readDir(path.join(REPO_ROOT, 'issues'))
+  // Issue docs come from the active source (local files by default; the GitHub
+  // Project board when ISSUES_SOURCE=github — GH-pivot Step 3, flagged/additive).
+  const issueDocs = await readIssueDocs(REPO_ROOT);
+
+  const openIssues = issueDocs
     .filter(({ path: p, fm }) =>
       !p.endsWith('README.md') &&
       !['resolved', 'wont-fix'].includes(String(fm.status ?? 'open'))
@@ -430,7 +435,7 @@ export function GET({ url }: { url: URL }) {
     .sort(byPriority);
 
   // ── Heatmap: top bugs + feature requests by demand (time-weighted) ──────────
-  const heatmap = readDir(path.join(REPO_ROOT, 'issues'))
+  const heatmap = issueDocs
     .filter(({ path: p, fm }) =>
       !p.endsWith('README.md') &&
       ['bug', 'feature'].includes(String(fm.category ?? '')) &&
@@ -553,7 +558,7 @@ export function GET({ url }: { url: URL }) {
     ...readDir(path.join(REPO_ROOT, 'plans', 'completed')),
     ...readDir(path.join(REPO_ROOT, 'proposals')),
     ...readDir(path.join(REPO_ROOT, 'proposals', 'approved')),
-    ...readDir(path.join(REPO_ROOT, 'issues')),
+    ...issueDocs,
   ];
   interface ReleaseTargetItem {
     path: string; title: string; type: string; status: string;

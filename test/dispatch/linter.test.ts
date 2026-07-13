@@ -731,3 +731,20 @@ describe('Collaboration model enforcement linting', () => {
     assert.ok(!err, 'triaged issue with priority should pass');
   });
 });
+
+describe('Frontmatter linter — GH-pivot issue-rule gating (Step 8)', () => {
+  const bad = { title: 'X', author: 'NetYeti', created: '2026-01-01', 'author-role': 'user', status: 'bogus-status' };
+  afterEach(() => { delete process.env.ISSUES_SOURCE; });
+
+  it('git-native (default): flags an unknown issue status', () => {
+    delete process.env.ISSUES_SOURCE;
+    const results = lintDocument('issues/bug-x.md', bad, profile);
+    assert.ok(results.some(r => r.field === 'status'), 'status rule active when local-governed');
+  });
+
+  it('GH-canonical (ISSUES_SOURCE=github): issue status rule is retired', () => {
+    process.env.ISSUES_SOURCE = 'github';
+    const results = lintDocument('issues/bug-x.md', bad, profile);
+    assert.ok(!results.some(r => r.field === 'status'), 'status rule skipped when issues are GitHub-canonical');
+  });
+});

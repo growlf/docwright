@@ -17,12 +17,12 @@ tests_defined: true
 tests_human_reviewed: true
 related_to:
   - plans/completed/release-v0.5.0.md
-  - issues/bug-report-bug-button-should-pop-up-a-form.md
-  - issues/bug-report-button-should-offer-feature-as-well.md
+  - https://github.com/growlf/docwright/issues/177
+  - https://github.com/growlf/docwright/issues/178
   - issues/bug-issues-created-from-report-bug-dont-create-the-gh-.md
-  - issues/governance-panel-pending-approval-stat-is-mislabel.md
-  - issues/governance-panel-status-stat-tiles-aren-t-clickabl.md
-  - issues/bug-issues-have-no-forward-path.md
+  - https://github.com/growlf/docwright/issues/112
+  - https://github.com/growlf/docwright/issues/113
+  - https://github.com/growlf/docwright/issues/176
 total_steps: 6
 completed_steps: 6
 scenario_synthesis: "Svelte UI + SvelteKit API route changes (modal form, governance panel, issue promotion) plus a one-off backfill script to backfill github_issue: links on already-reported issues via the existing Frappe HD -> GitHub sync API; no infrastructure or deployment steps. Happy path: user reports a bug/feature via modal, it lands in issues/ with a github_issue: backlink and appears in the heatmap; governance panel tiles are correctly labeled and clickable through to the filtered list; an issue can be promoted to a proposal from its detail view. Failure path: GH API is unreachable during report submit -- issue is still created locally, github_issue: stays unset, and the backfill script picks it up on a later run."

@@ -14,6 +14,7 @@ reported_dates: [2026-07-09]
 channel: dev
 tags:
   - reported-bug
+github_issue: 358
 ---
 
 # CI gap: webui production build (vite build) never exercised — unresolved imports reach main undetected

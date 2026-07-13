@@ -17,6 +17,7 @@ related:
   - src/webui/src/lib/server/opencode-complete.ts
 tags:
   - reported-bug
+github_issue: 372
 ---
 
 # plan-review endpoint reviews steps sequentially for plans with a real steps table, unlike the already-fixed no-steps branch

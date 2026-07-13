@@ -16,6 +16,7 @@ related:
   - plans/completed/improve-bug-feature-reporting-tool.md
 tags:
   - reported-bug
+github_issue: 385
 ---
 
 # Web UI Complete button only sets status field, never archives plan or redirects

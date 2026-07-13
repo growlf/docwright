@@ -14,9 +14,9 @@ assigned_to: ""
 priority: medium
 milestone: backlog
 related_to:
-  - issues/bug-version-patch-number-diverged-from-completed-plan-.md
-  - issues/bug-versioning-policy-still-references-retired-develop.md
-  - issues/bug-phase-closets-docstring-claims-step-verification-b.md
+  - https://github.com/growlf/docwright/issues/300
+  - https://github.com/growlf/docwright/issues/299
+  - https://github.com/growlf/docwright/issues/303
 ---
 
 ## Problem

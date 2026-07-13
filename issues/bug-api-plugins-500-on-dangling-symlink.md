@@ -12,6 +12,7 @@ tags: []
 milestone: v0.6.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
+github_issue: 352
 ---
 
 > Found by dogfooding on 2026-07-05 — a headless-browser render of the dev-cloud instances

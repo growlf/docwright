@@ -584,6 +584,11 @@ The organizational operating system. Policy as the foundation of all work.
 ```
 /inbox/          ← zero-friction capture (stubs; auto-timestamped)
 /issues/         ← triaged observations (reference parent inbox item)
+                   NOTE: on CODE PROJECTS, dev-issue tracking moved to GitHub Issues +
+                   a GitHub Project board (2026-07-13 GH-pivot — breaks the self-hosting
+                   cyclic reference). DocWright reads/links them; `ISSUES_SOURCE=github`.
+                   This git-native /issues/ model remains for org-operations/knowledge-base
+                   vaults. See plans/plan-pivot-issue-tracking-to-github-issues-projects-*.
 /proposals/      ← structured evaluations (reference parent issue)
 /plans/          ← actionable plans (reference parent proposal)
 /policies/

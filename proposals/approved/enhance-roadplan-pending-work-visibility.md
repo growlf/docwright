@@ -16,7 +16,7 @@ created_by: NetYeti@cluster-llm
 author-role: governance
 assigned_to: NetYeti
 related_to:
-  - issues/ui-roadplan-pending-work-visibility.md
+  - https://github.com/growlf/docwright/issues/395
   - proposals/approved/ui-git-controlls.md
 depends_on: []
 blocks: []

@@ -6,6 +6,7 @@ created: 2026-07-07
 author: NetYeti
 author-role: contributor
 ai-last-action: file bug 2026-07-07
+github_issue: 350
 ---
 
 # Bug: Plan completion action succeeds but provides no UI feedback

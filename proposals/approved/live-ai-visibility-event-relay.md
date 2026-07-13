@@ -35,7 +35,7 @@ locally: one short prompt produced 31 delta events. The full "terminal experienc
 exists on the wire; we throw it away.
 
 A related security finding was filed during the same investigation:
-[[issues/bug-opencode-serve-exposed-unauthenticated-on-00004096.md]] — the agent
+[[https://github.com/growlf/docwright/issues/368]] — the agent
 server (shell + edit access) listens unauthenticated on `0.0.0.0:4096`.
 
 ## Research Basis

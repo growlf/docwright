@@ -22,7 +22,7 @@ completed_steps: 4
 github_epic: ""
 automated: full
 milestone: v0.5.0
-channel: dev
+channel: stable
 gate_note: "Changed files are untestable types: plans/wave-b-hooks-identity.md"
 tests_last_run: "2026-07-06T22:09:31.000Z"
 tests_last_result: pass

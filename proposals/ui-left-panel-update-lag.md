@@ -13,7 +13,7 @@ assigned_to: ""
 priority: low
 milestone: backlog
 related_to:
-  - issues/bug-left-panel-updates-lag.md
+  - https://github.com/growlf/docwright/issues/364
 ---
 
 ## Problem

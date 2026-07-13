@@ -11,7 +11,7 @@ priority: medium
 created_by: "NetYeti@cluster-llm"
 assigned_to: NetYeti
 related_to:
-  - "[[proposals/three-docwright-instance-deployment]]"
+  - "[[proposals/approved/three-docwright-instance-deployment.md]]"
 depends_on: []
 blocks: []
 part_of: plans/release-v0.5.0.md

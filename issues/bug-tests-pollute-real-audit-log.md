@@ -13,7 +13,8 @@ milestone: backlog
 assigned_to: []
 created_by: NetYeti@cluster-llm
 closed_by_pr: #84
-cross_link: 
+cross_link:
+github_issue: 382
 ---
 
 > The inaugural native code-issue in the `issues/` store — captured while dogfooding #68

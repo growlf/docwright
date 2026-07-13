@@ -2,7 +2,7 @@
   "name": "docwright",
   "displayName": "docwright",
   "description": "Organizational operating system for policy-driven teams",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "license": "MIT",
   "publisher": "growlf",
   "repository": {
@@ -57,6 +57,8 @@
     "lifecycle:fix-approvals:fix": "npx tsx scripts/fix-stale-approvals.ts --fix",
     "backfill:github-issues": "npx tsx scripts/backfill-github-issues.ts",
     "phase:close": "npx tsx scripts/phase-close.ts",
+    "migrate:issues": "npx tsx scripts/migrate-issues-to-github.ts",
+    "parity:issues": "npx tsx scripts/parity-check-issues.ts",
     "session:end": "npx tsx scripts/end-session.ts",
     "release:tag": "bash scripts/release-tag.sh",
     "generate-roadplan": "npx tsx scripts/generate-roadplan.ts",

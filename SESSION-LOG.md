@@ -1885,3 +1885,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] docs: file phase:close/protected-main gap (GH #329)
 
 **Session note:** `docs/session-notes/session_note_202607111701.md`
+
+---
+
+## Session: 2026-07-12 — Lifecycle-tooling hardening + v0.5.1
+
+**Focus:** Lifecycle-tooling hardening + v0.5.1
+
+**Completed:**
+- [x] docs: prepare Phase 4 plan for its close (Phase Gate + verification_type: none)
+- [x] docs: close out phase-close-web-ui (3/3, PR #344) — staged for completion gate
+- [x] chore: reconcile dogfood with main — phase-close-web-ui
+- [x] feat: phase close-out from the Web UI (#17 / phase-close-web-ui)
+- [x] feat: phase close-out from the Web UI (#17 / phase-close-web-ui)
+- [x] docs: harden-lifecycle-tooling 11/11 — all steps merged, staged for completion gate
+- [x] chore: reconcile dogfood with main — live-review completion signal
+- [x] fix: deterministic live plan-review completion signal (#15 step 4.3)
+- [x] fix: deterministic live plan-review completion signal (#15 step 4.3)
+- [x] chore: reconcile dogfood with main — PreToolUse block fix
+
+**Session note:** `docs/session-notes/session_note_202607122325.md`

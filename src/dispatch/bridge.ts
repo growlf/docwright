@@ -23,6 +23,8 @@ export interface BugReport {
   system_info?: string;
   milestone?: string;
   category?: 'bug' | 'feature';
+  /** Capture source/channel (e.g. `dev`, `web-ui`) — stamped onto the GH board's Channel field. */
+  channel?: string;
 }
 
 export interface DuplicateSuggestion {

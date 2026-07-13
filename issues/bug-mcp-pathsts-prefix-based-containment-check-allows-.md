@@ -14,6 +14,7 @@ channel: dev
 resolved_by: src/mcp/lib/paths.ts (fix/mcp-paths-containment)
 tags:
   - reported-bug
+github_issue: 366
 ---
 
 > **Resolved 2026-07-11.** Replaced the prefix `startsWith(REPO_ROOT)` guard (and

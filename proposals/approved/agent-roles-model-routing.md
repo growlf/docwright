@@ -838,7 +838,7 @@ narrowed by Rounds 2–3. Original text retained.)*
     2026-07-10 and found worse than reported — `fileExists`,
     `getMtime`, `globFiles` have NO containment check at all
     (`getMtime('../../etc/passwd')` escapes today). Filed via bug
-    bridge as `issues/bug-mcp-pathsts-prefix-based-containment-check-allows-.md`
+    bridge as `https://github.com/growlf/docwright/issues/366`
     (priority critical, novel — no dedup match across six phrasings);
     GitHub mirror pending (needs network). Per bugs-before-features
     this must be resolved before the Critic pilot ships.*

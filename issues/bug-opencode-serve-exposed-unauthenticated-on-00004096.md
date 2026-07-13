@@ -14,6 +14,7 @@ channel: dev
 resolved_by: plans/live-ai-visibility-event-relay.md
 tags:
   - reported-bug
+github_issue: 368
 ---
 
 > **Resolved 2026-07-09** by live-ai-visibility steps 1.1–1.3: OpenCode server

@@ -16,6 +16,7 @@ related:
   - plans/improve-bug-feature-reporting-tool.md
 tags:
   - reported-bug
+github_issue: 384
 ---
 
 # update_step row-replacement corrupts table when Details cell contains an unescaped pipe

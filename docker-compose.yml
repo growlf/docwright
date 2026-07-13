@@ -25,6 +25,12 @@ services:
       OPENCODE_URL:    http://${DOCKER_GATEWAY_IP}:4096
       OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
       OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-}
+      # GH-pivot: dev-issue source (local by default; `github` reads GitHub Issues +
+      # the Project board). Values live in .env (gitignored — keeps the token off git).
+      ISSUES_SOURCE:           ${ISSUES_SOURCE:-local}
+      DOCWRIGHT_GH_REPO:       ${DOCWRIGHT_GH_REPO:-}
+      DOCWRIGHT_GH_TOKEN:      ${DOCWRIGHT_GH_TOKEN:-}
+      DOCWRIGHT_GH_PROJECT_ID: ${DOCWRIGHT_GH_PROJECT_ID:-}
     volumes:
       # Project source — live-dev mount (Vite HMR). Removed in the prod compose.
       - .:/app

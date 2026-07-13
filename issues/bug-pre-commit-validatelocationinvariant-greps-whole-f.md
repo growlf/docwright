@@ -15,6 +15,7 @@ related:
   - proposals/approved/bulk-issue-to-proposal.md
 tags:
   - reported-bug
+github_issue: 375
 ---
 
 # pre-commit validate_location_invariant greps whole file for approved:, not just frontmatter

@@ -13,6 +13,7 @@ reported_dates: [2026-07-10]
 channel: dev
 tags:
   - reported-bug
+github_issue: 355
 ---
 
 # Bug report should be modal

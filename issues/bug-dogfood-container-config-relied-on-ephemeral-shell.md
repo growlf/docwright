@@ -13,6 +13,7 @@ reported_dates: [2026-07-09]
 channel: dev
 tags:
   - reported-bug
+github_issue: 360
 ---
 
 # Dogfood container config relied on ephemeral shell env — recreate silently reverted vault mount and port (data "disappeared")

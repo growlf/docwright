@@ -22,7 +22,7 @@ completed_steps: 6
 github_epic: ""
 automated: full
 milestone: v0.5.0
-channel: dev
+channel: stable
 tests_last_run: "2026-07-06T03:57:36.908Z"
 tests_last_result: pass
 tests_last_commit: b308e2b

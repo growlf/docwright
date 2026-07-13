@@ -13,6 +13,7 @@ milestone: v0.6.0
 assigned_to: []
 created_by: NetYeti@cluster-llm
 closed_by_pr: #134
+github_issue: 359
 ---
 
 > Found by dogfooding on 2026-07-05 setting up per-repo **deploy-key** git-push auth for the

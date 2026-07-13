@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { json } from '@sveltejs/kit';
-import { suggestDuplicates } from '../../../../../../dispatch/bridge';
+import { captureSuggest } from '../../../../../../dispatch/capture';
 
 const REPO_ROOT = process.env.DOCWRIGHT_ROOT
   ? path.resolve(process.env.DOCWRIGHT_ROOT)
@@ -13,7 +13,8 @@ export async function POST({ request }) {
   try {
     const { title, category } = await request.json();
     if (!title) return json({ error: 'title is required' }, { status: 400 });
-    return json({ ok: true, suggestions: suggestDuplicates(REPO_ROOT, title, category === 'feature' ? 'feature' : 'bug') });
+    const suggestions = await captureSuggest(REPO_ROOT, title, category === 'feature' ? 'feature' : 'bug');
+    return json({ ok: true, suggestions });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'internal server error' }, { status: 500 });
   }

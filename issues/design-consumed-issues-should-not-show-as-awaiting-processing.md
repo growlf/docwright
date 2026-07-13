@@ -23,6 +23,7 @@ scope_decision: in-scope
 assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev
+github_issue: 394
 ---
 
 # Design: Consumed issues should not appear as awaiting processing

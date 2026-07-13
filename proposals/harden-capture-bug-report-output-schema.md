@@ -14,8 +14,8 @@ assigned_to: ""
 priority: medium
 milestone: backlog
 related_to:
-  - issues/bug-capturebugreport-emits-schema-invalid-frontmatter-.md
-  - issues/bug-capturebugreport-create-sets-invalid-default-issue.md
+  - https://github.com/growlf/docwright/issues/357
+  - https://github.com/growlf/docwright/issues/356
 ---
 
 ## Problem

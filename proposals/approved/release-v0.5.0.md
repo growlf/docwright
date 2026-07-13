@@ -42,13 +42,13 @@ Already shipped since v0.4.9 (49 commits):
 
 | Item | Status | Type |
 |------|--------|------|
-| `issues/ui-roadplan-pending-work-visibility.md` | triaged | ux |
-| `issues/UX-release-criteria-visibility.md` | triaged | ux |
-| `issues/design-consumed-issues-should-not-show-as-awaiting-processing.md` | proposal-linked | ux |
-| `issues/bug-report-bug-button-should-pop-up-a-form.md` | proposal-linked | bug |
-| `issues/bug-report-button-should-offer-feature-as-well.md` | proposal-linked | bug |
-| `issues/governance-panel-pending-approval-stat-is-mislabel.md` | scope-checked | bug |
-| `issues/governance-panel-status-stat-tiles-aren-t-clickabl.md` | scope-checked | feature |
+| `https://github.com/growlf/docwright/issues/395` | triaged | ux |
+| `https://github.com/growlf/docwright/issues/351` | triaged | ux |
+| `https://github.com/growlf/docwright/issues/394` | proposal-linked | ux |
+| `https://github.com/growlf/docwright/issues/177` | proposal-linked | bug |
+| `https://github.com/growlf/docwright/issues/178` | proposal-linked | bug |
+| `https://github.com/growlf/docwright/issues/112` | scope-checked | bug |
+| `https://github.com/growlf/docwright/issues/113` | scope-checked | feature |
 
 All 7 must be resolved (done, superseded, or explicitly cut from scope) before the release can proceed. Any UI/UX bugs filed between now and release must also be resolved or explicitly deferred — optional additions land under this same gate.
 
@@ -59,7 +59,7 @@ All 7 must be resolved (done, superseded, or explicitly cut from scope) before t
 | `proposals/three-docwright-instance-deployment.md` | Proposal | Evaluate ship readiness |
 | `proposals/git-panel-branch-switcher.md` | Proposal | Evaluate ship readiness |
 | `plans/lifecycle-gates.md` | Draft plan | Needs approval or defer |
-| `issues/bug-session-start-blind-to-unmerged-work.md` | Bug | Fix or defer |
+| `https://github.com/growlf/docwright/issues/380` | Bug | Fix or defer |
 
 ## Alternatives Considered
 

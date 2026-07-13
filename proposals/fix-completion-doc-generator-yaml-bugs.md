@@ -10,8 +10,8 @@ approved: true
 created_by: "claude@claude-code"
 assigned_to: NetYeti
 sources:
-  - issues/bug-completion-doc-generator-emits-invalid-yaml-tags-l.md
-  - issues/plan-doc-generator-raw-js-date-in-created-field-an.md
+  - https://github.com/growlf/docwright/issues/185
+  - https://github.com/growlf/docwright/issues/136
 github_issues:
   - 185
   - 136

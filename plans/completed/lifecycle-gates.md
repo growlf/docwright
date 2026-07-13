@@ -25,7 +25,7 @@ completed_steps: 5
 phase: 4
 github_epic: null
 milestone: v0.5.0
-channel: beta
+channel: stable
 scenario_synthesis: "Happy path: before a reviewer signs off a gate, the AI pre-review engine surfaces a readiness summary (ready/needs-work/blocked + concerns) for the human; the quorum, scheduled-trigger, retroactive-audit, and governance-log engines shipped in gates.ts/audit.ts and wire through promote.ts. Failure paths: AI summary generation fails → the offline KeywordEngine fallback still returns a summary and the human path is never blocked on AI; retroactive audit --fix only proposes corrections, a human commits them; the audit log is append-only NDJSON — a failed write aborts the transition rather than losing the record."
 automated: full
 gate_note: "AI pre-review is display-only / non-blocking by design; orphaned checkWithAI removed in PR #331."

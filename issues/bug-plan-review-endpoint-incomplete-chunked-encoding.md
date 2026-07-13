@@ -22,6 +22,7 @@ assigned_to: []
 created_by: NetYeti@cluster-llm
 channel: dev
 resolution: OPENCODE_URL set to http://localhost:4096 in vite dev environment
+github_issue: 371
 ---
 
 # Bug: Plan review endpoint returns ERR_INCOMPLETE_CHUNKED_ENCODING

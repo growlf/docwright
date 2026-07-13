@@ -13,7 +13,7 @@ consumed_by: plans/completed/image-based-deployment-any-directory.md
 created_by: "NetYeti@cluster-llm"
 assigned_to: ""
 related_to:
-  - issues/bug-container-as-root-writes-svelte-kit-into-the-sourc.md
+  - https://github.com/growlf/docwright/issues/288
 milestone: backlog
 ---
 
@@ -25,7 +25,7 @@ in place** (`build: .`). That single decision is the root of a class of failures
 - **App code lives in a mutable working tree that drifts.** The tree accumulates
   hand-applied hotfixes (e.g. an `auth/constants.ts` edit), root-owned `.svelte-kit`
   artifacts the container writes back into the source
-  (see [[issues/bug-container-as-root-writes-svelte-kit-into-the-sourc]], GH #288),
+  (see https://github.com/growlf/docwright/issues/288, GH #288),
   and local `docker-compose.yml` edits. Any drift makes `git checkout <tag>` refuse.
 - **Per-instance config leaked into tracked source.** The base `docker-compose.yml`
   *enumerated* env vars, so customizing an instance (adding `AUTH_MODE` / `LOCAL_AUTH_*`)

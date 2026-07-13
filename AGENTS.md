@@ -16,10 +16,17 @@ or declare an explicit exception in the plan. See `policies/core/bugs-before-fea
 **ALWAYS file noticed bugs/gaps through `capture_bug_report`.** When you notice a bug,
 gap, or issue — while working on anything else — file it via the MCP bridge, never by
 hand: `capture_bug_report(action=suggest)` first (cross-source dedup; if a match exists,
-`confirm` to +1 its demand instead of double-filing), then `create` only if novel, then
-mirror to GitHub with a `github_issue:` backlink. Hand-filed issues bypass dedup and the
-demand heatmap. The suggest matcher is literal — try more than one phrasing before
-trusting "no duplicates". (BDFL directive 2026-07-05.)
+`confirm` to +1 its demand instead of double-filing), then `create` only if novel. The
+suggest matcher is literal — try more than one phrasing before trusting "no duplicates".
+Hand-filed issues bypass dedup and the demand heatmap. (BDFL directive 2026-07-05.)
+
+> **GH-pivot (2026-07-13):** on **code projects** (DocWright itself), dev issues are
+> **GitHub-canonical** — `capture_bug_report` creates a GitHub issue and places it on the
+> Project board (`ISSUES_SOURCE=github`); the demand heatmap + dedup read GitHub. There is
+> no local `issues/*.md` write and no `github_issue:` backlink to maintain (GitHub *is* the
+> record; proposals link stable GH issue URLs). The local `issues/` model + `github_issue:`
+> backlink remain only for git-native vaults (org-operations, knowledge-base).
+> See `plans/plan-pivot-issue-tracking-to-github-issues-projects-*`.
 
 **ALWAYS VERIFY, never assume docs are up to date.** Before acting on any documented IP, credential, role, or topology, verify against the live system.
 
