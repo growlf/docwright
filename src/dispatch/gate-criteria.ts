@@ -154,6 +154,11 @@ export function parseGateCriteria(text: string): GateCriterion[] {
   return out;
 }
 
+/** Does the plan body contain a gate section at all? (a heading with "Phase Gate"/"Gate Criteria") */
+export function hasGateSection(text: string): boolean {
+  return text.split('\n').some((l) => l.startsWith('#') && (l.includes('Phase Gate') || l.includes('Gate Criteria')));
+}
+
 function tierOf(binding: GateBinding | null): GateTier {
   if (!binding) return 3; // unbound / legacy
   if (binding.kind === 'human') return 3;

@@ -9,7 +9,8 @@
  *
  * Pure text functions only — no filesystem, no MCP, no VS Code deps.
  */
-import { extractFrontmatterField } from './frontmatter';
+import { extractFrontmatterField, parseFrontmatter } from './frontmatter';
+import { auditGateCriteria, hasGateSection, type GateEvidence } from './gate-criteria';
 
 /**
  * Split a markdown table row on unescaped pipes only — `\|` inside a cell is
@@ -135,6 +136,23 @@ export function hasPendingSteps(text: string): boolean {
   return total > completed;
 }
 
+/**
+ * Build the evidence a gate criterion is resolved against, entirely from the plan text — so the
+ * gate stays a pure function. file_exists/cmd bound criteria rely on results the step-3 recorder
+ * writes into `gate_evidence` (keyed by criterion id); human criteria on `gate_attestations`.
+ */
+function planGateEvidence(text: string): GateEvidence {
+  const fm = parseFrontmatter(text);
+  const asMap = (v: unknown) =>
+    v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, any>) : undefined;
+  return {
+    frontmatter: fm,
+    hasPendingSteps: hasPendingSteps(text),
+    gateEvidence: asMap(fm.gate_evidence),
+    attestations: asMap(fm.gate_attestations),
+  };
+}
+
 export function checkCompletionGate(text: string, planName: string): string | null {
   // Fix 2: enforce tests_human_reviewed in addition to tests_defined
   const testsDefined = extractFrontmatterField(text, 'tests_defined');
@@ -151,28 +169,25 @@ export function checkCompletionGate(text: string, planName: string): string | nu
     return `ERROR: Plan '${planName}' has tests_human_reviewed ${current}. A human must review and certify the test plan before the plan can be completed. Set tests_human_reviewed: true in the frontmatter after review.`;
   }
 
-  const lines = text.split('\n');
-  let inGate = false;
-  let gateFound = false;
-  let unchecked = 0;
-
-  for (const line of lines) {
-    // Fix 1: recognize both '## Phase Gate' (legacy) and '### Gate Criteria' (current template)
-    if (line.startsWith('#')) {
-      if (inGate) break;
-      inGate = line.includes('Phase Gate') || line.includes('Gate Criteria');
-      if (inGate) gateFound = true;
-    } else if (inGate && line.includes('- [ ]')) {
-      unchecked++;
-    }
-  }
-
-  if (!gateFound) {
+  if (!hasGateSection(text)) {
     return `ERROR: Plan '${planName}' has no Gate Criteria section. All plans must have a '### Gate Criteria' (or '## Phase Gate') section that is fully signed off before completion.`;
   }
 
-  if (unchecked > 0) {
-    return `ERROR: Plan '${planName}' has ${unchecked} unchecked gate item${unchecked === 1 ? '' : 's'}. All Gate Criteria items must be checked [x] before the plan can be completed.`;
+  // Each gate criterion is a verifiable claim (see gate-criteria.ts). Unbound criteria keep the
+  // legacy rule — satisfied only when checked [x]. Bound criteria are DERIVED from recorded
+  // evidence (tier 1), or attested-and-not-contradicted (tiers 2/3). Evidence is read from the
+  // plan's own frontmatter, so this stays a pure text function (file_exists/cmd bound criteria
+  // rely on results the step-3 recorder writes into gate_evidence, keyed by criterion id).
+  const { unmet } = auditGateCriteria(text, planGateEvidence(text));
+  if (unmet.length > 0) {
+    // Pure-legacy plans (all unmet criteria unbound) get the exact historical message, so
+    // existing plans and the gate-parity contract are unchanged. Once bindings are involved,
+    // report per-criterion WHY each is unmet — the point of the whole feature.
+    if (unmet.every((c) => c.binding === null)) {
+      return `ERROR: Plan '${planName}' has ${unmet.length} unchecked gate item${unmet.length === 1 ? '' : 's'}. All Gate Criteria items must be checked [x] before the plan can be completed.`;
+    }
+    const detail = unmet.map((c) => `  - ${c.id ? `(${c.id}) ` : ''}${c.text} — ${c.result.reason}`).join('\n');
+    return `ERROR: Plan '${planName}' has ${unmet.length} unsatisfied gate criteri${unmet.length === 1 ? 'on' : 'a'}:\n${detail}\nEach must be verified (machine-derived) or attested (human) before completion.`;
   }
 
   // The whole Testing Plan section must be verified, not just Gate Criteria —
@@ -224,19 +239,12 @@ export function checkCompletionGate(text: string, planName: string): string | nu
 export function isReadyForHumanCompletion(text: string): boolean {
   if (hasPendingSteps(text)) return false;
 
-  // Gate section present + all its criteria checked (mirrors checkCompletionGate's scan).
-  const lines = text.split('\n');
-  let inGate = false, gateFound = false, uncheckedGate = 0;
-  for (const line of lines) {
-    if (line.startsWith('#')) {
-      if (inGate) break;
-      inGate = line.includes('Phase Gate') || line.includes('Gate Criteria');
-      if (inGate) gateFound = true;
-    } else if (inGate && line.includes('- [ ]')) {
-      uncheckedGate++;
-    }
-  }
-  if (!gateFound || uncheckedGate > 0) return false;
+  // Gate section present, and every MACHINE-derived (tier 1) criterion satisfied. Tier 2/3
+  // (human) and unbound criteria are the human's remaining sign-off — the Certify/Attest clicks
+  // this queue is meant to surface — so they don't disqualify "ready for human".
+  if (!hasGateSection(text)) return false;
+  const { criteria } = auditGateCriteria(text, planGateEvidence(text));
+  if (criteria.some((c) => c.result.tier === 1 && !c.result.satisfied)) return false;
 
   if (uncheckedTestingPlanBoxes(text).length > 0) return false;
 
