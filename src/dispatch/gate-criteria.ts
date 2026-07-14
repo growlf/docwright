@@ -78,6 +78,23 @@ export interface CriterionResult {
   reason: string;
 }
 
+/** A recorded evidence entry for one criterion (written by the step-3 recorder). */
+export interface EvidenceEntry {
+  satisfied: boolean;
+  detail: string;
+  at?: string; // commit the check ran against
+  ts?: string; // ISO timestamp
+}
+
+/** Injected effects for LIVE evaluation (running the checks), kept out of this pure module. */
+export interface LiveEffects {
+  frontmatter?: Record<string, unknown>;
+  hasPendingSteps?: boolean;
+  fileExists?: (path: string) => boolean;
+  /** Runs a whitelisted named command; returns null when the name is not allowed. */
+  runCmd?: (name: string) => { satisfied: boolean; detail: string } | null;
+}
+
 const CHECKBOX_LINE = /^\s*-\s*\[( |x|X)\]\s*(?:\(([^)]+)\)\s*)?(.*?)\s*$/;
 // A verify binding is separated from the claim by an em dash or a double hyphen.
 const VERIFY_SUFFIX = /\s*(?:—|--)\s*verify:\s*(\S.*?)\s*$/;
@@ -241,6 +258,90 @@ export function resolveCriterion(crit: GateCriterion, ev: GateEvidence = {}): Cr
   // Tier 1 — machine-derived.
   const mc = resolveMachineCheck(b, crit.id, ev);
   return { tier, satisfied: mc.satisfied, reason: mc.reason };
+}
+
+/** The machine check underlying a binding: the binding itself (tier 1) or the sub-check of a
+ *  tier-2 human+check. null for `human` (tier 3) and unbound criteria — nothing to run. */
+export function machineCheckOf(binding: GateBinding | null): MachineCheck | null {
+  if (!binding) return null;
+  if (binding.kind === 'human') return null;
+  if (binding.kind === 'human_check') return binding.check;
+  return binding as MachineCheck; // tier 1
+}
+
+/**
+ * Evaluate a machine check LIVE — actually running fs/cmd via injected effects — into a fresh
+ * evidence entry. The step-3 recorder wires real fs/exec; tests inject fakes. Pure otherwise.
+ */
+export function evaluateMachineCheckLive(check: MachineCheck, fx: LiveEffects): { satisfied: boolean; detail: string } {
+  const fm = fx.frontmatter ?? {};
+  switch (check.kind) {
+    case 'tests_pass': {
+      const ok = String(fm.tests_last_result) === 'pass';
+      return { satisfied: ok, detail: `tests_last_result: ${fm.tests_last_result ?? 'none'}` };
+    }
+    case 'steps_done':
+      return { satisfied: fx.hasPendingSteps === false, detail: fx.hasPendingSteps === false ? 'no pending steps' : 'implementation steps still pending' };
+    case 'frontmatter': {
+      const actual = fm[check.field as string];
+      return { satisfied: String(actual) === check.value, detail: `${check.field}=${String(actual)} (want ${check.value})` };
+    }
+    case 'file_exists': {
+      const ok = fx.fileExists ? fx.fileExists(check.path as string) : false;
+      return { satisfied: ok, detail: `${check.path} ${ok ? 'exists' : 'missing'}` };
+    }
+    case 'cmd': {
+      const r = fx.runCmd ? fx.runCmd(check.cmd as string) : null;
+      return r ?? { satisfied: false, detail: `cmd:${check.cmd} not allowed (not in the verify allowlist)` };
+    }
+  }
+}
+
+/**
+ * Named checks a `cmd:` criterion may reference → the package.json script each runs. This is the
+ * security boundary for `cmd:` verification: only these names execute; anything else records
+ * satisfied:false without running. Shared by every surface that records evidence.
+ */
+export const GATE_CMD_ALLOWLIST: Readonly<Record<string, string>> = Object.freeze({
+  typecheck: 'typecheck',
+  lint: 'lint',
+  'roadmap-check': 'roadmap:check',
+  'test-dispatch': 'test:dispatch',
+});
+
+export interface BuiltEvidence {
+  evidence: Record<string, EvidenceEntry>;
+  recorded: Array<{ id: string; satisfied: boolean; detail: string; raw: string }>;
+  warnings: string[];
+}
+
+/**
+ * Evaluate every MACHINE-bound criterion in a plan LIVE (via injected effects) and build the
+ * gate_evidence map, merged onto any existing evidence. Pure — the recorder surfaces (MCP tool,
+ * Web UI endpoint) inject real fs/exec and then persist the returned `evidence`. human/unbound
+ * criteria are skipped; machine criteria without an (id) are reported in `warnings`.
+ */
+export function buildGateEvidence(
+  text: string,
+  fx: LiveEffects,
+  stamp: { commit?: string; ts?: string } = {},
+  existing: Record<string, any> = {},
+): BuiltEvidence {
+  const evidence: Record<string, EvidenceEntry> = { ...existing };
+  const recorded: BuiltEvidence['recorded'] = [];
+  const warnings: string[] = [];
+  for (const c of parseGateCriteria(text)) {
+    const mc = machineCheckOf(c.binding);
+    if (!mc) continue;
+    if (!c.id) {
+      warnings.push(`"${c.text}" (verify: ${mc.raw}) has no (id) — cannot key evidence; add an (id).`);
+      continue;
+    }
+    const r = evaluateMachineCheckLive(mc, fx);
+    evidence[c.id] = { satisfied: r.satisfied, detail: r.detail, at: stamp.commit, ts: stamp.ts };
+    recorded.push({ id: c.id, satisfied: r.satisfied, detail: r.detail, raw: mc.raw });
+  }
+  return { evidence, recorded, warnings };
 }
 
 export interface GateAudit {

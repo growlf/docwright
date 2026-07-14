@@ -1,6 +1,7 @@
 import { McpTool } from '../types';
 import { updateStep, updatePlanStatus, appendHistory, setPlanField, writePlan } from './mutation';
 import { verifyPlanTests } from './verify_tests';
+import { verifyGateCriteria } from './gate_verify';
 
 export const mutationTools: McpTool[] = [
   {
@@ -105,6 +106,27 @@ export const mutationTools: McpTool[] = [
     },
     handler: async (args) => {
       const res = await verifyPlanTests(String(args.plan_name), args.script ? String(args.script) : 'test');
+      return { content: [{ type: 'text', text: res }] };
+    }
+  },
+  {
+    name: 'verify_gate_criteria',
+    description:
+      'Run each MACHINE-verifiable gate criterion of a plan and record the result into its ' +
+      'gate_evidence map (keyed by the criterion (id), with commit + timestamp) — the agent ' +
+      'verify-and-record path for evidence-backed completion. Machine checks: tests_pass, ' +
+      'steps_done, frontmatter:<f>=<v>, file_exists:<path>, cmd:<name>. cmd names are a fixed ' +
+      'allowlist (typecheck, lint, roadmap-check, test-dispatch), NOT arbitrary commands. ' +
+      'human/unbound criteria are skipped (those are human attestations).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        plan_name: { type: 'string' }
+      },
+      required: ['plan_name']
+    },
+    handler: async (args) => {
+      const res = await verifyGateCriteria(String(args.plan_name));
       return { content: [{ type: 'text', text: res }] };
     }
   }

@@ -117,6 +117,32 @@ export function setFrontmatterField(text: string, field: string, value: any): st
   return text.replace(match[0], `---\n${newFmBlock}\n---`);
 }
 
+/**
+ * Set a nested MAP field (e.g. gate_evidence, gate_attestations) in frontmatter, surgically
+ * replacing just that field's block (the `field:` line + its indented children) and preserving
+ * everything else byte-for-byte — including comments — the way setFrontmatterField does for
+ * scalars/lists. Serializes the object with js-yaml so nested structure round-trips.
+ */
+export function setFrontmatterMap(text: string, field: string, obj: Record<string, any>): string {
+  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return text;
+  const fmBlock = match[1];
+  const dumped = yaml.dump({ [field]: obj }, { schema: yaml.JSON_SCHEMA, lineWidth: -1, noRefs: true }).trimEnd();
+  const lines = fmBlock.split('\n');
+  const idx = lines.findIndex((l) => l.startsWith(`${field}:`));
+  let newFmBlock: string;
+  if (idx < 0) {
+    newFmBlock = fmBlock.trimEnd() + '\n' + dumped;
+  } else {
+    // Drop the field line plus any following indented (child) lines — the next non-indented
+    // line is the following top-level key and must be kept.
+    let end = idx + 1;
+    while (end < lines.length && /^\s+\S/.test(lines[end])) end++;
+    newFmBlock = [...lines.slice(0, idx), dumped, ...lines.slice(end)].join('\n');
+  }
+  return text.replace(match[0], `---\n${newFmBlock}\n---`);
+}
+
 export function formatYamlList(items: string[]): string {
   if (!items || items.length === 0) return ' []';
   return '\n' + items.map(t => `  - ${t}`).join('\n');
