@@ -19,7 +19,7 @@ related_to:
 depends_on: []
 blocks: []
 _path: proposals/approved/roadmap-date-discipline
-consumed_by: plans/roadmap-date-discipline.md
+consumed_by: plans/completed/roadmap-date-discipline.md
 ---
 
 # Roadmap date discipline — enforce version/milestone dates + issue-in-range scheduling (DocWright + GitHub)
