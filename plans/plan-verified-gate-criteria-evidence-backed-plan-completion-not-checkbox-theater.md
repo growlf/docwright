@@ -19,7 +19,7 @@ reviewed_date:
 canceled_date:  # Populated when plan is canceled
 cancellation_reason:  # Populated when plan is canceled
 template_version: "1.0"
-tests_defined: true
+tests_defined: false
 tests_human_reviewed: false  # Set to true after human certifies AI-generated tests
 verification_type: unit
 # Gate fields — populated when a lifecycle gate applies to this document
@@ -30,7 +30,7 @@ gate_note:      # Optional reviewer note
 gate_reviews: []  # Phase 1a — array of {reviewer, role, status, date, note}
 gate_quorum: 1    # Phase 1a — minimum approvals needed
 total_steps: 7
-completed_steps: 0
+completed_steps: 1
 ---
 
 # Plan: Verified gate criteria — evidence-backed plan completion, not checkbox theater
@@ -93,7 +93,7 @@ sign-off; the validator catches the agent checking something untrue exactly as i
 
 | Step | Action | Details | Status |
 |------|--------|---------|--------|
-| 1 | Criterion parser + check registry + tier resolver (PURE core) | New `src/dispatch/gate-criteria.ts`. `parseGateCriteria(text)` → `{id,text,checked,binding}[]` from the Phase Gate/Gate Criteria section (reuse completion-gate's section scan); parse inline `- [ ] (id) text — verify: <check>`. `resolveCriterion(crit, evidence, {fileExists?})` → `{tier,satisfied,reason}`. Checks: `tests_pass`(evidence.tests_last_result==='pass'), `steps_done`(no pending steps), `frontmatter:<f>=<v>`, `file_exists:<p>`(via injected predicate), `cmd:<name>`(reads evidence.gate_evidence[id]), `human`(needs attestation), `human+<check>`(tier2). PURE — no fs/exec/VS Code imports; fs only via injected predicate. Unit tests per check + tier + contradiction. NOT wired yet. | ⏳ Pending |
+| 1 | Criterion parser + check registry + tier resolver (PURE core) | New `src/dispatch/gate-criteria.ts`. `parseGateCriteria(text)` → `{id,text,checked,binding}[]` from the Phase Gate/Gate Criteria section (reuse completion-gate's section scan); parse inline `- [ ] (id) text — verify: <check>`. `resolveCriterion(crit, evidence, {fileExists?})` → `{tier,satisfied,reason}`. Checks: `tests_pass`(evidence.tests_last_result==='pass'), `steps_done`(no pending steps), `frontmatter:<f>=<v>`, `file_exists:<p>`(via injected predicate), `cmd:<name>`(reads evidence.gate_evidence[id]), `human`(needs attestation), `human+<check>`(tier2). PURE — no fs/exec/VS Code imports; fs only via injected predicate. Unit tests per check + tier + contradiction. NOT wired yet. | ✅ Done |
 | 2 | Wire resolver into `checkCompletionGate` (backward-compatible) | `completion-gate.ts` consumes parseGateCriteria + resolveCriterion. Unbound criterion → unchanged (must be `[x]`). Machine-bound → derived from evidence (typed box ignored). `human` → requires a recorded attestation for its id, else block. `human+check` → attestation present AND bound check not false. Evidence = plan frontmatter (tests_last_result, tests_defined, tests_human_reviewed…) + `gate_evidence` map (step 3). MUST keep MCP↔UI parity (extend `test/integration/gate-parity.test.ts`) and existing unbound plans byte-for-byte identical in behaviour. | ⏳ Pending |
 | 3 | Evidence recorder — the agent verify-and-record path | MCP tool `verify_gate_criteria(plan)` + `/api/lifecycle/verify-gate` endpoint: for each machine-bound criterion, evaluate its check (tests_pass/steps_done/frontmatter from the plan; file_exists via fs; `cmd:<name>` runs a WHITELISTED named check server-side, captures exit) and record `gate_evidence[id]={satisfied,at:<commit>,ts,detail}` via the sanctioned plan write; return evidence for display. Security: `cmd:` names are a fixed allowlist (e.g. `status-check`, `roadmap-check`) — NO arbitrary shell/interpolation. Tests: records evidence; unknown cmd rejected; tier-1 boxes auto-derive after a run. | ⏳ Pending |
 | 4 | Human attestation + cross-check (tier 2/3) — ACL-gated + audited | Tool/endpoint records `gate_attestations[id]={by,role,ts,commit,note}` for `human`/`human+check` criteria; ACL-gated (role ≥ steward via `acl.ts`); writes an append-only `audit_log` entry. Consumed by step 2's resolver; tier-2 blocked if the bound check's evidence is false (contradiction, named in the refusal). Tests: ACL denies unauthorized role; contradiction blocks; audit entry has who/when/commit. | ⏳ Pending |
@@ -145,3 +145,4 @@ sign-off; the validator catches the agent checking something untrue exactly as i
 |------|--------|--------|
 | 2026-07-13 | Created via Approve (auto-stub from proposals/approved/verified-gate-criteria-evidence-backed-completion.md). | NetYeti |
 | 2026-07-14 | Fleshed into 7 additive/backward-compatible steps after settling the design fork: inline-suffix binding grammar (`- [ ] (id) text — verify: <check>`) over structured frontmatter, to avoid migrating every plan. Priority set high. This plan's own Phase Gate dogfoods the new grammar (will be machine-derived once step 2 lands). Steps: parser+resolver (pure) → wire into checkCompletionGate (backward-compat) → evidence recorder (agent verify-and-record, cmd allowlist) → human attestation (ACL + audit + cross-check) → Web UI evidence-beside-box (closes #407) → template migration → policy/docs. | NetYeti |
+| 2026-07-14 | Step 1 done — pure parser + check registry + tier resolver. New src/dispatch/gate-criteria.ts (NO fs/exec/MCP/VS Code deps; fs only via injected predicate): parseGateCriteria(text) scans the first Phase Gate/Gate Criteria section (mirrors checkCompletionGate's scan so step 2 will agree on the section) and parses each `- [ ] (id) text — verify: <check>` line; parseBinding() handles tests_pass/steps_done/frontmatter:f=v/file_exists:p/cmd:name/human/human+check, returning null on malformed (⇒ safe unbound fallback); resolveCriterion(crit, evidence) returns {tier, satisfied, reason} — tier1 machine-derived (typed box ignored), tier2 human+check (attested AND not contradicted), tier3 human (needs attestation), unbound=legacy [x]; auditGateCriteria() aggregates. 21 unit tests (parse, each check, each tier, contradiction, missing-id, first-section-only, legacy). Additive: nothing wired yet — tsc clean, full dispatch suite 520 passing (was 499). Next: step 2 wires this into checkCompletionGate, backward-compatible. | NetYeti |
