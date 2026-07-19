@@ -1848,3 +1848,23 @@ See separate SESSION-LOG for full entry (cross-repo session on bms-ai-cluster).
 - [x] (see session note)
 
 **Session note:** `docs/session-notes/session_note_202607102339.md`
+
+---
+
+## Session: 2026-07-18 — BMS LXC onboarding + fixes
+
+**Focus:** BMS LXC onboarding + fixes
+
+**Completed:**
+- [x] fix: align issue-status linter with canonical lifecycle (#261 parity)
+- [x] fix: YAML-safe completion-doc frontmatter (serialize, don't interpolate) (#185, #136)
+- [x] chore: reconcile dogfood with main — fold in PR #332 (harden table-row parsing)
+- [x] fix: converge table-row parsing/writing on shared helpers (steps 2-3)
+- [x] docs: fix bundle-lifecycle-gates-phase-2 consumed_by backlink to completed plan path
+- [x] docs: complete lifecycle-gates (plan → completed)
+- [x] docs: edit plans/lifecycle-gates.md (web ui save)
+- [x] chore: reconcile dogfood with main — fold in PR #331 (remove orphaned checkWithAI)
+- [x] docs: close lifecycle-gates Step 1 — AI gate pre-review shipped, plan 5/5, staged for completion
+- [x] refactor: remove orphaned checkWithAI from promote.ts
+
+**Session note:** `docs/session-notes/session_note_202607182301.md`
