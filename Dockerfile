@@ -7,7 +7,7 @@
 # Base: node:22-bookworm-slim — NOT alpine (pydantic-core Rust extension
 # is ABI-incompatible with musl; bookworm-slim uses glibc).
 
-FROM node:22-bookworm-slim
+FROM node:25-bookworm-slim
 
 # ── System dependencies ───────────────────────────────────────────────────────
 RUN apt-get update \
