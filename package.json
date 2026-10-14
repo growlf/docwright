@@ -86,7 +86,7 @@
     "typescript": "^5.3.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@opencode-ai/sdk": "^1.15.13",
     "js-yaml": "^4.2.0"
   },
